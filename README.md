@@ -1,0 +1,98 @@
+<p align="center"><img src="assets/icon.svg" width="88" alt=""></p>
+
+<h1 align="center">Anabasis</h1>
+
+<p align="center">A writing desk for nonfiction. Documents, notes, sources and citations in one offline HTML file.</p>
+
+<p align="center">
+  <a href="https://github.com/gmichaelrapp/anabasis/releases/latest"><b>Download</b></a> ·
+  <a href="https://gmichaelrapp.github.io/anabasis/"><b>Try it in your browser</b></a> ·
+  <a href="docs/privacy.md">Privacy</a> ·
+  <a href="CHANGELOG.md">What’s new</a>
+</p>
+
+![The editor with a cited draft, its notes and bibliography](docs/screenshots/editor-light.png)
+
+Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
+
+The whole app is a single HTML file of about 7.5 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+
+## What it does
+
+**Write and cite**
+- A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
+- Citations in Chicago (notes and bibliography, shortened notes, author-date), APA 7, MLA 9 and the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
+- Add sources by DOI, ISBN or web address, or import BibTeX and RIS. Each source can carry an Admiralty reliability rating.
+- A binder of chapters and parts that compiles into a manuscript, with an index, front and back matter, and a chronology built from dated notes.
+
+**Research**
+- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, and a web clipper captures from other tabs.
+- Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
+- Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
+
+**Figures**
+- Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.
+- Maps that work offline: shade countries or provinces, and add markers, routes, arrows and hatched areas, with rivers, a scale bar and a locator inset.
+- Timelines from dated notes, and relationship maps of the people, places and organizations in your text.
+
+**Check the draft**
+- Undefined or late-defined acronyms, vague estimative language (against the ICD 203 scale), and paragraphs resting on a single source or only on weak ones.
+- House style: numbers, dates, the serial comma, US or U.S., dashes, quotes and your preferred spellings. Accessibility: alt text, heading order, table headers and link text.
+- Find and replace across every document. Drafts you can compare side by side, and checkpoints of the whole project.
+
+**Publish**
+- PDF with real footnotes, Word (.docx), ePub, HTML, Markdown and a Substack-ready post, plus a promo kit with a social thread, subtitle and quote cards.
+- Video-script mode with run time, an A/V table and a teleprompter.
+- Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository.
+
+| | |
+|---|---|
+| ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab's checks beside a draft](docs/screenshots/checks.png) |
+| ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
+
+## Getting started
+
+1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
+2. Open it in your browser. A short tour and a sample project show you around.
+3. Choose **Save** to keep your project as a `.json` file. Keep that file somewhere backed up, such as a synced folder.
+
+You can also use the [hosted copy](https://gmichaelrapp.github.io/anabasis/). It is the same file and still keeps everything in your browser.
+
+### Browsers
+
+Anabasis works best in current desktop **Chrome**, **Edge**, **Brave** or another Chromium browser. In those browsers it can save straight back to your project file and autosave to it.
+
+**Firefox** and **Safari** work too. Saving downloads a fresh copy of the project file each time instead of overwriting it, and some highlights in the checks appear only in the lists, not in the text.
+
+Phones and tablets are fine for reading and light editing. For a long working session, use a computer.
+
+## Your data
+
+Your project lives in two places: the `.json` file you save, and a working copy in your browser so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to look up a source or back up to GitHub. [More about privacy](docs/privacy.md).
+
+The project file is plain JSON, documented in [docs/file-format.md](docs/file-format.md), so your work is never locked in.
+
+## Building from source
+
+You need Python 3.10 or later. Nothing else is needed for the build, and it never touches the network.
+
+```sh
+python build.py --check     # verifies vendored files, writes dist/anabasis.html
+```
+
+To run the tests (Playwright and Chromium):
+
+```sh
+pip install playwright && python -m playwright install chromium
+python tests/run_tests.py
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out.
+
+## License
+
+Anabasis is free software under the [GNU Affero General Public License v3.0 or later](LICENSE). You can use, study, share and change it. If you distribute a modified version, or run one for others over a network, you must share its source under the same license.
+
+Anabasis is built on excellent open-source work, including citeproc-js, the Citation Style Language styles, PDF.js, Paged.js, docx, mammoth, Chart.js, d3, DOMPurify and Natural Earth. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md).
+
+Copyright © 2026 G. Michael Rapp.

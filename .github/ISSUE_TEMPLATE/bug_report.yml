@@ -1,0 +1,46 @@
+name: Bug report
+description: Something doesn't work the way it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. For a security problem, please use a private report instead: see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Anabasis version
+      description: Help → the number next to the title.
+      placeholder: 1.0.0
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and system
+      placeholder: Chrome 131 on macOS 15
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+      placeholder: |
+        1. Opened a project with …
+        2. Chose Export → Word
+        3. Expected footnotes; got …
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Error messages
+      description: Optional. Messages from the browser console (View → Developer → JavaScript Console), if any.
+      render: text
+  - type: checkboxes
+    id: file
+    attributes:
+      label: Sample file
+      options:
+        - label: I can attach a small project file that shows the problem (with anything private removed).

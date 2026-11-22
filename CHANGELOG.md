@@ -1,0 +1,44 @@
+# Changelog
+
+All notable changes to Anabasis. Versions follow [semantic versioning](https://semver.org): a major version can change the project file format in ways older versions can’t read, a minor version adds features, and a patch fixes bugs.
+
+## [1.0.0] — Unreleased
+
+The first public release.
+
+### Writing and citing
+- Word processor with headings, lists, tables, footnotes, figures, margin notes, focus mode, freewriting sprints and a revision lens.
+- Citations in Chicago 18th (notes and bibliography, shortened notes, author-date), APA 7, MLA 9 and the OSINT Style Guide, through citeproc-js. Notes, *Ibid.* and the bibliography rebuild as you write.
+- Sources by DOI, ISBN or web address, from BibTeX and RIS, or by hand, with Admiralty reliability ratings.
+- Binder of documents and parts, manuscript compile, index, front and back matter templates, chronology and annotated bibliography.
+- Drafts you name and compare side by side, and checkpoints of the whole project.
+- Project home with goals, pace and loose ends, and a planning board for outlining before drafting.
+
+### Research
+- Notes board with piles, tags, pins and a timeline view; drag notes into a draft as quotes or paraphrases.
+- PDF reader beside the draft, web clipper, Markdown import (Obsidian and similar), Word import with footnotes.
+- Interview transcripts from .srt, .vtt, text or Word, turned into timed quote notes.
+
+### Figures
+- Charts: columns, bars, stacked, lines, areas, dot plots and small multiples, with event lines and shaded periods.
+- Offline maps: countries, provinces for selected countries, rivers and lakes, markers, routes, arrows, hatched areas, scale bar and locator inset.
+- Timelines from dated notes and relationship maps from your Names list. Every figure stays editable.
+
+### Checks
+- Acronyms, estimative language (ICD 203), corroboration, house style, accessibility, names and spellings, quotes against their notes, and paragraphs without a citation.
+- Find and replace across all documents and notes, with a safety copy of each changed document.
+
+### Publishing
+- PDF with footnotes (Paged.js), Word (.docx) with real footnotes, ePub, HTML, Markdown and Substack.
+- Promo kit: social threads with character counts, Substack subtitle and description, quote cards.
+- Video-script mode with run time, A/V tables and a teleprompter.
+
+### Safety and privacy
+- One offline HTML file; no account, server or tracking.
+- Optional password lock (AES-256-GCM, PBKDF2 600,000 iterations), checked by reading back before every locked save.
+- Optional autosave to the project file (Chromium browsers) and backup to a private GitHub repository.
+- Project files are versioned (format 2) and migrated on opening. Damaged files are repaired where possible, with a fallback to the browser’s copy. Files from newer versions open as a copy.
+- Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
+- First-run tour and sample project.
+
+[1.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.0

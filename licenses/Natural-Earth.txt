@@ -1,0 +1,3 @@
+Natural Earth vector data (https://www.naturalearthdata.com) is in the public domain.
+"All versions of Natural Earth raster + vector map data found on this website are in the public domain."
+No permission is needed to use Natural Earth. Crediting the authors is unnecessary but appreciated.

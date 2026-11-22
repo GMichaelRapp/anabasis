@@ -1,0 +1,21 @@
+name: Feature idea
+description: Suggest something Anabasis could do.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the writing or research task, not the solution. What gets in your way today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: Optional. How you imagine it working.
+  - type: textarea
+    id: example
+    attributes:
+      label: An example
+      description: Optional. A style guide rule, a document, a screenshot from another tool.

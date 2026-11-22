@@ -1,0 +1,282 @@
+[
+  {
+    "file": "vendor/js/purify.min.js",
+    "name": "DOMPurify",
+    "version": "3.5.0",
+    "license": "MPL-2.0 OR Apache-2.0",
+    "source": "npm:dompurify@3.5.0 dist/purify.min.js",
+    "sha256": "f69a46022ab1f53e969c8ebbca98172c8995785a9b3be72ea4a12d25b1a1bf67"
+  },
+  {
+    "file": "vendor/js/citeproc.min.js",
+    "name": "citeproc-js",
+    "version": "2.4.63",
+    "license": "CPAL-1.0 OR AGPL-3.0-or-later",
+    "source": "npm:citeproc@2.4.63 (minified)",
+    "sha256": "e58980835512350647a949bdb002ba671f39f7a501f16241d34b3f34a206822a"
+  },
+  {
+    "file": "vendor/js/marked.min.js",
+    "name": "marked",
+    "version": "15.0.12",
+    "license": "MIT",
+    "source": "npm:marked@15.0.12 marked.min.js",
+    "sha256": "6c85ab806621b04adb56f961ec1139e85ab4937e0f8932b28beb23e558cba64a"
+  },
+  {
+    "file": "vendor/js/turndown.min.js",
+    "name": "turndown",
+    "version": "7.2.5",
+    "license": "MIT",
+    "source": "npm:turndown@7.2.5 (minified)",
+    "sha256": "55fee123b574d43858978f3be6e4978c66e3e1f3fc5eeccdc62efce5c0002890"
+  },
+  {
+    "file": "vendor/js/osint.js",
+    "name": "OSINT Citation Generator core",
+    "version": "3.2.1",
+    "license": "MIT (code); CC-BY-4.0 (style guide content)",
+    "source": "https://gmichaelrapp.github.io/OSINT_Cites/",
+    "sha256": "88dfaeb62fffc7973a5e89b42176230a34890497cf991440b35e99eaff5fa66f"
+  },
+  {
+    "file": "vendor/js/docx.min.js",
+    "name": "docx",
+    "version": "9.16.0",
+    "license": "MIT",
+    "source": "npm:docx@9.16.0 (UMD build)",
+    "sha256": "3b23530ed10f273913d2cdb07ba74ce270eb368b1d98a7e652a7e83e296b7b61"
+  },
+  {
+    "file": "vendor/js/mammoth.min.js",
+    "name": "mammoth",
+    "version": "1.13.0",
+    "license": "BSD-2-Clause",
+    "source": "npm:mammoth@1.13.0 mammoth.browser.min.js",
+    "sha256": "7cbb55963bcd447bd833e4c4a060c8636270c989818e36cafda6b1264aaf638d"
+  },
+  {
+    "file": "vendor/js/diff.min.js",
+    "name": "jsdiff",
+    "version": "9.0.0",
+    "license": "BSD-3-Clause",
+    "source": "npm:diff@9.0.0 dist/diff.min.js",
+    "sha256": "07f8f8438da5b2b99211fa47f99fe2d78e37e1de42b8abdb0472bf1c3466138c"
+  },
+  {
+    "file": "vendor/js/paged.min.js",
+    "name": "Paged.js",
+    "version": "0.4.3",
+    "license": "MIT",
+    "source": "npm:pagedjs@0.4.3 dist/paged.polyfill.min.js",
+    "sha256": "f44e35a6d5106d819c3415fd38591de04d3834343c14e50a562b84257e204692"
+  },
+  {
+    "file": "vendor/js/pdf.min.mjs",
+    "name": "PDF.js",
+    "version": "6.5.438",
+    "license": "Apache-2.0",
+    "source": "npm:pdfjs-dist@6.5.438 build/pdf.min.mjs",
+    "sha256": "3a88402882cfa3e7e72c2c9b5149f52f0f88baf1c5b62aa11a41abdbc2072440"
+  },
+  {
+    "file": "vendor/js/pdf.worker.min.mjs",
+    "name": "PDF.js worker",
+    "version": "6.5.438",
+    "license": "Apache-2.0",
+    "source": "npm:pdfjs-dist@6.5.438 build/pdf.worker.min.mjs",
+    "sha256": "1e64c8240e54735ec5913b37acd5134747799cb8c6bb3777c70adbc01232d2aa"
+  },
+  {
+    "file": "vendor/js/chart.umd.min.js",
+    "name": "Chart.js",
+    "version": "4.6.1",
+    "license": "MIT",
+    "source": "npm:chart.js@4.6.1 dist/chart.umd.min.js",
+    "sha256": "87364cc2b2a76a6684929e7d6b80b18a897794db38400caff1fcf1791c6925d2"
+  },
+  {
+    "file": "vendor/js/d3-array.min.js",
+    "name": "d3-array",
+    "version": "3.2.5",
+    "license": "ISC",
+    "source": "npm:d3-array@3.2.5",
+    "sha256": "468f7b9ed38d6322083da4d5ae9fa57d47784f964f16dcff96e413d16cc8f9d9"
+  },
+  {
+    "file": "vendor/js/d3-geo.min.js",
+    "name": "d3-geo",
+    "version": "3.1.2",
+    "license": "ISC",
+    "source": "npm:d3-geo@3.1.2",
+    "sha256": "1ea4c9608d0998f6468df3ab313c473bebbe81ba2c542a456b49db90e3672f89"
+  },
+  {
+    "file": "vendor/js/topojson-client.min.js",
+    "name": "topojson-client",
+    "version": "3.1.0",
+    "license": "ISC",
+    "source": "npm:topojson-client@3.1.0",
+    "sha256": "25cd02ae486cc5063e0215a4e4cfb15de83700c87ac48bac4d57dc6aaf3ebb89"
+  },
+  {
+    "file": "vendor/csl/chicago-notes-bibliography.csl",
+    "name": "CSL style: chicago-notes-bibliography",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "4b6be4bceaf8f3c31b49331c9f9e38c977f666d6ab80e19a2ac8482c7511abeb"
+  },
+  {
+    "file": "vendor/csl/chicago-shortened-notes-bibliography.csl",
+    "name": "CSL style: chicago-shortened-notes-bibliography",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "bb6e16b492930fab11581c5407a98fd5a203010944ccb3854e61734f3d27bd4c"
+  },
+  {
+    "file": "vendor/csl/chicago-author-date.csl",
+    "name": "CSL style: chicago-author-date",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "002fade78d7e4fe9d42936a16b43a8066b097013f6255df40b1bfba6631eff9b"
+  },
+  {
+    "file": "vendor/csl/apa.csl",
+    "name": "CSL style: apa",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "3917def5fc951b104d64216c3373096042368b9704ba269ca83c14ebaba889fc"
+  },
+  {
+    "file": "vendor/csl/modern-language-association.csl",
+    "name": "CSL style: modern-language-association",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "e1432698ef28938d044b06bd45ddcc57d6b974cec25f71007075646a11f99484"
+  },
+  {
+    "file": "vendor/csl/locales-en-US.xml",
+    "name": "CSL locale en-US",
+    "version": "snapshot 2026",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/locales",
+    "sha256": "ac864c7c21166b4390d82c31792cdc509400727fa0060b43d8aa17e07f9cb079"
+  },
+  {
+    "file": "data/countries-50m.json",
+    "name": "World countries (world-atlas 2.0.2, Natural Earth 1:50m), Crimea assigned to Ukraine",
+    "version": "2.0.2",
+    "license": "ISC (world-atlas); Natural Earth data public domain",
+    "source": "npm:world-atlas@2.0.2 countries-50m.json",
+    "sha256": "67c45d0b3df782496f3952be9f864b7bc09db2a577831550a4eac2dd9d0567dd"
+  },
+  {
+    "file": "data/places.txt",
+    "name": "Populated places (Natural Earth 1:10m)",
+    "version": "snapshot 2026",
+    "license": "Public domain",
+    "source": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/",
+    "sha256": "37120756131eddd8a9fb73ce9376d695da6d8c87c6d16a4abf93716b2612f149"
+  },
+  {
+    "file": "data/admin1.json",
+    "name": "Admin-1 provinces for selected countries (Natural Earth 1:10m)",
+    "version": "snapshot 2026",
+    "license": "Public domain",
+    "source": "https://www.naturalearthdata.com/downloads/10m-cultural-vectors/",
+    "sha256": "05dce76871bd77a444add64e7ee780fd66d3f7599df8254b50b18c52bf743306"
+  },
+  {
+    "file": "data/rivers.json",
+    "name": "Rivers and lakes (Natural Earth 1:10m rivers, 1:50m lakes)",
+    "version": "snapshot 2026",
+    "license": "Public domain",
+    "source": "https://www.naturalearthdata.com/downloads/10m-physical-vectors/",
+    "sha256": "9c7026eaf60830802d845fc7011b1c7f6430807b2eda56b3e95e112c44dafdd4"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "5cb240a4d99ab7e6fc3a4d4e6d11d89789fdffe9c86a8384000d662c53283f6f"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-ext-400-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "0f9e442184b58992113a9b26c0b85c380410a60e5f8f3ddc03c54fe80f81bbe8"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-500-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "f5243b80fbcabc6756a4f67a2843a581216ecb89019a789335b85c924f05702e"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-ext-500-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "0b3a72e74f915124c73048d3a6970463c9d2f14d3877ccb1f2cd0d7e33e0c5d6"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-700-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "0dbe07ed7679407db9d90f747d5ca3bd1b2bb7ccbcbe41c8246cfc6d2c7bc3bc"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-ext-700-normal.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "acd5d0771650ceddafa2beb172dc7ada45581f7641db03a70f4a13677ce799d1"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-400-italic.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "59bc0e965694b9409ac2684c6c8d08994f4fee8a474bc63c4653714f8f441435"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-ext-400-italic.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "d78c26d0c18f8d0f81efde4aa48a05d8e4d01c696a2683c1d1bdb8471ed0e827"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-700-italic.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "a72f903d445907688cb6d06ad4dc993975b8f65b5126743ff70c75e09c6122b2"
+  },
+  {
+    "file": "assets/fonts/atkinson-hyperlegible-next-latin-ext-700-italic.woff2",
+    "name": "Atkinson Hyperlegible Next",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
+    "sha256": "5b341909f2746b4ee6c4f5e9bcbf02ad58303f0fdd9621e016c6d069e32f3073"
+  }
+]

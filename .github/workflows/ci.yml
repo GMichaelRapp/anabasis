@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build and test (Chromium)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Playwright
+        run: |
+          pip install playwright==1.63.0
+          python -m playwright install --with-deps chromium
+      - name: Build
+        run: python build.py --check
+      - name: Test suites
+        run: python tests/run_tests.py
+      - name: Test suites without newer browser APIs
+        run: python tests/run_tests.py --degraded
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anabasis-${{ github.sha }}
+          path: |
+            dist/anabasis.html
+            tests/out/*.log
+            tests/out/*.png
+          retention-days: 14
+
+  engines:
+    name: Smoke test (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install playwright==1.63.0
+          python -m playwright install --with-deps ${{ matrix.browser }}
+      - run: python build.py
+      - name: Opened from disk
+        run: python tests/smoke.py --browser ${{ matrix.browser }}
+      - name: Served over HTTP
+        run: python tests/smoke.py --browser ${{ matrix.browser }} --http

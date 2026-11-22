@@ -1,0 +1,68 @@
+.docbody{--doc-font:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Charter,Georgia,serif;--doc-size:12pt;--doc-lh:2;font-family:var(--doc-font);font-size:var(--doc-size);line-height:var(--doc-lh)}
+.docbody.f-times{--doc-font:"Times New Roman",Times,"Liberation Serif",serif}
+.docbody.f-sans{--doc-font:"Helvetica Neue",Helvetica,Arial,"Liberation Sans",sans-serif}
+.docbody p{margin:0 0 .65em}
+.docbody.indent p{text-indent:.5in;margin:0}
+.docbody.indent h1+p,.docbody.indent h2+p,.docbody.indent h3+p,.docbody.indent blockquote+p{text-indent:0}
+.docbody h1,.docbody h2,.docbody h3{line-height:1.25;font-weight:700;break-after:avoid;page-break-after:avoid}
+.docbody h1{font-size:1.45em;margin:1em 0 .5em}
+.docbody h2{font-size:1.2em;margin:1em 0 .45em}
+.docbody h3{font-size:1.04em;margin:.9em 0 .4em;font-style:italic}
+.docbody blockquote{margin:0 0 .9em .5in;line-height:1.35}
+.docbody blockquote p{text-indent:0!important;margin:0 0 .4em}
+.docbody ul,.docbody ol{margin:0 0 .65em;padding-left:.5in}
+.docbody a{color:inherit;text-decoration:underline}
+.docbody sup,.docbody .sup{vertical-align:super;font-size:.72em;line-height:0}
+.docbody .title-block{text-align:center;margin-bottom:.35in;line-height:1.4}
+.docbody .title-block .tb-title{font-size:1.5em;font-weight:700;margin:0 0 .3em;text-indent:0}
+.docbody .title-block p{margin:0;text-indent:0}
+.docbody .end-h{font-size:1em;text-align:center;font-weight:700;margin:1.4em 0 .7em;font-style:normal}
+.docbody .notes p.note{text-indent:.5in;margin:0 0 .55em;line-height:1.35}
+.docbody .csl-bib .csl-entry{margin:0 0 .55em;line-height:1.35}
+.docbody .csl-bib.hanging .csl-entry{padding-left:.5in;text-indent:-.5in}
+.docbody.bib-ds .csl-bib .csl-entry,.docbody.bib-ds .notes p.note{line-height:inherit;margin-bottom:0}
+.docbody .refs-missing{color:#a33a2c}
+@media print{
+  .docbody{color:#000;background:#fff}
+  .docbody .end-sec,.docbody .ch-break{break-before:page;page-break-before:always}
+  .docbody p,.docbody li,.docbody .csl-entry{orphans:2;widows:2}
+}
+.docbody .part-title{text-align:center;font-size:1.6em;margin-top:2in}
+.docbody mark{background:#fde68a;color:inherit}
+.docbody p.ab-entry{padding-left:.5in;text-indent:-.5in;margin:0 0 .2em;line-height:1.35}
+.docbody p.ab-note{margin:0 0 .9em .5in;text-indent:0;line-height:1.35;font-size:.95em}
+.docbody nav.toc .toc-title{text-align:center}
+.docbody nav.toc ol{list-style:none;padding:0}
+.docbody nav.toc li{margin:0 0 .3em}
+.docbody nav.toc .toc-part{font-weight:700;margin-top:.8em}
+.docbody nav.toc a{color:inherit;text-decoration:none}
+.docbody .index .ix-body{columns:2;column-gap:.35in;font-size:.92em;line-height:1.35}
+.docbody .index p{text-indent:0;margin:0 0 .15em;padding-left:1em;text-indent:-1em;break-inside:avoid}
+.docbody .index p.ix-sub{padding-left:2em}
+.docbody .index p.ix-letter{font-weight:700;margin:.7em 0 .2em;padding:0;text-indent:0;break-after:avoid}
+.docbody .index a.ixref{color:inherit;text-decoration:none}
+.docbody a.ix-a{display:inline}
+/* figures & tables */
+.docbody figure{margin:1.1em 0 1.2em;text-align:center;text-indent:0}
+.docbody figure img{display:block;max-width:100%;height:auto;margin:0 auto}
+.docbody figure[data-size="large"] img{width:75%}
+.docbody figure[data-size="half"] img{width:50%}
+.docbody figcaption{font-size:.88em;line-height:1.35;margin-top:.45em;text-align:center;text-indent:0}
+.docbody figure.tbl{text-align:left}
+.docbody figure.tbl figcaption{text-align:left;margin:0 0 .35em}
+.docbody .fig-n{font-weight:700}
+.docbody table{border-collapse:collapse;width:100%;font-size:.9em;line-height:1.35}
+.docbody th,.docbody td{border:1px solid #9a9a9a;padding:4px 7px;vertical-align:top;text-align:left;text-indent:0}
+.docbody th{background:color-mix(in srgb,currentColor 9%,transparent);font-weight:700}
+.docbody td p,.docbody th p{margin:0;text-indent:0}
+.docbody nav.lof .toc-title{text-align:center}
+.docbody nav.lof .lof-h{font-size:1em;margin:1em 0 .4em}
+.docbody nav.lof ol{list-style:none;padding:0}
+.docbody nav.lof li{margin:0 0 .3em}
+.docbody nav.lof a{color:inherit;text-decoration:none}
+/* marginalia page */
+.docbody .marginalia .mg-entry{margin:0 0 .9em;break-inside:avoid}
+.docbody .marginalia p{text-indent:0!important;margin:0 0 .2em;line-height:1.35}
+.docbody .marginalia .mg-loc{font-size:.85em;color:#555}
+.docbody .marginalia .mg-pass{font-style:italic;color:#444;margin-left:1.2em}
+.docbody .marginalia .mg-note{margin-left:1.2em}

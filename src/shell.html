@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<!--
+  Anabasis — a lightweight word processor, notebook and citation manager in one HTML file.
+  Copyright (c) 2026 G. Michael Rapp. Licensed under the GNU Affero General Public License v3.0 or later.
+
+  Bundled open-source components (full notices in Help → About):
+    citeproc-js 2.4.63 (c) Frank Bennett — CPAL 1.0 / AGPL 3.0
+    CSL styles & en-US locale — Citation Style Language project, CC BY-SA 3.0
+    marked 15 (c) Christopher Jeffrey et al. — MIT
+    turndown 7 (c) Dom Christie — MIT
+    docx 9 (c) Dolan Miu — MIT
+    mammoth 1.13 (c) Michael Williamson — BSD-2-Clause
+    Paged.js 0.4.3 (c) Adam Hyde et al. — MIT
+    jsdiff 9 (c) Kevin Decker — BSD-3-Clause
+    PDF.js 6.5 (c) Mozilla Foundation — Apache-2.0
+    OSINT Citation Generator 3.2.1 core (c) 2026 G. Michael Rapp — MIT; OSINT Style Guide v1.5 content — CC BY 4.0
+    DOMPurify 3.5 (c) Cure53 — Apache-2.0 / MPL-2.0
+    Chart.js 4.6 (c) Chart.js contributors — MIT
+    d3-array 3.2, d3-geo 3.1 (c) Mike Bostock — ISC; topojson-client 3.1 (c) Mike Bostock — ISC
+    world-atlas 2.0 (c) Mike Bostock — ISC; map data from Natural Earth — public domain
+    Atkinson Hyperlegible Next (c) Braille Institute of America — SIL Open Font License 1.1
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- What this page may load or contact. Anabasis runs entirely in the browser: it reaches the network only to look up
+     a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org; worker-src blob:; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anabasis</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E %3Crect width='64' height='64' rx='14' fill='#2f4f7f'/%3E %3Ccircle cx='47' cy='16' r='4.5' fill='#e8b04b'/%3E %3Cpath d='M12 50 L32 13 L52 50' fill='none' stroke='#fff' stroke-width='6.5' stroke-linecap='round' stroke-linejoin='round'/%3E %3Cpath d='M19.5 38.5 q3.1 -3.4 6.2 0 t6.2 0 t6.2 0 t6.2 0' fill='none' stroke='#8fb0e3' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E %3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<meta name="theme-color" content="#2f4f7f">
+<style>
+:root{
+  --bg:#f4f2ee; --panel:#fbfaf7; --line:#ddd8cf; --line2:#ebe7e0; --ink:#1f2328; --muted:#6b6f76; --faint:#9aa0a6;
+  --accent:#2f4f7f; --accent-ink:#fff; --accent-soft:#e3e9f3; --danger:#a33a2c; --page:#fff; --page-ink:#1a1a1a;
+  --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06); --radius:8px;
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#17191c; --panel:#1e2125; --line:#33373d; --line2:#2a2e33; --ink:#e6e6e3; --muted:#a1a5ab; --faint:#757a81;
+  --accent:#8fb0e3; --accent-ink:#10131a; --accent-soft:#26324a; --danger:#e07b6c; --page:#23262b; --page-ink:#e8e6e1;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 4px 16px rgba(0,0,0,.3);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--ui);overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{white-space:nowrap;cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:5px 10px;line-height:1.2}
+button:hover{border-color:var(--faint)}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.danger{color:var(--danger)}
+button.ghost{background:transparent;border-color:transparent}
+button.ghost:hover{background:var(--line2)}
+button.icon{padding:5px 8px;min-width:32px}
+button:disabled{opacity:.45;cursor:default}
+input[type=text],input[type=search],input[type=url],input[type=date],input:not([type]),select,textarea{background:var(--page);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--accent);outline-offset:-1px}
+textarea{resize:vertical}
+label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
+.muted{color:var(--muted)} .small{font-size:12px}
+.hidden{display:none!important}
+svg{width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- top bar ---------- */
+.topbar{height:48px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+.brand{font-weight:650;letter-spacing:.2px;margin-right:4px;white-space:nowrap}
+.brand{display:flex;align-items:center;gap:7px;border:0;background:none;padding:4px 6px;font:inherit;font-weight:650;color:var(--ink)}
+.brand:hover{background:var(--line2)}
+body.home-on .brand{background:var(--accent-soft)}
+.brand-mark{width:24px;height:24px;flex:none;fill:initial;stroke:none}
+.proj-title{max-width:260px;border-color:transparent!important;background:transparent!important;font-weight:500}
+.proj-title:hover{border-color:var(--line)!important}
+.save-state{font-size:12px;color:var(--muted);white-space:nowrap}
+.save-state.dirty{color:#b26b00}
+:root[data-theme="dark"] .save-state.dirty{color:#e0a64a}
+.spacer{flex:1}
+.menu{position:relative}
+.menu-pop{position:absolute;right:0;top:calc(100% + 4px);background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);min-width:230px;padding:4px;z-index:50;display:none}
+.menu-pop.open{display:block}
+.menu-pop button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 10px}
+.menu-pop button:hover{background:var(--line2)}
+.menu-pop hr{border:0;border-top:1px solid var(--line2);margin:4px 0}
+
+/* ---------- layout ---------- */
+.layout{display:flex;height:calc(100% - 48px)}
+#sidebar{width:290px;flex:none;border-right:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;border:0;border-radius:0;background:transparent;padding:10px 4px;color:var(--muted);border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.tabs .count{font-size:11px;color:var(--faint);margin-left:3px}
+.pane{display:none;flex-direction:column;min-height:0;flex:1}
+.pane.on{display:flex}
+.pane-head{padding:10px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line2)}
+.pane-head .row{display:flex;gap:6px}
+.pane-head .row > *{flex:none}
+.pane-head .row input{flex:1}
+.list{list-style:none;margin:0;padding:6px;overflow:auto;flex:1}
+.list li{padding:8px 10px;border-radius:6px;cursor:pointer;border:1px solid transparent;margin-bottom:2px}
+.list li:hover{background:var(--line2)}
+.list li.on{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
+.list .t{font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .s{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.list .meta{font-size:11px;color:var(--faint);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.list .act{float:right;display:none;gap:2px}
+.list li:hover .act{display:flex}
+.list .act button{padding:1px 6px;font-size:12px}
+.empty{padding:18px;color:var(--muted);font-size:13px;text-align:center}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--page);cursor:pointer;color:var(--muted)}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tag{font-size:11px;padding:0 6px;border-radius:999px;background:var(--line2);color:var(--muted)}
+.kind{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--accent);font-weight:650}
+
+/* ---------- main / editor ---------- */
+#main{flex:1;display:flex;flex-direction:column;min-width:0}
+.doc-bar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line2);background:var(--panel);flex-wrap:wrap}
+.doc-bar .doc-title{max-width:340px;font-weight:600}
+.doc-bar select{width:auto;max-width:230px}
+.doc-bar{gap:6px}
+.doc-bar .doc-title{max-width:260px}
+.wc{font-size:12px;color:var(--muted);white-space:nowrap}
+.toolbar{display:flex;flex-wrap:wrap;gap:2px;align-items:center;padding:5px 10px;border-bottom:1px solid var(--line);background:var(--panel)}
+.toolbar button{border-color:transparent;background:transparent;padding:5px 7px;min-width:30px}
+.toolbar button:hover{background:var(--line2)}
+.toolbar button.on{background:var(--accent-soft);color:var(--accent)}
+.toolbar select{width:auto;padding:4px 6px;margin-right:4px}
+.toolbar .sep{width:1px;height:20px;background:var(--line);margin:0 5px}
+.toolbar .cite-btn{color:var(--accent);font-weight:600}
+.scroller{flex:1;overflow:auto;padding:28px 16px 80px}
+.page{background:var(--page);color:var(--page-ink);max-width:8.5in;margin:0 auto;padding:1in;box-shadow:var(--shadow);border-radius:3px;min-height:11in}
+#editor{outline:none;min-height:3in}
+#editor:empty::before{content:"Start writing…";color:var(--faint)}
+.refs{margin-top:.6in;border-top:1px dashed var(--line);padding-top:.15in;position:relative}
+.refs:empty{display:none}
+.refs .gen-label{position:absolute;top:-10px;left:0;background:var(--page);padding-right:8px;font:11px var(--ui);color:var(--faint)}
+.cite,.fn{cursor:pointer;border-radius:3px;user-select:all}
+#editor .cite{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+#editor .fn{background:color-mix(in srgb,#b26b00 15%,transparent)}
+#editor .cite:hover,#editor .fn:hover{outline:1px solid var(--accent)}
+.sup{vertical-align:super;font-size:.72em;line-height:0;padding:0 1px}
+.title-block{text-align:center;margin-bottom:.4in}
+.title-block:empty{display:none}
+
+/* shared document typography (also used for print and HTML export) */
+/*@DOCCSS@*/
+
+/* ---------- right panel ---------- */
+.panel{width:400px;flex:none;border-left:1px solid var(--line);background:var(--panel);display:flex;flex-direction:column;min-height:0}
+.panel-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line2)}
+.panel-head h3{margin:0;font-size:14px;flex:1}
+.panel-body{overflow:auto;padding:4px 14px 20px;flex:1}
+.panel-foot{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line2);flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 8px}
+.note-body{min-height:220px;font:15px/1.55 var(--ui)}
+.md-preview{border:1px solid var(--line);border-radius:6px;padding:4px 12px;background:var(--page);min-height:220px;font-size:15px}
+.preview-box{margin-top:14px;padding:10px 12px;border-radius:6px;background:var(--page);border:1px solid var(--line);font-family:Georgia,serif;font-size:14px}
+.preview-box h5{margin:0 0 4px;font:600 11px var(--ui);text-transform:uppercase;letter-spacing:.5px;color:var(--muted)}
+.preview-box p{margin:0 0 8px}
+.lookup{display:flex;gap:6px;margin-top:10px}
+.people .prow{display:grid;grid-template-columns:104px 1fr 1.25fr auto;gap:4px;margin-bottom:4px;align-items:center}
+.people .prow.org{grid-template-columns:104px 1fr auto}
+.people .prow select{padding:5px 4px;font-size:12px}
+.people .opts{font-size:11px;color:var(--muted);display:flex;gap:10px;margin:-2px 0 6px 122px}
+.people .opts label{display:inline;margin:0;font-size:11px}
+details{margin-top:14px}
+summary{cursor:pointer;color:var(--muted);font-size:12px}
+.raw{font:12px/1.4 var(--mono);min-height:160px}
+.tip{font-size:12px;color:var(--muted);background:var(--line2);border-radius:6px;padding:7px 9px;margin-top:10px}
+
+/* ---------- dialogs ---------- */
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);padding:0;box-shadow:0 10px 40px rgba(0,0,0,.25);width:min(520px,94vw);max-height:90vh}
+dialog.wide{width:min(760px,96vw)}
+dialog::backdrop{background:rgba(20,22,26,.45)}
+.dlg{display:flex;flex-direction:column;max-height:90vh}
+.dlg h3{margin:0;padding:14px 16px 10px;font-size:16px}
+.dlg .body{padding:0 16px 10px;overflow:auto}
+.dlg footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--line2)}
+.dlg footer .left{margin-right:auto}
+.pick{list-style:none;margin:8px 0;padding:0;max-height:200px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.pick li{padding:7px 10px;border-bottom:1px solid var(--line2);cursor:pointer;font-size:13px}
+.pick li:last-child{border-bottom:0}
+.pick li:hover{background:var(--line2)}
+.pick li.on{background:var(--accent-soft)}
+.cluster-row{border:1px solid var(--line);border-radius:6px;padding:8px;margin-bottom:6px;background:var(--page)}
+.cluster-row .hd{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:550}
+.cluster-row .hd span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cluster-row .fields{display:grid;grid-template-columns:110px 1fr 1fr 1fr;gap:6px;margin-top:6px;align-items:center}
+.cluster-row .fields select{padding:5px 4px}
+.cluster-row .chk{font-size:12px;color:var(--muted);display:flex;gap:4px;align-items:center;margin-top:6px}
+.cluster-row .chk input{width:auto}
+.compile-list{list-style:none;padding:0;margin:8px 0;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.compile-list li{display:flex;gap:8px;align-items:center;padding:6px 8px;border-bottom:1px solid var(--line2);font-size:13px}
+.compile-list li input{width:auto}
+.compile-list li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.compile-list li button{padding:0 6px}
+.radio-row{display:flex;gap:14px;flex-wrap:wrap;font-size:13px}
+.radio-row label{display:flex;gap:5px;align-items:center;margin:4px 0;color:var(--ink);font-size:13px}
+.radio-row input{width:auto}
+.help h4{margin:16px 0 4px}
+.help p,.help li{font-size:13px}
+.help kbd{font:11px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--page)}
+.license{font:11px/1.4 var(--mono);white-space:pre-wrap;background:var(--page);border:1px solid var(--line);border-radius:6px;padding:8px;max-height:160px;overflow:auto}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:.2s;z-index:100;font-size:13px;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.pop{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:8px;max-width:420px;font-size:13px}
+.pop .ptext{font-family:Georgia,serif;margin-bottom:8px}
+.pop .pbtns{display:flex;gap:6px}
+#printRoot{display:none}
+
+/* ---------- binder ---------- */
+.tabs button{padding:10px 2px;font-size:13px}
+.badge{font-size:10px;background:var(--accent);color:var(--accent-ink);border-radius:999px;padding:0 5px;margin-left:3px;font-weight:600}
+.badge:empty{display:none}
+.binder li.part{margin-top:8px;background:var(--line2)}
+.binder li.part .t{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.binder li.part .caret{display:inline-block;margin-right:5px;transition:transform .15s}
+.binder li.part.collapsed .caret{transform:rotate(-90deg)}
+.binder li.in-part{margin-left:12px}
+.binder li.part-empty{margin-left:12px;font-size:12px;color:var(--faint);border:1px dashed var(--line);cursor:default}
+.binder li.dragging{opacity:.4}
+.binder li.drop-before{box-shadow:0 -2px 0 var(--accent)}
+.binder li.drop-into{outline:2px dashed var(--accent)}
+/* outline pane */
+.ol-scroll{overflow:auto;padding:4px 10px 20px;flex:1}
+.ol-scroll h6{font:600 11px var(--ui);text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 4px 6px;display:flex;align-items:center;gap:4px}
+.ol-scroll h6 .hl{margin:0 0 0 auto;display:flex;gap:4px;align-items:center;text-transform:none;letter-spacing:0;font-size:11px}
+.ol-scroll h6 .hl input{width:auto}
+.outline{list-style:none;margin:0;padding:0}
+.outline li{display:flex;gap:6px;align-items:baseline;padding:5px 6px;border-radius:5px;cursor:pointer;font-size:13px}
+.outline li:hover{background:var(--line2)}
+.outline li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.outline li em{font-style:normal;font-size:11px;color:var(--faint)}
+.outline li.lvl2{padding-left:18px} .outline li.lvl3{padding-left:30px;font-size:12px}
+.outline li.none{cursor:default;white-space:normal}
+.outline li.none:hover{background:none}
+.fk{font:700 10px var(--ui);padding:1px 5px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px;flex:none}
+.fk-tk,.flag-tk{background:#fde68a;color:#7a4b00}
+.fk-cite,.flag-cite{background:#fecaca;color:#8a1f12}
+.fk-check,.flag-check{background:#c7e0fb;color:#14406e}
+#editor .flag{font:700 .62em var(--ui);padding:1px 5px;border-radius:4px;vertical-align:.15em;cursor:pointer;letter-spacing:.3px;text-transform:uppercase;user-select:all}
+#editor [data-cp-uncited]{box-shadow:-10px 0 0 -7px #e0a64a}
+#editor [data-cp-flash]{animation:flash 1.3s}
+@keyframes flash{0%,40%{background:color-mix(in srgb,var(--accent) 22%,transparent)}100%{background:transparent}}
+::highlight(cp-find){background:#fde68a;color:inherit}
+::highlight(cp-cur){background:#f59e0b;color:#000}
+/* reminder, find, targets */
+.remind{display:flex;gap:8px;align-items:center;padding:7px 12px;background:#fff6db;border-bottom:1px solid #f0d58c;color:#5c4300;font-size:13px}
+.remind span{flex:1}
+.remind.urgent{background:#ffe2d6;border-color:#f3a98b;color:#7a2510}
+:root[data-theme="dark"] .remind{background:#3b3220;border-color:#5e4d26;color:#f2dca5}
+:root[data-theme="dark"] .remind.urgent{background:#47271d;border-color:#7a3c2a;color:#ffc9b5}
+.findbar{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.findbar input:not([type=checkbox]){width:200px;flex:none;padding:4px 8px}
+.findbar .fc{min-width:70px}
+.findbar .fcase{display:flex;align-items:center;gap:4px;margin:0;color:var(--muted)}
+.findbar .fcase input{width:auto}
+.tgt{width:70px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;display:inline-block}
+.tgt i{display:block;height:100%;background:var(--accent);width:0}
+.search-btn{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.search-btn kbd{font:10px var(--mono);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+.toolbar .flag-btn{font:700 11px var(--ui);color:#7a4b00}
+:root[data-theme="dark"] .toolbar .flag-btn{color:#f0c060}
+.palette{max-height:55vh;border:0;margin-top:10px}
+.palette li{display:flex;gap:10px;align-items:flex-start;border-radius:6px;border-bottom:0}
+.palette li.on{background:var(--accent-soft)}
+.palette .pk{font:600 10px var(--ui);text-transform:uppercase;color:var(--muted);width:70px;flex:none;padding-top:2px}
+.palette .sn{font-size:12px;color:var(--muted);margin-top:2px}
+.palette mark{background:#fde68a;color:inherit;border-radius:2px}
+dialog.pal{margin-top:12vh}
+#msList li span:first-of-type{flex:1}
+/* focus mode */
+.focus-ui{display:none}
+body.focus .topbar,body.focus #sidebar,body.focus .panel,body.focus .doc-bar,body.focus .toolbar,body.focus .remind,body.focus .findbar{display:none!important}
+body.focus .layout{height:100%}
+body.focus .scroller{background:var(--page);padding-top:12vh;padding-bottom:50vh}
+body.focus .page{box-shadow:none;max-width:7.2in}
+body.focus .refs{display:none}
+body.focus.dim #editor > *{opacity:.32;transition:opacity .25s}
+body.focus.dim #editor > [data-cp-current],body.focus.dim #editor > *:hover{opacity:1}
+body.focus .focus-ui{display:block;position:fixed;z-index:30}
+#focusExit{top:12px;right:14px;opacity:.25;font-size:12px}
+#focusExit:hover{opacity:1}
+#focusStat{bottom:12px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 12px;opacity:.7}
+#focusStat.done{color:#2f7a3a;border-color:#2f7a3a}
+
+/* ---------- notecards & board ---------- */
+.c-yellow{--card:#fff6c9;--card-b:#efd97a} .c-green{--card:#e3f4dc;--card-b:#a9d49a} .c-blue{--card:#e1edfb;--card-b:#9cc0ea}
+.c-pink{--card:#fce4ec;--card-b:#f0a8c0} .c-purple{--card:#ece5fa;--card-b:#bba7ea} .c-gray{--card:#ececec;--card-b:#c4c4c4}
+:root[data-theme="dark"] .c-yellow{--card:#3a3520;--card-b:#7d6c2e} :root[data-theme="dark"] .c-green{--card:#22331f;--card-b:#4b7a41} :root[data-theme="dark"] .c-blue{--card:#1f2c3d;--card-b:#3d6496}
+:root[data-theme="dark"] .c-pink{--card:#3a2229;--card-b:#8a4a5f} :root[data-theme="dark"] .c-purple{--card:#2c2540;--card-b:#6650a0} :root[data-theme="dark"] .c-gray{--card:#2e3034;--card-b:#5a5e64}
+.note-li[class*=" c-"]{box-shadow:inset 3px 0 0 var(--card-b)}
+.pin-dot{color:var(--accent);font-size:9px;margin-right:4px;vertical-align:2px}
+.primary-soft{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.swatches{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding-top:2px}
+.sw{width:20px;height:20px;border-radius:50%;padding:0;border:1px solid var(--line);background:var(--card,var(--page))}
+.sw.c-yellow,.sw.c-green,.sw.c-blue,.sw.c-pink,.sw.c-purple,.sw.c-gray{background:var(--card-b)}
+.sw.none{background:linear-gradient(135deg,var(--page) 45%,var(--danger) 47%,var(--danger) 53%,var(--page) 55%)}
+.sw.on{outline:2px solid var(--accent);outline-offset:1px}
+.pin-btn{padding:2px 8px;margin-left:4px}
+.pin-btn.on{background:var(--accent-soft);color:var(--accent)}
+.note-links{margin-top:12px;display:flex;flex-direction:column;gap:4px;font-size:12px}
+.nlink{display:inline-block;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:1px 8px;margin:2px 2px 0 0;text-decoration:none}
+.nlink.missing{background:transparent;border:1px dashed var(--faint);color:var(--muted)}
+.md-preview a[href^="#note:"]{color:var(--accent);text-decoration:none;border-bottom:1px dashed var(--accent)}
+body.board-on .doc-bar,body.board-on .toolbar,body.board-on .findbar,body.board-on .scroller{display:none!important}
+.board{flex:1;display:flex;flex-direction:column;min-height:0;background:var(--bg)}
+.board-bar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.board-bar input[type=search]{width:200px}
+.board-bar label.inline{display:flex;gap:6px;align-items:center;margin:0;font-size:12px}
+.board-bar select{width:auto}
+.bd-sel{display:flex;gap:6px;align-items:center;padding:6px 12px;background:var(--accent-soft);border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:13px}
+.bd-sel #bdSelN{font-weight:600;margin-right:4px}
+.bd-sel button{padding:3px 9px}
+.bd-area{flex:1;overflow:auto;min-height:0;position:relative}
+.bd-area.cols{display:flex;gap:12px;padding:14px;align-items:flex-start}
+.bd-col{flex:none;width:270px;background:var(--line2);border-radius:10px;display:flex;flex-direction:column;max-height:100%;border:2px solid transparent}
+.bd-col.drop{border-color:var(--accent)}
+.bd-col-h{display:flex;gap:6px;align-items:center;padding:9px 10px 6px}
+.bd-col-h b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.bd-col-h button{padding:0 5px;min-width:0;font-size:13px}
+.bd-col-h .col-act{display:none;gap:0}
+.bd-col:hover .col-act{display:flex}
+.bd-cards{overflow:auto;padding:4px 8px 10px;display:flex;flex-direction:column;gap:8px;min-height:60px}
+.bd-empty{border:1px dashed var(--line);border-radius:8px;padding:16px;text-align:center;font-size:12px;color:var(--faint)}
+.card{background:var(--card,var(--page));border:1px solid var(--card-b,var(--line));border-radius:8px;padding:8px 10px;box-shadow:0 1px 2px rgba(0,0,0,.06);cursor:grab;user-select:none;touch-action:none;font-size:13px;position:relative}
+.card:hover{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.card.sel{outline:2px solid var(--accent);outline-offset:1px}
+.card.open{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent)}
+.card.pinned{border-top:3px solid var(--accent)}
+.card.placeholder{opacity:.3}
+.card-top{display:flex;gap:6px;align-items:center}
+.card-top .grip{margin-left:auto;color:var(--faint);font-size:12px}
+.card-top .pin{color:var(--accent);font-size:9px}
+.card-title{font-weight:600;margin:3px 0 2px;line-height:1.3}
+.card-body{color:var(--ink);line-height:1.45;max-height:12.5em;overflow:hidden;font-family:Georgia,serif;font-size:13.5px}
+.card-body p{margin:0 0 .4em} .card-body ul,.card-body ol{margin:0 0 .4em;padding-left:1.2em} .card-body blockquote{margin:0 0 .4em .6em;padding-left:.6em;border-left:2px solid var(--line)}
+.card-body a{color:var(--accent)}
+.card-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;font-size:11px;color:var(--muted)}
+.ghost-card{position:fixed;z-index:200;pointer-events:none;transform:rotate(2deg);box-shadow:0 12px 30px rgba(0,0,0,.25);opacity:.95}
+.drop-line{height:3px;border-radius:2px;background:var(--accent);margin:-5px 0}
+body.bd-dragging,body.bd-dragging *{cursor:grabbing!important}
+.bd-area.canvas{background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:22px 22px}
+.canvas-in{position:relative}
+.canvas-in .card{position:absolute;width:230px}
+.canvas-in .card.lifting{z-index:5;box-shadow:0 12px 30px rgba(0,0,0,.22);transform:rotate(1deg)}
+.bd-hint{padding:6px 14px;border-top:1px solid var(--line2);background:var(--panel)}
+.clip-btn{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:10px 18px;border-radius:999px;font-weight:600;text-decoration:none;cursor:grab;box-shadow:var(--shadow)}
+.handoff{display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;font:16px var(--ui);color:var(--ink);background:var(--bg)}
+.handoff b{font-size:20px}
+#stStorage .ok{color:#2f7a3a} #stStorage .warn{color:#b26b00}
+#stStorage button{padding:1px 8px;margin-left:4px}
+
+/* ---------- nonfiction tools ---------- */
+.ol-sum{margin:-2px 6px 4px}
+#editor .cmt{background:color-mix(in srgb,#e0a64a 22%,transparent);border-bottom:2px solid #e0a64a;cursor:pointer}
+#editor [data-cp-qbad]{text-decoration:underline wavy #d97706;text-underline-offset:3px}
+#editor blockquote[data-cp-qbad]{box-shadow:-6px 0 0 -3px #d97706}
+::highlight(cp-name){background:#fecaca;color:inherit;text-decoration:underline wavy #b91c1c}
+::highlight(cp-long){background:color-mix(in srgb,#f59e0b 22%,transparent)}
+::highlight(cp-passive){background:color-mix(in srgb,#3b82f6 25%,transparent)}
+::highlight(cp-hedge){background:color-mix(in srgb,#a855f7 25%,transparent)}
+::highlight(cp-repeat){background:color-mix(in srgb,#ef4444 22%,transparent)}
+.lensbar{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.lchip{font-size:12px;padding:3px 9px;border-radius:999px}
+.lchip b{margin-left:3px}
+.lchip.l-long{background:color-mix(in srgb,#f59e0b 22%,var(--page))} .lchip.l-passive{background:color-mix(in srgb,#3b82f6 22%,var(--page))}
+.lchip.l-hedge{background:color-mix(in srgb,#a855f7 22%,var(--page))} .lchip.l-repeat{background:color-mix(in srgb,#ef4444 20%,var(--page))}
+.lchip.off{background:var(--page);opacity:.55;text-decoration:line-through}
+.lensbar #lensClose{margin-left:auto}
+.diffbox{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--page);max-height:45vh;overflow:auto;font-family:Georgia,serif;line-height:1.55;margin-top:6px}
+ins{background:#d1fae5;color:#065f46;text-decoration:none} del{background:#fee2e2;color:#991b1b}
+:root[data-theme="dark"] ins{background:#123a2c;color:#a7f3d0} :root[data-theme="dark"] del{background:#3d1717;color:#fecaca}
+.outline li.qdiff{display:block;cursor:default}
+.outline li.qdiff .pbtns{display:flex;gap:6px;margin-top:6px}
+.ver-list{list-style:none;padding:0;margin:12px 0}
+.ver-list li{display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2)}
+.ver-list li > span{flex:1}
+.ent{display:grid;grid-template-columns:1.2fr 110px 1.6fr 1.2fr auto;gap:6px;margin-bottom:6px}
+.ent select{padding:5px 4px}
+.sug{list-style:none;padding:0;margin:0}
+.sug li{display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line2);font-size:13px}
+.sug li span{flex:1}
+table.audit{width:100%;border-collapse:collapse;font-size:13px;margin-top:10px}
+table.audit th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid var(--line);padding:6px 4px}
+table.audit td{border-bottom:1px solid var(--line2);padding:6px 4px;vertical-align:middle}
+table.audit td.hot{color:#b45309;font-weight:600}
+.bar{display:inline-block;width:60px;height:5px;background:var(--line);border-radius:3px;overflow:hidden;vertical-align:middle;margin:0 4px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.warnbox{background:#fff6db;color:#5c4300}
+:root[data-theme="dark"] .warnbox{background:#3b3220;color:#f2dca5}
+ul.cols2{columns:2;padding-left:18px}
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:8px}
+.tpl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;text-align:left;border-radius:8px}
+.tpl span{font-size:11px;color:var(--muted)}
+.tpl:hover{border-color:var(--accent)}
+.rec-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.rec-stats div{background:var(--page);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+.rec-stats b{display:block;font-size:22px} .rec-stats span{font-size:11px;color:var(--muted)}
+.rec-chart{width:100%;height:auto} .rec-chart rect{fill:var(--accent)} .rec-chart .goal{stroke:#d97706;stroke-dasharray:4 3} .rec-chart .axis{stroke:var(--line)} .rec-chart text{font:10px var(--ui);fill:var(--muted)}
+table.rec input[type=date]{width:auto;padding:3px 6px} table.rec select{width:auto;padding:3px 4px}
+.role-tag{font:600 9px var(--ui);text-transform:uppercase;letter-spacing:.4px;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 4px;margin-right:5px;vertical-align:1px}
+.st{font-size:10px;border-radius:4px;padding:0 5px;text-transform:uppercase;letter-spacing:.3px;font-weight:600}
+.st-idea{background:var(--line2);color:var(--muted)} .st-drafting{background:#fde68a;color:#7a4b00} .st-revising{background:#c7e0fb;color:#14406e} .st-final{background:#bbf7d0;color:#14532d}
+.due{font-size:11px;color:var(--muted)} .due.soon{color:#b45309;font-weight:600} .due.late{color:var(--danger);font-weight:600}
+.tr-lines{list-style:none;padding:0;margin:4px 0;max-height:38vh;overflow:auto;border:1px solid var(--line);border-radius:6px}
+.tr-lines li{padding:5px 8px;border-bottom:1px solid var(--line2);font-size:13px;cursor:pointer;line-height:1.4}
+.tr-lines li.on{background:var(--accent-soft)}
+.tr-lines .ts{display:inline-block;min-width:62px;font:11px var(--mono);color:var(--muted)}
+.bd-area.timeline{display:flex;gap:16px;padding:14px;align-items:flex-start}
+.tl-main{flex:1;max-width:760px;position:relative;padding-left:8px}
+.tl-year{font:700 18px var(--ui);margin:16px 0 6px 118px;color:var(--accent)}
+.tl-row{display:grid;grid-template-columns:100px 18px 1fr;align-items:start;gap:0;margin-bottom:10px}
+.tl-date{font-size:12px;color:var(--muted);text-align:right;padding:9px 8px 0 0}
+.tl-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin:12px 4px 0;box-shadow:0 0 0 3px var(--accent-soft)}
+.tl-main::before{content:"";position:absolute;left:121px;top:0;bottom:0;width:2px;background:var(--line)}
+.tl-side{width:260px;flex:none;background:var(--line2);border-radius:10px;position:sticky;top:0}
+
+/* ---------- PDF reader ---------- */
+.reader{position:relative;flex:none;width:42vw;border-left:1px solid var(--line);background:#525659;display:flex;flex-direction:column;min-height:0;min-width:320px}
+.rd-resize{position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:5}
+.rd-bar{display:flex;gap:6px;align-items:center;padding:6px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
+.rd-bar select{flex:1;min-width:0;width:auto;padding:4px 6px}
+.rd-bar select.nudge{outline:2px solid #f59e0b}
+.rd-name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.rd-bar2{flex-wrap:wrap;gap:4px}
+.rd-bar2 input#rdPage{width:46px;text-align:center;padding:3px 4px}
+.rd-bar2 input#rdFind{width:130px;padding:3px 6px}
+.rd-bar2 .sep{width:1px;height:18px;background:var(--line);margin:0 3px}
+.rd-off{display:flex;gap:4px;align-items:center;margin:0 0 0 auto;font-size:11px}
+.rd-off input{width:44px;padding:3px 4px}
+.rd-pages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:0}
+.rd-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);flex:none}
+.rd-page canvas{position:absolute;left:0;top:0}
+.rd-pnum{position:absolute;bottom:-12px;right:0;font:10px var(--ui);color:#ddd}
+.rd-empty{color:#e5e7eb;text-align:center;max-width:340px;margin-top:20%;font-size:13px;line-height:1.5}
+.rd-selbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:var(--shadow);z-index:6;white-space:nowrap}
+.textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;letter-spacing:normal;word-spacing:normal;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:0;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+.rd-page{--user-unit:1;--scale-round-x:1px;--scale-round-y:1px}
+.textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%;user-select:text}
+.textLayer > :not(.markedContent),.textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
+.textLayer .markedContent{display:contents}
+.textLayer ::selection{background:rgba(0,90,255,.3);color:transparent}
+.textLayer br::selection{background:transparent}
+.textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none}
+.textLayer.selecting .endOfContent{top:0}
+.textLayer span.rd-hit{background:rgba(255,200,0,.45);border-radius:2px}
+body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-shadow:var(--shadow)}
+/* index marks & dialogs */
+#editor .ixm{display:inline-block;width:.9em;cursor:pointer;user-select:none}
+#editor .ixm::before{content:"⌗";font:600 .7em var(--ui);color:var(--accent);opacity:.65;vertical-align:.3em}
+#editor .ixm:hover::before{opacity:1}
+.ixrow{display:grid;grid-template-columns:1.2fr 1fr 1.3fr 1fr auto;gap:6px;margin-bottom:6px}
+.danger-bg{background:var(--danger)!important;border-color:var(--danger)!important;color:#fff!important}
+#freshDlg .radio-row label{align-items:flex-start}
+#freshDlg .radio-row label span{flex:1}
+
+/* ---------- figures, tables, margin, lock ---------- */
+#editor figure.fig{cursor:default}
+#editor figure.fig img{cursor:pointer}
+#editor figcaption{outline:none;min-height:1.2em}
+#editor figcaption[data-cp-n]::before{content:attr(data-cp-n) "\00a0";font-weight:600;font-style:normal;color:var(--page-ink)}
+#editor figcaption:empty::after,#editor figcaption:has(> br:only-child)::after{content:'Caption';color:#9ca3af;font-style:italic}
+#editor table td:focus-within,#editor table th:focus-within{outline:2px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:-2px}
+#editor nav.lof{border:1px dashed var(--line);border-radius:6px;padding:10px 14px;color:var(--muted);font-family:system-ui,sans-serif;font-size:13px;user-select:none}
+.page{position:relative}
+.tblbar{position:absolute;z-index:5;display:flex;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;box-shadow:var(--shadow);font-size:12px}
+.tblbar button{padding:3px 8px;font-size:12px}
+.tblbar button.on{background:var(--accent-soft)}
+.margin{position:absolute;top:0;left:calc(100% + 18px);width:230px;height:0;font-family:system-ui,sans-serif;z-index:3}
+body.focus .margin,body.board-on .margin,body.plan-on .margin,body.home-on .margin{display:none}
+body.mg-shift.has-margin .page{margin-left:max(12px,calc((100% - 8.5in - 250px)/2))}
+.mg-card{position:absolute;left:0;width:100%;background:var(--panel);border:1px solid var(--line);border-left:3px solid #e0a64a;border-radius:6px;padding:5px 7px 6px;box-shadow:0 1px 3px rgba(0,0,0,.06);transition:top .12s}
+.mg-card:focus-within{box-shadow:var(--shadow);border-color:#e0a64a}
+.mg-head{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.mg-n{font-weight:700;color:#b7791f}
+.mg-head .mg-del{margin-left:auto;padding:0 4px;opacity:0;font-size:11px}
+.mg-card:hover .mg-del,.mg-card:focus-within .mg-del{opacity:1}
+.mg-card textarea{width:100%;border:0;background:transparent;resize:none;font:13px/1.45 system-ui,sans-serif;color:var(--ink);padding:2px 0 0;outline:none;overflow:hidden;min-height:20px}
+body.mg-narrow .margin{left:auto;right:6px;width:28px}
+body.mg-narrow .mg-card.mg-collapsed{width:24px;height:22px;padding:0;border-left-width:1px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center}
+body.mg-narrow .mg-card.mg-collapsed .mg-when,body.mg-narrow .mg-card.mg-collapsed .mg-del,body.mg-narrow .mg-card.mg-collapsed textarea{display:none}
+body.mg-narrow .mg-card:not(.mg-collapsed){left:auto;right:0;width:min(260px,70vw);z-index:6}
+#editor .cmt[data-cp-hot]{background:color-mix(in srgb,#e0a64a 45%,transparent)}
+#editor .cmt-pt{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e0a64a;vertical-align:super;margin:0 2px;cursor:pointer;border:0}
+#btnMargin span:empty{display:none}
+#btnMargin:not(.on){opacity:.55}
+.lock-badge{display:none;padding:2px 4px}
+body.locked .lock-badge{display:inline-block}
+.auto-resume{color:#b45309}
+.pw-err{color:#b91c1c;font-size:13px;min-height:18px;margin-top:6px}
+.ss-list{margin:0 0 6px;padding-left:18px;font-size:14px;line-height:1.7}
+.ss-list .warn{color:#b45309}
+
+/* ---------- visuals: figure menu, chart, map, timeline, relationships ---------- */
+.fig-menu{display:flex;flex-direction:column;gap:2px;padding:5px;min-width:270px}
+.fig-menu button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;border:0;background:transparent;padding:7px 10px;text-align:left;min-height:0}
+.fig-menu button:hover{background:var(--accent-soft)}
+.fig-menu button span{font-size:12px;color:var(--muted);font-weight:400}
+dialog.xwide{width:min(1180px,96vw);max-width:96vw}
+.ch-body{display:grid;grid-template-columns:minmax(260px,330px) 1fr;gap:18px}
+.ch-left textarea{width:100%;font:12.5px/1.45 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.ch-stage{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px;min-height:260px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.ch-err{color:var(--danger);font-size:13px;min-height:18px;margin-top:6px}
+.mp-body{display:grid;grid-template-columns:1fr 300px;gap:14px}
+.mp-bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.mp-tools{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.mp-tools button{border:0;border-radius:0;min-height:30px}
+.mp-tools button.on{background:var(--accent);color:var(--accent-ink)}
+.mp-searchwrap{position:relative;flex:1;min-width:180px}
+.mp-searchwrap input{width:100%}
+.mp-results{position:absolute;left:0;right:0;top:calc(100% + 3px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);padding:4px;max-height:300px;overflow:auto}
+.mp-results button{display:flex;flex-direction:column;align-items:flex-start;width:100%;border:0;background:transparent;padding:6px 8px;min-height:0;text-align:left}
+.mp-results button:hover{background:var(--accent-soft)}
+.mp-results button span,.mp-none{font-size:12px;color:var(--muted)}
+.mp-none{padding:6px 8px}
+.mp-keys{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}
+.mp-key{min-height:26px;padding:2px 8px;font-size:12.5px;gap:6px}
+.mp-key i{width:14px;height:11px;border:1px solid;border-radius:2px;display:inline-block}
+.mp-key.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mp-stage{border:1px solid var(--line);border-radius:6px;overflow:hidden;cursor:grab;touch-action:none;user-select:none;background:#dde7ee}
+.mp-stage:active{cursor:grabbing}
+.mp-stage svg{display:block}
+.mp-stage .mp-sel{filter:drop-shadow(0 0 3px #b5841f) drop-shadow(0 0 2px #b5841f)}
+.mp-side{max-height:68vh;overflow:auto;padding-right:4px}
+.mp-lk{display:flex;gap:6px;align-items:center;margin-bottom:4px}
+.mp-lk i{width:18px;height:13px;border:1px solid;border-radius:2px;flex:none}
+.mp-lk input{flex:1;min-height:28px;padding:3px 7px}
+.mp-grp{font-weight:700;font-size:12.5px;margin:8px 0 3px}
+.mp-it{display:flex;gap:4px;align-items:center;margin-bottom:4px;padding:3px;border-radius:5px;flex-wrap:wrap}
+.mp-it.sel{background:var(--accent-soft)}
+.mp-it span{flex:1;font-size:13px}
+.mp-it input{flex:1;min-width:90px;min-height:28px;padding:3px 7px}
+.mp-it select{min-height:28px;padding:2px 24px 2px 6px;font-size:12.5px}
+.mp-chk{display:inline-flex;gap:3px;align-items:center;font-size:12px;margin:0}
+.tf-stage{background:#fff;border:1px solid var(--line);border-radius:6px;padding:6px;margin-bottom:10px;max-height:46vh;overflow:auto}
+.tf-cols{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.tf-list{max-height:30vh;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px}
+.tf-ev{display:flex;gap:6px;align-items:center;margin:2px 0}
+.tf-ev input:not([type=checkbox]){min-height:28px;padding:3px 7px;flex:1}
+.tf-ev .tf-date{flex:0 0 9.5em}
+.tl-gap{margin:6px 0 6px 64px;padding:3px 10px;border-left:2px dashed var(--line);color:var(--muted);font-size:12.5px;font-style:italic}
+body.rel-on .doc-bar,body.rel-on .toolbar,body.rel-on .findbar,body.rel-on .scroller,body.rel-on .lensbar,body.rel-on .margin,body.rel-on .scriptbar{display:none!important}
+.rel-head{font-size:14px}
+.rel-kinds{display:inline-flex;gap:8px;font-size:13px}.rel-kinds label,.rel-min{margin:0;color:var(--ink);display:inline-flex;gap:4px;align-items:center}
+.rel-wrap{flex:1;min-height:0;display:grid;grid-template-columns:1fr 300px}
+.rel-stage{overflow:auto;background:var(--page);padding:10px;touch-action:none}
+.rel-stage svg{max-width:1100px;display:block;margin:0 auto;cursor:default}
+.rel-stage [data-node]{cursor:grab}
+.rel-stage .rel-sel{stroke:#b5841f;stroke-width:4}
+.rel-stage [data-edge]{cursor:pointer}
+.rel-side{border-left:1px solid var(--line);background:var(--panel);overflow:auto;padding:14px}
+.rel-side h5{margin:0 0 4px;font-size:15px}.rel-side h6{margin:12px 0 4px;font-size:12.5px}
+.rel-list{list-style:none;margin:0;padding:0}
+.rel-list li{padding:6px 7px;border-radius:5px;cursor:pointer;display:flex;flex-direction:column;gap:2px;font-size:13px}
+.rel-list li:hover{background:var(--line2)}
+.rel-list li span{color:var(--muted);font-size:12.5px;line-height:1.4}
+.rel-list li.rel-man{flex-direction:row;align-items:center;justify-content:space-between;cursor:default}
+.rel-list li.rel-man span{color:var(--ink)}
+.rel-empty{max-width:520px;margin:60px auto;font-size:14.5px;line-height:1.55}
+/* tools: acronyms, estimative, script, teleprompter, github */
+.ol-acts{display:inline-flex;gap:4px;margin-left:6px;flex:none}
+.ol-acts button{min-height:24px;padding:1px 7px;font-size:12px}
+#acroList li,#estList li{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.est-scale{display:grid!important;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)}
+::highlight(cp-vague){text-decoration:underline wavy #d97706;text-decoration-thickness:1.5px;text-underline-offset:3px}
+::highlight(cp-scale){text-decoration:underline solid #2a78d6;text-decoration-thickness:1.5px;text-underline-offset:3px}
+.est-pop{min-width:260px}
+.est-pop button{display:flex;justify-content:space-between;width:100%;border:0;background:transparent;min-height:0;padding:6px 8px;gap:12px}
+.est-pop button:hover{background:var(--accent-soft)}
+.ac-rows{max-height:44vh;overflow:auto;margin-bottom:8px}
+.ac-row{display:grid;grid-template-columns:7em 1fr 5em auto;gap:6px;align-items:center;margin-bottom:4px}
+.scriptbar{display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid var(--line);background:var(--panel);font-size:13px;flex-wrap:wrap}
+.scriptbar input{width:4.6em;min-height:26px;padding:2px 6px}
+.sb-sep{width:1px;height:16px;background:var(--line);margin:0 2px}
+body.script-on #editor > p[data-cp-tc],body.script-on #editor > ul[data-cp-tc],body.script-on #editor > blockquote[data-cp-tc]{position:relative}
+body.script-on #editor > [data-cp-tc]::before{content:attr(data-cp-tc);position:absolute;left:-58px;top:.25em;font:600 11px/1 var(--ui);color:var(--muted);text-indent:0;font-variant-numeric:tabular-nums}
+body.script-on #editor td[data-cp-tc]::before{content:attr(data-cp-tc);display:block;font:600 10.5px/1.6 var(--ui);color:var(--muted)}
+#editor figure.av td:first-child,#editor figure.av th:first-child{width:36%;color:color-mix(in srgb,var(--page-ink) 75%,var(--page));font-size:.92em}
+.docbody figure.av td:first-child{width:36%}
+@media (max-width:860px){ body.script-on #editor > [data-cp-tc]::before{left:-34px;font-size:9.5px} }
+.tp{position:fixed;inset:0;z-index:1000;background:#05080c;color:#f2f2ee;display:flex;flex-direction:column}
+.tp-scroll{flex:1;overflow-y:auto;scrollbar-width:none}
+.tp-scroll.mirror{transform:scaleX(-1)}
+.tp-text{max-width:1000px;margin:0 auto;padding:0 6vw;font:500 44px/1.45 'Anabasis Figures',var(--ui)}
+.tp-text p{margin:0 0 .9em}.tp-text h3{font-size:.6em;color:#9db8e0;margin:1.4em 0 .6em}
+.tp-text .tp-cue{font-size:.42em;color:#8b95a1;font-style:italic;margin-bottom:.5em}
+.tp-pad{height:45vh}
+.tp-line{position:fixed;left:0;right:0;top:35vh;height:0;border-top:2px solid rgba(224,176,79,.55);pointer-events:none}
+.tp-bar{display:flex;gap:8px;align-items:center;padding:10px 16px;background:#111821;border-top:1px solid #253041;position:relative;flex-wrap:wrap;font-size:14px}
+.tp-bar button{background:#1b2532;color:#e6ebf1;border-color:#2f3d4f}
+.tp-bar button.primary{background:#9dbbe3;color:#0c1524;border-color:#9dbbe3;min-width:5.5em}
+.tp-bar label{color:#e6ebf1}
+.tp-prog{position:absolute;left:0;right:0;top:-3px;height:3px;background:#1b2532}.tp-prog i{display:block;height:100%;width:0;background:#e0b04f}
+body.tp-on{overflow:hidden}
+.gh-status{margin-top:10px;font-size:13px;min-height:18px;color:var(--ink)}.gh-status.bad{color:var(--danger)}
+@media (max-width:860px){ .ch-body,.mp-body,.tf-cols{grid-template-columns:1fr} .rel-wrap{grid-template-columns:1fr;grid-template-rows:1fr auto} .rel-side{border-left:0;border-top:1px solid var(--line);max-height:35vh} .mp-side{max-height:none} }
+
+.mp-stage svg,.tf-stage svg,.rel-stage svg{fill:#000;stroke:none;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter}
+.mp-it input:not([type=checkbox]),.mp-it select{width:auto}
+.mp-it input[type=checkbox]{flex:none;min-width:0;min-height:0;width:15px;height:15px}
+.mp-it select{flex:0 1 auto}
+/* ---------- drafts ---------- */
+body.drafts-on .doc-bar,body.drafts-on .toolbar,body.drafts-on .findbar,body.drafts-on .scroller,body.drafts-on .lensbar,body.drafts-on .margin{display:none!important}
+.df-count{background:var(--line2);color:var(--ink);border-radius:999px;padding:0 6px;font-size:11.5px;font-weight:700;margin-left:2px}
+.df-head{font-size:14px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.df-wrap{flex:1;min-height:0;display:grid;grid-template-columns:280px 1fr}
+.df-rail{border-right:1px solid var(--line);background:var(--panel);overflow:auto;padding:12px 10px 40px}
+.df-cur{padding:9px 11px;border-radius:7px;border:1px solid var(--line);background:var(--page);margin-bottom:12px;cursor:pointer}
+.df-cur.on{box-shadow:inset 3px 0 0 var(--accent)}
+.df-list{list-style:none;margin:0;padding:0 0 0 12px;border-left:2px solid var(--line);margin-left:8px}
+.df-item{position:relative;padding:8px 10px 9px;border-radius:7px;cursor:pointer;margin:0 0 4px}
+.df-item::before{content:'';position:absolute;left:-19px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid var(--muted)}
+.df-item:hover{background:var(--line2)}
+.df-item.on{background:var(--accent-soft)}
+.df-item.on::before{background:var(--sun);border-color:var(--sun)}
+.df-it-head{display:flex;gap:7px;align-items:baseline;flex-wrap:wrap}
+.df-num{font-weight:700;color:var(--ink)}
+.df-it-head b{font-weight:500}
+.df-meta{font-size:12px;color:var(--muted);margin-top:1px}
+.df-note{margin:5px 0 0;font-size:13px;line-height:1.4;color:var(--ink)}
+.df-acts{display:none;flex-wrap:wrap;gap:4px;margin-top:7px}
+.df-item.on .df-acts,.df-item:focus-within .df-acts{display:flex}
+.df-acts button{min-height:26px;padding:2px 8px;font-size:12px}
+.df-safety{margin-top:16px}
+.df-safety summary{cursor:pointer;font-weight:700;font-size:13px;padding:4px 2px}
+.df-safety .count{background:var(--line2);border-radius:999px;padding:0 7px;font-size:11.5px;margin-left:4px}
+.df-safety .df-num{display:none}
+.df-empty{padding:6px 4px;font-size:13.5px;line-height:1.5;color:var(--muted)}
+.df-empty p{margin:0 0 8px}
+.df-main{display:flex;flex-direction:column;min-width:0;min-height:0}
+.df-pick{display:flex;align-items:center;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.df-pick select{field-sizing:content;min-width:11em;max-width:22em}
+.df-all{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;color:var(--ink)}
+.df-navbtns{display:inline-flex;align-items:center;gap:2px}
+.df-sum{padding:8px 16px;font-size:13.5px;border-bottom:1px solid var(--line);background:var(--page);display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.df-sum:empty{display:none}
+.df-s-add{color:var(--ok-ink);font-weight:700;background:var(--ok-bg);border-radius:4px;padding:0 5px}
+.df-s-del{color:var(--bad-ink);font-weight:700;background:var(--bad-bg);border-radius:4px;padding:0 5px}
+.df-s-paras{margin-left:auto;color:var(--muted)}
+.df-scroll{flex:1;overflow:auto;background:var(--page);min-height:0}
+.df-cols{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;padding:10px 24px 8px 28px;position:sticky;top:0;z-index:2;background:var(--page);border-bottom:1px solid var(--line);font-weight:700;font-size:13.5px}
+.df-grid{padding:6px 0 80px;color:var(--page-ink);font-size:15px;line-height:1.55}
+.df-row{display:grid;grid-template-columns:1fr 1fr;gap:0 32px;padding:6px 24px 6px 24px;border-left:4px solid transparent;position:relative}
+.df-row.same{color:color-mix(in srgb,var(--page-ink) 72%,var(--page))}
+.df-row.chg{border-left-color:var(--sun)}
+.df-row.add{border-left-color:var(--ok-ink)}
+.df-row.del{border-left-color:var(--bad-ink)}
+.df-row.move{border-left-color:var(--accent)}
+.df-row:not(.same){background:color-mix(in srgb,var(--line2) 35%,transparent)}
+.df-row.df-here{outline:2px solid var(--sun);outline-offset:-2px}
+.df-c{min-width:0;position:relative}
+.df-c > p,.df-c > h1,.df-c > h2,.df-c > h3,.df-c > blockquote,.df-c > ul,.df-c > ol,.df-c > figure,.df-c .df-b{margin:.25em 0}
+.df-c > p,.df-c .df-p{text-indent:0}
+.df-c .df-h1{font-size:1.5em;font-weight:700}.df-c .df-h2{font-size:1.25em;font-weight:700}.df-c .df-h3{font-size:1.08em;font-weight:700}
+.df-c .df-blockquote{padding-left:1em;border-left:3px solid var(--line)}
+.df-tag{display:block;font:700 11.5px/1.2 var(--ui);color:var(--muted);margin:2px 0 1px}
+.df-gap{font:italic 13px/1.4 var(--ui);color:var(--muted);padding:.5em 0;display:flex;gap:6px;align-items:center}
+.df-grid ins{background:var(--ok-bg);color:var(--ok-ink);text-decoration:none;border-radius:2px}
+.df-grid del{background:var(--bad-bg);color:var(--bad-ink);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad-ink) 60%,transparent);border-radius:2px}
+.df-tok{font:600 10.5px/1 var(--ui);border:1px solid var(--line);border-radius:3px;padding:1px 4px;color:var(--muted);vertical-align:1px}
+.df-take{margin-top:4px;font:500 12px var(--ui);min-height:26px;padding:2px 9px;opacity:0;transition:opacity .12s}
+.df-row:hover .df-take,.df-take:focus-visible{opacity:1}
+@media (hover:none){.df-take{opacity:1}}
+.df-fold{display:block;width:calc(100% - 48px);margin:4px 24px;min-height:30px;border:1px dashed var(--line);background:transparent;color:var(--muted);font:500 12.5px var(--ui);justify-content:center}
+.df-fold:hover{border-style:solid;color:var(--ink)}
+.df-pickfirst{padding:40px 28px;color:var(--muted);font:15px/1.5 var(--ui);max-width:38em}
+.df-c img{max-width:100%}
+@media (max-width:860px){
+  .df-wrap{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .df-rail{max-height:34vh;border-right:0;border-bottom:1px solid var(--line)}
+  .df-cols{display:none}
+  .df-row{grid-template-columns:1fr;gap:4px;padding:8px 12px}
+  .df-row.same .df-c.l{display:none}
+  .df-c:not(:empty)::before{content:attr(data-side);display:block;font:700 11px var(--ui);color:var(--muted)}
+  .df-row.same .df-c::before{display:none}
+  .df-fold{width:calc(100% - 24px);margin:4px 12px}
+  .df-pick{padding:8px 10px} .df-pick select{max-width:100%}
+}
+
+/* ---------- project home ---------- */
+body.home-on .doc-bar,body.home-on .toolbar,body.home-on .findbar,body.home-on .scroller,body.home-on .lensbar{display:none!important}
+.hm-head{font-size:14px}
+.hm-area{flex:1;overflow:auto;min-height:0;padding:18px 20px 60px}
+.hm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;max-width:1180px;margin:0 auto}
+.hm-card{background:var(--page);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.hm-card h5{margin:0 0 10px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:flex;gap:8px;align-items:center}
+.hm-card h5 .count{background:var(--line2);color:var(--ink);border-radius:999px;padding:0 7px;font-size:11px;letter-spacing:0}
+.hm-card h5 button{margin-left:auto;text-transform:none;letter-spacing:0}
+.hm-wide{grid-column:1/-1}
+.hm-resume{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.hm-resume .who{flex:1;min-width:220px}
+.hm-resume .who b{display:block;font:600 22px/1.25 Georgia,serif;margin:2px 0 4px}
+.hm-next{display:flex;gap:10px;align-items:center;margin-top:12px;padding:10px 12px;background:var(--accent-soft);border-radius:8px;font-size:13.5px}
+.hm-next span{flex:1}
+.hm-quick{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.hm-big{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.hm-big b{font-size:28px;font-variant-numeric:tabular-nums}
+.hm-bar{height:8px;background:var(--line2);border-radius:999px;overflow:hidden;margin:8px 0 12px}
+.hm-bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.hm-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 14px;font-size:12.5px}
+.hm-stats div b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.hm-stats div span{color:var(--muted)}
+.hm-pace{margin-top:10px;font-size:13px;padding:8px 10px;border-radius:8px;background:var(--line2)}
+.hm-pace.ok{background:#dcfce7;color:#14532d} .hm-pace.behind{background:#fef3c7;color:#78350f} .hm-pace.late{background:#fee2e2;color:#7f1d1d}
+:root[data-theme="dark"] .hm-pace.ok{background:#173a26;color:#bbf7d0} :root[data-theme="dark"] .hm-pace.behind{background:#3d2f12;color:#fde68a} :root[data-theme="dark"] .hm-pace.late{background:#45201b;color:#fecaca}
+.hm-spark{width:100%;height:44px;margin-top:10px;display:block;stroke:none}
+.hm-spark rect{fill:var(--accent);opacity:.75} .hm-spark rect.z{fill:var(--line);opacity:1}
+.hm-goal{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:12px}
+.hm-goal label{margin:0 0 3px}
+.hm-list{list-style:none;margin:0;padding:0}
+.hm-list li{display:flex;gap:8px;align-items:center;padding:6px 6px;border-radius:6px;cursor:pointer;font-size:13px;min-width:0}
+.hm-list li:hover{background:var(--line2)}
+.hm-list li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hm-list li .m{color:var(--muted);font-size:12px;white-space:nowrap}
+.hm-list li .mini{width:60px;height:5px;background:var(--line2);border-radius:999px;overflow:hidden;flex:none}
+.hm-list li .mini i{display:block;height:100%;background:var(--accent)}
+.hm-group{margin-bottom:10px}
+.hm-group > summary{cursor:pointer;font-size:13px;font-weight:600;padding:4px 0;list-style:none;display:flex;gap:8px;align-items:center}
+.hm-group > summary::-webkit-details-marker{display:none}
+.hm-group > summary::before{content:'▸';color:var(--muted);font-size:11px;width:10px}
+.hm-group[open] > summary::before{content:'▾'}
+.hm-group > summary .count{margin-left:auto;background:var(--line2);border-radius:999px;padding:0 8px;font-size:12px}
+.hm-group .flag{pointer-events:none}
+.hm-empty{color:var(--muted);font-size:13px;padding:6px 0}
+.hm-file{font-size:13px;margin-bottom:10px}
+.hm-file .dirty{color:#b45309}
+.np-kinds{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
+.np-kind{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;white-space:normal;padding:9px 10px;border-radius:8px}
+.np-kind b{font-size:13px} .np-kind span{font-size:11.5px;color:var(--muted);line-height:1.35}
+.np-kind.on{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 0 0 1px var(--accent)}
+@keyframes hmflash{0%{background:rgba(250,204,21,.55)}100%{background:transparent}}
+.hm-flash{animation:hmflash 1.8s ease-out}
+@media (max-width:860px){ .hm-area{padding:12px 10px 60px} .hm-goal{grid-template-columns:1fr 1fr} .hm-resume .who b{font-size:19px} }
+
+/* ---------- planning ---------- */
+body.plan-on .doc-bar,body.plan-on .toolbar,body.plan-on .findbar,body.plan-on .scroller,body.plan-on .lensbar{display:none!important}
+.pl-crumbs{font-size:13px;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:40%}
+.pl-crumbs a{color:var(--ink);text-decoration:none;font-weight:600}
+.pl-area{flex:1;overflow:auto;min-height:0;padding:14px 18px 60px}
+.pl-row{display:flex;align-items:center;gap:6px;padding:2px 6px 2px calc(6px + var(--d) * 22px);border-radius:6px;position:relative}
+.pl-row:hover{background:var(--line2)}
+.pl-row.sel{background:var(--accent-soft)}
+.pl-row.dragging{opacity:.4}
+.pl-caret{width:20px;min-width:20px;padding:0;color:var(--muted);font-size:12px}
+.pl-type{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:5px;font:700 11px var(--ui);flex:none;background:var(--line2);color:var(--muted)}
+.ty-claim .pl-type,.pl-type.ty-claim{background:#dbeafe;color:#1e40af} .ty-evidence .pl-type,.pl-type.ty-evidence{background:#dcfce7;color:#166534}
+.ty-counter .pl-type,.pl-type.ty-counter{background:#fee2e2;color:#991b1b} .ty-question .pl-type,.pl-type.ty-question{background:#fef3c7;color:#92400e}
+.ty-idea .pl-type,.pl-type.ty-idea{background:#f3e8ff;color:#6b21a8}
+:root[data-theme="dark"] .pl-type{filter:brightness(.8) saturate(1.2)}
+.pl-title{flex:1;border:0!important;background:transparent!important;padding:6px 4px!important;font-size:15px;min-width:80px}
+.pl-row[style*="--d:0"] .pl-title{font-weight:600}
+.pl-title:focus{outline:none!important;box-shadow:inset 0 -2px 0 var(--accent)}
+.pl-meta{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted);white-space:nowrap}
+.pl-link{color:var(--accent)}
+.pl-grip{color:var(--faint);cursor:grab;padding:0 4px;visibility:hidden;touch-action:none}
+.pl-row:hover .pl-grip{visibility:visible}
+.pl-syn{padding:0 10px 6px calc(58px + var(--d) * 22px);font-size:12.5px;color:var(--muted);font-family:Georgia,serif;line-height:1.4}
+.pl-drop{height:3px;background:var(--accent);border-radius:2px;margin:1px 0}
+.pl-end{height:40px}
+.pl-empty{max-width:520px;margin:40px auto;line-height:1.6}
+.st-todo{background:var(--line2);color:var(--muted)} .st-done,.st-answered,.st-found,.st-keep{background:#bbf7d0;color:#14532d} .st-open{background:#fef3c7;color:#92400e} .st-cut{background:#fee2e2;color:#991b1b}
+.pl-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.pl-card{background:#fffdf5;border:1px solid #e8dfc2;border-radius:6px;padding:10px 12px;min-height:150px;display:flex;flex-direction:column;gap:6px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:grab;background-image:repeating-linear-gradient(transparent 0 23px,#e9eef7 23px 24px);background-position:0 34px}
+:root[data-theme="dark"] .pl-card{background-color:#2a2a24;border-color:#4a4636;background-image:none}
+.pl-card.sel{outline:2px solid var(--accent)}
+.pl-card-top{display:flex;gap:6px;align-items:center}
+.pl-card-syn{flex:1;font-family:Georgia,serif;font-size:13.5px;line-height:24px}
+.pl-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:11px;color:var(--muted)}
+.pl-open{margin-left:auto;color:var(--accent);text-decoration:none}
+.pl-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:640px;margin-bottom:12px}
+.pl-stats div{background:var(--page);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+.pl-stats b{display:block;font-size:22px} .pl-stats span{font-size:11px;color:var(--muted)}
+.pl-issues{list-style:none;padding:0;max-width:760px}
+.pl-issues li{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;background:var(--page);cursor:pointer;font-size:13px}
+.pl-issues li b{white-space:nowrap;max-width:240px;overflow:hidden;text-overflow:ellipsis}
+.pl-issues li span:last-child{color:var(--muted)}
+.pl-issues li.sev2{border-left:4px solid #dc2626} .pl-issues li.sev1{border-left:4px solid #d97706} .pl-issues li.sev0{border-left:4px solid var(--line)}
+.chips-x{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.chipx{display:inline-flex;align-items:center;gap:2px;background:var(--accent-soft);border-radius:999px;padding:1px 4px 1px 9px;font-size:12px}
+.chipx a{color:var(--accent);text-decoration:none}
+.chipx button{padding:0 5px;min-width:0;font-size:13px}
+/* structure editor */
+.structure li{position:relative}
+.structure .ol-grip{color:var(--faint);cursor:grab;visibility:hidden;touch-action:none;flex:none}
+.structure li:hover .ol-grip{visibility:visible}
+.structure .ol-act{display:none;gap:0}
+.structure li.ol-h:hover .ol-act{display:flex}
+.structure .ol-act button{padding:0 4px;min-width:0;font-size:12px}
+.structure li.ol-p{font-size:12px;color:var(--muted);font-family:Georgia,serif}
+.structure li.ol-p.lvl1{padding-left:18px} .structure li.ol-p.lvl2{padding-left:30px} .structure li.ol-p.lvl3{padding-left:42px}
+.structure li.dragging{opacity:.35}
+.structure li.ol-drop{height:3px;padding:0;background:var(--accent);border-radius:2px;margin:1px 0}
+.structure li.ol-end{height:24px}
+/* freewrite */
+.fw{position:fixed;inset:0;z-index:120;background:var(--page);display:flex;flex-direction:column;padding:24px max(24px,calc((100vw - 760px)/2))}
+.fw-top{display:flex;gap:12px;align-items:center}
+.fw-top input{flex:1;border:0!important;background:transparent!important;font:italic 15px Georgia,serif;color:var(--muted)}
+.fw-stat{font:600 14px var(--ui);color:var(--accent);white-space:nowrap}
+.fw-barwrap{height:3px;background:var(--line2);border-radius:2px;margin:10px 0 18px;overflow:hidden}
+.fw-barwrap i{display:block;height:100%;width:0;background:var(--accent);transition:width .5s linear}
+.fw-setup{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.fw-setup label.inline,.board-bar label.inline{display:flex;gap:6px;align-items:center;margin:0;font-size:13px;color:var(--ink)}
+.fw-setup input[type=checkbox]{width:auto}
+.fw textarea{flex:1;border:0!important;background:transparent!important;font:19px/1.7 Georgia,serif;resize:none;color:var(--page-ink)}
+.fw textarea:focus{outline:none!important}
+.fw textarea.nope{animation:nope .2s}
+@keyframes nope{0%,100%{transform:none}30%{transform:translateX(-4px)}70%{transform:translateX(4px)}}
+.fw-foot{display:flex;gap:8px;align-items:center;padding-top:10px;border-top:1px solid var(--line2)}
+
+/* ================================================================
+   Anabasis theme: “survey sheet”
+   Map-paper desk, slate ink, Aegean navy from the mark, brass sun for marks and focus.
+   Every status colour comes in a light and a dark pair; coloured text never sits on a coloured fill.
+   ================================================================ */
+/*@FONTS@*/
+:root{
+  --bg:#E7EBE4; --panel:#F4F6F1; --line:#C6CFC3; --line2:#DEE4DA; --ink:#16202C; --muted:#4A5763; --faint:#5C6873;
+  --accent:#24456E; --accent-ink:#FFFFFF; --accent-soft:#DAE3EE; --accent-hover:#1A3556;
+  --sun:#B5841F; --sun-ink:#6E4A00; --sun-soft:#F2E5C2;
+  --danger:#A3271B; --page:#FFFFFF; --page-ink:#14181D;
+  --tk-bg:#F4E2A6; --tk-ink:#5A3D00; --cite-bg:#F5D3CD; --cite-ink:#7A1C12; --check-bg:#D2E1F3; --check-ink:#163A63;
+  --ok-bg:#D5EAD7; --ok-ink:#1C4A29; --warn-bg:#F4E7C2; --warn-ink:#5A3D00; --bad-bg:#F5D6D1; --bad-ink:#7A1C12; --idea-bg:#E5DDF1; --idea-ink:#48287A;
+  --shadow:0 1px 0 rgba(22,32,44,.05),0 8px 24px -10px rgba(22,32,44,.28);
+  --page-shadow:0 0 0 1px rgba(22,32,44,.07),0 1px 1px rgba(22,32,44,.05),0 18px 40px -18px rgba(22,32,44,.38);
+  --radius:6px;
+  --ui:"Atkinson Hyperlegible Next",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  --contour:var(--contour-light);
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%234A5763' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101720; --panel:#17202B; --line:#2D3947; --line2:#212B37; --ink:#E3E8EE; --muted:#AAB5C1; --faint:#95A1AE;
+  --accent:#9DBBE3; --accent-ink:#0C1524; --accent-soft:#1F2F45; --accent-hover:#B8CDEC;
+  --sun:#E0B04F; --sun-ink:#F0CB78; --sun-soft:#3A3020;
+  --danger:#F2998B; --page:#1A222D; --page-ink:#E6E4DF;
+  --tk-bg:#4A3A14; --tk-ink:#F4D58A; --cite-bg:#4D221D; --cite-ink:#F7B8AD; --check-bg:#1C3450; --check-ink:#B4D0F2;
+  --ok-bg:#1B3A26; --ok-ink:#A9DDB5; --warn-bg:#40351B; --warn-ink:#F0D592; --bad-bg:#4D221D; --bad-ink:#F7B8AD; --idea-bg:#33284A; --idea-ink:#D3C2F2;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 10px 28px -10px rgba(0,0,0,.6);
+  --page-shadow:0 0 0 1px rgba(255,255,255,.05),0 18px 40px -16px rgba(0,0,0,.75);
+  --contour:var(--contour-dark);
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='%23AAB5C1' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+body{font:14px/1.45 var(--ui);font-feature-settings:"kern"}
+::selection{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+
+/* controls: one height, one rhythm */
+button{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;padding:4px 11px;border-radius:var(--radius);border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:500}
+button:hover{border-color:var(--muted);background:var(--panel)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button.danger{color:var(--danger)}
+button.danger:hover{border-color:var(--danger)}
+button.ghost{background:transparent;border-color:transparent}
+button.ghost:hover{background:var(--line2);border-color:transparent}
+button:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+input[type=text],input[type=search],input[type=url],input[type=date],input[type=number],input[type=password],input:not([type]),select,textarea{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:5px 9px;min-height:32px}
+input:hover,select:hover,textarea:hover{border-color:color-mix(in srgb,var(--muted) 55%,var(--line))}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--sun);outline-offset:0;border-color:var(--sun)}
+select{appearance:none;-webkit-appearance:none;background-image:var(--chev);background-repeat:no-repeat;background-position:right 9px center;padding-right:28px;cursor:pointer;text-overflow:ellipsis}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);width:15px;height:15px}
+label{font-size:12.5px;color:var(--muted);font-weight:500}
+.muted{color:var(--muted)}
+
+/* top bar */
+.topbar{background:var(--panel);border-bottom:1px solid var(--line);gap:6px}
+.brand{font-weight:700;font-size:15px;letter-spacing:.01em;color:var(--ink)}
+.brand-mark{width:26px;height:26px}
+.proj-title{font-weight:500;color:var(--muted)}
+.proj-title:focus{color:var(--ink)}
+.save-state{color:var(--muted)}
+.save-state.dirty,:root[data-theme="dark"] .save-state.dirty{color:var(--sun-ink)}
+.menu-pop{border-radius:8px;box-shadow:var(--shadow);padding:5px}
+.menu-pop button{min-height:0;border-radius:5px;padding:7px 10px;font-weight:400;justify-content:flex-start}
+.menu-pop button:hover{background:var(--accent-soft)}
+
+/* sidebar */
+#sidebar{background:var(--panel)}
+.tabs button{min-height:0;color:var(--muted);font-weight:500;border-bottom:2px solid transparent}
+.tabs button.on{color:var(--ink);font-weight:700;border-bottom-color:var(--accent)}
+.tabs .count{color:var(--muted);font-weight:400}
+.list li{border-radius:5px;border:0}
+.list li:hover{background:var(--line2)}
+.list li.on{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent);border:0}
+.list li.on .t{color:var(--ink)}
+.list .meta{color:var(--muted)}
+.list li.on .act button,.list li.on .act button.danger{color:var(--ink);background:var(--panel)}
+.list .act button{min-height:24px;padding:1px 7px}
+.chip{border-color:var(--line);background:var(--page);color:var(--muted);min-height:0}
+.chip.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tag{background:var(--line2);color:var(--muted)}
+.kind{text-transform:none;letter-spacing:0;font-size:11.5px;font-weight:700;color:var(--accent)}
+.binder li.part{background:transparent;border-top:1px solid var(--line2);border-radius:0;margin-top:10px}
+.binder li.part .t{text-transform:none;letter-spacing:0;font-size:13px;font-weight:700;color:var(--ink)}
+.binder li.part-empty{color:var(--muted)}
+.ol-scroll h6{text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:700;color:var(--ink)}
+.preview-box h5,.palette .pk,table.audit th,.role-tag,.st{text-transform:none;letter-spacing:0}
+.st{font-size:11px;font-weight:700;padding:1px 6px}
+.role-tag{font-size:10.5px}
+
+/* document bar & toolbar */
+.doc-bar{gap:6px;flex-wrap:wrap}
+.doc-bar .doc-title{flex:1 1 170px;max-width:300px;font-weight:700}
+.doc-bar select{field-sizing:content;width:auto;min-width:14em;max-width:26em}
+@supports not (field-sizing:content){ .doc-bar select{width:21em} }
+.wc{color:var(--muted)}
+.toolbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;gap:1px;padding:4px 10px}
+.toolbar > *{flex:none}
+.toolbar button{min-height:30px;min-width:30px;padding:4px 7px;border-color:transparent;background:transparent;font-weight:500}
+.toolbar button:hover{background:var(--line2)}
+.toolbar button.on{background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 -2px 0 var(--accent)}
+.toolbar select{min-height:30px;margin-right:4px}
+.toolbar .sep{height:18px;margin:0 4px;background:var(--line)}
+.toolbar .cite-btn{color:var(--accent);font-weight:700}
+.toolbar .flag-btn,:root[data-theme="dark"] .toolbar .flag-btn{color:var(--sun-ink)}
+
+/* the desk: the page rests on a survey map */
+.scroller{background-color:var(--bg);background-image:var(--contour);background-size:640px 640px;background-attachment:local}
+body.focus .scroller{background-image:none}
+.page{box-shadow:var(--page-shadow);border-radius:2px}
+.refs .gen-label{color:var(--muted)}
+#editor .fn{background:color-mix(in srgb,var(--sun) 18%,transparent)}
+
+/* flags, statuses, plan types: paired tokens */
+.fk-tk,.flag-tk,.st-drafting,.st-open{background:var(--tk-bg);color:var(--tk-ink)}
+.fk-cite,.flag-cite,.st-cut{background:var(--cite-bg);color:var(--cite-ink)}
+.fk-check,.flag-check,.st-revising{background:var(--check-bg);color:var(--check-ink)}
+.st-final,.st-done,.st-answered,.st-found,.st-keep{background:var(--ok-bg);color:var(--ok-ink)}
+.st-idea,.st-todo{background:var(--line2);color:var(--muted)}
+.ty-claim .pl-type,.pl-type.ty-claim{background:var(--check-bg);color:var(--check-ink)}
+.ty-evidence .pl-type,.pl-type.ty-evidence{background:var(--ok-bg);color:var(--ok-ink)}
+.ty-counter .pl-type,.pl-type.ty-counter{background:var(--bad-bg);color:var(--bad-ink)}
+.ty-question .pl-type,.pl-type.ty-question{background:var(--warn-bg);color:var(--warn-ink)}
+.ty-idea .pl-type,.pl-type.ty-idea{background:var(--idea-bg);color:var(--idea-ink)}
+:root[data-theme="dark"] .pl-type{filter:none}
+.due.soon{color:var(--sun-ink)} .due.late{color:var(--danger)}
+.remind,:root[data-theme="dark"] .remind{background:var(--warn-bg);border-color:color-mix(in srgb,var(--warn-ink) 25%,transparent);color:var(--warn-ink)}
+.remind.urgent,:root[data-theme="dark"] .remind.urgent{background:var(--bad-bg);border-color:color-mix(in srgb,var(--bad-ink) 25%,transparent);color:var(--bad-ink)}
+.warnbox,:root[data-theme="dark"] .warnbox{background:var(--warn-bg);color:var(--warn-ink)}
+ins,:root[data-theme="dark"] ins{background:var(--ok-bg);color:var(--ok-ink)} del,:root[data-theme="dark"] del{background:var(--bad-bg);color:var(--bad-ink)}
+.hm-pace.ok,:root[data-theme="dark"] .hm-pace.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.hm-pace.behind,:root[data-theme="dark"] .hm-pace.behind{background:var(--warn-bg);color:var(--warn-ink)}
+.hm-pace.late,:root[data-theme="dark"] .hm-pace.late{background:var(--bad-bg);color:var(--bad-ink)}
+.pw-err{color:var(--danger)} .auto-resume,.ss-list .warn,.hm-file .dirty,table.audit td.hot,#stStorage .warn{color:var(--sun-ink)}
+#stStorage .ok,#focusStat.done{color:var(--ok-ink)}
+.pl-issues li.sev2{border-left-color:var(--danger)} .pl-issues li.sev1{border-left-color:var(--sun)}
+.tip{background:var(--line2);color:var(--ink)}
+.empty{color:var(--muted)}
+#editor:empty::before,#editor figcaption:empty::after,#editor figcaption:has(> br:only-child)::after{color:var(--muted)}
+
+/* margin notes and comment marks use the brass sun */
+.mg-card{border-left-color:var(--sun);box-shadow:none}
+.mg-card:focus-within{border-color:var(--sun);box-shadow:var(--shadow)}
+.mg-n{color:var(--sun-ink)}
+#editor .cmt{background:color-mix(in srgb,var(--sun) 22%,transparent);border-bottom-color:var(--sun)}
+#editor .cmt[data-cp-hot]{background:color-mix(in srgb,var(--sun) 42%,transparent)}
+#editor .cmt-pt{background:var(--sun)}
+
+/* dialogs and popovers */
+dialog{border-radius:10px;border-color:var(--line);box-shadow:0 24px 60px -20px rgba(10,18,30,.55)}
+dialog::backdrop{background:rgba(16,23,32,.5)}
+.dlg h3{font-size:17px;font-weight:700;padding:16px 18px 10px}
+.dlg .body{padding:0 18px 12px}
+.dlg footer{padding:12px 18px;gap:8px;background:color-mix(in srgb,var(--line2) 45%,var(--panel));border-radius:0 0 10px 10px}
+.pop{border-radius:8px;box-shadow:var(--shadow)}
+.toast{border-radius:7px;font-weight:500}
+
+/* project home: the launch pad sits on the map too */
+.hm-area{background-color:var(--bg);background-image:var(--contour);background-size:640px 640px;background-attachment:local}
+.hm-card{border-radius:8px;border-color:var(--line);background:var(--panel)}
+.hm-card h5{text-transform:none;letter-spacing:0;font-size:14px;font-weight:700;color:var(--ink)}
+.hm-card h5 .count{background:var(--line2);color:var(--ink);font-weight:700}
+.hm-wide{background:var(--page);border-color:var(--line);box-shadow:var(--page-shadow)}
+.hm-resume .who b{font:700 24px/1.2 var(--ui);letter-spacing:-.01em}
+.hm-next{background:var(--accent-soft);color:var(--ink)}
+.hm-bar,.mini{background:var(--line2)}
+.hm-spark rect{fill:var(--accent);opacity:.85} .hm-spark rect.z{fill:var(--line)}
+.np-kind{min-height:0;align-items:flex-start;padding:10px 11px;font-weight:400}
+.np-kind.on{background:var(--accent-soft);border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.np-kind span{color:var(--muted)}
+
+/* planner & board surfaces */
+.pl-card,:root[data-theme="dark"] .pl-card{background-color:var(--page);border-color:var(--line);background-image:none;box-shadow:0 1px 0 rgba(22,32,44,.05)}
+.board-bar,.pl-bar{background:var(--panel)}
+#plArea{background-color:var(--bg);background-image:var(--contour);background-size:640px 640px;background-attachment:local}
+.tabs .badge,.badge{background:var(--sun);color:#1A1405;font-weight:700;min-width:16px;text-align:center;padding:0 5px}
+:root[data-theme="dark"] .badge{color:#1A1405}
+/* large figures: system digits (Atkinson’s legibility zero is slashed, which reads as Ø at display sizes) */
+@font-face{font-family:'Anabasis Figures';src:local('Helvetica Neue'),local('HelveticaNeue'),local('Segoe UI'),local('Roboto'),local('Arial');unicode-range:U+0030-0039}
+.hm-big b,.hm-stats b,.pl-stats b{font-family:'Anabasis Figures',var(--ui);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.toolbar select{padding:4px 28px 4px 9px}
+#npDlg .grid3{grid-template-columns:1.7fr 1fr 1fr}
+input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--sun) 70%,transparent);border-color:var(--sun)}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+
+
+/* ---------- round 8 ---------- */
+#pkDlg .radio-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}#pkDlg .radio-row select{width:auto;flex:none}.pk-meta{margin-top:0}
+#a11yList li>span:first-child,#hsList li>span:first-child,#corList li>span{white-space:normal;overflow:visible;text-overflow:clip;min-width:0;flex:1}
+#frScope{width:auto;flex:none}
+.cor-weight{display:block!important}
+.cor-bar{display:grid;grid-template-columns:minmax(0,1fr) 70px 34px;gap:6px;align-items:center;font-size:12px;margin-top:4px}
+.cor-bar .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cor-bar i{display:block;height:8px;border-radius:0 4px 4px 0;background:var(--accent);min-width:2px}
+.cor-bar .n{text-align:right;font-variant-numeric:tabular-nums}
+.cor-lean{margin-top:6px;padding:6px 8px;border-radius:6px;background:var(--warn-bg);color:var(--warn-ink)}
+.cor-single{display:block!important}.cor-single summary{cursor:pointer;font-size:12.5px;color:var(--ink2)}
+#corList li[data-cor],#hsList li,#a11yList li{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.hs-ex{display:inline-block;margin-right:6px}
+::highlight(cp-style){text-decoration:underline wavy #6250d6;text-decoration-thickness:1.5px;text-underline-offset:3px}
+.hs-checks{display:flex;flex-direction:column;justify-content:flex-end;gap:6px;padding-bottom:4px}
+.hs-checks label{margin:0;display:flex;gap:6px;align-items:center;font-weight:400}
+.fr-opts{flex-wrap:wrap;align-items:center;gap:10px 14px;margin-top:10px}
+.fr-sum{margin:10px 0 6px}
+.fr-results{list-style:none;margin:0;padding:0;max-height:48vh;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.fr-g{padding:8px 10px;border-bottom:1px solid var(--line)}.fr-g:last-child{border-bottom:0}
+.fr-g ul{list-style:none;margin:4px 0 0;padding:0 0 0 22px}
+.fr-g li label,.fr-gh{display:flex;gap:6px;align-items:baseline;font-weight:400;margin:2px 0;font-size:13px}
+.fr-ctx{color:var(--ink2)}.fr-ctx mark{background:var(--sun);color:#1a1405;border-radius:2px;padding:0 1px}
+.tr-findrow{display:flex;align-items:center;gap:8px;margin-top:12px;flex-wrap:wrap}.tr-findrow input{flex:1;min-width:160px}
+.pk-tabs{display:flex;gap:4px;margin:0 20px;border-bottom:1px solid var(--line)}.pk-tabs button{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:8px 12px;color:var(--ink2);font-weight:600}.pk-tabs button.on{color:var(--accent);border-bottom-color:var(--sun)}
+.pk-posts{display:flex;flex-direction:column;gap:8px;margin:8px 0;max-height:46vh;overflow:auto}
+.pk-post textarea{width:100%;resize:vertical}
+.pk-meta{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.pk-n{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}.pk-n.over{color:var(--bad-ink);background:var(--bad-bg);padding:0 5px;border-radius:4px;font-weight:700}
+.pk-card{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.pk-cr{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.pk-cr canvas{width:100%;height:auto;border:1px solid var(--line);border-radius:6px;box-shadow:0 2px 10px rgba(20,30,45,.12)}
+.pk-cands{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto}
+.pk-cands .pk-cand{text-align:left;justify-content:flex-start;font-size:12.5px;line-height:1.4;padding:7px 10px;white-space:normal;height:auto;min-height:0;font-weight:400}
+.cp-new{display:grid;grid-template-columns:1fr 1.4fr auto;gap:8px;margin-bottom:12px}
+.cp-list{list-style:none;margin:0;padding:0;max-height:52vh;overflow:auto}
+.cp-list>li{padding:10px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}
+.cp-list>li.cp-auto .cp-h b{font-weight:600;color:var(--ink2)}
+.cp-h{display:flex;flex-direction:column;gap:2px}.cp-acts{display:flex;gap:4px;align-items:flex-start;flex-wrap:wrap;justify-content:flex-end}
+.cp-diff{grid-column:1/-1;background:var(--bg2,rgba(0,0,0,.03));border-radius:8px;padding:8px 10px}
+.cp-rows{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.cp-tag{font:700 10px var(--ui);padding:1px 6px;border-radius:4px;text-transform:uppercase;letter-spacing:.3px;margin-right:4px}
+.cp-tag.add{background:var(--ok-bg);color:var(--ok-ink)}.cp-tag.chg{background:var(--warn-bg);color:var(--warn-ink)}.cp-tag.del{background:var(--bad-bg);color:var(--bad-ink)}
+.cp-missing{color:var(--warn-ink)}
+@media (max-width:700px){.pk-card,.cp-new{grid-template-columns:1fr}}
+
+/* ---------- tour ---------- */
+.tour{position:fixed;inset:0;z-index:2000;pointer-events:none}
+.tour-spot{position:fixed;border-radius:10px;box-shadow:0 0 0 9999px rgba(14,24,38,.48);outline:2px solid var(--sun);transition:all .22s ease;pointer-events:none}
+.tour-box{position:fixed;pointer-events:auto;background:var(--panel,#fff);color:var(--ink);border-radius:12px;padding:16px 18px 12px;box-shadow:0 18px 50px rgba(10,20,35,.35);border-top:4px solid var(--sun);transition:top .22s ease,left .22s ease}
+.tour-box h3{margin:2px 0 6px;font-size:17px}.tour-box p{margin:0 0 12px;font-size:14px;line-height:1.5}
+.tour-step{font-size:12px;color:var(--ink2)}
+.tour-acts{display:flex;gap:6px;align-items:center}.tour-acts .spacer{flex:1}
+.help-top{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+@media (prefers-reduced-motion:reduce){.tour-spot,.tour-box{transition:none}}
+/* ---------- responsive ---------- */
+.only-narrow{display:none}
+@media (max-width:1100px){ .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-shadow:var(--shadow)} }
+@media (max-width:480px){ #btnTheme,#btnHelp,#btnOpen{display:none} .hm-head{display:none} }
+@media (max-width:860px){
+  .only-narrow{display:inline-block}
+  #sidebar{position:fixed;left:0;top:48px;bottom:0;z-index:45;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow)}
+  body.side-open #sidebar{transform:none}
+  .panel{width:100%}
+  .page{padding:.5in .4in}
+  .brand span{display:none}
+  .proj-title{max-width:130px}
+  .hide-narrow,.save-state,#btnVersions,#btnRecord{display:none}
+  .ent,.ixrow{grid-template-columns:1fr 1fr}
+  .pl-meta{display:none} .pl-stats{grid-template-columns:repeat(2,1fr)}
+  .reader{position:fixed;inset:48px 0 0 0;width:auto!important;z-index:44}
+  .rec-stats{grid-template-columns:repeat(2,1fr)}
+  .topbar{gap:4px;padding:0 6px}
+  .toolbar{flex-wrap:nowrap;overflow-x:auto}
+  .toolbar > *{flex:none}
+  .doc-bar .doc-title{max-width:none;flex:1 1 100%}
+}
+
+/* ---------- print ---------- */
+@media print{
+  html,body{height:auto;overflow:visible;background:#fff}
+  body > *:not(#printRoot){display:none!important}
+  #printRoot{display:block!important}
+}
+</style>
+<style id="pageRule"></style>
+</head>
+<body>
+<header class="topbar">
+  <button class="icon ghost only-narrow" id="btnSide" aria-label="Show sidebar"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+  <button class="brand ghost" id="btnHome" title="Project home"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"> <rect width="64" height="64" rx="14" fill="#2f4f7f"/> <circle cx="47" cy="16" r="4.5" fill="#e8b04b"/> <path d="M12 50 L32 13 L52 50" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/> <path d="M19.5 38.5 q3.1 -3.4 6.2 0 t6.2 0 t6.2 0 t6.2 0" fill="none" stroke="#8fb0e3" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/> </svg><span>Anabasis</span></button>
+  <button id="lockBadge" class="ghost lock-badge" title="This project is locked with a password">🔒</button>
+  <input id="projTitle" class="proj-title" aria-label="Project title">
+  <span id="saveState" class="save-state"></span>
+  <button id="autoResume" class="ghost small hidden auto-resume" title="Chrome needs one click to let Anabasis write to your project file again">Resume autosave</button>
+  <div class="spacer"></div>
+  <button id="btnSearch" class="search-btn" title="Search everything and run commands (Ctrl/Cmd+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="hide-narrow"> Search</span> <kbd class="hide-narrow">⌘K</kbd></button>
+  <button id="btnNewProj" class="hide-narrow" title="New project">New</button>
+  <button id="btnOpen" title="Open a project .json file">Open</button>
+  <button id="btnSave" class="primary" title="Save project (Ctrl/Cmd+S)">Save</button>
+  <div class="menu">
+    <button id="btnExport">Export ▾</button>
+    <div class="menu-pop" id="exportMenu">
+      <button data-x="docx">Word (.docx), real footnotes</button>
+      <button data-x="pdf">PDF — print / save as PDF <span class="muted small">⌘P</span></button>
+      <button data-x="html">Document as HTML</button>
+      <button data-x="epub">ePub (e-book)</button>
+      <button data-x="md">Document as Markdown</button>
+      <button data-x="substack">Substack post: endnotes, images, tables…</button>
+      <button data-x="promo">Promo kit: thread, subtitle, quote cards…</button>
+      <button data-x="copy">Copy formatted text (for Docs, email…)</button>
+      <hr>
+      <button data-x="ms">Compile manuscript (several documents)…</button>
+      <hr>
+      <button data-x="saveas">Save project as…</button>
+      <button data-x="checkpoints">Project checkpoints…</button>
+      <button data-x="lock">Lock project with a password…</button>
+      <button data-x="github">Back up to GitHub…</button>
+      <button data-x="notesmd">All notes as Markdown</button>
+      <button data-x="annot">Annotated bibliography (new document)</button>
+      <button data-x="csl">Sources as CSL-JSON (Zotero-compatible)</button>
+      <button data-x="osintlist">Sources as OSINT Citation Generator list</button>
+    </div>
+  </div>
+  <button id="btnTheme" class="icon ghost" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button id="btnSettings" class="icon ghost" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button id="btnHelp" class="icon ghost" title="Help & about">?</button>
+  <input type="file" id="fileOpen" accept=".json,application/json" hidden>
+  <input type="file" id="fileTranscript" accept=".srt,.vtt,.txt,.docx,text/plain,text/vtt" hidden>
+  <input type="file" id="fileMd" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden>
+  <input type="file" id="fileMdDir" webkitdirectory directory multiple hidden>
+  <input type="file" id="fileFigure" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" multiple hidden>
+  <input type="file" id="fileCsl" accept=".json,.bib,.ris,.txt,application/json" hidden>
+ <input type="file" id="filePdf" accept=".pdf,application/pdf" hidden>
+  <input type="file" id="fileDocx" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+</header>
+
+<div class="layout">
+  <aside id="sidebar">
+    <nav class="tabs">
+      <button data-tab="docs" class="on">Docs<span class="count" id="cntDocs"></span></button>
+      <button data-tab="notes">Notes<span class="count" id="cntNotes"></span></button>
+      <button data-tab="sources">Sources<span class="count" id="cntSources"></span></button>
+      <button data-tab="outline" title="Outline and drafting checklist">Outline<span class="count badge" id="tabOutlineBadge"></span></button>
+    </nav>
+    <section class="pane on" data-pane="docs">
+      <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" title="New part (a folder for chapters)">+ Part</button></div>
+        <div class="row"><button id="btnPlan" class="primary-soft" style="flex:1" title="Plan your piece: outline, argument map, templates, build drafts">▤ Plan</button><button id="btnManuscript" style="flex:1" title="Combine documents into one manuscript">Compile manuscript…</button></div>
+        <div class="row"><button id="btnTemplates" style="flex:1" title="Front and back matter, chronology, annotated bibliography">Templates…</button><button id="btnImportDocx" style="flex:1" title="Bring in a Word document, footnotes included">Import Word…</button></div><div class="row"><button id="btnRel" style="flex:1" title="Who’s connected to whom, from your names list">Relationship map</button></div></div>
+      <ul class="list binder" id="docList"></ul>
+    </section>
+    <section class="pane" data-pane="outline" id="outlinePane">
+      <div class="ol-scroll">
+        <h6>Outline <button class="ghost small hl hidden" id="olUndo">Undo move</button><label class="hl"><input type="checkbox" id="olParas"> paragraphs</label></h6><ul class="outline structure" id="outlineList"></ul>
+        <h6>To resolve <span class="badge" id="flagCount"></span></h6><ul class="outline" id="flagList"></ul>
+        <h6>Quotes <span class="badge" id="qCount"></span></h6><div class="small muted ol-sum" id="quoteSum"></div><ul class="outline" id="quoteList"></ul>
+        <h6>Names &amp; spellings <span class="badge" id="nCount"></span> <button class="ghost small hl" id="btnNames">Manage…</button></h6><ul class="outline" id="nameList"></ul>
+        <h6>Index <button class="ghost small hl" id="btnIndexMgr">Terms…</button></h6><div class="small muted ol-sum" id="ixSum"></div>
+        <h6>Acronyms <span class="badge" id="acroCount"></span> <button class="ghost small hl" id="btnAcro">Manage…</button></h6><ul class="outline" id="acroList"></ul>
+        <h6>Estimative language <span class="badge" id="estCount"></span> <label class="hl"><input type="checkbox" id="estToggle"> check</label></h6><ul class="outline" id="estList"></ul>
+        <h6>Corroboration <span class="badge" id="corCount"></span> <label class="hl"><input type="checkbox" id="corToggle"> check</label></h6><ul class="outline" id="corList"></ul>
+        <h6>House style <span class="badge" id="hsCount"></span> <button class="ghost small hl" id="btnHouse">Rules…</button></h6><ul class="outline" id="hsList"></ul>
+        <h6>Accessibility <span class="badge" id="a11yCount"></span></h6><ul class="outline" id="a11yList"></ul>
+        <h6>Margin notes <span class="badge" id="cmtCount"></span></h6><ul class="outline" id="cmtList"></ul>
+        <h6>Paragraphs without a citation <span class="badge" id="uncitedCount"></span> <label class="hl"><input type="checkbox" id="showUncited"> highlight</label></h6><ul class="outline" id="uncitedList"></ul>
+      </div>
+    </section>
+    <section class="pane" data-pane="notes">
+      <div class="pane-head">
+        <div class="row"><input type="search" id="qNotes" placeholder="Search notes"><button id="btnNewNote" class="primary">+ New</button></div>
+        <div class="chips" id="tagChips"></div>
+        <div class="row"><button id="btnBoard" class="primary-soft" style="flex:1" title="Cards on a board: piles, tags, sources, or free arrangement">▦ Board</button><button id="btnCompile" style="flex:1">Compile…</button><button id="btnImportMd" title="Import Markdown notes, e.g. from Notecards">Import .md</button></div>
+      </div>
+      <ul class="list" id="noteList"></ul>
+    </section>
+    <section class="pane" data-pane="sources">
+      <div class="pane-head">
+        <div class="row"><input type="search" id="qSources" placeholder="Search sources"><button id="btnNewSource" class="primary">+ New</button></div>
+        <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
+        <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes">📄 Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis">✂ Web clipper</button></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import references…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
+      </div>
+      <ul class="list" id="sourceList"></ul>
+    </section>
+  </aside>
+
+  <main id="main">
+    <div class="remind hidden" id="tabBar"><span>Anabasis is open in another tab. Edits in two tabs can overwrite each other, so keep working in just one.</span><button id="tabBarClose" class="ghost">Dismiss</button></div>
+    <div class="remind hidden" id="remindBar"><span id="remindText"></span><button class="primary" id="remindSave">Save now</button><button id="remindLater" class="ghost">Later</button></div>
+    <div class="doc-bar">
+      <input id="docTitle" class="doc-title" aria-label="Document title">
+      <select id="docStyle" aria-label="Citation style"></select>
+      <button id="btnMargin" class="ghost" title="Show or hide margin notes">✎ <span></span></button>
+      <button id="btnPageSetup" title="Title block, fonts, spacing, bibliography options">Page setup</button>
+      <button id="btnVersions" class="ghost" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)">Drafts</button>
+      <button id="btnRecord" class="ghost" title="Daily words, streak, chapter status and deadlines">Record</button>
+      <div class="spacer"></div>
+      <span class="tgt hidden" id="tgtBar"><i id="tgtFill"></i></span>
+      <span class="wc" id="wordCount"></span>
+      <button id="btnFocus" class="ghost" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="hide-narrow"> Focus</span></button>
+    </div>
+    <div class="toolbar" id="toolbar">
+      <select id="blockSel" aria-label="Paragraph style">
+        <option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Block quote</option>
+      </select>
+      <button data-cmd="bold" title="Bold (Ctrl/Cmd+B)"><b>B</b></button>
+      <button data-cmd="italic" title="Italic (Ctrl/Cmd+I)"><i style="font-family:Georgia,serif">I</i></button>
+      <button data-cmd="underline" title="Underline (Ctrl/Cmd+U)"><u>U</u></button>
+      <button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+      <span class="sep"></span>
+      <button data-cmd="insertUnorderedList" title="Bulleted list"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+      <button data-cmd="insertOrderedList" title="Numbered list"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.7 2.8-.9 2.8.6 0 1.2-2.8 2-2.8 3.4h3"/></svg></button>
+      <button data-cmd="outdent" title="Decrease indent"><svg viewBox="0 0 24 24"><path d="M21 5H3M21 19H3M21 12h-9M7 9l-3 3 3 3"/></svg></button>
+      <button data-cmd="indent" title="Increase indent"><svg viewBox="0 0 24 24"><path d="M21 5H3M21 19H3M21 12h-9M4 9l3 3-3 3"/></svg></button>
+      <span class="sep"></span>
+      <button data-cmd="justifyLeft" title="Align left"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h16"/></svg></button>
+      <button data-cmd="justifyCenter" title="Center"><svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M4 18h16"/></svg></button>
+      <button data-cmd="justifyRight" title="Align right"><svg viewBox="0 0 24 24"><path d="M3 6h18M9 12h12M5 18h16"/></svg></button>
+      <span class="sep"></span>
+      <button id="btnFigure" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
+      <button id="btnTable" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
+      <span class="sep"></span>
+      <button id="btnLink" title="Link"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+      <button data-cmd="removeFormat" title="Clear formatting"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
+      <span class="sep"></span>
+      <button id="btnCite" class="cite-btn" title="Insert citation">“ Cite</button>
+      <button id="btnFootnote" title="Insert a text footnote (not a citation)">Footnote</button>
+      <button id="btnFlag" class="flag-btn" title="Leave a flag: TK, citation needed, check this (Ctrl/Cmd+Shift+K)">TK</button>
+      <button id="btnCapture" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)">→ Note</button>
+ <button id="btnIndexMark" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)">⌗</button>
+      <button id="btnComment" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)">✎</button>
+      <button id="btnLens" title="Revision lens: long sentences, passive voice, hedges, repeats">Lens</button>
+      <button id="btnFind" title="Find & replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      <span class="sep"></span>
+      <button data-cmd="undo" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button data-cmd="redo" title="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+    </div>
+    <div class="scriptbar hidden" id="scriptBar"><span>Run time <b id="scRun">0:00</b></span><span class="muted"><span id="scWords">0</span> narrated words at</span><input id="scWpm" type="number" min="60" max="260" step="5" value="150" aria-label="Words per minute"><span class="muted">wpm</span><span class="sb-sep"></span><button id="scAV" class="small">+ A/V table</button><button id="scCopy" class="small">Copy narration</button><button id="scPrompt" class="small primary">Teleprompter</button></div>
+<div class="lensbar hidden" id="lensBar"></div>
+    <div class="findbar hidden" id="findBar">
+      <input id="findQ" placeholder="Find" aria-label="Find"><span class="small muted fc" id="findCount"></span>
+      <button class="ghost icon" id="findPrev" title="Previous (Shift+Enter)">↑</button><button class="ghost icon" id="findNext" title="Next (Enter)">↓</button>
+      <input id="replQ" placeholder="Replace with" aria-label="Replace with"><button id="replOne">Replace</button><button id="replAll">All</button>
+      <label class="small fcase"><input type="checkbox" id="findCase"> Match case</label>
+      <button class="ghost small" id="findAllDocs" title="Find and replace across every document">All documents…</button>
+      <button class="ghost icon" id="findClose" title="Close (Esc)">✕</button>
+    </div>
+    <section class="board rel hidden" id="rel">
+      <div class="board-bar">
+        <button id="relBack" class="ghost">← Back to draft</button>
+        <b class="rel-head">Relationship map</b>
+        <span id="relKinds" class="rel-kinds"><label><input type="checkbox" value="person" checked> People</label><label><input type="checkbox" value="organization" checked> Organizations</label><label><input type="checkbox" value="place" checked> Places</label><label><input type="checkbox" value="term"> Terms</label></span>
+        <label class="inline rel-min">Linked at least <input type="range" id="relMin" min="1" max="10" value="1"> <b id="relMinV">1</b>×</label>
+        <label class="inline"><input type="checkbox" id="relCo" checked> Co-mentions</label>
+        <div class="spacer"></div>
+        <button id="relRelayout" title="Forget where you dragged names and arrange them again">Rearrange</button>
+        <button id="relFig" class="primary">Insert as figure…</button>
+      </div>
+      <div class="rel-wrap"><div class="rel-stage" id="relStage"></div><aside class="rel-side" id="relSide"></aside></div>
+    </section>
+    <section class="board drafts hidden" id="drafts">
+      <div class="board-bar">
+        <button id="dfBack" class="ghost">← Back to draft</button>
+        <b id="dfHead" class="df-head">Drafts</b>
+        <div class="spacer"></div>
+        <button id="dfSave" class="primary" title="⌘/Ctrl+Alt+D">Save a draft…</button>
+      </div>
+      <div class="df-wrap">
+        <aside class="df-rail" id="dfRail" aria-label="Saved drafts"></aside>
+        <div class="df-main">
+          <div class="df-pick">
+            <select id="dfL" aria-label="Left side"></select>
+            <button id="dfSwap" class="ghost" title="Swap sides">⇄</button>
+            <select id="dfR" aria-label="Right side"></select>
+            <div class="spacer"></div>
+            <label class="df-all"><input type="checkbox" id="dfAll"> Show unchanged text</label>
+            <span class="df-navbtns"><button id="dfPrev" class="ghost" title="Previous change (K)">↑</button><span id="dfPos" class="small muted"></span><button id="dfNext" class="ghost" title="Next change (J)">↓</button></span>
+            <button id="dfDl" title="A side-by-side page you can send or print">Download comparison</button>
+          </div>
+          <div class="df-sum" id="dfSum"></div>
+          <div class="df-scroll" id="dfScroll">
+            <div class="df-cols"><div id="dfLH"></div><div id="dfRH"></div></div>
+            <div class="df-grid docbody" id="dfGrid"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="board home hidden" id="home">
+      <div class="board-bar">
+        <button id="hmBack" class="ghost">← Back to draft</button>
+        <b class="hm-head">Project home</b>
+        <div class="spacer"></div>
+        <button id="hmOpen" title="Open a project .json file">Open project…</button>
+        <button id="hmNew" class="primary">New project…</button>
+      </div>
+      <div class="hm-area" id="hmArea"></div>
+    </section>
+    <section class="board plan hidden" id="plan">
+      <div class="board-bar">
+        <button id="plBack" class="ghost">← Back to draft</button>
+        <span class="pl-crumbs" id="plCrumbs"></span>
+        <label class="inline">View <select id="plView"><option value="outline">Outline</option><option value="cards">Index cards</option><option value="check">Argument check</option></select></label>
+        <div class="spacer"></div>
+        <button id="plFreewrite" title="Timed freewrite: just write, no editing">Freewrite</button>
+        <button id="plTemplates">Templates…</button>
+        <button id="plBuild" title="Turn the plan into documents">Build drafts…</button>
+        <button id="plAdd" class="primary">+ Item</button>
+      </div>
+      <div class="pl-area outline" id="plArea"></div>
+      <div class="bd-hint muted small hide-narrow">Enter: new line · Tab / Shift+Tab: indent / outdent · Alt+↑↓: move · ⌘/Ctrl+.: fold · drag ⠿ to rearrange (drop on the right side to nest) · drag notes from the Notes list onto an item to link them</div>
+    </section>
+    <section class="board hidden" id="board">
+      <div class="board-bar">
+        <button id="bdBack" class="ghost">← Back to draft</button>
+        <b class="hide-narrow">Notes board</b>
+        <label class="inline">Group by <select id="bdGroup"><option value="pile">Piles</option><option value="tag">Tags</option><option value="source">Sources</option><option value="kind">Kind</option><option value="canvas">Free canvas</option><option value="timeline">Timeline (by event date)</option></select></label>
+        <input type="search" id="bdQ" placeholder="Filter cards">
+        <div class="spacer"></div>
+        <button id="bdTidy" class="hidden" title="Line the cards up in a grid">Tidy</button>
+        <button id="bdTlFig" class="hidden" title="Turn the dated cards into a timeline graphic">Insert as figure…</button>
+        <button id="bdNewPile">+ Pile</button>
+        <button id="bdNewCard" class="primary">+ Card</button>
+      </div>
+      <div class="bd-sel hidden" id="bdSel">
+        <button data-b="pin">Pin / unpin</button><button data-b="tag">Tag…</button><button data-b="pile">Move to pile…</button><button data-b="merge">Merge</button><button data-b="draft">Draft from these</button><button data-b="del" class="danger">Delete</button><button data-b="clear" class="ghost">Clear selection</button>
+      </div>
+      <div class="bd-area cols" id="bdArea"></div>
+      <div class="bd-hint muted small hide-narrow">Drag cards between columns or within one. Shift- or ⌘/Ctrl-click to select several. Click a card to edit it at right.</div>
+    </section>
+    <div class="scroller" id="scroller" tabindex="0" aria-label="Document page">
+      <article class="page docbody" id="page">
+        <aside class="margin" id="margin" aria-label="Margin notes"></aside>
+        <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
+        <header class="title-block" id="titleBlock"></header>
+        <div id="editor" contenteditable="true" spellcheck="true"></div>
+        <section class="refs" id="refs"></section>
+      </article>
+    </div>
+  </main>
+
+  <aside class="reader hidden" id="reader">
+    <div class="rd-resize" id="rdResize" title="Drag to resize"></div>
+    <div class="rd-bar"><button id="rdOpen" title="Open a PDF file">Open…</button><b class="rd-name" id="rdName">PDF reader</b><select id="rdSource" aria-label="Linked source"></select><button class="icon ghost" id="rdClose" aria-label="Close reader">✕</button></div>
+    <div class="rd-bar rd-bar2">
+      <button class="ghost icon" id="rdPrev" title="Previous page">‹</button><input id="rdPage" aria-label="Page" value="1"><span class="small muted" id="rdOf">/ 0</span><button class="ghost icon" id="rdNext" title="Next page">›</button>
+      <span class="sep"></span><button class="ghost icon" id="rdZoomOut" title="Zoom out">−</button><span class="small" id="rdZoom">100%</span><button class="ghost icon" id="rdZoomIn" title="Zoom in">+</button><button class="ghost small" id="rdFit" title="Fit width">Fit</button>
+      <span class="sep"></span><input type="search" id="rdFind" placeholder="Find (Enter)"><span class="small muted" id="rdFindN"></span>
+      <label class="rd-off" title="If PDF page 15 is printed page 1, enter 14">Page offset <input id="rdOffset" inputmode="numeric" placeholder="0"></label>
+    </div>
+    <div class="rd-pages" id="rdPages"><div class="rd-empty">Open a PDF, or drop one anywhere on this window.<br><br>Select a passage to turn it into a quote note with the page number filled in. PDFs linked to a source are kept in this browser, not in your project file.</div></div>
+    <div class="rd-selbar hidden" id="rdSelBar"><button class="primary" data-k="quote">Quote note</button><button data-k="paraphrase">Paraphrase note</button><span class="small muted" id="rdSelPage"></span></div>
+  </aside>
+
+  <aside class="panel hidden" id="panel">
+    <div class="panel-head"><h3 id="panelTitle"></h3><button class="icon ghost" id="btnPanelClose" aria-label="Close panel">✕</button></div>
+    <div class="panel-body" id="panelBody"></div>
+    <div class="panel-foot" id="panelFoot"></div>
+  </aside>
+</div>
+
+<!-- citation dialog -->
+<dialog id="citeDlg" class="wide"><div class="dlg">
+  <h3 id="citeDlgTitle">Insert citation</h3>
+  <div class="body">
+    <div class="grid2" style="grid-template-columns:3fr 2fr">
+      <input type="search" id="citeSearch" placeholder="Search your sources…">
+      <div style="display:flex;gap:6px"><input id="citeLookup" placeholder="or add DOI / ISBN"><button id="citeLookupBtn">Add</button></div>
+    </div>
+    <ul class="pick" id="citePick"></ul>
+    <label>In this citation <span class="muted">(add several sources for a combined note or parenthetical)</span></label>
+    <div id="citeCluster"></div>
+    <div class="preview-box"><h5>Preview</h5><div id="citePreview" class="muted">Choose a source above.</div></div>
+  </div>
+  <footer><button id="citeRemove" class="danger left hidden">Remove citation</button><button id="citeCancel">Cancel</button><button id="citeOk" class="primary">Insert</button></footer>
+</div></dialog>
+
+<!-- footnote dialog -->
+<dialog id="fnDlg"><div class="dlg">
+  <h3>Footnote</h3>
+  <div class="body">
+    <textarea id="fnText" rows="5" placeholder="Discursive note text. *Italics* with asterisks."></textarea>
+    <div class="tip">Text footnotes share numbering with citation notes. For a source, use “Cite” instead so it gets formatted and added to the bibliography.</div>
+  </div>
+  <footer><button id="fnRemove" class="danger left hidden">Remove</button><button id="fnCancel">Cancel</button><button id="fnOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<!-- page setup -->
+<dialog id="setupDlg"><div class="dlg">
+  <h3>Page setup</h3>
+  <div class="body">
+    <div class="radio-row"><label><input type="checkbox" id="suTitleBlock"> Show title block</label></div>
+    <div class="grid2">
+      <div><label>Author</label><input id="suAuthor"></div>
+      <div><label>Date</label><input id="suDate" placeholder="e.g. November 20, 2026"></div>
+    </div>
+    <label>Subtitle / course / publication line</label><input id="suSubtitle">
+    <div class="grid3">
+      <div><label>Font</label><select id="suFont"><option value="book">Book serif</option><option value="times">Times</option><option value="sans">Sans-serif</option></select></div>
+      <div><label>Size</label><select id="suSize"><option>11</option><option>12</option><option>13</option></select></div>
+      <div><label>Line spacing</label><select id="suSpacing"><option value="1.25">Single</option><option value="1.5">1.5</option><option value="2">Double</option></select></div>
+    </div>
+    <div class="grid2">
+      <div><label>Paper (PDF)</label><select id="suPaper"><option value="letter">US Letter</option><option value="A4">A4</option></select></div>
+      <div><label>Bibliography lists</label><select id="suBib"><option value="cited">Only sources cited</option><option value="all">Every source in project</option><option value="none">No bibliography</option></select></div>
+    </div>
+    <div class="grid3"><div><label>Word target</label><input id="suTarget" inputmode="numeric" placeholder="e.g. 2500"></div>
+      <div><label>In a manuscript, this is</label><select id="suRole"><option value="front">Front matter</option><option value="body">A chapter</option><option value="back">Back matter</option></select></div>
+      <div><label>PDF notes</label><select id="suPdfNotes"><option value="foot">Footnotes (bottom of page)</option><option value="end">Endnotes (Notes section)</option></select></div></div>
+    <div class="radio-row" style="margin-top:8px"><label><input type="checkbox" id="suIndex"> Add an index (PDF, Word, ePub, HTML)</label></div>
+    <div class="radio-row" style="margin-top:8px"><label><input type="checkbox" id="suScript"> This is a video script: show run time and timecodes</label> <label class="inline">at <input id="suWpm" type="number" min="60" max="260" step="5" value="150" style="width:5em"> words per minute</label></div>
+    <label>Margin notes in exports</label><select id="suMargin"><option value="word">Word comments in Word files; left out elsewhere</option><option value="page">On a separate Marginalia page at the end (all formats)</option><option value="omit">Leave them out</option></select>
+    <div class="radio-row"><label><input type="checkbox" id="suIndent"> Indent first line of paragraphs</label><label><input type="checkbox" id="suPageNums"> Page numbers in PDF</label></div>
+    <div class="tip">PDFs can put notes at the foot of each page with running heads (book style) or collect them as endnotes before the bibliography. Word files always get real Word footnotes. OSINT style has no bibliography.</div>
+  </div>
+  <footer><button id="suCancel">Cancel</button><button id="suOk" class="primary">Apply</button></footer>
+</div></dialog>
+
+<!-- compile -->
+<dialog id="compileDlg" class="wide"><div class="dlg">
+  <h3>Compile notes into a draft</h3>
+  <div class="body">
+    <div class="grid3">
+      <div><label>Tag</label><select id="cmTag"></select></div>
+      <div><label>Source</label><select id="cmSource"></select></div>
+      <div><label>Arrange</label><select id="cmGroup"><option value="order">In the order below</option><option value="tag">Grouped by tag</option><option value="source">Grouped by source</option></select></div>
+    </div>
+    <ul class="compile-list" id="cmList"></ul>
+    <div class="radio-row">
+      <label><input type="checkbox" id="cmTitles" checked> Note titles as headings</label>
+      <label><input type="checkbox" id="cmCite" checked> Cite linked sources</label>
+    </div>
+    <div class="radio-row">
+      <label><input type="radio" name="cmDest" value="new" checked> New document</label>
+      <label><input type="radio" name="cmDest" value="cursor"> Insert at cursor in current document</label>
+    </div>
+  </div>
+  <footer><span class="muted small left" id="cmCount"></span><button id="cmCancel">Cancel</button><button id="cmOk" class="primary">Compile</button></footer>
+</div></dialog>
+
+<!-- flag -->
+<dialog id="flagDlg"><div class="dlg">
+  <h3 id="flagDlgTitle">Leave a flag</h3>
+  <div class="body">
+    <div class="radio-row">
+      <label><input type="radio" name="flagKind" value="tk" checked> <b class="fk fk-tk">TK</b> missing fact or detail</label>
+      <label><input type="radio" name="flagKind" value="cite"> <b class="fk fk-cite">cite?</b> citation needed</label>
+      <label><input type="radio" name="flagKind" value="check"> <b class="fk fk-check">check</b> verify this</label>
+    </div>
+    <label>Note to self <span class="muted">(optional)</span></label><input id="flagNote" placeholder="e.g. tonnage of the Liaoning; confirm date of the strike">
+    <div class="tip">Flags let you keep drafting past a gap. They appear under <b>Outline → To resolve</b>. Exports print them as highlighted [TK] text so nothing slips through.</div>
+  </div>
+  <footer><button id="flagRemove" class="danger left hidden">Resolve (remove)</button><button id="flagCiteNow" class="hidden">Cite now</button><button id="flagCancel">Cancel</button><button id="flagOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<!-- manuscript -->
+<dialog id="msDlg" class="wide"><div class="dlg">
+  <h3>Compile manuscript</h3>
+  <div class="body">
+    <div class="grid2">
+      <div><label>Include</label><select id="msScope"></select></div>
+      <div><label>Manuscript title</label><input id="msTitle"></div>
+      <div><label>Citation style</label><select id="msStyle"></select></div>
+      <div><label>Output</label><select id="msFormat"><option value="docx">Word (.docx), real footnotes</option><option value="pdf">PDF (print)</option><option value="md">Markdown</option><option value="epub">ePub (e-book)</option><option value="html">HTML</option><option value="doc">A new document in this project</option></select></div>
+    </div>
+    <div class="radio-row" style="margin-top:8px">
+      <label><input type="checkbox" id="msPartTitles" checked> Part names as headings</label>
+      <label><input type="checkbox" id="msDocTitles" checked> Document titles as chapter headings</label>
+      <label><input type="checkbox" id="msBreaks" checked> Each chapter on a new page</label>
+      <label><input type="checkbox" id="msNumber"> Number chapters</label>
+      <label><input type="checkbox" id="msToc" checked> Table of contents</label><label><input type="checkbox" id="msLof"> List of figures &amp; tables</label><label><input type="checkbox" id="msAbbr"> List of abbreviations</label>
+      <label><input type="checkbox" id="msIndex"> Index</label>
+    </div>
+    <ul class="compile-list" id="msList"></ul>
+    <div class="tip">Front matter goes first and back matter last, whatever their place in the binder (set a document’s role in Page setup, or start it from Templates). Notes are numbered continuously across the whole manuscript, and short forms follow the first full citation anywhere in it. Title block, fonts and spacing come from the first document’s page setup.</div>
+  </div>
+  <footer><span class="muted small left" id="msCount"></span><button id="msCancel">Cancel</button><button id="msOk" class="primary">Compile</button></footer>
+</div></dialog>
+
+<!-- web clipper -->
+<dialog id="clipDlg" class="wide"><div class="dlg">
+  <h3>Web clipper</h3>
+  <div class="body">
+    <p style="margin-top:0">A bookmark button that sends any web page you’re reading into Anabasis as a source, with the author, date and site filled in where the page provides them. Select a passage first, and it also becomes a quote note linked to that source.</p>
+    <p style="text-align:center;margin:18px 0"><a id="clipLink" class="clip-btn" href="#">✂ Clip to Anabasis</a></p>
+    <ol class="small">
+      <li><b>On a computer:</b> show your bookmarks bar, then drag the button above onto it.</li>
+      <li><b>On iPhone, iPad or Android:</b> tap <i>Copy code</i>, bookmark any page, then edit that bookmark and paste the code in place of its address.</li>
+      <li>On any page, select a passage if you want one, then click the bookmark. Anabasis opens (or uses the tab it’s already in) and files the clip.</li>
+    </ol>
+    <div class="tip hidden" id="clipLocal"><b>Heads up:</b> you’re running Anabasis from a file on your computer. Browsers don’t let web pages open local files, so the clipper only works once Anabasis is at a web address (GitHub Pages works). The bookmark is made for this address: <code id="clipHere"></code></div>
+    <div class="tip">Private by design: the clipper sends the page’s title, address, author and date tags and your selection straight to your own Anabasis tab. Nothing goes to any server. If you later move Anabasis to a new address, make the bookmark again.</div>
+  </div>
+  <footer><button id="clipCopy" class="left">Copy code</button><button id="clipClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<!-- versions -->
+<dialog id="sdDlg"><div class="dlg">
+  <h3 id="sdTitle">Save a draft</h3>
+  <div class="body">
+    <p class="small muted" id="sdInfo" style="margin-top:0"></p>
+    <label style="margin-top:0">Name</label><input id="sdName" placeholder="Draft 1">
+    <label>What’s this draft? <span class="muted">(optional)</span></label><textarea id="sdNote" rows="3" placeholder="e.g. Sent to the editor. Or: before cutting the opening section."></textarea>
+    <div class="tip">A draft is a fixed copy of this document as it is right now. Keep writing; you can compare any two drafts side by side, bring paragraphs back, or restore one.</div>
+  </div>
+  <footer><button id="sdCancel">Cancel</button><button id="sdOk" class="primary">Save draft</button></footer>
+</div></dialog>
+
+<!-- names -->
+<dialog id="namesDlg" class="wide"><div class="dlg">
+  <h3>Names &amp; spellings</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">List the people, organizations, places and terms you write about with their preferred spelling. Any variant you list is flagged in the draft (Outline → Names), with one-click fixes.</p>
+    <div id="namesList"></div>
+    <button id="namesAdd" class="small">+ Add a name</button>
+    <h4 style="margin:16px 0 4px">Possible inconsistent spellings</h4>
+    <p class="small muted" style="margin-top:0">Capitalized words across your documents and notes that differ by a letter or two.</p>
+    <ul class="sug" id="namesSug"></ul>
+  </div>
+  <footer><button id="namesClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<!-- audit -->
+<dialog id="auditDlg" class="wide"><div class="dlg">
+  <h3>Source audit</h3>
+  <div class="body">
+    <label style="margin-top:0">Scope</label><select id="auScope" style="width:auto"><option value="all">Whole project</option><option value="doc">This document</option></select>
+    <div id="auBody"></div>
+  </div>
+  <footer><button id="auClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<!-- templates -->
+<dialog id="tplDlg" class="wide"><div class="dlg">
+  <h3>Templates</h3>
+  <div class="body"><p class="small muted" style="margin-top:0">Each starts a new document with its manuscript role set, so Compile manuscript puts it in the right place.</p><div class="tpl-grid" id="tplList"></div></div>
+  <footer><button id="tplClose">Close</button></footer>
+</div></dialog>
+
+<!-- writing record -->
+<dialog id="recDlg" class="wide"><div class="dlg">
+  <h3>Writing record</h3>
+  <div class="body">
+    <div class="rec-stats" id="recStats"></div>
+    <div id="recChart"></div>
+    <p class="small muted">Words added per day, last 30 days. Pastes and imports of more than 250 words at once don’t count. Set a daily goal in Settings to track a streak.</p>
+    <table class="audit rec"><thead><tr><th>Document</th><th>Status</th><th>Deadline</th><th>Words</th><th></th></tr></thead><tbody id="recDocs"></tbody></table>
+  </div>
+  <footer><button id="recClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<!-- transcript -->
+<dialog id="trDlg" class="wide"><div class="dlg">
+  <h3>Interview transcript</h3>
+  <div class="body">
+    <div style="display:flex;gap:6px"><select id="trSource"></select><button id="trNewSrc" title="Create an interview source">+ New interview</button></div>
+    <label>Transcript <span class="muted">(saved with the source)</span> <button class="small hl" id="trOpenFile" title="Caption files (.srt, .vtt), text, or Word">Open file…</button></label>
+    <textarea id="trText" rows="5" placeholder="Paste a transcript: Otter, Zoom, Descript, YouTube captions, or your own notes with timestamps."></textarea>
+    <div class="tr-findrow"><label style="margin:0">Lines <span class="muted">(click to select; Shift-click for a range)</span></label><input id="trFind" type="search" placeholder="Search the transcript"><span class="small muted" id="trFindN"></span></div>
+    <ul class="tr-lines" id="trLines"></ul>
+  </div>
+  <footer><span class="muted small left" id="trCount"></span><button id="trPara">Paraphrase note</button><button id="trQuote" class="primary">Quote note</button><button id="trClose">Done</button></footer>
+</div></dialog>
+
+<!-- index entry -->
+<dialog id="ixDlg"><div class="dlg">
+  <h3>Index entry</h3>
+  <div class="body">
+    <div class="grid2"><div><label style="margin-top:0">Entry</label><input id="ixMain" placeholder="e.g. Wagner Group"></div><div><label style="margin-top:0">Subentry <span class="muted">(optional)</span></label><input id="ixSub" placeholder="e.g. in Africa"></div></div>
+    <div class="radio-row" id="ixAllRow"><label><input type="checkbox" id="ixAll"> Index every occurrence in the project, not just this spot</label></div>
+    <div class="tip">Marks are invisible in exports. With <i>Add an index</i> on (Page setup or Compile manuscript), the index lists real page numbers in book-style PDFs, builds in Word when you open the file, and links back to each passage in ePub and HTML.</div>
+  </div>
+  <footer><button id="ixRemove" class="danger left hidden">Remove mark</button><button id="ixCancel">Cancel</button><button id="ixOk" class="primary">Mark</button></footer>
+</div></dialog>
+<dialog id="ixManDlg" class="wide"><div class="dlg">
+  <h3>Index</h3>
+  <div class="body">
+    <p class="small muted" id="ixStat" style="margin-top:0"></p>
+    <div class="radio-row"><label><input type="checkbox" id="ixNames"> Index every name in <b>Names &amp; spellings</b> (people as “Last, First”)</label></div>
+    <label>Terms indexed wherever they appear</label>
+    <div id="ixTerms"></div>
+    <div style="display:flex;gap:6px;margin-top:6px"><button id="ixAddTerm" class="small">+ Add term</button><button id="ixPreview" class="small">Preview index</button></div>
+    <div class="diffbox hidden" id="ixPrev"></div>
+    <div class="tip">To index a single passage, put the cursor there and click ⌗ in the toolbar (Ctrl/Cmd+Alt+X). Use subentries for depth (Wagner Group → in Africa) and <i>See also</i> for cross-references. Then tick <b>Add an index</b> in Page setup, or <b>Index</b> in Compile manuscript.</div>
+  </div>
+  <footer><button id="ixManClose" class="primary">Done</button></footer>
+</div></dialog>
+<!-- start fresh -->
+<dialog id="freshDlg"><div class="dlg">
+  <h3>Start fresh</h3>
+  <div class="body">
+    <div class="radio-row" style="flex-direction:column;gap:2px">
+      <label><input type="radio" name="frMode" value="blank" checked> <span><b>Blank project.</b> Clears the current project from this browser and starts empty. Settings are kept.</span></label>
+      <label><input type="radio" name="frMode" value="all"> <span><b>Erase everything.</b> Removes every trace Anabasis keeps in this browser: the working copy, stored PDFs, settings and autosaves. Then reloads, empty.</span></label>
+    </div>
+    <div class="radio-row" style="margin-top:8px"><label><input type="checkbox" id="frBackup" checked> Download a backup of the current project first</label></div>
+    <div class="tip">Project files you’ve saved to your computer aren’t touched.</div>
+  </div>
+  <footer><button id="frCancel">Cancel</button><button id="frOk" class="primary danger-bg">Start fresh</button></footer>
+</div></dialog>
+
+<!-- plan templates -->
+<dialog id="ptDlg" class="wide"><div class="dlg">
+  <h3>Plan templates</h3>
+  <div class="body"><p class="small muted" style="margin-top:0">Starting structures for common nonfiction forms. Everything is editable once it’s in your plan.</p>
+    <div class="radio-row"><label><input type="checkbox" id="ptInside"> Add inside the selected item (otherwise at the current level)</label></div>
+    <div class="tpl-grid" id="ptList"></div></div>
+  <footer><button id="ptClose">Close</button></footer>
+</div></dialog>
+<!-- new project -->
+<dialog id="npDlg" class="wide"><div class="dlg">
+  <h3>New project</h3>
+  <div class="body">
+    <label style="margin-top:0">Working title</label><input id="npTitle" placeholder="e.g. Gangster Democracy">
+    <label>What are you writing?</label><div class="np-kinds" id="npKinds"></div>
+    <div class="grid3"><div><label>Citation style</label><select id="npStyle"></select></div><div><label>Word target</label><input id="npTarget" inputmode="numeric" placeholder="none"></div><div><label>Deadline</label><input type="date" id="npDeadline"></div></div>
+    <div class="radio-row"><label><input type="checkbox" id="npPlan" checked> <span id="npPlanLbl">Start the plan from a template</span></label></div>
+    <div class="tip" id="npWarn"></div>
+  </div>
+  <footer><button id="npCancel">Cancel</button><button id="npOk" class="primary">Create project</button></footer>
+</div></dialog>
+<!-- table -->
+<dialog id="tblDlg"><div class="dlg">
+  <h3>Insert a table</h3>
+  <div class="body">
+    <div class="grid2"><div><label>Rows</label><input id="tbRows" type="number" min="1" max="60" value="3"></div><div><label>Columns</label><input id="tbCols" type="number" min="1" max="12" value="3"></div></div>
+    <div class="radio-row"><label><input type="checkbox" id="tbHead" checked> Header row</label></div>
+    <div class="tip">Tab moves to the next cell (and adds a row at the end). A bar above the table adds or removes rows and columns. Type the caption on the line above the table.</div>
+  </div>
+  <footer><button id="tbCancel">Cancel</button><button id="tbOk" class="primary">Insert table</button></footer>
+</div></dialog>
+<!-- substack -->
+<dialog id="ssDlg"><div class="dlg">
+  <h3>Prepare for Substack</h3>
+  <div class="body">
+    <div id="ssSum"></div>
+    <div class="tip">Paste into a new Substack post. Headings, bold and italics, links, block quotes and images carry over. The package is a backup: post.html plus every image numbered in order, for anything that doesn’t paste.</div>
+  </div>
+  <footer><button id="ssClose">Close</button><button id="ssZip">Download package (.zip)</button><button id="ssCopy" class="primary">Copy for Substack</button></footer>
+</div></dialog>
+<!-- markdown import -->
+<dialog id="mdDlg"><div class="dlg">
+  <h3>Import Markdown notes</h3>
+  <div class="body">
+    <p>Bring in notes from Notecards, an Obsidian vault, or any folder of <code>.md</code> files. Titles, YAML front matter, <code>#tags</code> and <code>[[links]]</code> between notes all carry over.</p>
+    <div class="radio-row"><label><input type="checkbox" id="mdPiles" checked> Subfolders become board piles</label></div>
+    <div class="tip">Hidden folders such as <code>.obsidian</code> are skipped, and so are notes already in this project. Embedded images become text placeholders.</div>
+  </div>
+  <footer><button id="mdCancel">Cancel</button><button id="mdFiles">Choose files…</button><button id="mdFolder" class="primary">Choose a folder…</button></footer>
+</div></dialog>
+<!-- password -->
+<dialog id="pwDlg"><div class="dlg">
+  <h3 id="pwTitle">Password</h3>
+  <div class="body">
+    <p id="pwMsg"></p>
+    <label>Password</label><input id="pw1" type="password" autocomplete="current-password">
+    <div id="pw2Row"><label>Type it again</label><input id="pw2" type="password" autocomplete="new-password"></div>
+    <div class="pw-err" id="pwErr"></div>
+    <div class="tip" id="pwWarn"><b>There’s no way to recover a forgotten password</b> — not for you, and not for anyone else. Keep it in a password manager. Locking covers the project file and this browser’s working copy (documents, notes, sources and images). PDFs you open in the reader are stored separately and aren’t locked.</div>
+  </div>
+  <footer><button id="pwFresh" class="ghost danger hidden">Forgot it? Start without this copy</button><button id="pwCancel">Cancel</button><button id="pwOk" class="primary">Unlock</button></footer>
+</div></dialog>
+<dialog id="lkDlg"><div class="dlg">
+  <h3>🔒 This project is locked</h3>
+  <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p></div>
+  <footer><button id="lkRemove" class="danger">Remove lock</button><button id="lkChange">Change password</button><button id="lkClose" class="primary">Done</button></footer>
+</div></dialog>
+<!-- chart -->
+<dialog id="chDlg" class="xwide"><div class="dlg">
+  <h3>Chart from data</h3>
+  <div class="body ch-body">
+    <div class="ch-left">
+      <label style="margin-top:0">Data</label><select id="chFromTable"></select>
+      <textarea id="chData" rows="9" spellcheck="false" placeholder="Year, China, United States&#10;2015, 255, 271&#10;2020, 333, 296&#10;2025, 370, 290"></textarea>
+      <div class="small muted">First row names the series; first column labels the categories (years, countries…). Paste straight from a spreadsheet.</div>
+      <div class="grid2"><div><label>Chart type</label><select id="chType"><option value="bar">Columns</option><option value="hbar">Bars (horizontal)</option><option value="stack">Stacked columns</option><option value="line">Line</option><option value="area">Area</option><option value="multi">Small multiples (one per series)</option><option value="dot">Dot plot</option></select></div><div><label>Value axis label</label><input id="chYLabel" placeholder="e.g. Ships in service"></div></div>
+      <div class="grid2"><div><label>Numbers</label><select id="chFmt"><option value="n">1,234</option><option value="d1">1,234.5</option><option value="pct">12%</option><option value="usd">$1,234</option><option value="k">1.2K, 3.4M</option></select></div><div><label>Shape</label><select id="chAspect"><option value="wide">Wide (16:9)</option><option value="std">Standard (4:3)</option><option value="tall">Tall (4:5)</option></select></div></div>
+      <label>Events and periods <span class="muted small">(optional; columns, lines and areas)</span></label><textarea id="chEvents" rows="2" spellcheck="false" placeholder="2022 | Full-scale invasion&#10;2014–2015 | Minsk agreements"></textarea>
+      <label>Caption</label><input id="chCaption" placeholder="What the chart shows">
+      <label>Source</label><input id="chSource" placeholder="e.g. IISS, The Military Balance 2025">
+      <div class="ch-err" id="chErr"></div>
+    </div>
+    <div class="ch-right"><div class="ch-stage" id="chStage"><canvas id="chCanvas"></canvas></div><div class="small muted" id="chNote"></div></div>
+  </div>
+  <footer><button id="chCancel">Cancel</button><button id="chOk" class="primary">Insert chart</button></footer>
+</div></dialog>
+<!-- map -->
+<dialog id="mpDlg" class="xwide mp-dlg"><div class="dlg">
+  <h3>Map</h3>
+  <div class="body mp-body">
+    <div class="mp-main">
+      <div class="mp-bar">
+        <span class="mp-tools" id="mpTools"><button data-m="pan" title="Move the map; select items">Move</button><button data-m="shade" title="Shade countries">Shade</button><button data-m="marker" title="Place a marker">Marker</button><button data-m="route" title="Draw a route or arrow">Route</button><button data-m="area" title="Draw an area">Area</button></span>
+        <button id="mpFinish" class="small primary hidden">Finish</button>
+        <div class="mp-searchwrap"><input id="mpSearch" type="search" placeholder="Find a place or country…" autocomplete="off"><div class="mp-results hidden" id="mpResults"></div></div>
+        <select id="mpPreset" aria-label="Region"></select>
+        <button id="mpFit" title="Zoom to everything on the map">Fit</button>
+        <button id="mpZoomOut" class="ghost" title="Zoom out">−</button><button id="mpZoomIn" class="ghost" title="Zoom in">+</button>
+      </div>
+      <div class="mp-keys" id="mpKeys"></div>
+      <div class="mp-stage" id="mpStage" tabindex="0"></div>
+      <div class="small muted" id="mpHint"></div>
+    </div>
+    <aside class="mp-side" id="mpSide">
+      <label style="margin-top:0">Legend</label><div id="mpLegend"></div>
+      <div class="radio-row"><label><input type="checkbox" id="mpLabels"> Country names</label><label><input type="checkbox" id="mpGrat"> Grid lines</label><label title="Oblasts, provinces and states for selected countries"><input type="checkbox" id="mpProv"> Provinces</label><label><input type="checkbox" id="mpRivers"> Rivers and lakes</label><label><input type="checkbox" id="mpRiverNames"> River names</label><label title="Shown when zoomed in to country scale"><input type="checkbox" id="mpScale" checked> Scale bar</label><label title="Shown when zoomed in to a region"><input type="checkbox" id="mpLocator" checked> Locator inset</label></div>
+      <label>On the map</label><div id="mpItems"></div>
+      <label>Caption</label><input id="mpCaption" placeholder="What the map shows">
+      <label>Source</label><input id="mpSource" placeholder="e.g. ISW, as of Nov 20, 2026">
+      <div class="small muted" style="margin-top:8px">Borders: Natural Earth (public domain), with Crimea shown as part of Ukraine. Other disputed areas follow Natural Earth’s de facto lines; use a hatched area to show control or claims.</div>
+    </aside>
+  </div>
+  <footer><button id="mpCancel">Cancel</button><button id="mpOk" class="primary">Insert map</button></footer>
+</div></dialog>
+<!-- timeline figure -->
+<dialog id="tfDlg" class="xwide"><div class="dlg">
+  <h3>Timeline figure</h3>
+  <div class="body">
+    <div class="tf-stage" id="tfStage"></div>
+    <div class="tf-cols"><div><label style="margin-top:0">Events <button class="ghost small" id="tfAll">All / none</button></label><div class="tf-list" id="tfList"></div><div class="small muted">Dates come from your notes’ event dates. Edit the labels here to shorten them; ranges like “1680–1692” draw as bars.</div></div>
+    <div><label style="margin-top:0">Caption</label><input id="tfCaption" placeholder="What the timeline shows"><label>Source</label><input id="tfSource" placeholder="Optional"></div></div>
+  </div>
+  <footer><button id="tfCancel">Cancel</button><button id="tfOk" class="primary">Insert timeline</button></footer>
+</div></dialog>
+<!-- relationship figure -->
+<dialog id="nfDlg" class="xwide"><div class="dlg">
+  <h3>Relationship map figure</h3>
+  <div class="body"><div class="tf-stage" id="nfStage"></div>
+    <div class="grid2"><div><label>Caption</label><input id="nfCaption" placeholder="What the map shows"></div><div><label>Source</label><input id="nfSource" placeholder="Optional"></div></div>
+  </div>
+  <footer><button id="nfRefresh" class="hidden">Redraw from current notes</button><button id="nfCancel">Cancel</button><button id="nfOk" class="primary">Insert figure</button></footer>
+</div></dialog>
+<!-- acronyms -->
+<dialog id="acDlg" class="wide"><div class="dlg">
+  <h3>Acronyms &amp; abbreviations</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Anabasis learns acronyms when you spell them out in the text (“Islamic Revolutionary Guard Corps (IRGC)”). It flags ones you never define, define late or twice, or define but use only once. A <i>List of Abbreviations</i> (Templates, or the manuscript options) fills in from this list on export.</p>
+    <div id="acRows" class="ac-rows"></div>
+    <button id="acAdd" class="small">+ Add one</button>
+    <label>Never flag these <span class="muted">(well-known; US, UK, UN and EU are already skipped)</span></label><input id="acIgnore" placeholder="e.g. NATO, FBI">
+  </div>
+  <footer><button id="acDone" class="primary">Done</button></footer>
+</div></dialog>
+<!-- github -->
+<dialog id="ghDlg" class="wide"><div class="dlg">
+  <h3>Back up to GitHub</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Each backup is a commit of the project file to a <b>private</b> repository, so GitHub keeps the full history. A locked project is backed up locked.</p>
+    <div class="grid3"><div><label style="margin-top:0">Repository</label><input id="ghRepo" placeholder="owner/name"></div><div><label style="margin-top:0">Branch</label><input id="ghBranch" placeholder="main"></div><div><label style="margin-top:0">Folder</label><input id="ghFolder" placeholder="anabasis"></div></div>
+    <label>Access token</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div class="small muted">Make a fine-grained token on GitHub (Settings → Developer settings) with access to just this repository and <b>Contents: Read and write</b>.</div>
+    <div class="radio-row"><label><input type="checkbox" id="ghRemember"> Remember the token on this device</label><label><input type="checkbox" id="ghAuto"> Back up whenever I save</label></div>
+    <div class="small muted">Saved to <code id="ghPath"></code>. A remembered token is stored unencrypted in this browser; leave it unchecked on shared computers.</div>
+    <div class="gh-status" id="ghStatus"></div>
+    <ul class="ver-list" id="ghHist"></ul>
+  </div>
+  <footer><button id="ghTest">Test connection</button><button id="ghHistory">History…</button><button id="ghClose">Close</button><button id="ghNow" class="primary">Back up now</button></footer>
+</div></dialog>
+<div class="tp hidden" id="tp" role="dialog" aria-label="Teleprompter">
+  <div class="tp-scroll" id="tpScroll"><div class="tp-pad"></div><div class="tp-text" id="tpText"></div><div class="tp-pad"></div></div>
+  <div class="tp-line" aria-hidden="true"></div>
+  <div class="tp-bar"><button id="tpPlay" class="primary">Play</button><button id="tpSlower" title="Slower (⌘/Ctrl+↓)">−</button><span><b id="tpWpm">150</b> wpm</span><button id="tpFaster" title="Faster (⌘/Ctrl+↑)">+</button><span class="sb-sep"></span><button id="tpSmaller" title="Smaller text">A−</button><button id="tpBigger" title="Larger text">A+</button><button id="tpMirror" title="Flip for a beam-splitter prompter">Mirror</button><label class="inline"><input type="checkbox" id="tpCues"> Show visual cues</label><div class="spacer"></div><span id="tpLeft"></span><button id="tpClose">Close (Esc)</button><div class="tp-prog"><i id="tpBar"></i></div></div>
+</div>
+<!-- house style -->
+<dialog id="hsDlg" class="wide"><div class="dlg">
+  <h3>House style</h3>
+  <div class="body hs-body">
+    <p class="small muted" style="margin-top:0">Rules for this project. Anything that breaks one is listed under House style in the Outline tab, with a fix.</p>
+    <div class="grid2">
+      <div><label>Numbers</label><select id="hs_numbers"><option value="off">Don’t check</option><option value="ap">Spell out one to nine (AP, news)</option><option value="chicago">Spell out up to one hundred (Chicago)</option></select></div>
+      <div><label>Percent</label><select id="hs_percent"><option value="off">Don’t check</option><option value="word">12 percent</option><option value="symbol">12%</option></select></div>
+      <div><label>United States</label><select id="hs_us"><option value="off">Don’t check</option><option value="US">US</option><option value="U.S.">U.S.</option></select></div>
+      <div><label>Serial comma</label><select id="hs_serial"><option value="off">Don’t check</option><option value="on">Use it (red, white, and blue)</option><option value="off-rule">Drop it (red, white and blue)</option></select></div>
+      <div><label>Dates</label><select id="hs_dates"><option value="off">Don’t check</option><option value="us">February 24, 2022</option><option value="intl">24 February 2022</option></select></div>
+      <div><label>Em dashes</label><select id="hs_dash"><option value="off">Don’t check</option><option value="closed">Closed—like this</option><option value="spaced">Spaced — like this</option></select></div>
+      <div><label>Ellipses</label><select id="hs_ellipsis"><option value="off">Don’t check</option><option value="char">One character (…)</option><option value="spaced">Spaced periods (. . .)</option></select></div>
+      <div class="hs-checks"><label><input type="checkbox" id="hs_quotes"> Curly quotes and apostrophes</label><label><input type="checkbox" id="hs_doubleSpace"> No double spaces</label></div>
+    </div>
+    <label>Preferred spellings <span class="muted">(one per line: preferred = avoid, avoid…)</span></label>
+    <textarea id="hs_prefer" rows="7" spellcheck="false"></textarea>
+  </div>
+  <footer><button id="hsReset" class="left ghost">Reset to defaults</button><button id="hsCancel">Cancel</button><button id="hsSave" class="primary">Save rules</button></footer>
+</div></dialog>
+<!-- find across documents -->
+<dialog id="frDlg" class="wide"><div class="dlg">
+  <h3>Find and replace in all documents</h3>
+  <div class="body">
+    <div class="grid2"><div><label style="margin-top:0">Find</label><input id="frFind" autocomplete="off"></div><div><label style="margin-top:0">Replace with</label><input id="frRepl" autocomplete="off" placeholder="Leave empty to delete"></div></div>
+    <div class="radio-row fr-opts"><label><input type="checkbox" id="frCase"> Match case</label><label><input type="checkbox" id="frWord"> Whole words</label><label title="JavaScript regular expressions; use $1 in the replacement"><input type="checkbox" id="frRe"> Pattern (regex)</label><label><input type="checkbox" id="frNotes"> Include notes</label><select id="frScope" aria-label="Where to search"><option value="all">Every document</option><option value="part">This part only</option><option value="doc">This document</option></select></div>
+    <div class="small muted" id="frMsg"></div>
+    <div class="fr-sum"><b id="frSum"></b> <span class="small muted">Citations, footnotes and index marks are skipped.</span></div>
+    <ul class="fr-results" id="frResults"></ul>
+  </div>
+  <footer><span class="small muted left">Each changed document gets a safety copy in Drafts first.</span><button id="frClose">Close</button><button id="frGo" class="primary">Replace selected</button></footer>
+</div></dialog>
+<!-- promo kit -->
+<dialog id="pkDlg" class="xwide"><div class="dlg">
+  <h3>Promo kit</h3>
+  <div class="seg pk-tabs" id="pkTabs"><button data-t="thread" class="on">Thread</button><button data-t="sub">Subtitle and description</button><button data-t="card">Quote card</button></div>
+  <div class="body">
+    <div class="pk-pane" data-p="thread">
+      <div class="radio-row"><select id="pkPlat" aria-label="Platform"><option value="x">X (280)</option><option value="bsky">Bluesky (300)</option><option value="threads">Threads (500)</option><option value="mastodon">Mastodon (500)</option><option value="linkedin">LinkedIn (3,000)</option></select><input id="pkLink" placeholder="Link to the post (https://…)" style="flex:1;min-width:200px"><label><input type="checkbox" id="pkNum" checked> Number the posts</label><button id="pkRegen" class="small">Rebuild</button></div>
+      <p class="small muted">Built from your opening, then each section heading with the sentence after it. Edit freely; the counters keep track.</p>
+      <div class="pk-posts" id="pkPosts"></div>
+      <button id="pkCopyAll" class="small">Copy the whole thread</button>
+    </div>
+    <div class="pk-pane hidden" data-p="sub">
+      <label style="margin-top:0">Title <span class="pk-n" id="pkTitleN"></span></label><input id="pkTitle">
+      <label>Subtitle <span class="pk-n" id="pkSubN"></span></label><input id="pkSub">
+      <label>Description for search and social previews <span class="pk-n" id="pkDescN"></span></label><textarea id="pkDesc" rows="3"></textarea>
+      <p class="small muted">Substack shows the subtitle under the title; search results and link previews cut the description near 160 characters.</p>
+      <button id="pkCopySub" class="small">Copy all three</button>
+    </div>
+    <div class="pk-pane hidden" data-p="card">
+      <div class="pk-card">
+        <div class="pk-cl">
+          <label style="margin-top:0">Quote</label><textarea id="pkQuote" rows="4"></textarea>
+          <div class="grid2"><div><label>Attribution</label><input id="pkWho" placeholder="Author"></div><div><label>Publication or handle</label><input id="pkHandle" placeholder="e.g. yourname.substack.com"></div></div>
+          <div class="grid2"><div><label>Size</label><select id="pkSize"><option value="square">Square 1080 × 1080</option><option value="wide">Wide 1200 × 675</option><option value="tall">Portrait 1080 × 1350</option></select></div><div><label>Look</label><select id="pkTheme"><option value="paper">Paper</option><option value="navy">Navy</option><option value="white">White</option></select></div></div>
+          <label>Sentences from this document</label><div class="pk-cands" id="pkCands"></div>
+        </div>
+        <div class="pk-cr"><canvas id="pkCanvas"></canvas><button id="pkDl" class="primary">Download PNG</button></div>
+      </div>
+    </div>
+  </div>
+  <footer><button id="pkClose">Done</button></footer>
+</div></dialog>
+<!-- checkpoints -->
+<dialog id="cpDlg" class="wide"><div class="dlg">
+  <h3>Project checkpoints</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">A checkpoint is a copy of the whole project (every document, note and source) that you can compare against or go back to. Checkpoints are kept in this browser; download one to keep it elsewhere.</p>
+    <div class="cp-new"><input id="cpName" placeholder="Checkpoint name"><input id="cpNote" placeholder="Note (optional): what this moment is"><button id="cpSave" class="primary">Save checkpoint</button></div>
+    <ul class="cp-list" id="cpList"></ul>
+  </div>
+  <footer><button id="cpClose">Done</button></footer>
+</div></dialog>
+<!-- build drafts -->
+<dialog id="buildDlg"><div class="dlg">
+  <h3>Build drafts from the plan</h3>
+  <div class="body">
+    <label style="margin-top:0">From</label><select id="bdScope"></select>
+    <label>Put new documents in</label><select id="bdPart"></select>
+    <div class="radio-row" style="flex-direction:column;gap:0;margin-top:8px">
+      <label><input type="checkbox" id="bdSyn" checked> Synopses as italic placeholders, each with a TK flag to draft</label>
+      <label><input type="checkbox" id="bdNotes" checked> Linked notes as starting material (with citations)</label>
+    </div>
+    <div class="tip">Each top-level item becomes a document. Items under it become Heading 2 and Heading 3 sections. Open research questions arrive as “check” flags. The plan then shows how much of each part you’ve drafted against its word target.</div>
+  </div>
+  <footer><button id="bdCancel">Cancel</button><button id="bdOk" class="primary">Build</button></footer>
+</div></dialog>
+
+<!-- search everything -->
+<dialog id="palDlg" class="wide pal"><div class="dlg">
+  <div class="body" style="padding-top:14px"><input id="palQ" placeholder="Search documents, notes and sources, or type a command…" autocomplete="off"><ul class="pick palette" id="palList"></ul></div>
+</div></dialog>
+
+<!-- settings -->
+<dialog id="settingsDlg"><div class="dlg">
+  <h3>Settings <span class="muted small">(this browser)</span></h3>
+  <div class="body">
+    <div class="grid2">
+      <div><label>Remind me to save after</label><select id="stRemind"><option value="0">Never</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
+      <div><label>Session word goal</label><input id="stGoal" inputmode="numeric" placeholder="e.g. 750 (blank = none)"></div>
+      <div><label>Daily word goal <span class="muted">(streaks)</span></label><input id="stDaily" inputmode="numeric" placeholder="e.g. 500 (blank = any writing)"></div>
+      <div><label>“Uncited paragraph” means ≥ words</label><input id="stUncited" inputmode="numeric"></div>
+    </div>
+    <div class="radio-row" style="margin-top:10px">
+      <label><input type="checkbox" id="stType"> Focus mode: keep the line you’re on centered</label>
+      <label><input type="checkbox" id="stDim"> Focus mode: dim other paragraphs</label>
+      <label><input type="checkbox" id="stSpell"> Spellcheck</label>
+      <label><input type="checkbox" id="stHome"> Open to the project home (otherwise straight to the draft)</label>
+      <label><input type="checkbox" id="stAuto"> Autosave to the project file (Chrome and Edge)</label><div class="small muted" id="stAutoNote" style="margin:-2px 0 6px 24px"></div>
+    </div>
+    <label>Browser storage</label><div class="small" id="stStorage">Checking…</div>
+    <label>Start over</label><div class="small">Clear the slate: a blank project, or erase everything Anabasis keeps in this browser. <button id="btnFresh" class="small danger">Start fresh…</button></div>
+    <div class="tip">Your work is always copied into this browser as you type. The reminder is for saving the project file, the copy you keep and back up.</div>
+  </div>
+  <footer><button id="stCancel">Cancel</button><button id="stOk" class="primary">Save settings</button></footer>
+</div></dialog>
+
+<!-- generic prompt / confirm -->
+<dialog id="askDlg"><div class="dlg">
+  <h3 id="askTitle"></h3>
+  <div class="body"><p id="askMsg" style="margin-top:0"></p><input id="askInput" class="hidden"></div>
+  <footer><button id="askCancel">Cancel</button><button id="askOk" class="primary">OK</button></footer>
+</div></dialog>
+
+<!-- help -->
+<dialog id="helpDlg" class="wide"><div class="dlg">
+  <h3>Anabasis <span class="muted small" style="font-weight:500">version <span id="aboutVersion"></span></span> — help &amp; about</h3>
+  <div class="body help">
+    <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/releases" target="_blank" rel="noopener">Check for a newer version</a></div>
+    <h4>Your privacy</h4>
+    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), or backing up to GitHub. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
+    <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
+    <h4>Writing</h4>
+    <ul>
+      <li><b>“ Cite</b> inserts a citation at the cursor. Pick one or more sources, add page or other locators, and it formats in the document’s style. Note styles (Chicago notes &amp; bibliography) number it as a note. Author-date, APA and MLA show a parenthetical.</li>
+      <li>Click any citation or footnote marker to edit or remove it. Notes and the bibliography rebuild themselves below the text, with <i>Ibid.</i> and short forms handled automatically.</li>
+      <li>Switch the style from the menu next to the title. Every citation reformats at once.</li>
+      <li>Pasted text keeps basic formatting (headings, bold, italics, lists, links) and drops the rest. Use <kbd>Ctrl/Cmd+Shift+V</kbd> for plain text.</li>
+    </ul>
+    <h4>Drafting</h4>
+    <ul>
+      <li><b>TK</b> leaves a flag where something’s missing: a fact (TK), a citation (cite?), or something to verify (check). Typing the letters TK counts too. Everything to resolve is listed under <b>Outline</b>. Click an item to jump to it.</li>
+      <li><b>Outline</b> also lists your headings with section word counts, and paragraphs of 40+ words with no citation. Tick <i>highlight</i> to mark those in the text.</li>
+      <li><b>→ Note</b> turns selected text into a note, linked to the source if the passage carries a citation. With nothing selected it opens a blank note for a quick idea.</li>
+      <li><b>Focus</b> hides everything but the page, keeps your line centered and shows your word count and session progress. Set word targets in Page setup and a session goal in Settings.</li>
+      <li><b>Search</b> (<kbd>Ctrl/Cmd+K</kbd>) finds anything in your documents, notes and sources, and runs commands. <kbd>Ctrl/Cmd+F</kbd> is find and replace in the current document.</li>
+    </ul>
+    <h4>Notecards &amp; the board</h4>
+    <ul>
+      <li><b>▦ Board</b> (Notes tab) lays your notes out as cards. Group them into <b>piles</b> you name (chapters, arguments, “maybe”), or by tag, source or kind. Or switch to <b>free canvas</b> and arrange them anywhere, like index cards on a table.</li>
+      <li>Drag cards to reorder them or move them between columns. Moving a card changes its pile, tag, source or kind to match the column. Board order is also the default order for <b>Compile</b>. Dragging works with a mouse, trackpad or touch.</li>
+      <li>Shift- or ⌘/Ctrl-click to select several cards, then color, pin, tag, move, <b>merge</b>, delete, or <b>draft from these</b> (a new document from the cards, in order).</li>
+      <li>In a note, <b>Split</b> breaks the card in two at the cursor. Write <code>[[Another note]]</code> to link notes. Links and backlinks show under the note, and clicking a link to a note that doesn’t exist offers to create it.</li>
+      <li>Drag a note from the Notes list straight into your draft to drop it where you let go.</li>
+    </ul>
+    <h4>Getting sources in</h4>
+    <ul>
+      <li>Paste a <b>URL</b>, DOI or ISBN into the Sources tab. URLs are looked up through Wikipedia’s citation service (Citoid) for author, date and publication. If a site blocks it or you’re offline, the URL is saved and you fill in the rest.</li>
+      <li><b>✂ Web clipper</b> gives you a bookmark button that clips any page, plus a selected passage, straight into your project. It needs Anabasis at a web address (GitHub Pages works), not opened as a local file.</li>
+      <li>Keep Anabasis open in <b>one tab</b>. Clips sent from other pages go to that tab automatically. If you open a second tab, you’ll get a warning so the two don’t overwrite each other.</li>
+    </ul>
+    <h4>Nonfiction tools</h4>
+    <ul>
+      <li><b>Quote check.</b> Quotes inserted from quote notes stay linked to the note. If the wording in the draft drifts from your note, Outline → Quotes flags it. Compare shows the difference, and you can restore the original or update the note. Ellipses (…) and [bracketed changes] count as legitimate edits. Long quotations typed or pasted without a note are listed as unlinked.</li>
+      <li><b>Names &amp; spellings.</b> Keep a list of people, organizations, places and terms with their preferred spelling. Variants (Kiev, Prigozin) are highlighted in the draft and fixable in one click. Anabasis also suggests near-duplicate spellings it finds.</li>
+      <li><b>Source audit</b> (Sources tab). Citations and share per source, a warning when one chapter leans on a single source, quoted words per source for permissions, sources missing details, and sources you haven’t used.</li>
+      <li><b>Timeline.</b> Give notes an <i>event date</i> (when it happened), then set the board to Timeline to see them in order. Templates → Chronology turns them into a document.</li>
+      <li><b>Comments.</b> Select text and click 💬. Comments are listed under Outline and travel to Word as real margin comments. They’re left out of PDF, ePub and other exports.</li>
+      <li><b>Revision lens.</b> Highlights long sentences (35+ words), passive voice, hedges and filler, and repeated words, and shows grade level. It runs on your device, so nothing is sent anywhere.</li>
+      <li><b>Templates</b> for front and back matter: dedication, epigraph, preface, acknowledgments, a note on sources, glossary, about the author. Also an annotated bibliography built from each source’s <i>Annotation</i> field.</li>
+      <li><b>Record.</b> Words added per day, your streak, and each chapter’s status and deadline (also shown in the binder).</li>
+      <li><b>Transcripts.</b> On a source, click Transcript…, paste a transcript, select lines, and make quote or paraphrase notes with the timestamp as the locator.</li>
+      <li><b>Versions.</b> Save a named version, see what changed since (word-level), or restore it. Restoring saves your current text as a version first.</li>
+      <li><b>Import Word</b> brings in .docx drafts with footnotes as text footnotes. <b>Import references</b> reads BibTeX and RIS as well as Zotero and OSINT lists. <b>Export → ePub</b> makes an e-book with tappable notes.</li>
+    </ul>
+    <h4>Charts, maps, timelines &amp; relationships</h4>
+    <ul>
+      <li>The <b>figure button</b> in the toolbar now offers an image, a <b>chart from data</b> (paste a table or use one from the document), a <b>map</b>, a <b>timeline</b> from your dated notes, or a <b>relationship map</b>. Each becomes a numbered figure with a caption and source line; click it later and choose <i>Edit</i> to change it.</li>
+      <li><b>Maps</b> work offline: shade countries, search about 7,300 places (or save your own), place markers, and draw routes, arrows and hatched areas, with a legend you label. Borders come from Natural Earth, with Crimea shown as part of Ukraine; other disputed lines follow Natural Earth’s de facto view.</li>
+      <li><b>Timeline:</b> notes with an event date line up on the board’s Timeline view (Group by: Timeline). Gaps in the record are marked, and <i>Insert as figure</i> turns them into a graphic. Dates can be years, “Aug 1680”, full dates, ranges like “1680–1692”, or BCE.</li>
+      <li><b>Relationships</b> (Docs tab) maps the people, organizations and places in your Names list by how often they appear together, with the passages one click away. Shift-click two names to add your own labeled link.</li>
+    </ul>
+    <h4>Checking the draft</h4>
+    <ul>
+      <li><b>Corroboration</b> (Outline tab) lists paragraphs that rest on one source, or only on sources rated D–E or 4–5 in the Admiralty scale, and shows which sources carry the most citations. It warns when one source carries more than a third of them.</li>
+      <li><b>House style</b> (Outline tab → Rules…) checks numbers, percent, US or U.S., the serial comma, date order, em dashes, curly quotes, ellipses, double spaces and your preferred spellings (Kyiv, not Kiev). Each rule has a Fix all button. Rules are saved with the project.</li>
+      <li><b>Accessibility</b> (Outline tab) flags figures without alt text, headings that skip a level, tables without a header row, and links that say “here” or show a bare address. Exporting to HTML, ePub or Word reminds you if anything is left.</li>
+      <li><b>Find and replace in all documents</b> (the find bar → All documents…, or the command palette) searches every document and, if you like, your notes. Tick the matches to change. Citations and footnotes are never touched, and each changed document gets a safety copy in Drafts first.</li>
+    </ul>
+    <h4>Checkpoints, transcripts &amp; promotion</h4>
+    <ul>
+      <li><b>Project checkpoints</b> (Export menu) save a copy of the whole project. Compare one with now to see documents added, removed or changed, then open any changed document side by side in Drafts. Restoring saves the current state as a checkpoint first. Checkpoints live in this browser; Download keeps one elsewhere.</li>
+      <li><b>Transcripts</b>: in the transcript window, <i>Open file…</i> reads caption files (.srt, .vtt), text, or Word. Caption fragments are joined into sentences with speakers and timestamps, and the search box filters the lines.</li>
+      <li><b>Promo kit</b> (Export menu) drafts a numbered thread for X, Bluesky, Threads, Mastodon or LinkedIn with a counter on every post, a Substack subtitle and search description, and quote cards (square, wide or portrait) as PNG.</li>
+      <li><b>Maps</b> can show oblast and province borders (Ukraine, Russia, Belarus, the Middle East, China, the Koreas, Japan, Taiwan, South Asia, the US and neighbors), rivers and lakes with names, a scale bar, and a locator inset when zoomed in. With provinces on, Shade colors a single province. Charts can mark events and shaded periods, fill areas, or split into small multiples on a shared scale.</li>
+    </ul>
+    <h4>Acronyms, estimative language &amp; scripts</h4>
+    <ul>
+      <li><b>Acronyms</b> (Outline tab) are learned when you spell them out and flagged when undefined, defined late or twice, or used once. One click fixes each. A List of Abbreviations fills in on export.</li>
+      <li><b>Estimative language</b> (Outline tab; on automatically for briefs and white papers) underlines vague words like “may” or “could” and offers terms from the ICD 203 likelihood scale. It also flags mixed wordings of the scale, confidence and likelihood in one sentence, and Key Judgments with no confidence level.</li>
+      <li><b>Script mode</b> (Page setup → “This is a video script”) shows run time at your speaking rate, timecodes beside each paragraph or A/V row, two-column A/V tables, “Copy narration”, and a <b>teleprompter</b>. Space plays and pauses, ⌘/Ctrl+↑↓ changes speed, and Mirror flips the text for a prompter mirror.</li>
+      <li><b>GitHub backup</b> (Export menu) commits the project file to a private repository on demand or whenever you save, and can reopen any earlier backup.</li>
+    </ul>
+    <h4>Drafts</h4>
+    <ul>
+      <li><b>Drafts are made only when you choose.</b> Click <b>Drafts</b> in the bar above the page (or press ⌘/Ctrl+Alt+D) to save one: a fixed copy of this document as it is now, numbered Draft 1, 2, 3…, with an optional name and a note such as “Sent to editor”.</li>
+      <li><b>Compare side by side:</b> the Drafts view lines up any two drafts, or a draft and your current text, paragraph by paragraph. Rewritten paragraphs show the exact words cut and added; new, cut and moved paragraphs are marked down the left edge. Unchanged stretches fold away. J and K jump between changes. You can also compare against another document, such as an alternate version.</li>
+      <li><b>Bring things back:</b> when the right side is your current text, <i>Use this version</i>, <i>Put it back</i> and <i>Remove it</i> work paragraph by paragraph. Restore brings back a whole draft, and <i>Copy to new doc</i> keeps a draft as its own document. Before Anabasis replaces any text for you, it keeps a safety copy, listed separately from your drafts.</li>
+      <li><b>Download comparison</b> saves the side-by-side view as a page you can send to an editor or print.</li>
+    </ul>
+    <h4>Figures, tables &amp; the margin</h4>
+    <ul>
+      <li><b>Figures:</b> the picture button inserts an image, chart or map; you can also paste a screenshot or drop image files onto the page. Type the caption underneath. Figures number themselves (Figure 1, 2…). Click an image to resize it, add alt text, or replace it. Large images are scaled down to 1800 px, and they travel inside the project file.</li>
+      <li><b>Tables:</b> the grid button inserts one with a caption above. Tab moves between cells and adds a row at the end; the bar above the table adds and removes rows and columns. Word import now keeps images and tables.</li>
+      <li><b>List of figures &amp; tables:</b> add it from Templates (front matter), the ⌘K command search, or the manuscript compile options. It fills in on export, with page numbers in PDF.</li>
+      <li><b>Marginalia:</b> <b>✎</b> in the toolbar (⌘/Ctrl+Alt+A) writes a note in the margin beside the line, anchored to the cursor or to selected text. Esc goes back to the text, and an empty note disappears. On narrow screens notes fold into numbered tabs. Page setup decides what exports do with them: Word comments, a separate <i>Marginalia</i> page at the end (with page numbers in PDF and Word), or leave them out.</li>
+    </ul>
+    <h4>Substack, imports, autosave &amp; locking</h4>
+    <ul>
+      <li><b>Export → Substack post</b> copies the document ready to paste: notes become a numbered Notes section, figures stay images, and tables are drawn as images because Substack has no tables. The .zip package has the post and every image, in case something doesn’t paste.</li>
+      <li><b>Import .md</b> (Notes tab) takes a whole folder, such as Notecards or an Obsidian vault, or a few files. Subfolders can become board piles.</li>
+      <li><b>Autosave to file</b> (Settings, Chrome and Edge): after you save the project once, Anabasis writes to the same .json a few seconds after you stop typing. After a restart the browser may ask for one click (<i>Resume autosave</i>) before it can write again.</li>
+      <li><b>Lock project</b> (Export menu) encrypts the project file and this browser’s copy with a password (AES-256, PBKDF2). There’s no recovery if you forget it. PDFs opened in the reader aren’t locked.</li>
+    </ul>
+    <h4>Project home</h4>
+    <ul>
+      <li>Anabasis opens to the <b>project home</b>; click the logo at top left to return to it. It shows where to pick up, a suggested next step, and progress against your word target and deadline, with the pace you need and the pace you’ve kept. It also lists each document’s status.</li>
+      <li><b>Loose ends</b> gathers what’s unfinished across the whole project: TK, cite? and check flags, open research questions and plan gaps, uncited paragraphs, sources missing details, and PDFs with no notes yet. Click any item to go straight to it.</li>
+      <li><b>Notes inbox</b> lists notes not yet linked to the plan or sorted into a pile. <b>New project…</b> starts from a kind (book, article, Substack series, white paper, intelligence brief, video script, literary journalism) with a plan template, citation style and target preset. It works on one project at a time: save the current one first. <b>Recent files</b> reopen in one click in Chrome and Edge; other browsers ask you to pick the file.</li>
+    </ul>
+    <h4>Planning</h4>
+    <ul>
+      <li><b>▤ Plan</b> (Docs tab) is an outliner for structure before drafting. Enter adds a line, Tab and Shift+Tab indent and outdent, Alt+↑/↓ moves an item, ⌘/Ctrl+. folds it, and ⠿ drags it (drop on the right side to nest). Each item has a synopsis, a word target, a status, and linked notes, sources and document. Drag notes from the Notes list onto an item to link them.</li>
+      <li>Items can be <b>sections</b>, <b>claims</b>, <b>evidence</b>, <b>counterpoints</b>, <b>research questions</b> or <b>ideas</b>. <b>Argument check</b> lists claims without evidence, evidence without a source, unanswered counterpoints, open questions, and sections running short of their targets.</li>
+      <li><b>Index cards</b> shows one level as cards with synopses. Drag to reorder, and double-click to go inside. <b>Focus branch</b> narrows the plan to one chapter.</li>
+      <li><b>Templates</b>: argument essay, policy brief / white paper, intelligence brief, op-ed, narrative journalism, explainer / video script, Substack article series, nonfiction book, book proposal.</li>
+      <li><b>Build drafts</b> turns the plan into documents with headings, synopsis placeholders (as TK flags) and linked notes. The plan then tracks drafted words against targets.</li>
+      <li><b>Freewrite</b>: a timed sprint (optionally with no deleting) saved as a note and linked to the plan item it was about.</li>
+      <li>In the <b>Outline</b> tab, drag ⠿ to move whole sections (or single paragraphs, with <i>paragraphs</i> ticked, which gives a reverse outline). ← and → promote and demote headings. Notes renumber automatically, and <i>Undo move</i> reverses the last change.</li>
+    </ul>
+    <h4>PDF reader</h4>
+    <ul>
+      <li><b>📄 Read a PDF</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
+      <li>Select a passage, then click <b>Quote note</b> (saved with the page number) or <b>Paraphrase note</b> (opens so you can rewrite it). If the PDF’s page numbers differ from the printed ones, set the <b>page offset</b> (PDF page 15 = printed 1 → 14). PDFs with built-in page labels are handled automatically.</li>
+      <li>Link the PDF to a source with the menu at the top, or choose <i>New source from this PDF</i>. That uses the PDF’s DOI when it has one, otherwise its title, author and date. Linked PDFs are kept in this browser so they reopen from the source, but they’re never put in your project file.</li>
+    </ul>
+    <h4>Index</h4>
+    <ul>
+      <li>Mark single passages with ⌗ (Ctrl/Cmd+Alt+X). List terms, and optionally your Names list, to index every occurrence automatically. Subentries and <i>see also</i> references are supported.</li>
+      <li>Turn on <b>Add an index</b> in Page setup, or <b>Index</b> in Compile manuscript. Book-style PDFs get real page numbers, with ranges joined (12–14). Word files get true index fields that build when Word opens the file. ePub and HTML get links to each passage.</li>
+    </ul>
+    <h4>Binder &amp; manuscripts</h4>
+    <ul>
+      <li>Group documents into <b>parts</b> (chapters, sections, research folders). Drag to reorder, or use the ↑ ↓ ⇥ buttons on a document.</li>
+      <li><b>Compile manuscript…</b> joins documents in binder order into one Word file, PDF, Markdown, HTML or new document. Notes number continuously and short forms carry across chapters.</li>
+    </ul>
+    <h4>Keyboard</h4>
+    <p><kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
+    <h4>Saving</h4>
+    <ul><li>The browser keeps a working copy of everything as you type. If you forget to save the file for a while (15 minutes by default, set in Settings), a reminder bar appears. If you open a project file and this browser holds newer unsaved work on it, Anabasis asks which to use.</li></ul>
+    <h4>OSINT Style Guide citations</h4>
+    <ul>
+      <li>Choose <b>OSINT Style Guide v1.5</b> in a document’s style menu. Citations become footnotes in the guide’s form, built by the OSINT Citation Generator’s own formatter: full form the first time, short form after. There is no bibliography, as the guide specifies.</li>
+      <li>Open any source and expand <b>OSINT Style Guide details</b> to set the description (the full 771-term library), details, qualifiers, access notes, rating, language, archive copy and commentary. The preview shows the finished footnote and the generator’s fix/check warnings.</li>
+      <li>Anything you leave blank is filled from the source’s regular fields: authors, title, container as location, date, URL/DOI. Journal volume/issue and page ranges are filled the same way.</li>
+      <li>Type <i>See</i>, <i>Cited in</i> or <i>Quoted in</i> as a citation’s prefix to open the footnote with it. The suffix becomes commentary after the citation.</li>
+      <li><b>Import sources…</b> opens list files saved by the OSINT Citation Generator, and <b>Export → Sources as OSINT Citation Generator list</b> writes one back, so you can audit a list there.</li>
+    </ul>
+    <h4>Notes</h4>
+    <ul>
+      <li>Notes are written in Markdown and can be tagged, typed (quote, paraphrase, summary, idea) and linked to a source and page.</li>
+      <li><b>Insert at cursor</b> drops a note into the current document with its citation. Quotes of 100+ words become block quotes, shorter ones get quotation marks.</li>
+      <li><b>Compile notes…</b> turns a filtered, ordered set of notes into a new draft, optionally grouped by tag or by source.</li>
+      <li><b>Import .md</b> reads Markdown files, such as Notecards notes. The first <code># heading</code> becomes the title. <code>tags:</code> front matter or <code>#hashtags</code> become tags.</li>
+    </ul>
+    <h4>Sources</h4>
+    <ul>
+      <li>Enter details by hand, or quick-add by DOI (via doi.org / Crossref) or ISBN (via Open Library). Lookups need an internet connection. Everything else works offline.</li>
+      <li>Type titles the way they should print. CSL styles can’t reliably convert title case to APA’s sentence case.</li>
+      <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here. Sources export back out the same way.</li>
+    </ul>
+    <h4>Saving &amp; exporting</h4>
+    <ul>
+      <li><kbd>Ctrl/Cmd+S</kbd> saves the project. In Chrome and Edge it writes back to the same file after the first save. Other browsers download a fresh copy.</li>
+      <li><b>PDF</b> opens the print dialog. Choose “Save as PDF” as the destination. The PDF has real, selectable text.</li>
+      <li>Markdown export uses <code>[^1]</code> footnotes, which Obsidian and most Markdown tools understand.</li>
+    </ul>
+    <h4>Open-source components</h4>
+    <p><b>citeproc-js</b> 2.4.63, © Frank Bennett, CPAL 1.0 / AGPL 3.0, is the citation engine used by Zotero and Mendeley. <b>CSL styles</b> (Chicago 18th notes-bibliography, shortened notes, author-date; APA 7th; MLA 9th) and the en-US locale come from the Citation Style Language project, CC BY-SA 3.0. <b>marked</b>, MIT, renders Markdown. <b>turndown</b>, MIT, converts HTML to Markdown. <b>docx</b> by Dolan Miu, MIT, writes Word files. <b>mammoth</b> (BSD-2) reads Word files. <b>Paged.js</b> (MIT) lays out book-style PDFs. <b>jsdiff</b> (BSD-3) compares versions. <b>PDF.js</b> by Mozilla (Apache 2.0) renders PDFs. The <b>OSINT Citation Generator</b> 3.2.1 formatter and description library, MIT, build OSINT footnotes. Anabasis itself is released under the AGPL 3.0 or later.</p>
+    <div class="license" tabindex="0" aria-label="License notices">citeproc-js — Copyright (c) 2009-2019 Frank Bennett. Licensed under EITHER the Common Public Attribution License (CPAL) v1 or later, OR the GNU Affero General Public License (AGPL) v3 or later.
+CSL styles and locales — © their respective authors; https://github.com/citation-style-language — Creative Commons Attribution-ShareAlike 3.0.
+OSINT Citation Generator core &amp; OSINT Style Guide v1.5 — © 2026 G. Michael Rapp. Code: MIT License. Guide content: CC BY 4.0. https://gmichaelrapp.github.io/OSINT_Cites/
+marked — Copyright (c) 2018+ MarkedJS, (c) 2011-2018 Christopher Jeffrey. MIT License.
+turndown — Copyright (c) 2017+ Dom Christie. MIT License.
+docx — Copyright (c) 2016 Dolan Miu. MIT License. https://github.com/dolanmiu/docx
+mammoth.js — Copyright (c) 2013 Michael Williamson. BSD 2-Clause License. https://github.com/mwilliamson/mammoth.js
+Paged.js — Copyright (c) 2018 Adam Hyde, Fred Chasen, Julien Taquet and contributors. MIT License. https://pagedjs.org
+jsdiff — Copyright (c) 2009-2015 Kevin Decker. BSD 3-Clause License. https://github.com/kpdecker/jsdiff
+PDF.js — Copyright (c) Mozilla Foundation and contributors. Apache License 2.0. https://github.com/mozilla/pdf.js
+DOMPurify — Copyright (c) Cure53 and other contributors. Apache License 2.0 or Mozilla Public License 2.0. https://github.com/cure53/DOMPurify
+Chart.js — Copyright (c) 2014-2024 Chart.js Contributors. MIT License. https://www.chartjs.org
+d3-array, d3-geo, topojson-client, world-atlas — Copyright Mike Bostock. ISC License. https://d3js.org
+Natural Earth — map data in the public domain. https://www.naturalearthdata.com
+Atkinson Hyperlegible Next — Copyright (c) Braille Institute of America. SIL Open Font License 1.1.
+Full license texts ship with the source code: https://github.com/gmichaelrapp/anabasis</div>
+  </div>
+  <footer><button id="helpClose" class="primary">Close</button></footer>
+</div></dialog>
+
+ <div class="fw hidden" id="fw">
+  <div class="fw-top"><input id="fwPrompt" placeholder="Prompt (optional): what are you trying to figure out?"><span class="fw-stat" id="fwStat">Ready</span></div>
+  <div class="fw-barwrap"><i id="fwBar"></i></div>
+  <div class="fw-setup" id="fwSetup"><label class="inline">Sprint <select id="fwMins"><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option><option value="20">20 min</option><option value="25">25 min</option></select></label>
+    <label class="inline"><input type="checkbox" id="fwStrict"> No deleting (keep moving forward)</label><button id="fwGo" class="primary">Start writing</button></div>
+  <textarea id="fwText" placeholder="Don’t edit. Don’t look things up. Write what you think, as fast as you can." disabled></textarea>
+  <div class="fw-foot"><button id="fwStop" class="ghost">Stop early</button><span class="spacer"></span><span class="hidden" id="fwDone"></span><button id="fwDiscard" class="ghost">Discard</button><button id="fwSave" class="primary">Save as note</button></div>
+</div>
+<button id="focusExit" class="focus-ui" title="Exit focus mode (Esc)">Exit focus</button>
+<div id="focusStat" class="focus-ui"></div>
+<div id="printRoot"></div>
+<div class="toast" id="toast"></div>
+<div class="tour hidden" id="tour"><div class="tour-spot" id="tourSpot"></div><div class="tour-box" id="tourBox" role="dialog" aria-modal="false" aria-labelledby="tourTitle" aria-describedby="tourText"><div class="tour-step" id="tourStep"></div><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tour-acts"><button id="tourSkip" class="ghost small">Skip tour</button><span class="spacer"></span><button id="tourBack" class="small">Back</button><button id="tourNext" class="primary small">Next</button></div></div></div>
+
+<!--@CSL@-->
+<script>/*@VENDOR@*/</script>
+<script>
+/*@APP@*/
+</script>
+</body>
+</html>
