@@ -1,4 +1,4 @@
-import asyncio, json, zipfile, io, re, subprocess
+import xml.dom.minidom, asyncio, json, zipfile, io, re, subprocess
 from playwright.async_api import async_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from env import URL, HTTP, OUT, FX, AXE
@@ -76,8 +76,8 @@ async def m():
     bad=0
     for n in en:
       if n.endswith('.xhtml'):
-        r=subprocess.run(['xmllint','--noout','-'],input=z.read(n),capture_output=True)
-        if r.returncode: bad+=1; print('xml err', n, r.stderr[:200])
+        try: xml.dom.minidom.parseString(z.read(n))
+        except Exception as e: bad+=1; print('xml err', n, str(e)[:200])
     print('epub xhtml invalid:', bad)
     # ---- Word round trip: import the docx we just made
     await pg.set_input_files('#fileDocx', dp); await pg.wait_for_timeout(2500)

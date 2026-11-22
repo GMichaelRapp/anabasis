@@ -1,4 +1,4 @@
-import asyncio, json, zipfile, subprocess, os, time
+import xml.dom.minidom, asyncio, json, zipfile, subprocess, os, time
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from env import URL, HTTP, OUT, FX, AXE
 T0=time.time()
@@ -107,8 +107,8 @@ async def main():
     bad=[]
     for n in names:
       if n.endswith(('.xhtml','.opf','.ncx','.xml')):
-        r=subprocess.run(['xmllint','--noout','-'],input=z.read(n),capture_output=True)
-        if r.returncode: bad.append((n,r.stderr.decode()[:200]))
+        try: xml.dom.minidom.parseString(z.read(n))
+        except Exception as e: bad.append((n,str(e)[:200]))
     print('xml errors:', bad)
     # word import: build docx with footnote via page's docx lib
     await pg.evaluate("""async()=>{ const D=docx; const d=new D.Document({footnotes:{1:{children:[new D.Paragraph('Imported note text.')]}},sections:[{children:[new D.Paragraph({heading:D.HeadingLevel.HEADING_1,children:[new D.TextRun('Imported Chapter')]}),new D.Paragraph({children:[new D.TextRun('Body with a note.'),new D.FootnoteReferenceRun(1),new D.TextRun({text:' Italic bit.',italics:true})]})]}]}); const blob=await D.Packer.toBlob(d); window.__f=new File([blob],'draft.docx'); }""")
