@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.0.4';
+const APP_VERSION = '1.1.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -55,7 +55,7 @@ let noteTagFilter = null;
 let homeOn = false;      // project home dashboard showing
 
 function blankProject() {
-  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
+  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], threads: [], claims: [], reviewKeys: [], stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
 }
 function newDoc(title = 'Untitled document', html = '<p><br></p>') {
   return { id: uid('d'), title, html, style: DEFAULT_STYLE, created: nowISO(), modified: nowISO(), partId: '', order: 0, target: 0,
@@ -66,6 +66,10 @@ function newNote() {
   const order = P && P.notes && P.notes.length ? Math.max(...P.notes.map(n => +n.order || 0)) + 1 : 0;
   return { id: uid('n'), title: '', body: '', date: '', kind: 'idea', tags: [], sourceId: '', locator: '', label: 'page', color: '', pinned: false, pile: '', order, x: null, y: null, created: nowISO(), modified: nowISO() };
 }
+/* research marks (see "Research marks" below) */
+const TH_COLORS = ['#E0A526', '#2A9D8F', '#D1495B', '#3A7CC3', '#8A5CC2', '#5B9A3C', '#E07A2E', '#6C7A89'];
+const CL_ST = { open: { label: 'Not checked', short: 'unchecked' }, ok: { label: 'Supported', short: 'supported' }, need: { label: 'Needs a source', short: 'needs source' }, disp: { label: 'Contested', short: 'contested' }, cut: { label: 'Cut', short: 'cut' } };
+const RV_REASONS = ['Verify a fact', 'Check a quote', 'Rewrite', 'Tighten', 'Update later', 'Legal or sensitivity read', 'Ask an editor', 'Other'];
 function normalize(p) {
   p = migrateProject(p);
   if (p && Array.isArray(p.docs)) p.docs = p.docs.filter(x => x && typeof x === 'object').map(x => Object.assign(x, { html: scrubHTML(asStr(x.html)), title: asStr(x.title), snapshots: Array.isArray(x.snapshots) ? x.snapshots.filter(v => v && typeof v === 'object').map(v => Object.assign(v, { html: scrubHTML(asStr(v.html)), name: asStr(v.name) })) : [] }));
@@ -99,6 +103,11 @@ function normalize(p) {
   const pl = out.plan && typeof out.plan === 'object' ? out.plan : {};
   out.plan = { hoist: pl.hoist || '', items: Array.isArray(pl.items) ? pl.items.filter(i => i && i.id).map((i, k) => ({ id: i.id, parent: i.parent || '', order: typeof i.order === 'number' ? i.order : k, title: i.title || '', type: i.type in { section: 1, claim: 1, evidence: 1, counter: 1, question: 1, idea: 1 } ? i.type : 'section', synopsis: i.synopsis || '', status: i.status || '', target: +i.target || 0, notes: Array.isArray(i.notes) ? i.notes : [], sources: Array.isArray(i.sources) ? i.sources : [], docId: i.docId || '', collapsed: !!i.collapsed })) : [] };
   out.stats = out.stats && typeof out.stats === 'object' ? out.stats : {}; out.stats.days = out.stats.days || {}; out.stats.base = out.stats.base || {};
+  const arr = v => (Array.isArray(v) ? v : []).filter(x => x && typeof x === 'object' && x.id), hexOk = c => /^#[0-9a-f]{6}$/i.test(c || ''), dayOk = v => (/^\d{4}-\d\d-\d\d$/.test(v || '') ? v : '');
+  const rstr = v => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : '');
+  out.threads = arr(out.threads).map((t, i) => ({ id: String(t.id), name: rstr(t.name) || 'Thread', color: hexOk(t.color) ? t.color : TH_COLORS[i % TH_COLORS.length], note: rstr(t.note), hidden: !!t.hidden, created: rstr(t.created) || nowISO() }));
+  out.claims = arr(out.claims).map(c => ({ id: String(c.id), status: Object.prototype.hasOwnProperty.call(CL_ST, c.status) ? c.status : 'open', note: rstr(c.note), checkedText: rstr(c.checkedText), checkedAt: rstr(c.checkedAt), created: rstr(c.created) || nowISO(), modified: rstr(c.modified) || rstr(c.created) || nowISO() }));
+  out.reviewKeys = arr(out.reviewKeys).map(r => ({ id: String(r.id), reason: rstr(r.reason) || RV_REASONS[0], due: dayOk(r.due), note: rstr(r.note), done: !!r.done, doneAt: rstr(r.doneAt), created: rstr(r.created) || nowISO() }));
   out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}));
   return out;
 }
@@ -465,6 +474,7 @@ function openDoc(id, skipSync = false) {
   if (homeOn) closeHome();
   if (draftsOn) closeDrafts();
   if (relOn) closeRel();
+  if (typeof deskOn !== 'undefined' && deskOn) closeDesk();
   curDocId = d.id;
   editor.innerHTML = d.html || '<p><br></p>'; tidyTopLevel(); prepFigureDom(editor); hydrateImages(); renumberFigures();
   $('#docTitle').value = d.title;
@@ -477,7 +487,7 @@ function openDoc(id, skipSync = false) {
   if (!$('#findBar').classList.contains('hidden')) runFind();
   $('#scroller').scrollTop = 0;
   document.body.classList.remove('side-open');
-  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y();
+  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch();
 }
 function updateWordCount() {
   const clone = editor.cloneNode(true);
@@ -607,6 +617,10 @@ function sanitize(html) {
       if (/^H[4-6]$/.test(tag)) { const h = doc.createElement('h3'); h.append(...ch.childNodes); ch.replaceWith(h); walk(h); return; }
       if (!ALLOWED[tag]) { walk(ch); ch.replaceWith(...ch.childNodes); return; }
       const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn'));
+      if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
+        const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
+        walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
+      }
       // Google Docs / Word: bold & italic arrive as inline styles on spans
       if (tag === 'SPAN' && !isMarker) {
         const st = ch.getAttribute('style') || '';
@@ -1741,6 +1755,7 @@ function buildExport(doc, mode = 'html') {
   const mgWant = doc.layout.marginalia || 'word';
   const mg = mgWant === 'page' && mode !== 'substack' ? collectMarginalia(tmp, mode) : [];
   if (mode !== 'docx' || mgWant !== 'word') $$('.cmt', tmp).forEach(c => c.replaceWith(...c.childNodes));
+  $$('.rm', tmp).forEach(c => c.replaceWith(...c.childNodes)); tmp.normalize();
   let index = '';
   if (doc.layout.index && mode !== 'md') index = buildIndex(tmp, mode); else $$('.ixm', tmp).forEach(m => m.remove());
   const markers = $$('.cite,.fn', tmp);
@@ -1882,7 +1897,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
 
-function renderAll() { $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); }
+function renderAll() { $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); }
 
 /* ================================================================
    Drafting & research tools
@@ -2458,7 +2473,7 @@ editor.addEventListener('drop', e => {
 let boardSel = new Set(), boardOn = false;
 const BG = () => PREFS.boardGroup || 'pile';
 function openBoard() {
-  syncEditor(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel(); boardOn = true; document.body.classList.add('board-on'); $('#board').classList.remove('hidden');
+  syncEditor(); if (deskOn) closeDesk(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel(); boardOn = true; document.body.classList.add('board-on'); $('#board').classList.remove('hidden');
   $('#bdGroup').value = BG(); renderBoard(); document.body.classList.remove('side-open');
 }
 function closeBoard() { boardOn = false; boardSel.clear(); document.body.classList.remove('board-on'); $('#board').classList.add('hidden'); }
@@ -2935,7 +2950,7 @@ $('#sdDlg').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target
 /* ---------- the workspace ---------- */
 function openDrafts(left) {
   const d = curDoc(); if (!d) return;
-  syncEditor(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (relOn) closeRel();
+  syncEditor(); if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (relOn) closeRel();
   draftsOn = true; dfTook = false; document.body.classList.add('drafts-on'); $('#drafts').classList.remove('hidden'); document.body.classList.remove('side-open');
   const ds = d.snapshots.filter(isDraft);
   if (left) dfLeft = left; else if (!dfLeft || !dfSource(dfLeft)) dfLeft = ds[0] ? 'v:' + ds[0].id : (d.snapshots[0] ? 'v:' + d.snapshots[0].id : '');
@@ -4158,7 +4173,7 @@ function plNewItem(parent = '', afterId = null, props = {}) {
 }
 let plSel = null, planOn = false;
 function openPlan() {
-  syncEditor(); if (boardOn) closeBoard(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
+  syncEditor(); if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
   planOn = true; document.body.classList.add('plan-on'); $('#plan').classList.remove('hidden');
   $('#plView').value = PREFS.planView || 'outline'; renderPlan(); document.body.classList.remove('side-open');
 }
@@ -4682,7 +4697,7 @@ function nextStep(pc, le, inbox) {
 let hmNext = null, hmJump = [];
 function openHome() {
   if (!P) return;
-  syncEditor(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
+  syncEditor(); if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
   homeOn = true; document.body.classList.add('home-on'); $('#home').classList.remove('hidden');
   document.body.classList.remove('side-open'); renderHome();
 }
@@ -4719,9 +4734,11 @@ async function renderHome() {
   const files = await recentList();
   const flagLabel = k => (FLAG_KINDS[k] || FLAG_KINDS.tk).label;
 
-  const leTotal = le.flags.length + le.questions.length + le.gaps.length + le.uncited.length + le.missing.length + le.pdfs.length;
+  const rl = researchLoose();
+  const leTotal = le.flags.length + le.questions.length + le.gaps.length + le.uncited.length + le.missing.length + le.pdfs.length + rl.claims.length;
   const looseHTML = leTotal ? [
     groupHTML('hmFlags', 'Flags in drafts (TK, cite?, check)', le.flags, f => `<li data-j="${J(() => jumpTo(f.d.id, f.at))}"><span class="flag flag-${f.kind}">${flagLabel(f.kind)}</span><span class="t">${esc(f.note || f.snip || '(empty paragraph)')}</span><span class="m">${esc(f.d.title || 'Untitled')}</span></li>`, le.flags.length <= 8),
+    groupHTML('', 'Claims to check', rl.claims, x => `<li data-j="${J(() => rmGo(x.p))}"><span class="cl-chip st-${x.c.status}">${CL_ST[x.c.status].short}</span><span class="t">${esc(x.p.text.slice(0, 90))}</span><span class="m">${esc(x.iss[0])}</span></li>`),
     groupHTML('', 'Open research questions', le.questions, x => `<li data-j="${J(() => { openPlan(); plSelect(x.it.id); })}"><span class="pl-type ty-question">?</span><span class="t">${esc(x.it.title || 'Untitled')}</span></li>`),
     groupHTML('', 'Gaps in the argument', le.gaps, x => `<li data-j="${J(() => { PREFS.planView = 'check'; savePrefs(); openPlan(); })}"><span class="pl-type ty-${x.it.type}">${(PT[x.it.type] || PT.section).icon}</span><span class="t">${esc(x.it.title || 'Untitled')}</span><span class="m">${esc(x.msg.replace(/\.$/, ''))}</span></li>`),
     groupHTML('', `Uncited paragraphs (${PREFS.uncitedMin || 40}+ words)`, le.uncited, u => `<li data-j="${J(() => jumpTo(u.d.id, u.at))}"><span class="t">${esc(u.snip)}</span><span class="m">${esc(u.d.title || 'Untitled')}</span></li>`),
@@ -4768,6 +4785,11 @@ async function renderHome() {
     ${looseHTML}
   </div>
 
+  ${rl.keys.length ? `<div class="hm-card hm-due">
+    <h5>Due for review <span class="count">${rl.keys.length}</span><button class="ghost small" id="hmReview">All review keys</button></h5>
+    <ul class="hm-list">${rl.keys.slice(0, 8).map(x => `<li data-j="${J(() => rmGo(x.p))}"><span class="t"><b>${esc(x.r.reason)}</b> ${esc(x.p.text.slice(0, 70))}${x.p.text.length > 70 ? '…' : ''}</span><span class="m ${daysUntil(x.r.due) <= 0 ? 'rv-late' : ''}">${esc(fmtDue(x.r.due))}</span></li>`).join('')}</ul>
+  </div>` : ''}
+
   <div class="hm-card">
     <h5>Notes inbox <span class="count">${inbox.length}</span><button class="ghost small" id="hmBoard">Sort on the board</button></h5>
     ${inbox.length ? `<ul class="hm-list">${inbox.slice(0, 8).map(n => `<li data-j="${J(() => openNote(n.id))}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><span class="m">${n.kind ? esc(n.kind) + ' · ' : ''}${relTime(n.created)}</span></li>`).join('')}${inbox.length > 8 ? `<li class="m" data-j="${J(() => openBoard())}">…${inbox.length - 8} more on the board</li>` : ''}</ul>` : '<div class="hm-empty">Every note is linked to the plan or sorted into a pile.</div>'}
@@ -4800,6 +4822,7 @@ $('#hmArea').addEventListener('click', e => {
   else if (id === 'hmBuild') { openPlan(); $('#plBuild').click(); }
   else if (id === 'hmNewDoc') addDoc(newDoc());
   else if (id === 'hmBoard') openBoard();
+  else if (id === 'hmReview') openDesk('review');
   else if (id === 'hmSave') saveProject(false).then(renderHome);
   else if (id === 'hmOpen2') openProject();
   else if (id === 'hmNew2') openNewProject();
@@ -5597,7 +5620,7 @@ async function placeSpecFigure(spec, oldSpec) {
     hydrateImages(); renumberFigures(); onEdit(); toast('Figure updated.');
     return;
   }
-  if (boardOn) closeBoard(); if (relOn) closeRel(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
+  if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (relOn) closeRel(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
   restoreSelection();
   insertBlocksAtCursor(figHTML(id, captionFor(spec)) + '<p><br></p>');
   hydrateImages(); renumberFigures(); markDirty();
@@ -6076,7 +6099,7 @@ function relSpecNow() {
   return { type: 'network', w, h, nodes, edges };
 }
 function openRel(forFigure = false) {
-  syncEditor(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
+  syncEditor(); if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
   relOn = true; relForFigure = forFigure; relSel = null; relPick = null;
   document.body.classList.add('rel-on'); $('#rel').classList.remove('hidden'); document.body.classList.remove('side-open');
   $('#relFig').textContent = specTarget ? 'Update figure' : 'Insert as figure…';
@@ -7056,6 +7079,632 @@ function linkLabels(root = document) {
 }
 linkLabels();
 { const relink = debounce(() => linkLabels(), 150); new MutationObserver(recs => { if (recs.some(r => !editor.contains(r.target))) relink(); }).observe(document.body, { childList: true, subtree: true }); }
+/* ================================================================
+   Research marks: threads, claims, review keys and questions.
+   A mark is one or more <span class="rm"> segments that share data-rm (the
+   passage id). data-k says what kind: th (thread, data-ref = thread id),
+   cl (claim, record in P.claims), rv (review key, record in P.reviewKeys),
+   q (linked to a research question in the plan, data-ref = plan item id).
+   Marks live in the saved HTML and are unwrapped in every export.
+   ================================================================ */
+const RM_KINDS = { th: 'Thread', cl: 'Claim', rv: 'Review key', q: 'Question' };
+const RM_SKIP = '.cite,.fn,.flag,.cmt-pt,.ix-a,figure,nav,[contenteditable="false"]';
+const RM_BLOCK = 'p,h1,h2,h3,li,blockquote';
+const rmNorm = s => String(s || '').replace(/\s+/g, ' ').trim();
+const rmEsc = s => (window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, '\\$&'));
+const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const addDaysISO = (iso, n) => { const d = new Date((iso || todayISO()) + 'T12:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const daysUntil = iso => Math.round((new Date(iso + 'T12:00') - new Date(todayISO() + 'T12:00')) / 864e5);
+
+/* Wrap every text node the range touches, across paragraphs, stepping around
+   citations, footnotes and other markers. Returns the new spans. */
+function rmWrap(range, attrs) {
+  let root = range.commonAncestorContainer; if (root.nodeType === 3) root = root.parentNode;
+  if (!editor.contains(root) && root !== editor) return [];
+  const nodes = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) {
+    const n = w.currentNode;
+    if (!n.data.length || !range.intersectsNode(n)) continue;
+    const pe = n.parentElement;
+    if (!pe || pe.closest(RM_SKIP) || !pe.closest(RM_BLOCK) || !editor.contains(pe)) continue;
+    nodes.push(n);
+  }
+  const spans = [];
+  nodes.forEach(n => {
+    let s = 0, e = n.data.length;
+    if (n === range.startContainer) s = range.startOffset;
+    if (n === range.endContainer) e = range.endOffset;
+    if (e <= s) return;
+    if (e < n.data.length) n.splitText(e);
+    if (s > 0) n = n.splitText(s);
+    if (!n.data.length) return;
+    const sp = document.createElement('span'); sp.className = 'rm';
+    Object.entries(attrs).forEach(([k, v]) => { if (v) sp.setAttribute(k, v); });
+    n.parentNode.insertBefore(sp, n); sp.appendChild(n); spans.push(sp);
+  });
+  // a passage that is only spaces is not a passage
+  if (spans.length && !rmNorm(spans.map(s => s.textContent).join(''))) { spans.forEach(s => s.replaceWith(...s.childNodes)); return []; }
+  return spans;
+}
+function rmUnwrap(pid, root = editor) {
+  const segs = $$(`.rm[data-rm="${rmEsc(pid)}"]`, root); const parents = new Set(segs.map(s => s.parentNode));
+  segs.forEach(s => s.replaceWith(...s.childNodes)); parents.forEach(p => p && p.normalize && p.normalize());
+  return segs.length;
+}
+function rmSegText(s) { const c = s.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.ix-a', c).forEach(x => x.remove()); return c.textContent; }
+function rmPassageText(segs) {
+  let out = '', lastBlk = null;
+  segs.forEach(s => { const b = s.closest(RM_BLOCK); out += (lastBlk && b !== lastBlk ? ' ' : '') + rmSegText(s); lastBlk = b; });
+  return rmNorm(out);
+}
+/* Citations inside the passage, or straight after it (only punctuation or space between). */
+function rmCites(segs) {
+  if (!segs.length) return [];
+  const first = segs[0], last = segs[segs.length - 1], blk = last.closest(RM_BLOCK) || last.parentNode, out = [];
+  const r = document.createRange(); r.setStartBefore(first); r.setEndAfter(last);
+  const sc = r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentNode;
+  $$('.cite', sc).forEach(c => { if (r.intersectsNode(c)) out.push(c); });
+  let prev = last;
+  $$('.cite', blk).filter(c => last.compareDocumentPosition(c) & Node.DOCUMENT_POSITION_FOLLOWING && !out.includes(c)).forEach(c => {
+    if (!prev) return;
+    const g = document.createRange(); g.setStartAfter(prev); g.setEndBefore(c);
+    if (/^[\s.,;:!?”’"')\]—–-]*$/.test(g.toString())) { out.push(c); prev = c; } else prev = null;
+  });
+  return [...new Set(out.flatMap(c => markerItems(c).map(it => it.id)).filter(Boolean))];
+}
+function rmCollect(root, d) {
+  const by = new Map();
+  $$('.rm[data-rm]', root).forEach(s => {
+    const pid = s.dataset.rm; let p = by.get(pid);
+    if (!p) { p = { pid, k: s.dataset.k || 'th', ref: s.dataset.ref || '', docId: d.id, at: blockIndexOf(root, s), segs: [] }; by.set(pid, p); }
+    p.segs.push(s);
+  });
+  return [...by.values()].map(p => { const out = Object.assign(p, { text: rmPassageText(p.segs), cites: p.k === 'cl' ? rmCites(p.segs) : [] }); delete out.segs; return out; }); // no DOM kept: the live passage is looked up in the editor
+}
+const RM_CACHE = new Map();
+function rmScan(d) {
+  const c = RM_CACHE.get(d.id); if (c && c.html === d.html) return c.list;
+  let list = [];
+  if (String(d.html || '').includes('data-rm=')) { const t = document.createElement('div'); t.innerHTML = d.html; list = rmCollect(t, d); }
+  RM_CACHE.set(d.id, { html: d.html, list }); return list;
+}
+let RM_ALL = null; // one scan per task; anything that changes marks clears it. Never syncs the editor itself: during a load the editor can still hold the previous project.
+const rmDirty = () => { RM_ALL = null; };
+function rmAll(kind) {
+  if (!RM_ALL) { RM_ALL = binderOrder().flatMap(d => rmScan(d)); setTimeout(rmDirty, 0); } // reads saved HTML; callers that just edited sync first
+  return kind ? RM_ALL.filter(p => p.k === kind) : RM_ALL;
+}
+const rmDoc = id => P.docs.find(d => d.id === id);
+const thById = id => P.threads.find(t => t.id === id);
+const clById = id => P.claims.find(c => c.id === id);
+const rvById = id => P.reviewKeys.find(r => r.id === id);
+const qItems = () => PLI().filter(i => i.type === 'question');
+
+/* ---------- claim checks ---------- */
+function rateTier(r) { if (!r) return 'none'; if (RATE_LOW(r)) return 'weak'; if (/^[AB]/i.test(r) || /^[12]$/.test(r)) return 'strong'; return 'fair'; }
+const srcRating = id => { const s = P.sources.find(x => x.id === id); return (s && s.osint && s.osint.rating) || ''; };
+function claimIssues(p, c) {
+  c = c || clById(p.pid) || { status: 'open' }; const out = [];
+  if (c.status === 'cut') return out;
+  if (c.status === 'need') out.push('Needs a source');
+  else if (!p.cites.length) out.push('No citation');
+  if (c.status === 'disp') out.push('Contested');
+  if (p.cites.length) { const rated = p.cites.map(srcRating); if (rated.every(r => r) && rated.every(RATE_LOW)) out.push('Only low-rated sources'); }
+  if (c.status === 'ok' && c.checkedText && rmNorm(p.text) !== c.checkedText) out.push('Changed since you marked it supported');
+  if (p.cites.some(id => !P.sources.some(s => s.id === id))) out.push('Cites a deleted source');
+  return out;
+}
+function setClaimStatus(id, st) {
+  const c = clById(id); if (!c || !(st in CL_ST)) return;
+  syncEditor(); c.status = st; c.modified = nowISO();
+  if (st === 'ok') { const p = rmAll('cl').find(x => x.pid === id); c.checkedText = p ? rmNorm(p.text) : ''; c.checkedAt = nowISO(); } else { c.checkedText = ''; c.checkedAt = ''; }
+  markDirty(); rmRefresh();
+}
+
+/* ---------- making marks ---------- */
+function rmRange() {
+  const sel = getSelection();
+  let r = sel.rangeCount && editor.contains(sel.anchorNode) ? sel.getRangeAt(0) : (savedRange && editor.contains(savedRange.startContainer) ? savedRange : null);
+  if (!r || r.collapsed || !rmNorm(r.toString())) { toast('Select the passage first, then mark it.'); return null; }
+  return r.cloneRange();
+}
+function rmApply(range, k, extra = {}) {
+  if (!range) return null;
+  const pid = extra.pid || uid('m');
+  const spans = rmWrap(range, Object.assign({ 'data-rm': pid, 'data-k': k }, extra.ref ? { 'data-ref': extra.ref } : {}));
+  if (!spans.length) { toast('Nothing to mark there. Marks go on running text, not figures or notes.'); return null; }
+  try { const r = document.createRange(); r.setStartBefore(spans[0]); r.setEndAfter(spans[spans.length - 1]); const s = getSelection(); s.removeAllRanges(); s.addRange(r); savedRange = r.cloneRange(); } catch (e) {}
+  syncEditor(); rmDirty(); markDirty(); rmRefresh();
+  return pid;
+}
+function markClaim() {
+  const r = rmRange(); if (!r) return;
+  const id = uid('cl'); const pid = rmApply(r, 'cl', { pid: id }); if (!pid) return;
+  P.claims.push({ id, status: 'open', note: '', checkedText: '', checkedAt: '', created: nowISO(), modified: nowISO() });
+  markDirty(); rmRefresh(); toast('Marked as a claim. Click it to set whether it’s supported.');
+}
+let thRange = null;
+function openThreadPick() {
+  const r = rmRange(); if (!r) return; thRange = r;
+  const used = new Set(P.threads.map(t => t.color)), free = TH_COLORS.find(c => !used.has(c)) || TH_COLORS[P.threads.length % TH_COLORS.length];
+  $('#thPickList').innerHTML = P.threads.length ? P.threads.map(t => `<button class="th-pick" data-th="${esc(t.id)}"><i class="th-dot" style="--c:${t.color}"></i>${esc(t.name)}<span class="muted small">${rmAll('th').filter(p => p.ref === t.id).length}</span></button>`).join('') : '<p class="small muted">No threads yet. Name your first one below: a theme, an argument, a person or a line of evidence you want to follow through the piece.</p>';
+  $('#thName').value = ''; thSwatches(free);
+  $('#thDlg').showModal(); setTimeout(() => (P.threads.length ? $('#thPickList button') : $('#thName')).focus(), 30);
+}
+function thSwatches(on) { $('#thColors').innerHTML = TH_COLORS.map(c => `<button type="button" class="sw th-sw ${c === on ? 'on' : ''}" data-c="${c}" style="background:${c}" title="${c}" aria-label="Color ${c}"></button>`).join(''); }
+$('#thColors').addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (b) thSwatches(b.dataset.c); });
+function thAddTo(id) {
+  $('#thDlg').close(); editor.focus();
+  if (!thRange) return;
+  const s = getSelection(); s.removeAllRanges(); s.addRange(thRange);
+  const pid = rmApply(thRange, 'th', { ref: id }); thRange = null;
+  if (pid) { const t = thById(id); toast(`Added to “${t ? t.name : 'thread'}”.`); }
+}
+$('#thPickList').addEventListener('click', e => { const b = e.target.closest('[data-th]'); if (b) thAddTo(b.dataset.th); });
+function newThread(name, color) {
+  const t = { id: uid('th'), name: name || 'Thread', color: color || TH_COLORS[P.threads.length % TH_COLORS.length], note: '', hidden: false, created: nowISO() };
+  P.threads.push(t); markDirty(); return t;
+}
+$('#thNew').addEventListener('click', () => {
+  const name = $('#thName').value.trim(); if (!name) { $('#thName').focus(); return; }
+  const t = newThread(name, $('#thColors .on')?.dataset.c); thAddTo(t.id);
+});
+$('#thName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#thNew').click(); } });
+$('#thCancel').addEventListener('click', () => { thRange = null; $('#thDlg').close(); });
+
+let rvRange = null, rvEdit = null;
+function openReviewKey(id) {
+  rvEdit = id ? rvById(id) : null;
+  if (!rvEdit) { const r = rmRange(); if (!r) return; rvRange = r; }
+  $('#rvReason').innerHTML = RV_REASONS.map(x => `<option ${x === (rvEdit ? rvEdit.reason : 'Verify a fact') ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  if (rvEdit && !RV_REASONS.includes(rvEdit.reason)) $('#rvReason').insertAdjacentHTML('afterbegin', `<option selected>${esc(rvEdit.reason)}</option>`);
+  $('#rvDue').value = rvEdit ? rvEdit.due : addDaysISO(todayISO(), 7);
+  $('#rvNote').value = rvEdit ? rvEdit.note : '';
+  $('#rvTitle').textContent = rvEdit ? 'Review key' : 'Key this passage for review';
+  $('#rvRemove').classList.toggle('hidden', !rvEdit);
+  $('#rvDlg').showModal(); setTimeout(() => $('#rvNote').focus(), 30);
+}
+$$('#rvQuick [data-d]').forEach(b => b.addEventListener('click', () => { const n = +b.dataset.d; $('#rvDue').value = n < 0 ? '' : addDaysISO(todayISO(), n); }));
+$('#rvOk').addEventListener('click', () => {
+  const v = { reason: $('#rvReason').value, due: $('#rvDue').value || '', note: $('#rvNote').value.trim() };
+  $('#rvDlg').close();
+  if (rvEdit) { Object.assign(rvEdit, v); markDirty(); rmRefresh(); rvEdit = null; return; }
+  editor.focus(); const s = getSelection(); if (rvRange) { s.removeAllRanges(); s.addRange(rvRange); }
+  const id = uid('rv'); const pid = rmApply(rvRange, 'rv', { pid: id }); rvRange = null; if (!pid) return;
+  P.reviewKeys.push(Object.assign({ id, done: false, doneAt: '', created: nowISO() }, v)); markDirty(); rmRefresh();
+  toast(v.due ? `Keyed for review ${fmtDue(v.due)}.` : 'Keyed for review.');
+});
+$('#rvCancel').addEventListener('click', () => { rvRange = rvEdit = null; $('#rvDlg').close(); });
+$('#rvNote').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#rvOk').click(); });
+$('#rvRemove').addEventListener('click', () => { const r = rvEdit; $('#rvDlg').close(); rvEdit = null; if (r) removeMark('rv', r.id); });
+function fmtDue(iso) { if (!iso) return 'no date'; const n = daysUntil(iso); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === -1 ? 'yesterday' : n < 0 ? `${-n} days overdue` : n < 7 ? `in ${n} days` : fmtDay(new Date(iso + 'T12:00')); }
+
+let qRange = null;
+function openQuestionLink(newOnly = false) {
+  if (!newOnly) { const r = rmRange(); if (!r) return; qRange = r; } else qRange = null;
+  const open = qItems().filter(i => i.status !== 'answered');
+  $('#qPickList').innerHTML = qRange && open.length ? open.map(i => `<button class="th-pick" data-q="${esc(i.id)}"><b class="q-mk">?</b>${esc(i.title || 'Untitled question')}</button>`).join('') : '';
+  $('#qPickWrap').classList.toggle('hidden', !(qRange && open.length));
+  $('#qDlgTitle').textContent = qRange ? 'Link this passage to a question' : 'New research question';
+  $('#qText').value = ''; $('#qDlg').showModal(); setTimeout(() => $('#qText').focus(), 30);
+}
+function qLink(id) {
+  $('#qDlg').close(); if (!qRange) { rmRefresh(); return; }
+  editor.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(qRange);
+  rmApply(qRange, 'q', { ref: id }); qRange = null; toast('Passage linked to the question.');
+}
+$('#qPickList').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (b) qLink(b.dataset.q); });
+$('#qNew').addEventListener('click', () => {
+  const t = $('#qText').value.trim(); if (!t) { $('#qText').focus(); return; }
+  const it = plNewItem('', null, { type: 'question', title: t, status: 'open' }); markDirty();
+  if (qRange) qLink(it.id); else { $('#qDlg').close(); rmRefresh(); toast('Question added. It also appears in Plan and on Project home.'); }
+});
+$('#qText').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qNew').click(); } });
+$('#qCancel').addEventListener('click', () => { qRange = null; $('#qDlg').close(); });
+
+function removeMark(k, pidOrRecord) {
+  const pid = pidOrRecord;
+  const p = rmAll().find(x => x.pid === pid);
+  if (p && p.docId !== curDocId) { const d = rmDoc(p.docId); if (d) { const t = document.createElement('div'); t.innerHTML = d.html; rmUnwrap(pid, t); d.html = t.innerHTML; d.modified = nowISO(); } }
+  else if (rmUnwrap(pid)) syncEditor();
+  rmDirty();
+  if (k === 'cl') P.claims = P.claims.filter(c => c.id !== pid);
+  if (k === 'rv') P.reviewKeys = P.reviewKeys.filter(r => r.id !== pid);
+  markDirty(); rmRefresh();
+}
+
+/* ---------- moving between passages ---------- */
+function rmGo(p, select = true) {
+  if (!p) return;
+  if (deskOn) closeDesk();
+  if (p.docId !== curDocId || homeOn || boardOn || planOn || draftsOn || relOn) openDoc(p.docId);
+  const segs = $$(`.rm[data-rm="${rmEsc(p.pid)}"]`, editor); if (!segs.length) return;
+  segs[0].scrollIntoView({ block: 'center', behavior: 'smooth' });
+  segs.forEach(s => s.setAttribute('data-cp-flash', '')); setTimeout(() => segs.forEach(s => s.removeAttribute('data-cp-flash')), 1500);
+  if (select) try { const r = document.createRange(); r.setStartBefore(segs[0]); r.setEndAfter(segs[segs.length - 1]); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); savedRange = r.cloneRange(); } catch (e) {}
+  document.body.classList.remove('side-open');
+}
+function rmStep(kind, ref, dir, fromPid) {
+  syncEditor(); rmDirty();
+  const list = rmAll(kind).filter(p => !ref || p.ref === ref);
+  if (!list.length) { toast('No passages yet.'); return; }
+  let i = list.findIndex(p => p.pid === fromPid);
+  if (i < 0) { // nearest after (or before) the cursor in this document
+    const here = list.map((p, k) => [p, k]).filter(([p]) => p.docId === curDocId);
+    const sel = getSelection(); const at = sel.rangeCount && editor.contains(sel.anchorNode) ? blockIndexOf(editor, sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement) : -1;
+    const pick = dir > 0 ? here.find(([p]) => p.at > at) : [...here].reverse().find(([p]) => p.at < at);
+    i = pick ? pick[1] - dir : (dir > 0 ? -1 : list.length);
+  }
+  const n = list[(i + dir + list.length) % list.length];
+  rmGo(n); toast(`${list.indexOf(n) + 1} of ${list.length}${ref && thById(ref) ? ' in “' + thById(ref).name + '”' : ''}`);
+}
+
+/* ---------- the popover on a marked passage ---------- */
+let rmPopEl = null;
+function closeRmPop() { if (rmPopEl) { rmPopEl.remove(); rmPopEl = null; } }
+function rmMarksAt(node) { const out = []; let x = node && node.nodeType === 3 ? node.parentElement : node; while (x && x !== editor) { if (x.classList && x.classList.contains('rm') && x.dataset.rm && !out.some(o => o.dataset.rm === x.dataset.rm)) out.push(x); x = x.parentElement; } return out; }
+function rmPopRow(s) {
+  const k = s.dataset.k, pid = s.dataset.rm;
+  if (k === 'th') { const t = thById(s.dataset.ref); return `<div class="rp-row" data-pid="${esc(pid)}" data-k="th" data-ref="${esc(s.dataset.ref || '')}"><i class="th-dot" style="--c:${t ? t.color : '#888'}"></i><span class="rp-t"><b>${esc(t ? t.name : 'Thread (deleted)')}</b><span class="muted small">Thread</span></span><button class="ghost small" data-a="prev" title="Previous passage in this thread" aria-label="Previous passage">‹</button><button class="ghost small" data-a="next" title="Next passage in this thread" aria-label="Next passage">›</button><button class="ghost small" data-a="read" title="Read the whole thread">Read</button><button class="ghost small danger" data-a="unmark" title="Take this passage out of the thread">Remove</button></div>`; }
+  if (k === 'cl') {
+    const c = clById(pid) || { status: 'open' }, p = rmAll('cl').find(x => x.pid === pid) || { cites: [], text: '' }, iss = claimIssues(p, c);
+    return `<div class="rp-row rp-claim" data-pid="${esc(pid)}" data-k="cl"><span class="cl-mk st-${c.status}" aria-hidden="true"></span><span class="rp-t"><b>Claim</b><span class="muted small">${p.cites.length ? p.cites.map(id => esc(srcShort(P.sources.find(s => s.id === id)) + (srcRating(id) ? ' (' + srcRating(id) + ')' : ''))).join('; ') : 'No citation'}</span></span>
+      <select data-a="status" aria-label="Claim status">${Object.entries(CL_ST).map(([v, x]) => `<option value="${v}" ${v === c.status ? 'selected' : ''}>${x.label}</option>`).join('')}</select><button class="ghost small" data-a="register">Register</button><button class="ghost small danger" data-a="unmark">Remove</button>
+      ${iss.length ? `<div class="rp-iss">${iss.map(esc).join(' · ')}</div>` : ''}</div>`;
+  }
+  if (k === 'rv') { const r = rvById(pid) || {}; const n = r.due ? daysUntil(r.due) : null; return `<div class="rp-row" data-pid="${esc(pid)}" data-k="rv"><span class="rv-mk" aria-hidden="true">⚑</span><span class="rp-t"><b>${esc(r.reason || 'Review')}</b><span class="small ${n !== null && n <= 0 && !r.done ? 'rv-late' : 'muted'}">${r.done ? 'Done' : 'Due ' + esc(fmtDue(r.due))}${r.note ? ' · ' + esc(r.note) : ''}</span></span><button class="ghost small" data-a="rvedit">Edit</button><button class="ghost small" data-a="rvdone">${r.done ? 'Reopen' : 'Done'}</button><button class="ghost small danger" data-a="unmark">Remove</button></div>`; }
+  if (k === 'q') { const it = plItem(s.dataset.ref); return `<div class="rp-row" data-pid="${esc(pid)}" data-k="q" data-ref="${esc(s.dataset.ref || '')}"><b class="q-mk" aria-hidden="true">?</b><span class="rp-t"><b>${esc(it ? it.title || 'Untitled question' : 'Question (deleted)')}</b><span class="muted small">${it ? (it.status === 'answered' ? 'Answered' : 'Open question') : ''}</span></span><button class="ghost small" data-a="qopen">Open</button><button class="ghost small danger" data-a="unmark">Unlink</button></div>`; }
+  return '';
+}
+function showRmPop(marks, anchor) {
+  closeRmPop(); closePop(); syncEditor(); rmDirty();
+  rmPopEl = document.createElement('div'); rmPopEl.className = 'pop rm-pop'; rmPopEl.setAttribute('role', 'dialog'); rmPopEl.setAttribute('aria-label', 'Marks on this passage');
+  rmPopEl.innerHTML = marks.map(rmPopRow).join('');
+  document.body.appendChild(rmPopEl);
+  const r = anchor.getClientRects()[0] || anchor.getBoundingClientRect(), pw = rmPopEl.offsetWidth;
+  rmPopEl.style.left = Math.max(8, Math.min(innerWidth - pw - 8, r.left - 10)) + 'px';
+  rmPopEl.style.top = (r.bottom + 6 + rmPopEl.offsetHeight > innerHeight ? r.top - rmPopEl.offsetHeight - 6 : r.bottom + 6) + 'px';
+  rmPopEl.addEventListener('change', e => { const row = e.target.closest('.rp-row'); if (e.target.dataset.a === 'status' && row) { setClaimStatus(row.dataset.pid, e.target.value); const seg = $(`.rm[data-rm="${rmEsc(row.dataset.pid)}"]`, editor); if (seg) showRmPop(rmMarksAt(anchor), anchor); } });
+  rmPopEl.addEventListener('click', e => {
+    const a = e.target.closest('button')?.dataset.a, row = e.target.closest('.rp-row'); if (!a || !row) return;
+    const pid = row.dataset.pid, k = row.dataset.k;
+    if (a === 'prev' || a === 'next') { closeRmPop(); rmStep('th', row.dataset.ref, a === 'next' ? 1 : -1, pid); }
+    if (a === 'read') { closeRmPop(); openDesk('threads', row.dataset.ref); }
+    if (a === 'unmark') { closeRmPop(); removeMark(k, pid); }
+    if (a === 'register') { closeRmPop(); openDesk('claims', pid); }
+    if (a === 'rvedit') { closeRmPop(); openReviewKey(pid); }
+    if (a === 'rvdone') { const r = rvById(pid); if (r) { r.done = !r.done; r.doneAt = r.done ? nowISO() : ''; markDirty(); rmRefresh(); } closeRmPop(); }
+    if (a === 'qopen') { closeRmPop(); if (plItem(row.dataset.ref)) openPlanItem(row.dataset.ref); }
+  });
+}
+editor.addEventListener('click', e => {
+  if (e.target.closest('.cite,.fn,.flag')) { closeRmPop(); return; }
+  const marks = rmMarksAt(e.target); if (!marks.length) { closeRmPop(); return; }
+  const sel = getSelection(); if (sel && !sel.isCollapsed) return;
+  showRmPop(marks, marks[0]);
+});
+document.addEventListener('mousedown', e => { if (rmPopEl && !rmPopEl.contains(e.target) && !e.target.closest('.rm')) closeRmPop(); });
+editor.addEventListener('keydown', e => { if (rmPopEl && e.key !== 'Shift') closeRmPop(); });
+$('#scroller').addEventListener('scroll', () => closeRmPop(), { passive: true });
+
+/* ---------- the Mark menu and its quick keys ---------- */
+function openMarkMenu() { const m = $('#markMenu'), r = $('#btnMark').getBoundingClientRect(); m.classList.add('open'); const w = m.offsetWidth; m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; m.style.top = (r.bottom + 4) + 'px'; }
+$('#btnMark').addEventListener('click', e => { e.stopPropagation(); if ($('#markMenu').classList.contains('open')) $('#markMenu').classList.remove('open'); else openMarkMenu(); });
+$('#toolbar').addEventListener('scroll', () => $('#markMenu').classList.remove('open'), { passive: true });
+document.addEventListener('click', e => { if (!e.target.closest('#markMenuWrap')) $('#markMenu').classList.remove('open'); });
+function rmDo(a) {
+  if (a === 'th') openThreadPick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
+  if (a === 'desk') openDesk(); if (a === 'tab') { switchTab('research'); document.body.classList.add('side-open'); }
+}
+$('#markMenu').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.m; if (!a) return; $('#markMenu').classList.remove('open'); rmDo(a); });
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; $('#btnMark').scrollIntoView({ block: 'nearest', inline: 'nearest' }); openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
+  if ($('#markMenu').classList.contains('open') && !mod && !e.altKey) {
+    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', d: 'desk' }[e.key.toLowerCase()];
+    if (m) { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); rmDo(m); }
+    else if (e.key === 'Escape') { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); }
+  }
+});
+
+/* ---------- styles for threads (colors, show / hide) ---------- */
+function rmStyle() {
+  let st = $('#rmStyle'); if (!st) { st = document.createElement('style'); st.id = 'rmStyle'; document.head.append(st); }
+  st.textContent = P.threads.map(t => `.rm[data-ref="${rmEsc(t.id)}"]{--c:${t.color}}` + (t.hidden ? `#editor .rm[data-k=th][data-ref="${rmEsc(t.id)}"]{background:none;box-shadow:none}` : '')).join('\n')
+    + P.claims.map(c => c.status !== 'open' ? `.rm[data-rm="${rmEsc(c.id)}"]{--cs:var(--cl-${c.status});--cl-dec:${{ ok: 'solid', need: 'dashed', disp: 'double', cut: 'solid' }[c.status]}}` + (c.status === 'cut' ? `#editor .rm[data-rm="${rmEsc(c.id)}"]{text-decoration-line:line-through}` : '') : '').join('')
+    + P.reviewKeys.filter(r => r.done).map(r => `#editor .rm[data-rm="${rmEsc(r.id)}"]{border-bottom-color:transparent}`).join('');
+  document.body.classList.toggle('marks-off', !!PREFS.marksOff);
+}
+
+/* ---------- Research tab ---------- */
+let rsEls = [];
+function renderResearch() {
+  if (!P || !$('#researchPane')) return;
+  rmStyle(); rmDirty();
+  const all = rmAll(), here = all.filter(p => p.docId === curDocId);
+  const J = fn => { rsEls.push(fn); return rsEls.length - 1; }; rsEls = [];
+  $('#rmShow').checked = !PREFS.marksOff;
+  // threads
+  $('#rsThreads').innerHTML = P.threads.length ? P.threads.map(t => { const n = here.filter(p => p.k === 'th' && p.ref === t.id).length, m = all.filter(p => p.k === 'th' && p.ref === t.id).length; return `<li class="rs-th" data-thid="${esc(t.id)}"><i class="th-dot" style="--c:${t.color}"></i><span class="t" data-j="${J(() => openDesk('threads', t.id))}" title="Read the thread">${esc(t.name)}<span class="muted small"> ${n} here · ${m} in all</span></span><button class="ghost small" data-a="prev" aria-label="Previous passage in ${esc(t.name)}" title="Previous passage">‹</button><button class="ghost small" data-a="next" aria-label="Next passage in ${esc(t.name)}" title="Next passage">›</button><button class="ghost small" data-a="eye" aria-pressed="${!t.hidden}" title="${t.hidden ? 'Show' : 'Hide'} this thread’s highlight">${t.hidden ? '◌' : '●'}</button></li>`; }).join('')
+    : '<li class="muted small none">Threads follow a theme, an argument or a person through the piece. Select a passage, then <b>Mark → Add to thread</b>.</li>';
+  // claims in this doc
+  const cls = here.filter(p => p.k === 'cl').map(p => ({ p, c: clById(p.pid) || { status: 'open' } })).map(x => Object.assign(x, { iss: claimIssues(x.p, x.c) }));
+  const by = st => cls.filter(x => x.c.status === st).length;
+  $('#rsClaimSum').textContent = cls.length ? Object.entries(CL_ST).map(([k, v]) => by(k) ? `${by(k)} ${v.short}` : '').filter(Boolean).join(' · ') : '';
+  const probs = cls.filter(x => x.iss.length);
+  $('#rsClaimCount').textContent = probs.length || '';
+  $('#rsClaims').innerHTML = cls.length ? [...probs, ...cls.filter(x => !x.iss.length)].map(x => `<li data-j="${J(() => rmGo(x.p))}"><span><span class="cl-chip st-${x.c.status}">${CL_ST[x.c.status].short}</span> ${esc(x.p.text.length > 90 ? x.p.text.slice(0, 88) + '…' : x.p.text)}${x.iss.length ? `<br><span class="rs-iss small">${x.iss.map(esc).join(' · ')}</span>` : ''}</span><em>${x.p.cites.length}</em></li>`).join('')
+    : '<li class="muted small none">Mark a sentence as a claim to track whether it’s supported, which sources back it, and whether it changed after you checked it.</li>';
+  // review keys (whole project, open first by due date)
+  const keys = all.filter(p => p.k === 'rv').map(p => ({ p, r: rvById(p.pid) })).filter(x => x.r && !x.r.done).sort((a, b) => (a.r.due || '9999').localeCompare(b.r.due || '9999'));
+  const due = keys.filter(x => x.r.due && daysUntil(x.r.due) <= 0);
+  $('#rsKeyCount').textContent = due.length || '';
+  $('#rsKeys').innerHTML = keys.length ? keys.slice(0, 12).map(x => { const late = x.r.due && daysUntil(x.r.due) <= 0; return `<li data-j="${J(() => rmGo(x.p))}"><span><b class="small">${esc(x.r.reason)}</b> <span class="small ${late ? 'rv-late' : 'muted'}">${esc(fmtDue(x.r.due))}</span><br><span class="muted small">${esc(x.p.text.slice(0, 70))}${x.p.text.length > 70 ? '…' : ''}${x.p.docId !== curDocId ? ' · ' + esc((rmDoc(x.p.docId) || {}).title || 'Untitled') : ''}</span></span></li>`; }).join('') + (keys.length > 12 ? `<li class="muted small" data-j="${J(() => openDesk('review'))}">${keys.length - 12} more on the research desk…</li>` : '')
+    : '<li class="muted small none">Key a passage you want to come back to (verify, rewrite, check a quote) with a due date. Due keys show up here and on Project home.</li>';
+  // questions
+  const qs = qItems().filter(i => i.status !== 'answered');
+  $('#rsQs').innerHTML = qs.length ? qs.slice(0, 10).map(i => { const n = all.filter(p => p.k === 'q' && p.ref === i.id).length; return `<li data-j="${J(() => openDesk('questions', i.id))}"><span><b class="q-mk">?</b> ${esc(i.title || 'Untitled question')}</span><em>${n || ''}</em></li>`; }).join('')
+    : '<li class="muted small none">No open questions. Add one, then link passages and notes that bear on it.</li>';
+  const badge = probs.length + due.length; $('#tabResearchBadge').textContent = badge || '';
+}
+const renderResearchSoon = debounce(() => { if (!homeOn && !boardOn && !planOn) renderResearch(); }, 700);
+function rmRefresh() { rmDirty(); renderResearch(); if (deskOn) renderDesk(); if (homeOn) renderHomeSoon(); }
+$('#researchPane').addEventListener('click', e => {
+  const j = e.target.closest('[data-j]'); const thLi = e.target.closest('.rs-th'); const a = e.target.closest('button')?.dataset.a;
+  if (thLi && a) { const t = thById(thLi.dataset.thid); if (!t) return; if (a === 'eye') { t.hidden = !t.hidden; markDirty(); renderResearch(); } else rmStep('th', t.id, a === 'next' ? 1 : -1); return; }
+  if (j) { const fn = rsEls[+j.dataset.j]; if (fn) fn(); }
+});
+$('#rmShow').addEventListener('change', e => { PREFS.marksOff = !e.target.checked; savePrefs(); rmStyle(); });
+$('#rsNewThread').addEventListener('click', async () => { const n = await ask('New thread', 'Name a theme, argument, person or line of evidence to follow through the piece.', 'Create', ''); if (n) { newThread(n); renderResearch(); if (deskOn) renderDesk(); } });
+$('#rsNewQ').addEventListener('click', () => openQuestionLink(true));
+$('#btnDesk').addEventListener('click', () => openDesk());
+$('#btnAbout').addEventListener('click', () => openDesk('about'));
+editor.addEventListener('input', renderResearchSoon);
+
+/* ================================================================
+   Research desk: threads read straight through, the claims register,
+   the evidence grid, review keys, questions, and "everything about X"
+   ================================================================ */
+let deskOn = false, deskView = 'threads', deskSel = null, deskJ = [];
+const DK = { threads: 'Threads', claims: 'Claims', grid: 'Evidence grid', review: 'Review', questions: 'Questions', about: 'Everything about…' };
+function openDesk(view, sel) {
+  if (!P) return;
+  syncEditor(); closeRmPop(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
+  if (view) deskView = view; else deskView = PREFS.deskView || 'threads';
+  deskSel = sel || (view === 'about' ? deskSel : null);
+  deskOn = true; document.body.classList.add('desk-on'); $('#desk').classList.remove('hidden'); document.body.classList.remove('side-open');
+  renderDesk();
+  if (deskView === 'about') setTimeout(() => { const q = $('#abQ'); if (q) { q.focus(); q.select(); } }, 30);
+}
+function closeDesk() { deskOn = false; document.body.classList.remove('desk-on'); $('#desk').classList.add('hidden'); }
+$('#deskBack').addEventListener('click', () => { closeDesk(); openDoc(curDocId); });
+$('#deskTabs').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (!b) return; deskView = b.dataset.dv; PREFS.deskView = deskView; savePrefs(); deskSel = null; renderDesk(); if (deskView === 'about') setTimeout(() => $('#abQ')?.focus(), 30); });
+const DJ = fn => { deskJ.push(fn); return deskJ.length - 1; };
+const docT = id => esc((rmDoc(id) || {}).title || 'Untitled');
+function renderDesk() {
+  if (!deskOn) return;
+  deskJ = [];
+  $$('#deskTabs [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === deskView); b.setAttribute('aria-selected', b.dataset.dv === deskView); });
+  $('#deskTools').innerHTML = '';
+  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, review: deskReview, questions: deskQuestions, about: deskAbout }[deskView] || deskThreads;
+  fn();
+}
+$('#deskBody').addEventListener('click', e => {
+  const j = e.target.closest('[data-j]'); if (j && !e.target.closest('select,input,textarea')) { const fn = deskJ[+j.dataset.j]; if (fn) fn(e); }
+});
+$('#deskTools').addEventListener('click', e => { const j = e.target.closest('[data-j]'); if (j) { const fn = deskJ[+j.dataset.j]; if (fn) fn(e); } });
+
+/* threads */
+function deskThreads() {
+  if (!deskSel || !thById(deskSel)) deskSel = P.threads[0] ? P.threads[0].id : null;
+  const all = rmAll('th');
+  const t = thById(deskSel);
+  const list = P.threads.map(x => `<li class="${x.id === deskSel ? 'on' : ''}" data-j="${DJ(() => { deskSel = x.id; renderDesk(); })}"><i class="th-dot" style="--c:${x.color}"></i><span class="t">${esc(x.name)}</span><em>${all.filter(p => p.ref === x.id).length}</em></li>`).join('');
+  let main = '';
+  if (!t) main = `<div class="desk-empty"><p><b>Follow a thread through the whole piece.</b></p><p>A thread collects passages about one theme, argument, person or line of evidence, across every document. Select a passage in the draft, then choose <b>Mark → Add to thread</b> (Ctrl/Cmd+Alt+G, then T). Here you can read a thread straight through, in manuscript order.</p><button class="primary" data-j="${DJ(async () => { const n = await ask('New thread', 'Name a theme, argument, person or line of evidence.', 'Create', ''); if (n) { deskSel = newThread(n).id; renderDesk(); renderResearch(); } })}">+ New thread</button></div>`;
+  else {
+    const ps = all.filter(p => p.ref === t.id); let lastDoc = null;
+    main = `<div class="th-head"><input id="thRename" value="${esc(t.name)}" aria-label="Thread name"><span class="swatches">${TH_COLORS.map(c => `<button class="sw th-sw ${c === t.color ? 'on' : ''}" data-j="${DJ(() => { t.color = c; markDirty(); rmRefresh(); })}" style="background:${c}" aria-label="Color ${c}"></button>`).join('')}</span><label class="inline small"><input type="checkbox" id="thHide" ${t.hidden ? '' : 'checked'}> highlight in the draft</label></div>
+      <textarea id="thNote" rows="2" placeholder="What this thread is tracking, and what you want it to add up to">${esc(t.note)}</textarea>
+      <p class="small muted">${ps.length} passage${ps.length === 1 ? '' : 's'} in ${new Set(ps.map(p => p.docId)).size} document${new Set(ps.map(p => p.docId)).size === 1 ? '' : 's'}, in manuscript order.</p>
+      <div class="th-read">${ps.length ? ps.map((p, i) => { const h = p.docId !== lastDoc ? `<h4>${docT(p.docId)}</h4>` : ''; lastDoc = p.docId; return `${h}<div class="th-p" style="--c:${t.color}"><p>${esc(p.text)}</p><div class="th-pb"><span class="muted small">${i + 1}</span><button class="ghost small" data-j="${DJ(() => rmGo(p))}">Go to passage</button><button class="ghost small danger" data-j="${DJ(() => removeMark('th', p.pid))}">Remove</button></div></div>`; }).join('') : '<p class="muted">No passages in this thread yet. Select text in a draft and add it with Mark → Add to thread.</p>'}</div>`;
+    $('#deskTools').innerHTML = `<button data-j="${DJ(() => threadDoc(t))}" ${ps.length ? '' : 'disabled'}>New document from thread</button><button class="danger" data-j="${DJ(async () => { if (await ask('Delete thread', `Delete “${t.name}”? Its ${ps.length} passage${ps.length === 1 ? '' : 's'} stay in your drafts, unhighlighted.`, 'Delete')) { ps.forEach(p => removeMark('th', p.pid)); P.threads = P.threads.filter(x => x.id !== t.id); deskSel = null; markDirty(); rmRefresh(); } })}">Delete thread</button>`;
+  }
+  $('#deskBody').innerHTML = `<div class="desk-split"><aside class="desk-side"><h6>Threads <button class="ghost small hl" data-j="${DJ(async () => { const n = await ask('New thread', 'Name a theme, argument, person or line of evidence.', 'Create', ''); if (n) { deskSel = newThread(n).id; renderDesk(); renderResearch(); } })}">+ New</button></h6><ul class="desk-list">${list || '<li class="muted small">None yet</li>'}</ul></aside><div class="desk-main">${main}</div></div>`;
+  if (t) {
+    $('#thRename').addEventListener('change', e => { t.name = e.target.value.trim() || t.name; markDirty(); rmRefresh(); });
+    $('#thNote').addEventListener('change', e => { t.note = e.target.value; markDirty(); });
+    $('#thHide').addEventListener('change', e => { t.hidden = !e.target.checked; markDirty(); rmRefresh(); });
+  }
+}
+function threadDoc(t) {
+  const ps = rmAll('th').filter(p => p.ref === t.id); let last = null;
+  const html = `<h1>${esc(t.name)}</h1>${t.note ? `<p><i>${esc(t.note)}</i></p>` : ''}` + ps.map(p => { const h = p.docId !== last ? `<h2>${docT(p.docId)}</h2>` : ''; last = p.docId; return h + `<blockquote><p>${esc(p.text)}</p></blockquote>`; }).join('');
+  const d = newDoc(`Thread: ${t.name}`, html); closeDesk(); addDoc(d);
+  toast('Made a working document from the thread. Delete it when you’re done with it.');
+}
+
+/* claims register */
+function claimRows() {
+  return rmAll('cl').map(p => { const c = clById(p.pid) || { id: p.pid, status: 'open', note: '' }; return { p, c, iss: claimIssues(p, c) }; });
+}
+function deskClaims() {
+  const f = PREFS.clFilter || 'all', fd = PREFS.clDoc || '';
+  let rows = claimRows();
+  const counts = Object.fromEntries(Object.keys(CL_ST).map(k => [k, rows.filter(x => x.c.status === k).length])), nProb = rows.filter(x => x.iss.length).length;
+  if (fd) rows = rows.filter(x => x.p.docId === fd);
+  if (f === 'prob') rows = rows.filter(x => x.iss.length); else if (f !== 'all') rows = rows.filter(x => x.c.status === f);
+  const docs = [...new Set(rmAll('cl').map(p => p.docId))];
+  $('#deskTools').innerHTML = `<button data-j="${DJ(factSheet)}">Fact-check sheet</button><button data-j="${DJ(claimsCSV)}">CSV</button>`;
+  const orphans = P.claims.filter(c => !rmAll('cl').some(p => p.pid === c.id));
+  $('#deskBody').innerHTML = `<div class="desk-pad">
+    <div class="cl-filters" role="group" aria-label="Show claims"><button class="${f === 'all' ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = 'all'; savePrefs(); renderDesk(); })}">All <b>${Object.values(counts).reduce((a, b) => a + b, 0)}</b></button><button class="${f === 'prob' ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = 'prob'; savePrefs(); renderDesk(); })}">Needs attention <b>${nProb}</b></button>${Object.entries(CL_ST).map(([k, v]) => `<button class="${f === k ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = k; savePrefs(); renderDesk(); })}"><span class="cl-mk st-${k}" aria-hidden="true"></span>${v.label} <b>${counts[k]}</b></button>`).join('')}
+    <select id="clDoc" aria-label="Document"><option value="">All documents</option>${docs.map(id => `<option value="${esc(id)}" ${id === fd ? 'selected' : ''}>${docT(id)}</option>`).join('')}</select></div>
+    ${rows.length ? `<table class="cl-table"><thead><tr><th scope="col">Status</th><th scope="col">Claim</th><th scope="col">Sources</th><th scope="col">Note</th></tr></thead><tbody>${rows.map(x => `<tr class="${x.p.pid === deskSel ? 'hot' : ''}" data-pid="${esc(x.p.pid)}">
+      <td><select data-cl="status" aria-label="Status">${Object.entries(CL_ST).map(([k, v]) => `<option value="${k}" ${k === x.c.status ? 'selected' : ''}>${v.label}</option>`).join('')}</select></td>
+      <td><a href="#" class="cl-text" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.p.text)}</a><div class="muted small">${docT(x.p.docId)}${x.c.checkedAt && x.c.status === 'ok' ? ' · checked ' + esc(relTime(x.c.checkedAt)) : ''}</div>${x.iss.length ? `<div class="rs-iss small">${x.iss.map(esc).join(' · ')}</div>` : ''}</td>
+      <td>${x.p.cites.length ? x.p.cites.map(id => { const s = P.sources.find(v => v.id === id), r = srcRating(id); return `<a href="#" class="cl-src" data-j="${DJ(e => { e.preventDefault(); if (s) openSource(id); })}">${esc(srcShort(s))}</a>${r ? ` <span class="rt rt-${rateTier(r)}">${esc(r)}</span>` : ''}`; }).join('<br>') : '<span class="muted small">none</span>'}</td>
+      <td><textarea data-cl="note" rows="1" aria-label="Note" placeholder="What you checked, against what">${esc(x.c.note || '')}</textarea></td></tr>`).join('')}</tbody></table>`
+      : `<div class="desk-empty"><p><b>${rmAll('cl').length ? 'No claims match.' : 'Nothing in the register yet.'}</b></p>${rmAll('cl').length ? '' : '<p>Select a factual sentence in a draft and choose <b>Mark → Claim</b> (Ctrl/Cmd+Alt+G, then C). Anabasis finds the citations inside it or right after it, warns when a claim has no source or leans only on low-rated ones, and notices if you edit a claim after marking it supported. The fact-check sheet turns the register into a checklist for you or an editor.</p>'}</div>`}
+    ${orphans.length ? `<p class="small muted">${orphans.length} claim record${orphans.length === 1 ? '' : 's'} whose passage was deleted. <button class="ghost small" data-j="${DJ(() => { P.claims = P.claims.filter(c => !orphans.includes(c)); markDirty(); renderDesk(); })}">Clear them</button></p>` : ''}
+  </div>`;
+  $('#clDoc')?.addEventListener('change', e => { PREFS.clDoc = e.target.value; savePrefs(); renderDesk(); });
+  $$('#deskBody [data-cl]').forEach(el => el.addEventListener('change', e => {
+    const pid = e.target.closest('tr').dataset.pid; const c = clById(pid); if (!c) return;
+    if (e.target.dataset.cl === 'status') setClaimStatus(pid, e.target.value); else { c.note = e.target.value; c.modified = nowISO(); markDirty(); }
+  }));
+  const hot = $('#deskBody tr.hot'); if (hot) hot.scrollIntoView({ block: 'center' });
+}
+function citeFull(id) { try { const d = curDoc() || P.docs[0]; return htmlToText(previewCluster((d && d.style) || DEFAULT_STYLE, [{ id }])); } catch (e) { return srcShort(P.sources.find(s => s.id === id)); } }
+function factSheet() {
+  const rows = claimRows().filter(x => x.c.status !== 'cut');
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>${esc(P.title)}: fact-check sheet</title><style>
+body{font:14px/1.45 Georgia,'Times New Roman',serif;color:#111;max-width:1000px;margin:32px auto;padding:0 20px}h1{font-size:22px;margin:0}p.sub{color:#555;margin:4px 0 20px}
+table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:7px 8px;vertical-align:top;text-align:left}th{background:#eee;font:600 12px/1.3 system-ui,sans-serif}
+td.n{width:28px;color:#555}td.st{width:110px;font:12px system-ui,sans-serif}td.ck{width:120px}ul{margin:0;padding-left:16px}.iss{color:#a3271b;font:12px system-ui,sans-serif;margin-top:4px}.doc{color:#555;font:12px system-ui,sans-serif;margin-top:4px}
+@media print{body{margin:0}tr{break-inside:avoid}}</style></head><body><h1>${esc(P.title)}: fact-check sheet</h1><p class="sub">${rows.length} claim${rows.length === 1 ? '' : 's'} · ${esc(new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }))}</p>
+<table><thead><tr><th>#</th><th>Claim</th><th>Sources cited</th><th>Status</th><th>Checked by / date</th></tr></thead><tbody>${rows.map((x, i) => `<tr><td class="n">${i + 1}</td><td>${esc(x.p.text)}<div class="doc">${docT(x.p.docId)}</div>${x.c.note ? `<div class="doc">Note: ${esc(x.c.note)}</div>` : ''}${x.iss.length ? `<div class="iss">${x.iss.map(esc).join(' · ')}</div>` : ''}</td><td>${x.p.cites.length ? `<ul>${x.p.cites.map(id => `<li>${esc(citeFull(id))}${srcRating(id) ? ` <b>[${esc(srcRating(id))}]</b>` : ''}</li>`).join('')}</ul>` : '<i>none</i>'}</td><td class="st">${CL_ST[x.c.status].label}</td><td class="ck"></td></tr>`).join('')}</tbody></table></body></html>`;
+  download(fileSafe(P.title) + ' - fact-check sheet.html', html, 'text/html');
+}
+function claimsCSV() {
+  const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+  const lines = [['Claim', 'Document', 'Status', 'Sources', 'Ratings', 'Issues', 'Note', 'Checked'].map(q).join(',')].concat(claimRows().map(x => [x.p.text, (rmDoc(x.p.docId) || {}).title || '', CL_ST[x.c.status].label, x.p.cites.map(id => citeFull(id)).join(' | '), x.p.cites.map(srcRating).join(' | '), x.iss.join('; '), x.c.note || '', x.c.status === 'ok' ? (x.c.checkedAt || '').slice(0, 10) : ''].map(q).join(',')));
+  download(fileSafe(P.title) + ' - claims.csv', '\ufeff' + lines.join('\r\n'), 'text/csv');
+}
+
+/* evidence grid: claims down the side, sources across the top */
+function deskGrid() {
+  const rows = claimRows().filter(x => x.c.status !== 'cut');
+  const use = {}; rows.forEach(x => x.p.cites.forEach(id => { use[id] = (use[id] || 0) + 1; }));
+  const cols = Object.keys(use).sort((a, b) => use[b] - use[a] || srcShort(P.sources.find(s => s.id === a)).localeCompare(srcShort(P.sources.find(s => s.id === b))));
+  if (!rows.length) { $('#deskBody').innerHTML = `<div class="desk-empty"><p><b>The evidence grid lays your claims against your sources.</b></p><p>Each row is a claim; each column, a source it cites. Cells show the source’s rating, so you can see at a glance which claims rest on one source, which lean on weak ones, and which have none. Mark claims in your drafts to fill it.</p></div>`; return; }
+  const single = rows.filter(x => x.p.cites.length === 1).length, none = rows.filter(x => !x.p.cites.length).length, weak = rows.filter(x => x.iss.includes('Only low-rated sources')).length;
+  const tierLabel = { strong: 'A–B or 1–2', fair: 'C or 3', weak: 'D–E or 4–5', none: 'not rated' };
+  $('#deskBody').innerHTML = `<div class="desk-pad">
+    <div class="eg-sum"><div><b>${rows.length}</b><span>claims</span></div><div><b>${cols.length}</b><span>sources cited</span></div><div class="${none ? 'bad' : ''}"><b>${none}</b><span>with no source</span></div><div><b>${single}</b><span>on one source</span></div><div class="${weak ? 'bad' : ''}"><b>${weak}</b><span>only on low-rated sources</span></div></div>
+    <div class="eg-legend small" aria-label="Legend">Cells show each source’s rating: ${Object.entries(tierLabel).map(([k, v]) => `<span><i class="eg-cell rt-${k}">${k === 'none' ? '●' : k === 'strong' ? 'A' : k === 'fair' ? 'C' : 'D'}</i>${v}</span>`).join('')}</div>
+    <div class="eg-wrap"><table class="eg"><thead><tr><th scope="col" class="eg-c">Claim</th>${cols.map(id => { const s = P.sources.find(v => v.id === id); return `<th scope="col" class="eg-h" title="${esc(s ? sourceLabel(s).title || '' : 'Deleted source')}"><span>${esc(srcShort(s))}</span></th>`; }).join('')}<th scope="col" class="eg-n">n</th></tr></thead>
+    <tbody>${rows.map(x => `<tr><th scope="row" class="eg-c"><a href="#" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}"><span class="cl-mk st-${x.c.status}" aria-hidden="true"></span>${esc(x.p.text.length > 110 ? x.p.text.slice(0, 108) + '…' : x.p.text)}</a></th>${cols.map(id => x.p.cites.includes(id) ? `<td><i class="eg-cell rt-${rateTier(srcRating(id))}" title="${esc(srcShort(P.sources.find(s => s.id === id)))}${srcRating(id) ? ', rated ' + esc(srcRating(id)) : ', not rated'}">${esc(srcRating(id) || '●')}</i></td>` : '<td></td>').join('')}<td class="eg-n ${x.p.cites.length ? '' : 'bad'}">${x.p.cites.length || '0'}</td></tr>`).join('')}
+    <tr class="eg-tot"><th scope="row" class="eg-c">Claims each source supports</th>${cols.map(id => `<td>${use[id]}</td>`).join('')}<td></td></tr></tbody></table></div>
+    <p class="small muted">Rate sources on their Sources card (OSINT reliability and credibility). Click a claim to go to it in the draft.</p></div>`;
+}
+
+/* review keys */
+function deskReview() {
+  const f = PREFS.rvFilter || 'due';
+  const all = rmAll('rv').map(p => ({ p, r: rvById(p.pid) })).filter(x => x.r);
+  const cnt = { due: all.filter(x => !x.r.done && x.r.due && daysUntil(x.r.due) <= 0).length, soon: all.filter(x => !x.r.done && x.r.due && daysUntil(x.r.due) > 0).length, nodate: all.filter(x => !x.r.done && !x.r.due).length, done: all.filter(x => x.r.done).length, all: all.length };
+  let rows = all.filter(x => f === 'all' ? true : f === 'done' ? x.r.done : !x.r.done && (f === 'due' ? x.r.due && daysUntil(x.r.due) <= 0 : f === 'soon' ? x.r.due && daysUntil(x.r.due) > 0 : !x.r.due));
+  rows.sort((a, b) => (a.r.due || '9999').localeCompare(b.r.due || '9999'));
+  const L = { due: 'Due now', soon: 'Coming up', nodate: 'No date', done: 'Done', all: 'All' };
+  $('#deskBody').innerHTML = `<div class="desk-pad"><div class="cl-filters" role="group" aria-label="Show review keys">${Object.entries(L).map(([k, v]) => `<button class="${f === k ? 'on' : ''}" data-j="${DJ(() => { PREFS.rvFilter = k; savePrefs(); renderDesk(); })}">${v} <b>${cnt[k]}</b></button>`).join('')}</div>
+    ${rows.length ? `<ul class="rv-list">${rows.map(x => { const late = !x.r.done && x.r.due && daysUntil(x.r.due) <= 0; return `<li class="${x.r.done ? 'done' : ''}" data-pid="${esc(x.p.pid)}"><div class="rv-top"><span class="rv-mk" aria-hidden="true">⚑</span><b>${esc(x.r.reason)}</b><span class="small ${late ? 'rv-late' : 'muted'}">${x.r.done ? 'Done ' + esc(relTime(x.r.doneAt || x.r.created)) : esc(fmtDue(x.r.due))}</span><span class="muted small">· ${docT(x.p.docId)}</span><div class="spacer"></div>
+      <input type="date" data-rv="due" value="${esc(x.r.due || '')}" aria-label="Due date"><button class="small" data-j="${DJ(() => { x.r.due = addDaysISO(x.r.due && daysUntil(x.r.due) > 0 ? x.r.due : todayISO(), 7); markDirty(); rmRefresh(); })}">+1 week</button><button class="small ${x.r.done ? '' : 'primary-soft'}" data-j="${DJ(() => { x.r.done = !x.r.done; x.r.doneAt = x.r.done ? nowISO() : ''; markDirty(); rmRefresh(); })}">${x.r.done ? 'Reopen' : 'Done'}</button><button class="small" data-j="${DJ(() => rmGo(x.p))}">Go</button><button class="ghost small danger" data-j="${DJ(() => removeMark('rv', x.p.pid))}" aria-label="Remove review key">✕</button></div>
+      <blockquote>${esc(x.p.text)}</blockquote><input data-rv="note" value="${esc(x.r.note || '')}" placeholder="What to look at when you come back" aria-label="Note"></li>`; }).join('')}</ul>`
+      : `<div class="desk-empty"><p><b>${all.length ? 'Nothing here.' : 'No review keys yet.'}</b></p>${all.length ? '' : '<p>A review key marks a passage you mean to come back to, with a reason (verify, rewrite, check a quote, a legal read) and a due date. Select the passage and choose <b>Mark → Review key</b> (Ctrl/Cmd+Alt+G, then R). Due keys show up here, in the Research tab and on Project home.</p>'}</div>`}</div>`;
+  $$('#deskBody [data-rv]').forEach(el => el.addEventListener('change', e => { const r = rvById(e.target.closest('li').dataset.pid); if (!r) return; r[e.target.dataset.rv] = e.target.value.trim(); markDirty(); if (e.target.dataset.rv === 'due') rmRefresh(); else renderResearch(); }));
+}
+
+/* questions: research-question items in the plan, plus passages and notes linked to them */
+function deskQuestions() {
+  const qs = qItems().sort((a, b) => (a.status === 'answered') - (b.status === 'answered'));
+  if (!deskSel || !plItem(deskSel)) deskSel = qs[0] ? qs[0].id : null;
+  const all = rmAll('q'), it = plItem(deskSel);
+  const list = qs.map(i => `<li class="${i.id === deskSel ? 'on' : ''} ${i.status === 'answered' ? 'done' : ''}" data-j="${DJ(() => { deskSel = i.id; renderDesk(); })}"><b class="q-mk">?</b><span class="t">${esc(i.title || 'Untitled question')}</span><em>${all.filter(p => p.ref === i.id).length || ''}</em></li>`).join('');
+  let main;
+  if (!it) main = `<div class="desk-empty"><p><b>Keep your open questions where you can see them.</b></p><p>Write down what you still need to find out. Link passages in your drafts to a question (<b>Mark → Question</b>) and attach notes, then record the answer when you have it. Questions are shared with <b>Plan</b> and appear among the loose ends on Project home.</p><button class="primary" data-j="${DJ(() => openQuestionLink(true))}">+ New question</button></div>`;
+  else {
+    const ps = all.filter(p => p.ref === it.id), notes = it.notes.map(id => P.notes.find(n => n.id === id)).filter(Boolean);
+    main = `<input id="qTitle" class="q-title" value="${esc(it.title)}" aria-label="Question">
+      <div class="row" style="gap:10px;align-items:center"><label class="inline"><input type="checkbox" id="qDone" ${it.status === 'answered' ? 'checked' : ''}> Answered</label><button class="ghost small" data-j="${DJ(() => openPlanItem(it.id))}">Open in Plan</button><div class="spacer"></div><button class="ghost small danger" data-j="${DJ(async () => { if (await ask('Delete question', `Delete “${it.title || 'this question'}”? Linked passages stay in your drafts.`, 'Delete')) { ps.forEach(p => removeMark('q', p.pid)); P.plan.items = PLI().filter(x => x.id !== it.id); deskSel = null; markDirty(); rmRefresh(); } })}">Delete</button></div>
+      <label>What you’ve found so far / the answer</label><textarea id="qAns" rows="4" placeholder="Write what you know, what’s still missing, and where to look next">${esc(it.synopsis || '')}</textarea>
+      <h6>Passages linked to this question <span class="badge">${ps.length || ''}</span></h6>${ps.length ? ps.map(p => `<div class="th-p q-p"><p>${esc(p.text)}</p><div class="th-pb"><span class="muted small">${docT(p.docId)}</span><button class="ghost small" data-j="${DJ(() => rmGo(p))}">Go to passage</button><button class="ghost small danger" data-j="${DJ(() => removeMark('q', p.pid))}">Unlink</button></div></div>`).join('') : '<p class="muted small">Select a passage in a draft, then <b>Mark → Question</b>.</p>'}
+      <h6>Notes <span class="badge">${notes.length || ''}</span></h6>${notes.length ? `<ul class="desk-list">${notes.map(n => `<li data-j="${DJ(() => openNote(n.id))}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><em>${esc(n.kind || '')}</em></li>`).join('')}</ul>` : ''}
+      <div class="row"><select id="qAddNote" aria-label="Attach a note"><option value="">Attach a note…</option>${P.notes.filter(n => !it.notes.includes(n.id)).slice(0, 400).map(n => `<option value="${esc(n.id)}">${esc((noteTitle(n) || 'Untitled note').slice(0, 70))}</option>`).join('')}</select></div>`;
+  }
+  $('#deskTools').innerHTML = `<button data-j="${DJ(() => openQuestionLink(true))}">+ New question</button>`;
+  $('#deskBody').innerHTML = `<div class="desk-split"><aside class="desk-side"><h6>Questions</h6><ul class="desk-list">${list || '<li class="muted small">None yet</li>'}</ul></aside><div class="desk-main">${main}</div></div>`;
+  if (it) {
+    $('#qTitle').addEventListener('change', e => { it.title = e.target.value.trim(); markDirty(); rmRefresh(); });
+    $('#qAns').addEventListener('change', e => { it.synopsis = e.target.value; markDirty(); });
+    $('#qDone').addEventListener('change', e => { it.status = e.target.checked ? 'answered' : 'open'; markDirty(); rmRefresh(); });
+    $('#qAddNote').addEventListener('change', e => { if (e.target.value) { it.notes.push(e.target.value); markDirty(); renderDesk(); } });
+  }
+}
+
+/* everything about X: one term (and its known spellings) across the project */
+let abLast = null;
+function aboutTerms(q) {
+  const t = rmNorm(q); if (!t) return [];
+  const low = t.toLowerCase();
+  const ent = P.entities.find(e => e.name.toLowerCase() === low || (e.variants || []).some(v => String(v).toLowerCase() === low));
+  return [...new Set([t, ...(ent ? [ent.name, ...(ent.variants || [])] : [])].map(s => rmNorm(s)).filter(s => s.length > 1))];
+}
+function aboutSearch(q) {
+  const terms = aboutTerms(q); if (!terms.length) return null;
+  const re = new RegExp(terms.sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'gi');
+  const has = s => { re.lastIndex = 0; return re.test(s || ''); };
+  syncEditor();
+  const paras = [];
+  binderOrder().forEach(d => { const t = document.createElement('div'); t.innerHTML = d.html; [...t.children].forEach((el, at) => { const c = el.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.ix-a', c).forEach(x => x.remove()); const tx = rmNorm(c.textContent); if (has(tx)) paras.push({ d, at, tx }); }); });
+  const notes = P.notes.filter(n => has(n.title) || has(n.body) || (n.tags || []).some(has));
+  const sources = P.sources.filter(s => { const l = sourceLabel(s); return has(l.title) || has(l.who) || has(s.annotation) || has(JSON.stringify(s.csl.author || '')); });
+  const marks = rmAll().filter(p => has(p.text));
+  const threads = P.threads.filter(t => has(t.name) || has(t.note));
+  const questions = qItems().filter(i => has(i.title) || has(i.synopsis));
+  const ent = P.entities.find(e => terms.some(x => x.toLowerCase() === e.name.toLowerCase()));
+  return { q: rmNorm(q), terms, re, paras, notes, sources, marks, threads, questions, ent };
+}
+function hiText(tx, re, n = 260) {
+  re.lastIndex = 0; const m = re.exec(tx); let s = tx;
+  if (m && tx.length > n) { const a = Math.max(0, m.index - Math.floor(n / 3)); s = (a ? '…' : '') + tx.slice(a, a + n) + (a + n < tx.length ? '…' : ''); } else if (tx.length > n) s = tx.slice(0, n) + '…';
+  re.lastIndex = 0; let out = '', i = 0; s.replace(re, (mm, off) => { out += esc(s.slice(i, off)) + '<mark>' + esc(mm) + '</mark>'; i = off + mm.length; return mm; }); return out + esc(s.slice(i));
+}
+function deskAbout() {
+  const r = deskSel ? aboutSearch(deskSel) : null; abLast = r;
+  const kind = p => p.k === 'th' ? (thById(p.ref) || {}).name || 'Thread' : p.k === 'cl' ? 'Claim · ' + CL_ST[(clById(p.pid) || { status: 'open' }).status].short : p.k === 'rv' ? 'Review key' : 'Question';
+  const grp = (title, n, body) => n ? `<section class="ab-g"><h5>${title} <span class="count">${n}</span></h5>${body}</section>` : '';
+  const total = r ? r.paras.length + r.notes.length + r.sources.length + r.marks.length + r.threads.length + r.questions.length : 0;
+  $('#deskTools').innerHTML = r && total ? `<button data-j="${DJ(aboutDoc)}">New document from results</button>` : '';
+  let lastD = null;
+  $('#deskBody').innerHTML = `<div class="desk-pad ab">
+    <form id="abForm" class="ab-form" role="search"><input id="abQ" type="search" value="${esc(deskSel || '')}" placeholder="A person, place, organization, term or idea" aria-label="Everything about"><button class="primary">Gather</button></form>
+    ${!r ? `<div class="desk-empty"><p><b>Everything you have on one subject, in one place.</b></p><p>Type a name or term. Anabasis gathers every paragraph that mentions it in every document, the notes and sources about it, and the threads, claims, review keys and questions that touch it. If the name is in <b>Names &amp; spellings</b>, its other spellings are searched too.</p></div>`
+      : `<p class="small muted">${total ? `${total} result${total === 1 ? '' : 's'}` : 'Nothing found'} for ${r.terms.map(t => `<b>${esc(t)}</b>`).join(' or ')}${r.ent && r.ent.note ? ` · ${esc(r.ent.note)}` : ''}</p>
+      ${grp('In your documents', r.paras.length, r.paras.map(x => { const h = x.d !== lastD ? `<h6>${esc(x.d.title || 'Untitled')}</h6>` : ''; lastD = x.d; return `${h}<div class="ab-hit" data-j="${DJ(() => { closeDesk(); jumpTo(x.d.id, x.at); })}">${hiText(x.tx, r.re)}</div>`; }).join(''))}
+      ${grp('Marked passages', r.marks.length, r.marks.map(p => `<div class="ab-hit" data-j="${DJ(() => rmGo(p))}"><span class="ab-k">${esc(kind(p))}</span> ${hiText(p.text, r.re, 200)}</div>`).join(''))}
+      ${grp('Notes', r.notes.length, r.notes.map(n => `<div class="ab-hit" data-j="${DJ(() => { closeDesk(); openNote(n.id); })}"><b>${esc(noteTitle(n) || 'Untitled note')}</b> ${hiText(rmNorm(n.body), r.re, 200)}</div>`).join(''))}
+      ${grp('Sources', r.sources.length, r.sources.map(s => `<div class="ab-hit" data-j="${DJ(() => { closeDesk(); openSource(s.id); })}">${hiText(citeFull(s.id), r.re, 300)}</div>`).join(''))}
+      ${grp('Threads', r.threads.length, r.threads.map(t => `<div class="ab-hit" data-j="${DJ(() => openDesk('threads', t.id))}"><i class="th-dot" style="--c:${t.color}"></i> ${hiText(t.name, r.re)}</div>`).join(''))}
+      ${grp('Questions', r.questions.length, r.questions.map(i => `<div class="ab-hit" data-j="${DJ(() => openDesk('questions', i.id))}"><b class="q-mk">?</b> ${hiText(i.title || 'Untitled', r.re)}</div>`).join(''))}`}
+  </div>`;
+  $('#abForm').addEventListener('submit', e => { e.preventDefault(); const v = $('#abQ').value.trim(); deskSel = v || null; renderDesk(); setTimeout(() => $('#abQ')?.focus(), 0); });
+}
+function aboutDoc() {
+  const r = abLast; if (!r) return;
+  let last = null;
+  const html = `<h1>${esc(r.q)}</h1><p><i>Gathered ${esc(new Date().toLocaleDateString())} from ${esc(P.title)}${r.terms.length > 1 ? ', also searching ' + esc(r.terms.slice(1).join(', ')) : ''}.</i></p>`
+    + (r.paras.length ? '<h2>In the documents</h2>' + r.paras.map(x => { const h = x.d !== last ? `<h3>${esc(x.d.title || 'Untitled')}</h3>` : ''; last = x.d; return h + `<blockquote><p>${esc(x.tx)}</p></blockquote>`; }).join('') : '')
+    + (r.notes.length ? '<h2>Notes</h2>' + r.notes.map(n => `<p><b>${esc(noteTitle(n) || 'Untitled note')}.</b> ${esc(rmNorm(n.body))}</p>`).join('') : '')
+    + (r.sources.length ? '<h2>Sources</h2>' + r.sources.map(s => `<p>${esc(citeFull(s.id))}</p>`).join('') : '');
+  const d = newDoc(`About: ${r.q}`, html); closeDesk(); addDoc(d);
+  toast('Made a dossier document from the results.');
+}
+
+/* ---------- Project home: due for review, claims to check ---------- */
+function researchLoose() {
+  const claims = claimRows().filter(x => x.iss.length);
+  const keys = rmAll('rv').map(p => ({ p, r: rvById(p.pid) })).filter(x => x.r && !x.r.done && x.r.due && daysUntil(x.r.due) <= 3).sort((a, b) => a.r.due.localeCompare(b.r.due));
+  return { claims, keys };
+}
+
+COMMANDS.push(
+  ['Research desk: threads, claims, evidence, review', () => openDesk()], ['Mark the selection as a claim', () => markClaim()], ['Add the selection to a thread…', () => openThreadPick()],
+  ['Key the selection for review…', () => openReviewKey()], ['Link the selection to a research question…', () => openQuestionLink()], ['New research question', () => openQuestionLink(true)],
+  ['Claims register', () => openDesk('claims')], ['Evidence grid: claims × sources', () => openDesk('grid')], ['Due for review', () => openDesk('review')],
+  ['Everything about… (one name or term across the project)', () => openDesk('about')], ['Fact-check sheet (download)', () => factSheet()], ['Show or hide research marks in the draft', () => { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }]
+);
+
 /* ---------------- boot ---------------- */
 function sendClip(to, clip) {
   return new Promise(res => {

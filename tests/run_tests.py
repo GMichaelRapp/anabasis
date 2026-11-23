@@ -33,6 +33,7 @@ SUITES = {
     't26': 'performance with a 120,000-word project',
     't27': 'note text on citations: note styles, author-date, OSINT, and every export',
     't28': 'typing latency in every field, and one-off actions, on a 120,000-word project',
+    't29': 'research marks: threads, claims, review keys, questions, the research desk, clean exports',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

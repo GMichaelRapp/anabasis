@@ -1135,6 +1135,144 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
   .doc-bar .doc-title{max-width:none;flex:1 1 100%}
 }
 
+/* ---------- research marks, Research tab, research desk ---------- */
+:root{--k-research:#6B4C9A;--cl-open:#6C7A89;--cl-ok:#2E7D5B;--cl-need:#835A08;--cl-disp:#A3271B;--cl-cut:#8A8A8A;--rv:#6B4C9A;--rq:#2F6FAE}
+:root[data-theme="dark"]{--k-research:#C3A6EE;--cl-open:#9AA6B2;--cl-ok:#7CCBA2;--cl-need:#E0B04F;--cl-disp:#F2998B;--cl-cut:#8A8A8A;--rv:#C3A6EE;--rq:#8DB8E8}
+:root .tabs [data-tab=research]{--k:var(--k-research)} :root [data-pane=research]{--k:var(--k-research)}
+.tabs button{min-width:0;font-size:12.5px;padding-left:0;padding-right:0;letter-spacing:-.005em}
+.tabs .count{margin-left:2px}
+.mark-pop{position:fixed;right:auto}
+#editor .rm[data-k=th]{background:color-mix(in srgb,var(--c,#E0A526) 26%,transparent);box-shadow:0 2px 0 -0.5px color-mix(in srgb,var(--c,#E0A526) 75%,transparent);border-radius:1px}
+#editor .rm[data-k=th] .rm[data-k=th]{background:color-mix(in srgb,var(--c,#E0A526) 34%,transparent)}
+.rm[data-k=cl]{--cs:var(--cl-open)}
+#editor .rm[data-k=cl]{text-decoration-line:underline;text-decoration-color:var(--cs);text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-skip-ink:none;text-decoration-style:dotted}
+#editor .rm[data-k=cl][data-rm]{text-decoration-style:var(--cl-dec,dotted)}
+#editor .rm[data-k=rv]{border-bottom:2px dashed color-mix(in srgb,var(--rv) 80%,transparent);padding-bottom:1px}
+#editor .rm[data-k=q]{text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:color-mix(in srgb,var(--rq) 80%,transparent);text-decoration-thickness:1.5px;text-underline-offset:5px;text-decoration-skip-ink:none}
+#editor .rm[data-cp-flash]{animation:flash 1.5s}
+body.marks-off #editor .rm{background:none!important;box-shadow:none!important;text-decoration:none!important;border-bottom:0!important}
+.rm-pop{max-width:min(560px,94vw);padding:6px;display:flex;flex-direction:column;gap:4px}
+.rp-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 4px;border-radius:5px}
+.rp-row+.rp-row{border-top:1px solid var(--line2)}
+.rp-t{display:flex;flex-direction:column;flex:1;min-width:120px;line-height:1.3}
+.rp-row select{font-size:12.5px;padding:3px 6px;min-height:0;width:auto}
+.rp-iss,.rs-iss{color:var(--cl-disp);flex-basis:100%;font-size:12px}
+.rp-row .danger,.th-pb .danger{color:var(--cl-disp)}
+.th-dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 1px color-mix(in srgb,var(--c) 60%,#000 20%)}
+.cl-mk{display:inline-block;width:14px;height:0;border-bottom:3px dotted var(--cl-open);flex:none;margin-right:5px;vertical-align:middle}
+.cl-mk.st-ok{border-bottom:3px solid var(--cl-ok)}.cl-mk.st-need{border-bottom:3px dashed var(--cl-need)}.cl-mk.st-disp{border-bottom:3px double var(--cl-disp);height:2px}.cl-mk.st-cut{border-bottom:2px solid var(--cl-cut);height:4px;border-top:0}
+.cl-chip{display:inline-block;font:600 10.5px/1 var(--ui,system-ui);padding:3px 5px;border-radius:3px;border:1px solid currentColor;color:var(--cl-open);white-space:nowrap;vertical-align:1px}
+.cl-chip.st-ok{color:var(--cl-ok)}.cl-chip.st-need{color:var(--cl-need)}.cl-chip.st-disp{color:var(--cl-disp)}.cl-chip.st-cut{color:var(--cl-cut);text-decoration:line-through}
+.rv-mk{color:var(--rv);font-size:13px}.rv-late{color:var(--cl-disp);font-weight:600}
+.q-mk{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:color-mix(in srgb,var(--rq) 16%,transparent);color:var(--rq);font:700 11px/1 var(--ui,system-ui);flex:none;margin-right:4px}
+.mark-btn{color:var(--k-research)!important;font-weight:600}
+.mark-pop{min-width:250px}
+.mark-pop button{display:flex!important;align-items:center;gap:8px}
+.mark-pop kbd{margin-left:auto;font-size:11px;color:var(--muted)}
+.mk-i{display:inline-flex;width:18px;justify-content:center;flex:none;font-size:12px}
+.mk-th{height:12px;background:color-mix(in srgb,#E0A526 40%,transparent);border-radius:2px}
+.mk-cl{height:0;border-bottom:2px dotted var(--cl-open);width:16px}
+.mk-rv{color:var(--rv)}.mk-q{color:var(--rq);font-weight:700}
+.rs-show{display:flex!important;gap:6px;align-items:center;margin:2px 0 0;color:var(--ink)}
+.rs-threads li{display:flex;align-items:center;gap:4px}
+.rs-threads li .t{flex:1;min-width:0;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
+.rs-threads li button{padding:1px 6px;min-height:0}
+.rs-tip{margin:14px 2px 6px;line-height:1.5}
+.rs-tip kbd{font-size:11px}
+.th-picks{display:flex;flex-direction:column;gap:4px;max-height:40vh;overflow:auto;margin-bottom:8px}
+.th-pick{display:flex!important;align-items:center;gap:8px;text-align:left;justify-content:flex-start!important;width:100%}
+.th-pick span{margin-left:auto}
+.th-sw{width:22px;height:22px;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
+.rv-quick{display:inline-flex;gap:4px;flex-wrap:wrap}
+body.desk-on .doc-bar,body.desk-on .toolbar,body.desk-on .findbar,body.desk-on .scroller,body.desk-on .lensbar,body.desk-on .margin,body.desk-on .scriptbar{display:none!important}
+.desk-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.desk-tabs button{border:0;background:transparent;border-bottom:2px solid transparent;border-radius:0;padding:6px 9px;color:var(--muted);min-height:0}
+.desk-tabs button.on{color:var(--ink);border-bottom-color:var(--k-research);font-weight:600}
+.desk-tools{display:flex;gap:6px}
+.desk-body{flex:1;min-height:0;overflow:auto;background:var(--page)}
+.desk-split{display:grid;grid-template-columns:250px 1fr;min-height:100%}
+.desk-side{border-right:1px solid var(--line);background:var(--panel);padding:12px}
+.desk-side h6{margin:0 0 6px;font-size:12.5px;display:flex;align-items:center}
+.desk-side h6 .hl{margin-left:auto}
+.desk-list{list-style:none;margin:0;padding:0}
+.desk-list li{display:flex;align-items:center;gap:7px;padding:6px 7px;border-radius:5px;cursor:pointer;font-size:13.5px}
+.desk-list li:hover{background:var(--line2)}
+.desk-list li.on{background:color-mix(in srgb,var(--k-research) 12%,transparent);box-shadow:inset 3px 0 0 var(--k-research)}
+.desk-list li.done .t{color:var(--muted);text-decoration:line-through}
+.desk-list li .t{flex:1;min-width:0}
+.desk-list li em{font-style:normal;color:var(--muted);font-size:12px}
+.desk-main{padding:18px 26px 40px;max-width:860px}
+.desk-main h6{margin:20px 0 6px;font-size:12.5px}
+.desk-pad{padding:16px 22px 40px}
+.desk-empty{max-width:560px;margin:50px auto;font-size:14.5px;line-height:1.55;padding:0 16px}
+.th-head{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.th-head input:not([type]),.q-title{font:700 22px/1.2 var(--display,Georgia);border:0;border-bottom:1px solid transparent;background:transparent;padding:2px 0;flex:1;min-width:200px;color:var(--ink);border-radius:0}
+.th-head input:not([type]):focus,.q-title:focus{border-bottom-color:var(--line);outline:none}
+.q-title{width:100%;margin-bottom:6px}
+#thNote,#qAns{width:100%;font-size:14px}
+.th-read h4{font:700 15px/1.3 var(--display,Georgia);margin:22px 0 6px;color:var(--muted)}
+.th-p{border-left:4px solid var(--c,var(--k-research));background:var(--panel);padding:8px 12px 6px;margin:0 0 8px;border-radius:0 6px 6px 0}
+.th-p p{margin:0 0 4px;font:15px/1.55 Georgia,'Times New Roman',serif}
+.q-p{--c:var(--rq)}
+.th-pb{display:flex;gap:6px;align-items:center}
+.th-pb .muted{margin-right:auto}
+.cl-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.cl-filters button{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 11px;min-height:0;font-size:13px}
+.cl-filters button b{font-weight:600;color:var(--muted)}
+.cl-filters button.on{background:color-mix(in srgb,var(--k-research) 14%,var(--panel));border-color:var(--k-research);color:var(--ink)}
+.cl-filters select{width:auto;margin-left:auto}
+.cl-table{width:100%;border-collapse:collapse;font-size:13.5px;background:var(--panel)}
+.cl-table th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--neat,var(--line))}
+.cl-table td{border-bottom:1px solid var(--line2);padding:8px;vertical-align:top}
+.cl-table td:first-child{width:140px}.cl-table td:nth-child(3){width:210px}.cl-table td:last-child{width:220px}
+.cl-table select{width:100%;font-size:12.5px}
+.cl-table textarea{width:100%;font-size:12.5px;min-height:32px;resize:vertical}
+.cl-table tr.hot td{background:color-mix(in srgb,var(--k-research) 9%,transparent)}
+.cl-text{color:var(--ink);text-decoration:none;font-family:Georgia,serif;font-size:14.5px;line-height:1.45}
+.cl-text:hover{text-decoration:underline}
+.cl-src{color:var(--ink)}
+.rt{display:inline-block;font:600 11px/1 var(--ui,system-ui);padding:2px 4px;border-radius:3px;background:var(--line2)}
+.rt-strong{background:color-mix(in srgb,var(--cl-ok) 22%,transparent)}.rt-fair{background:color-mix(in srgb,var(--cl-need) 22%,transparent)}.rt-weak{background:color-mix(in srgb,var(--cl-disp) 24%,transparent)}
+.eg-sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.eg-sum div{background:var(--panel);border:1px solid var(--line);padding:8px 14px;min-width:110px;display:flex;flex-direction:column}
+.eg-sum b{font:700 22px/1.1 var(--display,Georgia)}.eg-sum span{font-size:12px;color:var(--muted)}
+.eg-sum .bad b{color:var(--cl-disp)}
+.eg-legend{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:10px;color:var(--muted)}
+.eg-legend span{display:inline-flex;gap:5px;align-items:center}
+.eg-wrap{overflow:auto;border:1px solid var(--line);background:var(--panel);max-height:calc(100vh - 290px)}
+table.eg{border-collapse:separate;border-spacing:0;font-size:13px}
+table.eg th,table.eg td{border-bottom:1px solid var(--line2);border-right:1px solid var(--line2);padding:4px;text-align:center}
+table.eg thead th{position:sticky;top:0;background:var(--panel);z-index:2;vertical-align:bottom}
+table.eg .eg-c{position:sticky;left:0;background:var(--panel);z-index:1;text-align:left;min-width:300px;max-width:380px;font-weight:400;padding:6px 10px}
+table.eg thead .eg-c{z-index:3}
+table.eg .eg-c a{color:var(--ink);text-decoration:none;line-height:1.4}
+table.eg .eg-c a:hover{text-decoration:underline}
+.eg-h{height:150px;width:34px;min-width:34px}
+.eg-h span{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;max-height:140px;overflow:hidden;text-overflow:ellipsis;font-weight:500;display:inline-block}
+.eg-n{color:var(--muted);width:30px}.eg-n.bad{color:var(--cl-disp);font-weight:700}
+.eg-cell{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:22px;border-radius:4px;font:600 11px/1 var(--ui,system-ui);font-style:normal;color:var(--ink);background:var(--line2);padding:0 3px}
+.eg-cell.rt-strong{background:color-mix(in srgb,var(--cl-ok) 32%,var(--panel))}.eg-cell.rt-fair{background:color-mix(in srgb,var(--cl-need) 30%,var(--panel))}.eg-cell.rt-weak{background:color-mix(in srgb,var(--cl-disp) 32%,var(--panel))}
+.eg-tot th,.eg-tot td{font-weight:600;color:var(--muted);border-bottom:0}
+.rv-list{list-style:none;margin:0;padding:0;max-width:900px}
+.rv-list li{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--rv);padding:9px 12px;margin-bottom:8px}
+.rv-list li.done{opacity:.65;border-left-color:var(--line)}
+.rv-top{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rv-top input[type=date]{width:auto;font-size:12.5px;padding:3px 6px}
+.rv-top button{min-height:0}
+.rv-list blockquote{margin:6px 0;font:14.5px/1.5 Georgia,serif;color:var(--ink)}
+.rv-list input:not([type]){width:100%;font-size:13px}
+.ab-form{display:flex;gap:8px;max-width:680px;margin-bottom:12px}
+.ab-form input{flex:1;font-size:16px}
+.ab-g{max-width:860px;margin:18px 0}
+.ab-g h5{font:700 16px/1.3 var(--display,Georgia);margin:0 0 6px;display:flex;gap:6px;align-items:center}
+.ab-g h6{margin:12px 0 4px;font-size:12.5px;color:var(--muted)}
+.ab-hit{background:var(--panel);border:1px solid var(--line2);padding:7px 10px;margin-bottom:5px;cursor:pointer;font-size:14px;line-height:1.5}
+.ab-hit:hover{border-color:var(--k-research)}
+.ab-hit mark{background:color-mix(in srgb,var(--k-research) 22%,transparent);color:inherit;padding:0 1px}
+.ab-k{font:600 11px/1 var(--ui,system-ui);color:var(--k-research);margin-right:4px}
+.hm-due h5 .ghost{margin-left:auto}
+@media (max-width:860px){ .desk-split{grid-template-columns:1fr} .desk-side{border-right:0;border-bottom:1px solid var(--line)} .desk-main{padding:14px} .eg-wrap{max-height:none} }
+
 /* ---------- print ---------- */
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
@@ -1201,6 +1339,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
       <button data-tab="notes">Notes<span class="count" id="cntNotes"></span></button>
       <button data-tab="sources">Sources<span class="count" id="cntSources"></span></button>
       <button data-tab="outline" title="Outline and drafting checklist">Outline<span class="count badge" id="tabOutlineBadge"></span></button>
+      <button data-tab="research" title="Threads, claims, review keys and questions">Research<span class="count badge" id="tabResearchBadge"></span></button>
     </nav>
     <section class="pane on" data-pane="docs">
       <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" title="New part (a folder for chapters)">+ Part</button></div>
@@ -1222,6 +1361,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
         <h6>Accessibility <span class="badge" id="a11yCount"></span></h6><ul class="outline" id="a11yList"></ul>
         <h6>Margin notes <span class="badge" id="cmtCount"></span></h6><ul class="outline" id="cmtList"></ul>
         <h6>Paragraphs without a citation <span class="badge" id="uncitedCount"></span> <label class="hl"><input type="checkbox" id="showUncited"> highlight</label></h6><ul class="outline" id="uncitedList"></ul>
+      </div>
+    </section>
+    <section class="pane" data-pane="research" id="researchPane">
+      <div class="pane-head">
+        <div class="row"><button id="btnDesk" class="primary-soft" style="flex:1" title="Read threads through, check claims, see evidence and what’s due">◈ Research desk</button></div>
+        <div class="row"><button id="btnAbout" style="flex:1" title="Everything you have on one name or term, across the project">Everything about…</button></div>
+        <label class="inline small rs-show"><input type="checkbox" id="rmShow" checked> Show marks in the draft</label>
+      </div>
+      <div class="ol-scroll">
+        <h6>Threads <button class="ghost small hl" id="rsNewThread">+ Thread</button></h6><ul class="outline rs-threads" id="rsThreads"></ul>
+        <h6>Claims in this document <span class="badge" id="rsClaimCount"></span></h6><div class="small muted ol-sum" id="rsClaimSum"></div><ul class="outline" id="rsClaims"></ul>
+        <h6>Due for review <span class="badge" id="rsKeyCount"></span></h6><ul class="outline" id="rsKeys"></ul>
+        <h6>Open questions <button class="ghost small hl" id="rsNewQ">+ Question</button></h6><ul class="outline" id="rsQs"></ul>
+        <p class="small muted rs-tip">Select a passage, then use <b>Mark</b> in the toolbar, or press <kbd>Ctrl/Cmd+Alt+G</kbd> then <kbd>T</kbd> thread, <kbd>C</kbd> claim, <kbd>R</kbd> review, <kbd>Q</kbd> question.</p>
       </div>
     </section>
     <section class="pane" data-pane="notes">
@@ -1288,6 +1441,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
       <button id="btnCapture" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)">→ Note</button>
  <button id="btnIndexMark" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)">⌗</button>
       <button id="btnComment" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)">✎</button>
+      <div class="menu" id="markMenuWrap"><button id="btnMark" class="mark-btn" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu">Mark ▾</button>
+        <div class="menu-pop mark-pop" id="markMenu" role="menu">
+          <button data-m="th" role="menuitem"><span class="mk-i mk-th" aria-hidden="true"></span>Highlight in a thread… <kbd>T</kbd></button>
+          <button data-m="cl" role="menuitem"><span class="mk-i mk-cl" aria-hidden="true"></span>Claim to check <kbd>C</kbd></button>
+          <button data-m="rv" role="menuitem"><span class="mk-i mk-rv" aria-hidden="true">⚑</span>Key for review… <kbd>R</kbd></button>
+          <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
+          <hr>
+          <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
+        </div>
+      </div>
       <button id="btnLens" title="Revision lens: long sentences, passive voice, hedges, repeats">Lens</button>
       <button id="btnFind" title="Find & replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       <span class="sep"></span>
@@ -1304,6 +1467,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
       <button class="ghost small" id="findAllDocs" title="Find and replace across every document">All documents…</button>
       <button class="ghost icon" id="findClose" title="Close (Esc)">✕</button>
     </div>
+    <section class="board desk hidden" id="desk" aria-label="Research desk">
+      <div class="board-bar">
+        <button id="deskBack" class="ghost">← Back to draft</button>
+        <b class="rel-head">Research desk</b>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <div class="spacer"></div>
+        <span id="deskTools" class="desk-tools"></span>
+      </div>
+      <div class="desk-body" id="deskBody"></div>
+    </section>
     <section class="board rel hidden" id="rel">
       <div class="board-bar">
         <button id="relBack" class="ghost">← Back to draft</button>
@@ -1511,6 +1684,41 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
     <div class="tip">Flags let you keep drafting past a gap. They appear under <b>Outline → To resolve</b>. Exports print them as highlighted [TK] text so nothing slips through.</div>
   </div>
   <footer><button id="flagRemove" class="danger left hidden">Resolve (remove)</button><button id="flagCiteNow" class="hidden">Cite now</button><button id="flagCancel">Cancel</button><button id="flagOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<dialog id="thDlg"><div class="dlg">
+  <h3>Highlight in a thread</h3>
+  <div class="body">
+    <div class="th-picks" id="thPickList"></div>
+    <label for="thName">New thread</label>
+    <div class="row"><input id="thName" placeholder="e.g. Logistics, The Kurdish route, Morale"><button id="thNew" class="primary">Create &amp; add</button></div>
+    <div class="swatches" id="thColors" aria-label="Thread color"></div>
+    <div class="tip">A thread follows one theme, argument, person or line of evidence through the whole piece. Read it straight through on the research desk.</div>
+  </div>
+  <footer><button id="thCancel">Cancel</button></footer>
+</div></dialog>
+
+<dialog id="rvDlg"><div class="dlg">
+  <h3 id="rvTitle">Key this passage for review</h3>
+  <div class="body">
+    <label for="rvReason">Why come back to it</label><select id="rvReason"></select>
+    <label for="rvDue">Review by</label>
+    <div class="row"><input type="date" id="rvDue"><span id="rvQuick" class="rv-quick"><button type="button" class="small" data-d="1">Tomorrow</button><button type="button" class="small" data-d="7">1 week</button><button type="button" class="small" data-d="30">1 month</button><button type="button" class="small" data-d="-1">No date</button></span></div>
+    <label for="rvNote">Note to self <span class="muted">(optional)</span></label><textarea id="rvNote" rows="2" placeholder="e.g. Confirm the casualty figure against the regimental history"></textarea>
+    <div class="tip">Review keys stay in the draft, invisible in exports. Due ones appear in the Research tab and on Project home.</div>
+  </div>
+  <footer><button id="rvRemove" class="danger left hidden">Remove key</button><button id="rvCancel">Cancel</button><button id="rvOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<dialog id="qDlg"><div class="dlg">
+  <h3 id="qDlgTitle">Link this passage to a question</h3>
+  <div class="body">
+    <div id="qPickWrap"><label>Open questions</label><div class="th-picks" id="qPickList"></div></div>
+    <label for="qText">New question</label>
+    <div class="row"><input id="qText" placeholder="e.g. How many men actually reached Trapezus?"><button id="qNew" class="primary">Add</button></div>
+    <div class="tip">Questions are shared with Plan. Record what you find on the research desk.</div>
+  </div>
+  <footer><button id="qCancel">Cancel</button></footer>
 </div></dialog>
 
 <!-- manuscript -->
@@ -2006,6 +2214,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
       <li><b>Timeline:</b> notes with an event date line up on the board’s Timeline view (Group by: Timeline). Gaps in the record are marked, and <i>Insert as figure</i> turns them into a graphic. Dates can be years, “Aug 1680”, full dates, ranges like “1680–1692”, or BCE.</li>
       <li><b>Relationships</b> (Docs tab) maps the people, organizations and places in your Names list by how often they appear together, with the passages one click away. Shift-click two names to add your own labeled link.</li>
     </ul>
+    <h4>Research: threads, claims, review keys &amp; questions</h4>
+    <ul>
+      <li>Select a passage, then use <b>Mark</b> in the toolbar (or <kbd>⌘/Ctrl Alt G</kbd>, then a letter). Marks can run across paragraphs and around citations, and they can overlap. Click a marked passage to see and change its marks. They’re saved with the draft and left out of every export.</li>
+      <li><b>Threads</b> (<kbd>T</kbd>) are named, colored highlights that follow a theme, an argument or a person through the whole piece. Step through a thread with ‹ › in the Research tab, read it straight through on the research desk, or turn it into a working document.</li>
+      <li><b>Claims</b> (<kbd>C</kbd>) go into a claims register. Anabasis finds the citations inside a claim or right after it, and warns when a claim has no source, rests only on sources rated D–E or 4–5, or was edited after you marked it supported. Set each claim to not checked, supported, needs a source, contested or cut. The <b>fact-check sheet</b> prints the register as a checklist with full citations, and the CSV opens in any spreadsheet.</li>
+      <li><b>Review keys</b> (<kbd>R</kbd>) mark a passage to come back to, with a reason and a due date. Due keys show in the Research tab and on Project home. Snooze one a week or tick it done on the research desk.</li>
+      <li><b>Questions</b> (<kbd>Q</kbd>) link passages to an open research question. Questions are shared with Plan. Record what you’ve found and attach notes on the research desk.</li>
+      <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
+      <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
+    </ul>
     <h4>Checking the draft</h4>
     <ul>
       <li><b>Corroboration</b> (Outline tab) lists paragraphs that rest on one source, or only on sources rated D–E or 4–5 in the Admiralty scale, and shows which sources carry the most citations. It warns when one source carries more than a third of them.</li>
@@ -2081,7 +2299,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
       <li><b>Compile manuscript…</b> joins documents in binder order into one Word file, PDF, Markdown, HTML or new document. Notes number continuously and short forms carry across chapters.</li>
     </ul>
     <h4>Keyboard</h4>
-    <p><kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
+    <p><kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl Alt G</kbd> mark (then T, C, R, Q or D) · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
     <h4>Saving</h4>
     <ul><li>The browser keeps a working copy of everything as you type. If you forget to save the file for a while (15 minutes by default, set in Settings), a reminder bar appears. If you open a project file and this browser holds newer unsaved work on it, Anabasis asks which to use.</li></ul>
     <h4>OSINT Style Guide citations</h4>

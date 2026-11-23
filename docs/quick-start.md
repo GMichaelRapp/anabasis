@@ -79,7 +79,19 @@ Most problems have a one-click fix. Click a finding to jump to it in the text.
 
 ![The Outline tab's Corroboration check flagging a paragraph with one source](quick-start/09-checks.png)
 
-## 10. Save the project file
+## 10. Mark what you'll come back to
+
+Select a passage and choose **Mark** in the toolbar:
+
+- **Claim to check** puts a sentence in the claims register. Anabasis finds the citation after it, and warns when a claim has no source, leans only on weak sources, or changed after you marked it supported.
+- **Highlight in a thread** follows a theme or an argument through every chapter, in its own color.
+- **Key for review** sets a passage to come back to by a date; **Link to a question** ties it to an open research question.
+
+Click a marked passage to change it. The **Research** tab lists what's in this document and what's due, and **Research desk** reads a thread straight through, shows claims against sources, and gathers everything about a name. Marks never appear in exports.
+
+![A supported claim and a highlighted thread in the draft, the claim's popover, and the Research tab](quick-start/10-research.png)
+
+## 11. Save the project file
 
 Choose **Save**. The first time, pick where to keep the project file, a single `.json` that holds everything: documents, notes, sources and images. Keep it somewhere that’s backed up, such as a synced folder.
 
@@ -87,15 +99,15 @@ In Chrome and Edge, later saves go straight back to the same file, and you can t
 
 To pick up where you left off, choose **Open** and select the file.
 
-![The top bar after saving](quick-start/10-save.png)
+![The top bar after saving](quick-start/11-save.png)
 
-## 11. Export a PDF
+## 12. Export a PDF
 
 Choose **Export**, then **PDF — print / save as PDF**. Anabasis lays the document out as pages with footnotes and opens your browser’s print window. Choose **Save as PDF** as the destination.
 
 The same menu exports Word (with real footnotes), ePub, HTML, Markdown and a Substack-ready post.
 
-![The Export menu with the PDF option highlighted](quick-start/11-export.png)
+![The Export menu with the PDF option highlighted](quick-start/12-export.png)
 
 ## Where to go next
 

@@ -36,6 +36,7 @@ The whole app is a single HTML file of about 7.5 MB. Download it, open it in you
 - Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, and a web clipper captures from other tabs.
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
+- Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
 
 **Figures**
 - Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.

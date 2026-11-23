@@ -4,6 +4,19 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-11-23
+
+### Added
+- **Research marks.** Select a passage and use **Mark** in the toolbar (or Ctrl/Cmd+Alt+G, then a letter). Marks can run across paragraphs and around citations, overlap, and travel with the text when you cut and paste. Click a marked passage to see and change its marks. They are saved with the draft and left out of every export.
+  - **Threads** (T): named, colored highlights that follow a theme, argument or person through the whole piece. Step through a thread from the Research tab, read it straight through in manuscript order, or turn it into a working document.
+  - **Claims** (C): a claims register. Anabasis finds the citations inside a claim or right after it and flags claims with no source, claims resting only on sources rated D–E or 4–5, and supported claims edited since they were checked. Statuses: not checked, supported, needs a source, contested, cut. Export a printable **fact-check sheet** with full citations, or a CSV.
+  - **Review keys** (R): a passage to come back to, with a reason and a due date. Due keys appear in the Research tab and on Project home; mark them done or snooze them a week.
+  - **Questions** (Q): link passages to open research questions (shared with Plan), and record what you've found.
+- A **Research** tab in the sidebar: threads, the current document's claims, what's due for review, and open questions.
+- The **research desk**: threads read through, the claims register, an **evidence grid** of claims against sources with each source's rating, review keys by due date, questions, and **Everything about…**, which gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names & spellings, and can make a dossier document from the results.
+- Project home lists claims that need checking among the loose ends, and a **Due for review** card.
+- File format: new top-level `threads`, `claims` and `reviewKeys`, and `span.rm` marks in document HTML (see docs/file-format.md). Older versions of Anabasis open these files and keep the marks as plain text spans.
+
 ## [1.0.4] — 2026-11-23
 
 ### Fixed
@@ -76,6 +89,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.1.0
 [1.0.4]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.4
 [1.0.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.3
 [1.0.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.2

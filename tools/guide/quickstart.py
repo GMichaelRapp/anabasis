@@ -125,15 +125,34 @@ async def main():
         await pg.evaluate("$('#corList').scrollIntoView({block: 'center'}); const d = $('#corList details'); if (d) d.open = true"); await pg.wait_for_timeout(300)
         await shot('09-checks', None, '.tabs [data-tab=outline]', '#corList')
 
-        # 10. Save
+        # 10. Research marks: a claim and a thread
+        await pg.evaluate("switchTab('research')"); await pg.wait_for_timeout(200)
+        pick = """([a, z]) => { const p = editor.querySelector('p'); const w = document.createTreeWalker(p, NodeFilter.SHOW_TEXT); const nodes = []; let n;
+            while ((n = w.nextNode())) if (!n.parentElement.closest('.cite,.fn')) nodes.push(n);
+            const find = str => { for (const x of nodes) { const i = x.data.indexOf(str); if (i >= 0) return [x, i]; } };
+            const [sn, so] = find(a), [en, eo] = find(z); const r = document.createRange(); r.setStart(sn, so); r.setEnd(en, eo + z.length);
+            const s = getSelection(); s.removeAllRanges(); s.addRange(r); savedRange = r.cloneRange(); editor.focus(); }"""
+        await pg.evaluate(pick, ['The cry', 'long march.'])
+        await pg.click('#btnMark'); await pg.click('#markMenu [data-m=cl]'); await pg.wait_for_timeout(300)
+        await pg.evaluate("() => setClaimStatus(P.claims[0].id, 'ok')")
+        await pg.evaluate(pick, ['After months', 'first time.'])
+        await pg.click('#btnMark'); await pg.click('#markMenu [data-m=th]'); await pg.wait_for_timeout(300)
+        await pg.fill('#thName', 'The route'); await pg.click('#thNew'); await pg.wait_for_timeout(400)
+        await pg.evaluate("$('#toast').classList.remove('show')")
+        box = await pg.evaluate("() => { const r = editor.querySelector('.rm[data-k=cl]').getClientRects()[0]; return [r.left + 40, r.top + r.height / 2]; }")
+        await pg.mouse.click(*box); await pg.wait_for_timeout(400)
+        await shot('10-research', None, '#btnMark', '.tabs [data-tab=research]')
+        await pg.evaluate("closeRmPop()")
+
+        # 11. Save
         async with pg.expect_download() as d: await pg.click('#btnSave')
         dl = await d.value; await dl.cancel() if hasattr(dl, 'cancel') else None
         await pg.wait_for_timeout(600)
-        await shot('10-save', {'x': 0, 'y': 0, 'width': W, 'height': 220}, '#btnSave', '#saveState')
+        await shot('11-save', {'x': 0, 'y': 0, 'width': W, 'height': 220}, '#btnSave', '#saveState')
 
-        # 11. Export
+        # 12. Export
         await pg.click('#btnExport'); await pg.wait_for_timeout(400)
-        await shot('11-export', None, '#exportMenu [data-x=pdf]')
+        await shot('12-export', None, '#exportMenu [data-x=pdf]')
         await pg.keyboard.press('Escape')
 
         await b.close()

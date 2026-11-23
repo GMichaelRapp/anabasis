@@ -10,7 +10,19 @@ VIEWS = [
     ('notes tab', "switchTab('notes')"),
     ('sources tab', "switchTab('sources')"),
     ('outline tab', "switchTab('outline')"),
-    ('home', "openHome()"),
+    ('research tab', "(() => { if (!P.threads.length) { const p = editor.querySelector('p'); const t = [...p.childNodes].find(n => n.nodeType === 3 && n.data.length > 30); const r = document.createRange(); r.setStart(t, 0); r.setEnd(t, 25); const th = newThread('Logistics'); rmApply(r, 'th', { ref: th.id }); const r2 = document.createRange(); const t2 = [...editor.querySelectorAll('p')][2].firstChild; r2.setStart(t2, 0); r2.setEnd(t2, 20); const id = uid('cl'); rmApply(r2, 'cl', { pid: id }); P.claims.push({ id, status: 'need', note: '', checkedText: '', checkedAt: '', created: nowISO(), modified: nowISO() }); const r3 = document.createRange(); const t3 = [...editor.querySelectorAll('p')][3].firstChild; r3.setStart(t3, 0); r3.setEnd(t3, 9); const rv = uid('rv'); rmApply(r3, 'rv', { pid: rv }); P.reviewKeys.push({ id: rv, reason: 'Rewrite', due: todayISO(), note: '', done: false, doneAt: '', created: nowISO() }); plNewItem('', null, { type: 'question', title: 'Open question', status: 'open' }); } switchTab('research'); rmRefresh(); })()"),
+    ('mark menu', "openMarkMenu()"),
+    ('desk threads', "$('#markMenu').classList.remove('open'); openDesk('threads')"),
+    ('desk claims', "openDesk('claims')"),
+    ('desk grid', "openDesk('grid')"),
+    ('desk review', "openDesk('review')"),
+    ('desk questions', "openDesk('questions')"),
+    ('desk about', "openDesk('about'); $('#abQ').value = 'Tuchman'; $('#abForm').requestSubmit()"),
+    ('thread dialog', "closeDesk(); openDoc(curDocId); const r = document.createRange(); r.selectNodeContents(editor.querySelector('p')); getSelection().removeAllRanges(); getSelection().addRange(r); openThreadPick()"),
+    ('review dialog', "$('#thDlg').close(); const r = document.createRange(); r.selectNodeContents(editor.querySelector('p')); getSelection().removeAllRanges(); getSelection().addRange(r); openReviewKey()"),
+    ('question dialog', "$('#rvDlg').close(); openQuestionLink(true)"),
+    ('marked passage popover', "$('#qDlg').close(); const s = editor.querySelector('.rm[data-k=cl]'); showRmPop(rmMarksAt(s), s)"),
+    ('home', "closeRmPop(); openHome()"),
     ('help', "closeHome(); $('#helpDlg').showModal()"),
     ('chart dialog', "$('#helpDlg').close(); openChart()"),
     ('map dialog', "$('#chDlg').close(); openMap()"),
@@ -24,6 +36,7 @@ async def main():
         b = await pw.chromium.launch()
         pg = await b.new_page(viewport={'width': 1440, 'height': 900})
         await pg.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true}))")
+        pg.on('console', lambda m: print('VIEW SCRIPT WARNING', m.text) if m.type == 'warning' else None)
         await pg.goto(URL); await pg.wait_for_timeout(1200)
         await pg.add_script_tag(content=open(AXE).read())
         total = {}
