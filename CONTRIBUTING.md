@@ -42,6 +42,7 @@ Before you open a pull request:
 - Keep `dist/anabasis.html` under the 10 MB budget. `build.py` refuses to go over it.
 - If you change what a project file holds, follow [Changing the format](docs/file-format.md#changing-the-format).
 - If the change is user-visible, add a line to `CHANGELOG.md` under **Unreleased**, and update Help in `src/shell.html` if it explains the feature.
+- If the change alters a screen shown in the [quick start](docs/quick-start.md), regenerate its screenshots with `python tools/guide/quickstart.py` (after `python build.py`).
 - Interface text: plain verbs, sentence case, and a button says what it does (“Save checkpoint”, not “Submit”).
 
 Don’t commit `dist/`. Releases are built by GitHub Actions from the tagged commit.

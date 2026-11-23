@@ -13,6 +13,7 @@
 <p align="center">
   <a href="https://github.com/gmichaelrapp/anabasis/releases/latest"><b>Download</b></a> ·
   <a href="https://gmichaelrapp.github.io/anabasis/"><b>Try it in your browser</b></a> ·
+  <a href="docs/quick-start.md"><b>Quick start</b></a> ·
   <a href="docs/privacy.md">Privacy</a> ·
   <a href="CHANGELOG.md">What’s new</a>
 </p>
@@ -57,6 +58,8 @@ The whole app is a single HTML file of about 7.5 MB. Download it, open it in you
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
 
 ## Getting started
+
+**New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in eleven illustrated steps.
 
 1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
 2. Open it in your browser. A short tour and a sample project show you around.

@@ -458,7 +458,9 @@ function updateWordCount() {
   const cites = $$('.cite', editor).length;
   $('#wordCount').textContent = `${words.toLocaleString()} words · ${cites} citation${cites === 1 ? '' : 's'}`;
 }
-const onEdit = debounce(() => { syncEditor(); renderRefs(); updateWordCount(); trackWords(); renderDocList(); markDirty(); }, 350);
+// Edits made by the app itself (inserting a note, a citation, a figure) don't fire 'input', so refresh the Outline checks here too.
+const refreshChecks = debounce(() => { if (typeof homeOn !== 'undefined' && (homeOn || boardOn || planOn)) return; renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); }, 1000);
+const onEdit = debounce(() => { syncEditor(); renderRefs(); updateWordCount(); trackWords(); renderDocList(); markDirty(); refreshChecks(); }, 350);
 editor.addEventListener('input', () => { onEdit(); });
 document.addEventListener('selectionchange', () => {
   const sel = getSelection();
@@ -527,7 +529,7 @@ function insertBlocksAtCursor(html) {
   const r = document.createRange(); r.selectNodeContents(last.nodeType === 1 ? last : editor); r.collapse(false);
   sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange();
   last.nodeType === 1 && last.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  syncEditor(); renderRefs(true); updateWordCount(); markDirty();
+  syncEditor(); renderRefs(true); updateWordCount(); markDirty(); refreshChecks();
 }
 function exec(cmd, val = null) { restoreSelection(); document.execCommand(cmd, false, val); onEdit(); updateToolbarState(); }
 try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
@@ -886,7 +888,7 @@ function addDoc(d) {
 }
 $('#btnNewDoc').addEventListener('click', () => { addDoc(newDoc()); $('#docTitle').select(); });
 $('#btnNewPart').addEventListener('click', async () => {
-  const n = await ask('New part', 'Name the part (e.g. “Part I: The Gangster State” or “Research”). Drag documents into it, or use ⇥ on a document.', 'Create', '');
+  const n = await ask('New part', 'Name the part (e.g. “Part I: The March Inland” or “Research”). Drag documents into it, or use ⇥ on a document.', 'Create', '');
   if (!n) return;
   P.parts.push({ id: uid('pt'), name: n, collapsed: false }); renderDocList(); markDirty();
 });
@@ -1585,11 +1587,15 @@ function noteToHTML(n, { withCite = true, heading = '' } = {}) {
   const body = stripWikiLinks(n.body).trim();
   if (n.kind === 'quote' && body) {
     const words = body.split(/\s+/).length;
-    const plain = body.replace(/^\s*>\s?/gm, '').replace(/^[“"]|[”"]$/g, '');
+    let plain = body.replace(/^\s*>\s?/gm, '').trim();
+    if (/^[“"]/.test(plain) && /[”"]$/.test(plain) && plain.length > 1) plain = plain.slice(1, -1).trim(); // drop quote marks only when they wrap the whole passage
     if (words >= 100 || plain.includes('\n\n')) {
       const inner = sanitize(marked.parse(plain));
       h += `<blockquote data-qn="${n.id}">${inner.replace(/<\/p>\s*$/, cite + '</p>')}</blockquote>`;
-    } else h += `<p>“<span class="qlink" data-qn="${n.id}">${sanitize(marked.parseInline(plain.replace(/\s*\n\s*/g, ' ')))}</span>”${cite}</p>`;
+    } else { // a run-in quotation: quotation marks inside it become single quotes
+      const inner = plain.replace(/\s*\n\s*/g, ' ').replace(/"([^"]*)"/g, '‘$1’').replace(/“/g, '‘').replace(/”/g, '’');
+      h += `<p>“<span class="qlink" data-qn="${n.id}">${sanitize(marked.parseInline(inner))}</span>”${cite}</p>`;
+    }
   } else if (body) {
     const inner = sanitize(marked.parse(body));
     h += cite ? inner.replace(/<\/(p|li|blockquote)>\s*$/, m => cite + m) : inner;
@@ -3272,7 +3278,7 @@ function importBibRis(text, name) {
 }
 
 /* ---------- quote integrity ---------- */
-const normQ = s => String(s || '').replace(/[“”„"]/g, '"').replace(/[‘’']/g, "'").replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim().toLowerCase();
+const normQ = s => String(s || '').replace(/[“”„"‘’']/g, "'").replace(/[–—]/g, '-').replace(/\s+/g, ' ').trim().toLowerCase();
 const plainMd = s => stripWikiLinks(s).replace(/^\s*>\s?/gm, '').replace(/[*_`#]/g, '').replace(/^[“"]|[”"]$/g, '');
 function quoteStatus(el) {
   const n = P.notes.find(x => x.id === el.dataset.qn);
@@ -6624,7 +6630,7 @@ function hsRules() {
 let HS = [];
 function houseScan() {
   const rules = hsRules(), out = [];
-  $$(':scope > p, :scope > blockquote, :scope > ul > li, :scope > ol > li, :scope > h1, :scope > h2, :scope > h3, :scope > figure figcaption', editor).forEach(el => {
+  $$(':scope > p, :scope > blockquote, :scope > blockquote > p, :scope > ul > li, :scope > ol > li, :scope > h1, :scope > h2, :scope > h3, :scope > figure figcaption', editor).forEach(el => {
     if (el.matches('blockquote') && el.querySelector('p')) return;
     const { text, range } = blockMap(el);
     rules.forEach(r => { r.re.lastIndex = 0; let mt; while ((mt = r.re.exec(text))) { if (r.test && !r.test(mt, text)) { if (!mt[0]) r.re.lastIndex++; continue; } const rep = r.fix ? r.fix(mt, text) : null; const rg = range(mt.index, mt.index + mt[0].length); if (rg) out.push({ rule: r, el, r: rg, from: mt[0], to: rep, at: mt.index }); if (!mt[0]) r.re.lastIndex++; } });

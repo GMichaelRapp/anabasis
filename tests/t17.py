@@ -14,14 +14,14 @@ async def main():
     await pg.click('#btnPlan'); await pg.wait_for_timeout(200)
     print('empty:', (await pg.inner_text('#plArea'))[:60])
     # keyboard outlining
-    await pg.click('#plAdd'); await pg.keyboard.type('Introduction'); await pg.keyboard.press('Enter'); await pg.keyboard.type('Chapter 1: The gangster state')
+    await pg.click('#plAdd'); await pg.keyboard.type('Introduction'); await pg.keyboard.press('Enter'); await pg.keyboard.type('Chapter 1: The march inland')
     await pg.keyboard.press('Enter'); await pg.keyboard.press('Tab'); await pg.keyboard.type('Patronage networks'); await pg.keyboard.press('Enter'); await pg.keyboard.type('Violence as a business')
     await pg.keyboard.press('Enter'); await pg.keyboard.press('Enter'); await pg.keyboard.type('Chapter 2: Proxies')  # empty Enter → outdent
     await pg.keyboard.press('Enter'); await pg.keyboard.type('temp'); await pg.keyboard.press('Control+a'); await pg.keyboard.press('Backspace'); await pg.keyboard.press('Backspace')  # delete empty
     print('outline:', await titles())
     await pg.click('#plArea .pl-row:has(input[value="Violence as a business"]) .pl-title'); await pg.keyboard.press('Alt+ArrowUp'); await pg.wait_for_timeout(100)
     print('after alt-up:', await titles())
-    await pg.click('#plArea .pl-row:has(input[value="Chapter 1: The gangster state"]) .pl-title'); await pg.keyboard.press('Control+.'); await pg.wait_for_timeout(100)
+    await pg.click('#plArea .pl-row:has(input[value="Chapter 1: The march inland"]) .pl-title'); await pg.keyboard.press('Control+.'); await pg.wait_for_timeout(100)
     print('folded:', await titles())
     await pg.keyboard.press('Control+.')
     # template inside Chapter 2
@@ -29,7 +29,7 @@ async def main():
     await pg.click('#plTemplates'); await pg.check('#ptInside'); await pg.click('#ptList [data-pt="Argument essay"]'); await pg.wait_for_timeout(200)
     print('rows after template:', len(await titles()))
     # panel: synopsis, target, link note
-    await pg.click('#plArea .pl-row:has(input[value="Chapter 1: The gangster state"]) .pl-title'); await pg.wait_for_timeout(100)
+    await pg.click('#plArea .pl-row:has(input[value="Chapter 1: The march inland"]) .pl-title'); await pg.wait_for_timeout(100)
     await pg.fill('#panelBody [data-p=synopsis]','Show how autocrats run states like criminal enterprises.'); await pg.fill('#panelBody [data-p=target]','300')
     await pg.select_option('#panelBody [data-add=note]', index=1); await pg.wait_for_timeout(200)
     print('item:', await pg.evaluate("JSON.stringify((({title,synopsis,target,notes})=>({title,synopsis,target,notes:notes.length}))(P.plan.items.find(i=>i.title.startsWith('Chapter 1'))))"))
@@ -54,7 +54,7 @@ async def main():
     await pg.screenshot(path='p3.png')
     await pg.click('#plCrumbs [data-h=""]'); await pg.select_option('#plView','outline')
     # build drafts (whole plan) into new part
-    await pg.click('#plBuild'); await pg.select_option('#bdScope','all'); await pg.select_option('#bdPart','__new'); await pg.click('#bdOk'); await pg.fill('#askInput','Gangster Democracy'); await pg.click('#askOk'); await pg.wait_for_timeout(500)
+    await pg.click('#plBuild'); await pg.select_option('#bdScope','all'); await pg.select_option('#bdPart','__new'); await pg.click('#bdOk'); await pg.fill('#askInput','The March of the Ten Thousand'); await pg.click('#askOk'); await pg.wait_for_timeout(500)
     print('docs:', await pg.evaluate("JSON.stringify(P.docs.map(d=>[d.title,(P.parts.find(p=>p.id===d.partId)||{}).name||'',d.target]))"))
     ch1 = await pg.evaluate("P.docs.find(d=>d.title.startsWith('Chapter 1')).html")
     print('chapter 1 html:', ch1[:500])
