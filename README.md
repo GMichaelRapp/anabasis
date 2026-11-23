@@ -41,6 +41,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
 - Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
+- A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click.
 
 **Figures**
 - Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.
@@ -62,6 +63,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 | ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab's checks beside a draft](docs/screenshots/checks.png) |
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
 | ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar's ⋯ menu](docs/screenshots/phone.png) |
+| ![The research journal: hypotheses with their status, evidence for and against, and status history](docs/screenshots/journal.png) | |
 
 ## Getting started
 

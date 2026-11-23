@@ -93,6 +93,8 @@ Click a marked passage to change it. The **Research** tab lists what's in this d
 
 ![A supported claim and a highlighted thread in the draft, the claim's popover, and the Research tab](quick-start/10-research.png)
 
+To keep a research journal, choose **＋ Today’s entry** in the Research tab, or **Journal** on the research desk. Write down your research design and hypotheses, log what you did, found and decided each day, and record your searches. **Research memo** turns it all into a document you can send.
+
 ## 11. Save the project file
 
 Choose **Save**. The first time, pick where to keep the project file, a single `.json` that holds everything: documents, notes, sources and images. Keep it somewhere that’s backed up, such as a synced folder.

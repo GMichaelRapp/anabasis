@@ -2,8 +2,8 @@
 
     python build.py && python tools/guide/screenshots.py
 
-Writes docs/screenshots/editor-light.png, editor-dark.png, research.png and phone.png from the
-sample project. (map.png, chart.png and checks.png show figures and checks and are kept as they are.)
+Writes docs/screenshots/editor-light.png, editor-dark.png, research.png, journal.png and phone.png
+from the sample project (journal.png from the thesis example). (map.png, chart.png and checks.png show figures and checks and are kept as they are.)
 """
 import asyncio, sys
 from pathlib import Path
@@ -43,6 +43,8 @@ async def main():
                 box = await pg.evaluate("() => { const r = editor.querySelector('.rm[data-k=cl]').getClientRects()[0]; return [r.left + 60, r.top + r.height / 2]; }")
                 await pg.mouse.click(*box); await pg.wait_for_timeout(400)
                 await pg.screenshot(path=str(OUT / 'research.png'))
+                await pg.evaluate("async () => { dirtyFile = false; await openStarter('thesis'); openJournal('hyp'); }"); await pg.wait_for_timeout(900); await pg.evaluate("() => $('#toast').classList.remove('show')"); await pg.wait_for_timeout(400)
+                await pg.screenshot(path=str(OUT / 'journal.png'))
             await ctx.close()
         # a phone: the draft, and the toolbar's ⋯ menu
         ctx = await b.new_context(viewport={'width': 390, 'height': 760}, device_scale_factor=2, is_mobile=True, has_touch=True)
@@ -59,9 +61,9 @@ async def main():
     sheet.paste(a, (gap, gap)); sheet.paste(c, (a.width + gap * 2, gap))
     sheet = sheet.resize((W // 2, (a.height + gap * 2) // 2), Image.LANCZOS)
     sheet.save(OUT / 'phone.png', optimize=True)
-    for f in ('editor-light.png', 'editor-dark.png', 'research.png'):
+    for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png'):
         p = OUT / f; Image.open(p).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)
-    print('wrote editor-light.png, editor-dark.png, research.png, phone.png to', OUT.relative_to(ROOT))
+    print('wrote editor-light.png, editor-dark.png, research.png, journal.png, phone.png to', OUT.relative_to(ROOT))
 
 
 if __name__ == '__main__':

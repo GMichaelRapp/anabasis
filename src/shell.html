@@ -1473,6 +1473,74 @@ body.desk-on .sg-bar,body.rel-on .sg-bar,body.board-on .sg-bar,body.drafts-on .s
 body.desk-on .tts-bar,body.rel-on .tts-bar,body.board-on .tts-bar,body.drafts-on .tts-bar,body.home-on .tts-bar,body.plan-on .tts-bar{display:none!important}
 @media (max-width:600px){ .tts-bar{flex-wrap:wrap} .tts-bar .spacer{flex-basis:100%;height:0} .tts-bar label{flex-basis:100%} }
 
+/* research journal */
+.j-side .j-today{width:100%;margin-bottom:10px}
+.j-sum{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.j-main{max-width:900px}
+.j-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.j-head h5{font:700 var(--fs-6)/1.2 var(--display);margin:0;flex:1}
+.j-field{margin-bottom:16px}
+.j-field h6{margin:0 0 5px;display:flex;align-items:center;gap:8px}
+.j-field h6 .hl{margin-left:auto}
+.j-field textarea{width:100%;font:15px/1.55 Georgia,'Times New Roman',serif;field-sizing:content;min-height:5.5em}
+.j-qs{margin:0;padding-left:22px}
+.j-qs li{margin:4px 0}
+.j-qs li label{margin:0 6px 0 0!important;display:inline}
+.j-qs li.done > a{color:var(--muted);text-decoration:line-through}
+.h-card{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--hc,var(--line));padding:12px 14px;margin-bottom:12px}
+.h-card header{display:flex;gap:10px;align-items:flex-start}
+.h-card header textarea{flex:1;font:600 16px/1.45 Georgia,serif;field-sizing:content;min-height:2.4em}
+.h-num{font:700 18px/1.6 var(--display);color:var(--hc,var(--muted))}
+.h-st{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.h-chip{display:inline-flex!important;align-items:center;gap:4px;margin:0!important;border:1px solid var(--hc,var(--line));border-radius:999px;padding:3px 10px;font-size:12.5px!important;color:var(--ink)!important;cursor:pointer;background:transparent}
+.h-chip input{position:absolute;opacity:0;pointer-events:none}
+.h-chip.on{background:color-mix(in srgb,var(--hc) 18%,var(--panel));font-weight:700}
+.h-chip:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.h-untested{--hc:var(--cl-open)}.h-supported{--hc:var(--cl-ok)}.h-mixed{--hc:var(--sun-ink,#8a6200)}.h-weakened{--hc:var(--cl-need)}.h-refuted{--hc:var(--cl-disp)}
+span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
+.h-tally{margin:6px 0 0}
+.h-ev{list-style:none;margin:0 0 8px;padding:0}
+.h-ev li{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line2)}
+.h-ev li a{flex:1;color:var(--ink)}
+.ev-st{font:600 11px/1 var(--ui);padding:3px 6px;border-radius:3px;background:var(--line2);white-space:nowrap}
+.ev-for .ev-st{background:color-mix(in srgb,var(--cl-ok) 20%,transparent)}.ev-against .ev-st{background:color-mix(in srgb,var(--cl-disp) 20%,transparent)}
+.h-add select{flex:1;min-width:0}
+.h-add select[data-hstance]{flex:0 0 auto;width:auto}
+.h-hist{margin-top:8px}.h-hist ul{margin:6px 0 0;padding-left:18px}
+.h-card footer{display:flex;justify-content:flex-end;margin-top:6px}
+.j-compose{background:var(--panel);border:1px solid var(--line);padding:10px 12px;margin-bottom:14px}
+.j-compose textarea{width:100%;font:15px/1.5 Georgia,serif;field-sizing:content;min-height:4.5em;margin:8px 0}
+.j-compose .row{flex-wrap:wrap}
+.j-compose .row input,.j-compose .row select{width:auto}
+.j-compose .row input:not([type=date]){flex:1;min-width:140px}
+.j-compose select{flex:1;min-width:160px;width:auto}
+.j-kinds{gap:6px;flex-wrap:wrap}
+.j-kind{display:inline-flex!important;margin:0!important;border:1px solid var(--line);border-radius:999px;padding:3px 11px;font-size:12.5px!important;cursor:pointer;color:var(--ink)!important}
+.j-kind input{position:absolute;opacity:0;pointer-events:none}
+.j-kind:has(input:checked){background:var(--accent-soft);border-color:var(--accent);font-weight:700}
+.j-kind:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.j-filt input[type=search]{width:auto;flex:1;min-width:140px}
+.j-date{font:700 var(--fs-4)/1.2 var(--display);margin:18px 0 6px;color:var(--muted)}
+.j-entry{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line2);padding:8px 10px;margin-bottom:6px}
+.j-entry.k-auto{background:transparent;border-style:dashed}
+.j-body p{margin:0 0 4px;font:15px/1.5 Georgia,serif}
+.j-entry.k-auto .j-body p{font:13.5px/1.45 var(--ui);color:var(--muted)}
+.j-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:4px;font-size:12px}
+.j-meta .tag{border:0;cursor:pointer;min-height:0}
+.j-link{font-size:12px}
+.j-kind-chip{font:600 11px/1 var(--ui);padding:4px 7px;border-radius:3px;white-space:nowrap;background:var(--line2);color:var(--ink)}
+.j-kind-chip.k-found{background:color-mix(in srgb,var(--cl-ok) 20%,transparent)}.j-kind-chip.k-decided{background:color-mix(in srgb,var(--accent) 18%,transparent)}.j-kind-chip.k-dead{background:color-mix(in srgb,var(--cl-disp) 18%,transparent)}.j-kind-chip.k-idea{background:color-mix(in srgb,var(--sun) 26%,transparent)}.j-kind-chip.k-question{background:color-mix(in srgb,var(--rq) 18%,transparent)}
+.j-edit{width:100%;font:15px/1.5 Georgia,serif;field-sizing:content}
+.j-acts{display:flex;gap:2px}
+.j-sform{display:grid;grid-template-columns:140px 1.2fr 1.4fr 1fr 80px 70px auto;gap:6px;margin-bottom:12px}
+.j-stable input{width:100%;border-color:transparent;background:transparent;padding:4px;font-size:13px}
+.j-stable input:hover,.j-stable input:focus{border-color:var(--line);background:var(--page)}
+.j-stable td:first-child{width:130px}.j-stable td:nth-child(3){width:28%}.j-stable td:nth-child(5),.j-stable td:nth-child(6){width:70px}.j-stable td:last-child{width:34px}
+.rs-journal{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.rs-journal p{flex-basis:100%;margin:2px 0 0}
+.sr-only{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:860px){ .j-sform{grid-template-columns:1fr 1fr} .j-sform button{grid-column:1/-1} .j-entry{grid-template-columns:1fr} }
+
 /* ---------- print ---------- */
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
@@ -1573,6 +1641,7 @@ body.desk-on .tts-bar,body.rel-on .tts-bar,body.board-on .tts-bar,body.drafts-on
         <label class="inline small rs-show"><input type="checkbox" id="rmShow" checked> Show marks in the draft</label>
       </div>
       <div class="ol-scroll">
+        <h6>Journal</h6><div class="rs-journal" id="rsJournal"></div>
         <h6>Threads <button class="ghost small hl" id="rsNewThread">+ Thread</button></h6><ul class="outline rs-threads" id="rsThreads"></ul>
         <h6>Claims in this document <span class="badge" id="rsClaimCount"></span></h6><div class="small muted ol-sum" id="rsClaimSum"></div><ul class="outline" id="rsClaims"></ul>
         <h6>Due for review <span class="badge" id="rsKeyCount"></span></h6><ul class="outline" id="rsKeys"></ul>
@@ -1690,7 +1759,7 @@ body.desk-on .tts-bar,body.rel-on .tts-bar,body.board-on .tts-bar,body.drafts-on
       <div class="board-bar">
         <button id="deskBack" class="ghost">← Back to draft</button>
         <b class="rel-head">Research desk</b>
-        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="about">Everything about…</button></nav>
         <div class="spacer"></div>
         <span id="deskTools" class="desk-tools"></span>
       </div>
@@ -2489,6 +2558,16 @@ body.desk-on .tts-bar,body.rel-on .tts-bar,body.board-on .tts-bar,body.drafts-on
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
       <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
+    </ul>
+    <h4>The research journal</h4>
+    <ul>
+      <li>Open <b>Journal</b> on the research desk, or <b>＋ Today’s entry</b> in the Research tab. It has four parts: the research design, hypotheses, a dated log and a search log.</li>
+      <li><b>Research design</b> holds the purpose, your research questions (the same ones as in Plan and the Questions tab), methods, sources and data, scope and limitations, ethics and milestones. Tick a question when it’s answered.</li>
+      <li><b>Hypotheses</b> are claims you could be wrong about. Give each a status (untested, supported, mixed evidence, weakened, refuted), the question it answers, and the claims, notes and sources that support or challenge it. Changing the status asks what changed; the change is dated in the hypothesis’s history and recorded in the log.</li>
+      <li>The <b>log</b> is a dated record: what you did, found or decided, dead ends, ideas and new questions, with tags and a link to a claim, note, source or question. <kbd>⌘/Ctrl Enter</kbd> adds the entry. Filter by kind or tag, or search it.</li>
+      <li>The <b>search log</b> records where you looked, the terms and filters, and how many results you got and kept, so the research can be repeated. It downloads as CSV.</li>
+      <li><b>Research memo</b> makes a document summing up the design, the hypotheses with their evidence, the searches and the last 30 days of the log, ready to send to a supervisor or editor. <b>Methods appendix</b> makes back matter from the methods, sources, searches, scope and ethics. Both are ordinary documents: make them again to bring them up to date.</li>
+      <li><b>Everything about…</b> searches the journal too, and deleting a hypothesis, entry or search can be undone.</li>
     </ul>
     <h4>Suggest mode &amp; working with editors</h4>
     <ul>

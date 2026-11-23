@@ -4,6 +4,18 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.4.0] — 2026-11-23
+
+### Added
+- **Research journal**, a new Journal view on the research desk (and **＋ Today’s entry** in the Research tab):
+  - **Research design**: purpose, research questions (shared with Plan and the Questions tab), methods, sources and data, scope and limitations, ethics and milestones.
+  - **Hypotheses**: each with a status (untested, supported, mixed evidence, weakened, refuted), the question it answers, your reasoning, and the claims, notes and sources that support or challenge it. Every change of status asks what changed and is dated in the hypothesis’s history.
+  - **Research log**: dated entries (did, found, decided, dead end, idea, question) with tags and links to claims, notes, sources and questions; filter by kind or tag, or search. Status changes and answered questions are recorded on their own.
+  - **Search log**: where you searched, the terms and filters, results and how many you kept, with CSV download.
+  - **Research memo** and **Methods appendix**: documents made from the journal, the appendix as back matter.
+- The thesis and investigation examples include a filled-in journal.
+- Everything about… searches the journal; journal deletions can be undone; new palette commands for each part.
+
 ## [1.3.0] — 2026-11-23
 
 ### Added
@@ -121,6 +133,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.4.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.4.0
 [1.3.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.3.0
 [1.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.2.0
 [1.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.1.0
