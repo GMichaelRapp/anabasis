@@ -41,7 +41,8 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
 - Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
-- A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click.
+- A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click. A weekly review shows what moved and what’s next, and method templates get the design started.
+- Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
 
 **Figures**
 - Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.
@@ -56,7 +57,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 **Publish**
 - PDF with real footnotes, Word (.docx), ePub, HTML, Markdown and a Substack-ready post, plus a promo kit with a social thread, subtitle and quote cards.
 - Video-script mode with run time, an A/V table and a teleprompter.
-- Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository.
+- Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
 
 | | |
 |---|---|

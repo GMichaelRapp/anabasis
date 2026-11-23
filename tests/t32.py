@@ -100,7 +100,7 @@ async def main():
         # ---- examples ship with a journal
         await pg.evaluate("() => { dirtyFile = false; openStarter('thesis'); }"); await pg.wait_for_timeout(700)
         r = await pg.evaluate("() => ({ d: !!P.journal.design.methods, h: P.journal.hypotheses.map(h => h.status + ':' + h.links.length + ':' + (h.questionId ? 'q' : '-')), l: P.journal.log.length, s: P.journal.searches.length, dangling: P.journal.hypotheses.some(h => h.links.some(l => !l.id)) })")
-        check('the thesis example has a design, linked hypotheses, a log and searches', r['d'] and r['h'] == ['supported:3:q', 'mixed:2:-'] and r['l'] == 4 and r['s'] == 2 and not r['dangling'], r)
+        check('the thesis example has a design, linked hypotheses, a log and searches', r['d'] and r['h'] == ['supported:3:q', 'mixed:2:-'] and r['l'] == 5 and r['s'] == 2 and not r['dangling'], r)
 
         # ---- hostile journal data is tidied, not trusted
         bad = json.dumps({'app': 'Anabasis', 'format': 2, 'title': 'x', 'docs': [{'id': 'd1', 'title': 'D', 'html': '<p>x</p>'}],

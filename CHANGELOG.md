@@ -4,6 +4,21 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.5.0] — 2026-11-23
+
+### Added
+- **Pick up on another device.** The GitHub dialog's **Open a project…** (and **From GitHub…** on Project home) lists every project backed up to the repository and opens the newest backup. When a newer backup of the open project turns up from another device, a notice offers to open it, checked when the app starts, when a project opens and when you come back to the tab.
+- **This week**, a weekly review in the Journal: words written each day, log entries, searches, sources, notes and checked claims, hypothesis changes, questions answered, review keys coming due. Step back through earlier weeks; **Week summary** makes a document.
+- **Next steps**: a new kind of log entry with a box to tick. Open ones show in This week, the Research tab and the research memo.
+- **Research design templates**: prompts for eight methods (archival, interviews, open-source investigation, document analysis, case studies, data analysis, literature review, investigative reporting), filled into empty fields or added below.
+- **Getting-started tips**: a short card on an empty document for the kind of writing, eleven kinds in all, also listed in Help. Off in Settings.
+
+### Changed
+- The fact-check sheet records who checked each claim and when, lists the page or other location of each citation, and can be made as a document in the project. The claims CSV includes the checker.
+- Backing up to GitHub over a newer backup from another device now asks first; automatic backups skip it and show the notice instead.
+- The thesis and investigation examples include a next step.
+- Build and publishing workflows moved to current GitHub Actions (Node 24), and publishing to GitHub Pages retries once if GitHub can't find the upload.
+
 ## [1.4.0] — 2026-11-23
 
 ### Added
@@ -133,6 +148,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.5.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.5.0
 [1.4.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.4.0
 [1.3.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.3.0
 [1.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.2.0

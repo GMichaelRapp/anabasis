@@ -6,7 +6,7 @@ from env import URL, HTTP, OUT, FX, AXE
 URL = os.environ.get('ANABASIS_URL', URL)
 AXE = os.environ.get('AXE_PATH', AXE)
 VIEWS = [
-    ('editor', "switchTab('docs')"),
+    ('editor', "ghBarHide(); if (curDocId !== P.docs[0].id) openDoc(P.docs[0].id); switchTab('docs')"),
     ('notes tab', "switchTab('notes')"),
     ('sources tab', "switchTab('sources')"),
     ('outline tab', "switchTab('outline')"),
@@ -20,6 +20,8 @@ VIEWS = [
     ('journal design', "plNewItem('', null, { type: 'question', title: 'Why?', status: 'open' }); openJournal('design')"),
     ('journal hypotheses', "P.journal.hypotheses.push({ id: 'h1', text: 'A guess', rationale: '', status: 'mixed', questionId: '', links: [{ k: 'src', id: P.sources[0].id, stance: 'for' }], history: [{ at: nowISO(), from: 'untested', to: 'mixed', note: 'x' }], created: nowISO(), modified: nowISO() }); openJournal('hyp')"),
     ('journal log', "jLog('found', 'Found the diary.', { tags: ['archive'] }); jLog('auto', 'H1 mixed'); openJournal('log')"),
+    ('journal this week', "jLog('next', 'Order the diary'); jLog('found', 'A thing'); openJournal('week')"),
+    ('journal design templates', "openJournal('design')"),
     ('journal searches', "P.journal.searches.push({ id: 'js1', date: todayISO(), where: 'JSTOR', terms: 'x', filters: '', results: 4, kept: 1, notes: '', created: nowISO() }); openJournal('search')"),
     ('desk about', "openDesk('about'); $('#abQ').value = 'Tuchman'; $('#abForm').requestSubmit()"),
     ('thread dialog', "closeDesk(); openDoc(curDocId); const r = document.createRange(); r.selectNodeContents(editor.querySelector('p')); getSelection().removeAllRanges(); getSelection().addRange(r); openThreadPick()"),
@@ -37,6 +39,8 @@ VIEWS = [
     ('find all', "$('#cpDlg').close(); openFindAll()"),
     ('promo', "$('#frDlg').close(); openPromo()"),
     ('tour', "$('#pkDlg').close(); startTour()"),
+    ('getting-started tips', "closeDesk(); P.goal.kind = 'article'; addDoc(newDoc('Empty'))"),
+    ('newer-backup notice', "ghBarShow({ sha: 'x', at: new Date().toISOString() })"),
 ]
 async def main():
     async with async_playwright() as pw:

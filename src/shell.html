@@ -1454,6 +1454,9 @@ body.side-hidden #sidebar{display:none}
 :root[data-theme="dark"]{--sg-ins:#86D4AB;--sg-del:#F2998B}
 .sg-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:color-mix(in srgb,var(--sg-ins) 9%,var(--panel));border-bottom:1px solid var(--line);font-size:var(--fs-2)}
 .sg-bar button{min-height:28px}
+.gh-bar{position:fixed;left:50%;top:60px;transform:translateX(-50%);z-index:60;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;max-width:min(720px,calc(100vw - 24px));padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);font-size:var(--fs-2)}
+.gh-bar-acts{display:flex;gap:6px;flex-wrap:wrap}
+.gh-bar.hidden{display:none}
 body.sg-on .sg-bar{background:color-mix(in srgb,var(--sg-ins) 16%,var(--panel))}
 .sg-mk{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-weight:800;flex:none}
 .sg-mk.sg-ins{background:color-mix(in srgb,var(--sg-ins) 18%,transparent);color:var(--sg-ins)}.sg-mk.sg-del{background:color-mix(in srgb,var(--sg-del) 18%,transparent);color:var(--sg-del)}
@@ -1530,6 +1533,25 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
 .j-link{font-size:12px}
 .j-kind-chip{font:600 11px/1 var(--ui);padding:4px 7px;border-radius:3px;white-space:nowrap;background:var(--line2);color:var(--ink)}
 .j-kind-chip.k-found{background:color-mix(in srgb,var(--cl-ok) 20%,transparent)}.j-kind-chip.k-decided{background:color-mix(in srgb,var(--accent) 18%,transparent)}.j-kind-chip.k-dead{background:color-mix(in srgb,var(--cl-disp) 18%,transparent)}.j-kind-chip.k-idea{background:color-mix(in srgb,var(--sun) 26%,transparent)}.j-kind-chip.k-question{background:color-mix(in srgb,var(--rq) 18%,transparent)}
+.j-kind-chip.k-next{background:color-mix(in srgb,var(--accent) 10%,transparent);border:1px solid color-mix(in srgb,var(--accent) 40%,transparent);display:inline-flex;align-items:center;gap:5px}
+.j-kind-chip .j-next{margin:0;width:14px;height:14px}
+.j-entry.done .j-body{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
+.j-span{margin:-6px 0 12px}
+.tip-card{position:absolute;z-index:2;box-sizing:border-box;background:var(--page);padding:14px 18px 12px;border:1px dashed color-mix(in srgb,var(--page-ink) 28%,transparent);border-radius:6px;font:var(--fs-2,14px)/1.5 var(--ui);color:color-mix(in srgb,var(--page-ink) 78%,transparent);user-select:text}
+.tip-card header{display:flex;align-items:center;gap:10px;margin-bottom:6px}.tip-card header b{font:600 15px/1.2 var(--display,Georgia);color:var(--page-ink)}.tip-card header select{width:auto;font-size:13px;padding:3px 6px}.tip-card header button{margin-left:auto}
+.tip-card ul{margin:0;padding-left:18px}.tip-card li{margin:4px 0}.tip-card footer{margin-top:8px}
+.help-tips details{margin:4px 0}.help-tips summary{cursor:pointer;font-weight:600}.help-tips ul{margin:4px 0 8px}
+.linkish{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;min-height:0}
+body.focus .tip-card{display:none}
+@media print{.tip-card{display:none!important}}
+.j-tpl{gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 16px;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:6px}.j-tpl label{margin:0;font-weight:600;display:inline;width:auto}.j-tpl select{width:auto}
+.wk-sum div{min-width:96px}
+.wk-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;height:92px;align-items:end;margin:4px 0 18px;max-width:520px}
+.wk-bar{display:flex;flex-direction:column;align-items:stretch;height:100%;justify-content:flex-end;gap:4px}
+.wk-bar i{display:block;background:var(--accent);border-radius:3px 3px 0 0;min-height:2px}
+.wk-bar span{font-size:11px;color:var(--muted);text-align:center}
+.wk-next{list-style:none;padding:0;margin:0}.wk-next li{padding:4px 0;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.wk-next label{display:inline;font-size:var(--fs-1,15px)}.wk-next input{margin-right:6px}
+.wk-log li{margin:2px 0}
 .j-edit{width:100%;font:15px/1.5 Georgia,serif;field-sizing:content}
 .j-acts{display:flex;gap:2px}
 .j-sform{display:grid;grid-template-columns:140px 1.2fr 1.4fr 1fr 80px 70px auto;gap:6px;margin-bottom:12px}
@@ -1853,6 +1875,7 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
         <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
         <header class="title-block" id="titleBlock"></header>
         <div id="editor" contenteditable="true" spellcheck="true"></div>
+        <aside class="tip-card hidden" id="tipCard" aria-label="Getting-started tips"></aside>
         <section class="refs" id="refs"></section>
       </article>
     </div>
@@ -2302,7 +2325,7 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
 <dialog id="ghDlg" class="wide"><div class="dlg">
   <h3>Back up to GitHub</h3>
   <div class="body">
-    <p class="small muted" style="margin-top:0">Each backup is a commit of the project file to a <b>private</b> repository, so GitHub keeps the full history. A locked project is backed up locked.</p>
+    <p class="small muted" style="margin-top:0">Each backup is a commit of the project file to a <b>private</b> repository, so GitHub keeps the full history. A locked project is backed up locked. To pick up on another device, enter the same repository and token there and choose <b>Open a project</b>; Anabasis tells you when a newer backup is waiting.</p>
     <div class="grid3"><div><label style="margin-top:0">Repository</label><input id="ghRepo" placeholder="owner/name"></div><div><label style="margin-top:0">Branch</label><input id="ghBranch" placeholder="main"></div><div><label style="margin-top:0">Folder</label><input id="ghFolder" placeholder="anabasis"></div></div>
     <label>Access token</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…">
     <div class="small muted">Make a fine-grained token on GitHub (Settings → Developer settings) with access to just this repository and <b>Contents: Read and write</b>.</div>
@@ -2311,8 +2334,9 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
     <div class="gh-status" id="ghStatus"></div>
     <ul class="ver-list" id="ghHist"></ul>
   </div>
-  <footer><button id="ghTest">Test connection</button><button id="ghHistory">History…</button><button id="ghClose">Close</button><button id="ghNow" class="primary">Back up now</button></footer>
+  <footer><button id="ghTest">Test connection</button><button id="ghProjects" title="Open any project backed up to this repository, e.g. one you worked on with another device">Open a project…</button><button id="ghHistory">History…</button><button id="ghClose">Close</button><button id="ghNow" class="primary">Back up now</button></footer>
 </div></dialog>
+<div class="gh-bar hidden" id="ghBar" role="status"><span id="ghBarMsg"></span><span class="gh-bar-acts"><button class="primary small" data-gb="open">Open the newer backup</button><button class="small" data-gb="copy" title="Save the copy you have open to a file first">Save this copy…</button><button class="small ghost" data-gb="no">Not now</button></span></div>
 <div class="tp hidden" id="tp" role="dialog" aria-label="Teleprompter">
   <div class="tp-scroll" id="tpScroll"><div class="tp-pad"></div><div class="tp-text" id="tpText"></div><div class="tp-pad"></div></div>
   <div class="tp-line" aria-hidden="true"></div>
@@ -2434,6 +2458,7 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
       <button type="button" class="small" id="stToolbar" style="margin:4px 0 6px">Customize toolbar…</button>
       <label><input type="checkbox" id="stSpell"> Spellcheck</label>
       <label><input type="checkbox" id="stHome"> Open to the project home (otherwise straight to the draft)</label>
+      <label><input type="checkbox" id="stTips"> Show getting-started tips on empty documents</label>
       <label><input type="checkbox" id="stAuto"> Autosave to the project file (Chrome and Edge)</label><div class="small muted" id="stAutoNote" style="margin:-2px 0 6px 24px"></div>
     </div>
     <label>Browser storage</label><div class="small" id="stStorage">Checking…</div>
@@ -2552,13 +2577,16 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
     <ul>
       <li>Select a passage, then use <b>Mark</b> in the toolbar (or <kbd>⌘/Ctrl Alt G</kbd>, then a letter). Marks can run across paragraphs and around citations, and they can overlap. Click a marked passage to see and change its marks. They’re saved with the draft and left out of every export.</li>
       <li><b>Threads</b> (<kbd>T</kbd>) are named, colored highlights that follow a theme, an argument or a person through the whole piece. Step through a thread with ‹ › in the Research tab, read it straight through on the research desk, or turn it into a working document.</li>
-      <li><b>Claims</b> (<kbd>C</kbd>) go into a claims register. Anabasis finds the citations inside a claim or right after it, and warns when a claim has no source, rests only on sources rated D–E or 4–5, or was edited after you marked it supported. Set each claim to not checked, supported, needs a source, contested or cut. The <b>fact-check sheet</b> prints the register as a checklist with full citations, and the CSV opens in any spreadsheet.</li>
+      <li><b>Claims</b> (<kbd>C</kbd>) go into a claims register. Anabasis finds the citations inside a claim or right after it, and warns when a claim has no source, rests only on sources rated D–E or 4–5, or was edited after you marked it supported. Set each claim to not checked, supported, needs a source, contested or cut. The <b>fact-check sheet</b> prints the register as a checklist with full citations and the page of each one, and fills in who checked each supported claim and when (your name comes from Settings). <b>As a document</b> puts the same sheet in the project. The CSV opens in any spreadsheet.</li>
       <li><b>Review keys</b> (<kbd>R</kbd>) mark a passage to come back to, with a reason and a due date. Due keys show in the Research tab and on Project home. Snooze one a week or tick it done on the research desk.</li>
       <li><b>Questions</b> (<kbd>Q</kbd>) link passages to an open research question. Questions are shared with Plan. Record what you’ve found and attach notes on the research desk.</li>
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
       <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
     </ul>
+    <h4>Getting-started tips</h4>
+    <p>A new, empty document shows a short card of tips for the kind of writing you’re doing. It goes away when you start typing. Pick another kind from the card, close it for one document, or turn tips off in Settings. All of them are here too:</p>
+    <div id="helpTips" class="help-tips"></div>
     <h4>The research journal</h4>
     <ul>
       <li>Open <b>Journal</b> on the research desk, or <b>＋ Today’s entry</b> in the Research tab. It has four parts: the research design, hypotheses, a dated log and a search log.</li>
@@ -2567,6 +2595,9 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
       <li>The <b>log</b> is a dated record: what you did, found or decided, dead ends, ideas and new questions, with tags and a link to a claim, note, source or question. <kbd>⌘/Ctrl Enter</kbd> adds the entry. Filter by kind or tag, or search it.</li>
       <li>The <b>search log</b> records where you looked, the terms and filters, and how many results you got and kept, so the research can be repeated. It downloads as CSV.</li>
       <li><b>Research memo</b> makes a document summing up the design, the hypotheses with their evidence, the searches and the last 30 days of the log, ready to send to a supervisor or editor. <b>Methods appendix</b> makes back matter from the methods, sources, searches, scope and ethics. Both are ordinary documents: make them again to bring them up to date.</li>
+      <li><b>This week</b> shows what moved since Monday: words written, log entries, searches, sources and notes added, claims checked, hypothesis changes and questions answered, plus review keys coming due. Step back to earlier weeks with ‹, and <b>Week summary</b> makes a document to send or keep.</li>
+      <li>A <b>Next step</b> log entry is a to-do: tick it when it’s done. Open next steps show in This week, the Research tab and the research memo.</li>
+      <li><b>Start from a method</b>, at the top of the research design, fills empty fields with prompts for archival research, interviews, open-source investigation, document analysis, case studies, data analysis, a literature review or investigative reporting. Replace the [brackets]. Add a second method for mixed methods.</li>
       <li><b>Everything about…</b> searches the journal too, and deleting a hypothesis, entry or search can be undone.</li>
     </ul>
     <h4>Suggest mode &amp; working with editors</h4>
@@ -2610,6 +2641,7 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
       <li><b>Estimative language</b> (Outline tab; on automatically for briefs and white papers) underlines vague words like “may” or “could” and offers terms from the ICD 203 likelihood scale. It also flags mixed wordings of the scale, confidence and likelihood in one sentence, and Key Judgments with no confidence level.</li>
       <li><b>Script mode</b> (Page setup → “This is a video script”) shows run time at your speaking rate, timecodes beside each paragraph or A/V row, two-column A/V tables, “Copy narration”, and a <b>teleprompter</b>. Space plays and pauses, ⌘/Ctrl+↑↓ changes speed, and Mirror flips the text for a prompter mirror.</li>
       <li><b>GitHub backup</b> (Export menu) commits the project file to a private repository on demand or whenever you save, and can reopen any earlier backup.</li>
+      <li><b>Picking up on another device</b>: enter the same repository and token there, then choose <b>Open a project…</b> in the GitHub dialog (or <b>From GitHub…</b> on Project home). When a newer backup of the open project turns up, made on another device, a notice offers to open it. Backing up over a newer backup asks first, and automatic backups never do it; nothing is lost either way, since every backup stays in the history.</li>
     </ul>
     <h4>Drafts</h4>
     <ul>

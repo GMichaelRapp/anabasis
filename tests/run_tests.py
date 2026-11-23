@@ -37,6 +37,7 @@ SUITES = {
     't31': 'citation styles, reference export, Pandoc and LaTeX packages, suggest mode and Word round-trips, starter projects, reading aloud',
     't30': 'adaptive bars at every width, toolbar trimming, shortcut sheet, writing view, undo for marks, phone layouts, installable hosted copy',
     't32': 'research journal: design, hypotheses and evidence, the dated log, the search log, memo and appendix',
+    't33': 'picking up on another device from GitHub, weekly review and next steps, design templates, fact-check sheet, getting-started tips',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

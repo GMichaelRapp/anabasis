@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.4.0';
+const APP_VERSION = '1.5.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -160,19 +160,19 @@ function normalize(p) {
   const arr = v => (Array.isArray(v) ? v : []).filter(x => x && typeof x === 'object' && x.id), hexOk = c => /^#[0-9a-f]{6}$/i.test(c || ''), dayOk = v => (/^\d{4}-\d\d-\d\d$/.test(v || '') ? v : '');
   const rstr = v => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : '');
   out.threads = arr(out.threads).map((t, i) => ({ id: String(t.id), name: rstr(t.name) || 'Thread', color: hexOk(t.color) ? t.color : TH_COLORS[i % TH_COLORS.length], note: rstr(t.note), hidden: !!t.hidden, created: rstr(t.created) || nowISO() }));
-  out.claims = arr(out.claims).map(c => ({ id: String(c.id), status: Object.prototype.hasOwnProperty.call(CL_ST, c.status) ? c.status : 'open', note: rstr(c.note), checkedText: rstr(c.checkedText), checkedAt: rstr(c.checkedAt), created: rstr(c.created) || nowISO(), modified: rstr(c.modified) || rstr(c.created) || nowISO() }));
+  out.claims = arr(out.claims).map(c => ({ id: String(c.id), status: Object.prototype.hasOwnProperty.call(CL_ST, c.status) ? c.status : 'open', note: rstr(c.note), checkedText: rstr(c.checkedText), checkedAt: rstr(c.checkedAt), checkedBy: rstr(c.checkedBy), created: rstr(c.created) || nowISO(), modified: rstr(c.modified) || rstr(c.created) || nowISO() }));
   out.reviewKeys = arr(out.reviewKeys).map(r => ({ id: String(r.id), reason: rstr(r.reason) || RV_REASONS[0], due: dayOk(r.due), note: rstr(r.note), done: !!r.done, doneAt: rstr(r.doneAt), created: rstr(r.created) || nowISO() }));
   { // the research journal
     const J = out.journal && typeof out.journal === 'object' && !Array.isArray(out.journal) ? out.journal : {}, D = J.design && typeof J.design === 'object' ? J.design : {};
     const links = v => (Array.isArray(v) ? v : []).filter(l => l && /^(cl|note|src|q)$/.test(l.k) && l.id).map(l => ({ k: l.k, id: String(l.id), stance: l.stance === 'for' || l.stance === 'against' ? l.stance : '' }));
-    const HS = ['untested', 'supported', 'mixed', 'weakened', 'refuted'], LK = ['did', 'found', 'decided', 'dead', 'idea', 'question', 'auto'];
+    const HS = ['untested', 'supported', 'mixed', 'weakened', 'refuted'], LK = ['did', 'found', 'decided', 'dead', 'idea', 'question', 'next', 'auto'];
     const num = v => (v === '' || v == null || !isFinite(+v) ? '' : Math.max(0, Math.round(+v)));
     out.journal = {
       design: Object.fromEntries(['purpose', 'methods', 'data', 'scope', 'ethics', 'timeline'].map(k => [k, rstr(D[k])])),
       hypotheses: arr(J.hypotheses).map(h => ({ id: String(h.id), text: rstr(h.text), rationale: rstr(h.rationale), status: HS.includes(h.status) ? h.status : 'untested', questionId: rstr(h.questionId), links: links(h.links),
         history: (Array.isArray(h.history) ? h.history : []).filter(x => x && typeof x === 'object').map(x => ({ at: rstr(x.at) || nowISO(), from: HS.includes(x.from) ? x.from : 'untested', to: HS.includes(x.to) ? x.to : 'untested', note: rstr(x.note) })),
         created: rstr(h.created) || nowISO(), modified: rstr(h.modified) || nowISO() })),
-      log: arr(J.log).map(e => ({ id: String(e.id), date: dayOk(e.date) || todayISOof(e.created), kind: LK.includes(e.kind) ? e.kind : 'did', text: rstr(e.text), tags: (Array.isArray(e.tags) ? e.tags : []).map(rstr).filter(Boolean).slice(0, 12), links: links(e.links), created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.text),
+      log: arr(J.log).map(e => ({ id: String(e.id), date: dayOk(e.date) || todayISOof(e.created), kind: LK.includes(e.kind) ? e.kind : 'did', text: rstr(e.text), tags: (Array.isArray(e.tags) ? e.tags : []).map(rstr).filter(Boolean).slice(0, 12), links: links(e.links), done: e.kind === 'next' && !!e.done, doneAt: e.kind === 'next' && e.done ? rstr(e.doneAt) : '', created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.text),
       searches: arr(J.searches).map(x => ({ id: String(x.id), date: dayOk(x.date) || todayISOof(x.created), where: rstr(x.where), terms: rstr(x.terms), filters: rstr(x.filters), results: num(x.results), kept: num(x.kept), notes: rstr(x.notes), created: rstr(x.created) || nowISO() })),
     };
   }
@@ -356,6 +356,7 @@ async function loadProjectText(text, handle = null, name = '') {
   updateSaveState();
   toast((useLocal ? 'Continuing from the newer browser copy of “' : 'Opened “') + P.title + '”');
   if (repaired) setTimeout(() => toast('The file was slightly damaged and has been repaired. Check your work, then use Save project as… to write a clean copy.'), 1600);
+  ghBarHide(); setTimeout(() => ghCheckNewer(true), 1200);
   rememberRecent(handle, lastFileName);
   if (PREFS.startHome !== false) openHome();
   updateAutoState();
@@ -502,6 +503,110 @@ const htmlToText = h => { const d = document.createElement('div'); d.innerHTML =
 
 /* ---------------- editor ---------------- */
 const editor = $('#editor');
+/* ================================================================
+   Getting-started tips: a short card on an empty document, by kind of
+   writing. Plain text, a few kilobytes. Off in Settings.
+   ================================================================ */
+const TIPS = {
+  general: { label: 'Any document', tips: [
+    'Write down the point first: one or two sentences on what this piece says and who it’s for. Delete them later if you like.',
+    'Outline before you draft, even roughly: three to seven headings, each one a claim rather than a topic.',
+    'Draft fast and fix later. Type TK where a fact or word is missing and keep going; Project home collects every TK.',
+    'Cite as you write, while you know where the fact came from. Adding sources afterwards takes far longer.',
+    'Most first drafts start a paragraph too early. When you revise, ask whether the second paragraph is the real opening.',
+    'Read it aloud before it goes anywhere. Listen, in the toolbar’s ⋯ menu, reads the draft back to you.'] },
+  book: { label: 'Nonfiction book', tips: [
+    'Write the one-paragraph pitch first: the argument, why now, and who will read it. Every chapter should serve it.',
+    'Plan chapters as steps in the argument. Each answers one question and raises the next.',
+    'You don’t have to draft in order. Start with the chapter you know best, to find the book’s voice.',
+    'Set a daily word target you can hit on a bad day. Books are finished by pace, not bursts; Project home tracks it.',
+    'Keep names, terms and spellings consistent with house style and the acronym list, so chapter 12 matches chapter 1.',
+    'Fix the structure before the sentences: compile the manuscript and read it straight through before line editing.'] },
+  article: { label: 'Article or essay', tips: [
+    'Say the argument in one sentence before you start. If you can’t, narrow the question or do more research.',
+    'Open with the problem or a concrete moment, and reach your claim within the first three paragraphs.',
+    'Give each section one job (evidence, objection, implication) and a heading that states its claim.',
+    'Take on the strongest objection in its best form. Readers trust a writer who does.',
+    'End with what follows from the argument, not a summary of it.',
+    'Cut a tenth in revision. Start with throat-clearing openings and paragraphs that repeat the one before.'] },
+  series: { label: 'Substack series', tips: [
+    'Plan the arc before part one: what each part reveals, and the question that carries readers to the next.',
+    'Make every part stand alone: a short recap at the top, a payoff inside, a hook at the end.',
+    'Put your strongest material in part one. That’s where readers decide to subscribe.',
+    'Keep the length and publishing day steady, so readers learn the rhythm.',
+    'In an inbox, the headline and subtitle do the selling. Write several and choose one.',
+    'Use Export → Substack, then check footnotes and images in Substack’s preview before sending.'] },
+  whitepaper: { label: 'White paper or policy brief', tips: [
+    'Write for a busy decision-maker: the bottom line and the recommendations go on the first page.',
+    'Define the problem precisely, with numbers and dates, before discussing options.',
+    'Set out the options fairly, including doing nothing, with the cost and risk of each.',
+    'Recommend one, and say what evidence would change your mind.',
+    'Source every factual claim. Mark claims as you go; the evidence grid shows the thin spots.',
+    'Use headings that state findings (“Ports are the bottleneck”), not topics (“Ports”).'] },
+  brief: { label: 'Intelligence brief', tips: [
+    'Lead with key judgments: what you assess, how confident you are, and why it matters, in a few bullets.',
+    'Use estimative words consistently, and keep confidence separate from likelihood. The estimative language check helps.',
+    'Separate what is reported from what you judge, and say what you don’t know.',
+    'Name the alternative explanations you weighed and why you set them aside.',
+    'List indicators: what to watch for that would confirm or overturn the judgment.',
+    'Keep it short. If it runs past two pages, move the detail to an annex.'] },
+  script: { label: 'Video script', tips: [
+    'Hook in the first fifteen seconds with a question, a surprise or a stake, then promise what the viewer will get.',
+    'Write for the ear: short sentences, one idea each, numbers rounded.',
+    'Plan the pictures with the words (script mode’s A/V table). Every claim needs something on screen.',
+    'Signpost out loud (“three reasons…”) so viewers keep their place.',
+    'Read it aloud at speaking pace. The run time assumes about 150 words a minute.',
+    'Deliver the payoff you promised, then end with one clear call to action.'] },
+  narrative: { label: 'Literary journalism', tips: [
+    'Choose the opening scene: a person, a place, a moment with tension in it.',
+    'Write the nut graf, the paragraph that says why this story matters beyond itself, and place it early.',
+    'Build in scenes and summary: scenes for what matters most, summary to move through time.',
+    'Report for details you can only get by being there: sounds, objects, exact words.',
+    'Know the turn, the point where the story changes direction or meaning.',
+    'End on an image or a line that stays with the reader, not a moral.'] },
+  thesis: { label: 'Thesis or dissertation chapter', tips: [
+    'Say on the first page what the chapter argues and how it moves the thesis forward.',
+    'Place yourself in the literature: who said what, and where you differ. Briefly; it’s a chapter, not a review.',
+    'Fill in the research design in the Journal early. It becomes your methods section.',
+    'Give each paragraph one claim, its evidence and your reading of that evidence.',
+    'Signpost: say where the chapter is going, and sum up as you leave each section.',
+    'Send drafts early. A research memo from the Journal makes a good cover note for your supervisor.'] },
+  proposal: { label: 'Book proposal', tips: [
+    'The overview sells the book: its argument, why now and why you, in about two pages.',
+    'Pick three to five comparable titles from the last few years that show the readership exists, and say how yours differs.',
+    'Give each chapter a paragraph in the outline, so the editor sees the argument build.',
+    'Describe your platform with numbers: who already reads or watches your work.',
+    'Send your strongest sample chapter, which isn’t always chapter one.',
+    'Keep it tight. Editors read many proposals a week.'] },
+  investigation: { label: 'Investigative piece', tips: [
+    'Frame the story as a hypothesis you can prove or disprove, and write down what would prove it wrong.',
+    'Keep a claims ledger from the start: every factual sentence marked as a claim, sourced and rated.',
+    'Get the documents before the interviews where you can. Documents hold people to the record.',
+    'Corroborate each key claim with a second, independent source.',
+    'Plan the right of reply early: list every claim about each person and give them time to respond.',
+    'Log what you did each day. If the story is challenged, the record protects you and it.'] },
+};
+function tipKind() { const f = (PREFS.tipsFor || {})[P.id]; if (f && TIPS[f]) return f; const k = (P.goal || {}).kind; return TIPS[k] ? k : 'general'; }
+let tipLive = false; const tipShut = new Set();
+function tipCheck() {
+  const card = $('#tipCard'), d = curDoc(); if (!card || !d) return;
+  const empty = !editor.textContent.trim() && !editor.querySelector('img,figure,table,hr,.cite,.fn');
+  tipLive = empty;
+  if (!empty || PREFS.tipsOff || tipShut.has(d.id)) { card.classList.add('hidden'); return; }
+  const k = tipKind(), T = TIPS[k];
+  card.innerHTML = `<header><b>Getting started</b><label class="inline small"><span class="sr-only">Tips for</span><select id="tipFor" aria-label="Tips for">${Object.entries(TIPS).map(([kk, t]) => `<option value="${kk}" ${kk === k ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select></label><button class="ghost small" id="tipClose" aria-label="Close tips for this document">✕</button></header>
+    <ul>${T.tips.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <footer class="small muted">These go away when you start typing. <button class="linkish small" id="tipOff">Don’t show tips</button></footer>`;
+  card.classList.remove('hidden');
+  card.style.top = (editor.offsetTop + Math.min(editor.offsetHeight, 64)) + 'px'; card.style.left = editor.offsetLeft + 'px'; card.style.width = editor.offsetWidth + 'px';
+}
+$('#tipCard').addEventListener('change', e => { if (e.target.id === 'tipFor') { PREFS.tipsFor = Object.assign({}, PREFS.tipsFor, { [P.id]: e.target.value }); savePrefs(); tipCheck(); } });
+$('#tipCard').addEventListener('click', e => {
+  if (e.target.id === 'tipClose') { tipShut.add(curDocId); tipCheck(); editor.focus(); }
+  else if (e.target.id === 'tipOff') { PREFS.tipsOff = true; savePrefs(); tipCheck(); toast('Tips are off. Turn them back on in Settings.'); }
+});
+editor.addEventListener('input', () => { if (tipLive) tipCheck(); });
+
 let lastSig = '';
 let savedRange = null;
 function curDoc() { return P.docs.find(d => d.id === curDocId); }
@@ -554,7 +659,7 @@ function openDoc(id, skipSync = false) {
   lastSig = ''; renderRefs(true); updateWordCount();
   renderDocList(); renderOutline(); updateTargets();
   if (!$('#findBar').classList.contains('hidden')) runFind();
-  $('#scroller').scrollTop = 0;
+  $('#scroller').scrollTop = 0; tipCheck();
   document.body.classList.remove('side-open');
   renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
@@ -1979,7 +2084,8 @@ $('#btnSave').addEventListener('click', () => saveProject(false));
 $('#btnOpen').addEventListener('click', openProject);
 $('#btnNewProj').addEventListener('click', () => openNewProject());
 $('#fileOpen').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) loadProjectText(await f.text(), null, f.name); });
-$('#btnHelp').addEventListener('click', () => $('#helpDlg').showModal());
+function fillHelpTips() { const h = $('#helpTips'); if (h && !h.childElementCount) h.innerHTML = Object.values(TIPS).map(t => `<details><summary>${esc(t.label)}</summary><ul>${t.tips.map(x => `<li>${esc(x)}</li>`).join('')}</ul></details>`).join(''); }
+$('#btnHelp').addEventListener('click', () => { fillHelpTips(); $('#helpDlg').showModal(); });
 $('#helpClose').addEventListener('click', () => $('#helpDlg').close());
 function setTheme(t) { document.documentElement.dataset.theme = t; lsSet(THEME_KEY, t); }
 $('#btnTheme').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
@@ -2174,10 +2280,10 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
-  ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => $('#helpDlg').showModal()], ['Switch light / dark theme', () => $('#btnTheme').click()],
+  ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Switch light / dark theme', () => $('#btnTheme').click()],
 ];
 let palItems = [], palIdx = 0;
 function snippetAround(text, q, n = 60) {
@@ -2291,14 +2397,14 @@ document.addEventListener('selectionchange', debounce(focusTrack, 30));
 /* ---------- settings ---------- */
 function openSettings() {
   $('#stRemind').value = String(PREFS.remindMins); $('#stGoal').value = PREFS.sessionGoal || '';
-  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
+  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stTips').checked = !PREFS.tipsOff; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
   $('#settingsDlg').showModal(); renderStorageStatus();
 }
 $('#btnSettings').addEventListener('click', openSettings);
 $('#stCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#stOk').addEventListener('click', () => {
   PREFS.remindMins = +$('#stRemind').value; PREFS.sessionGoal = Math.max(0, parseInt($('#stGoal').value, 10) || 0);
-  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
+  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; PREFS.tipsOff = !$('#stTips').checked; tipCheck(); const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
   savePrefs(); $('#settingsDlg').close(); applyWritingView(); sgRefresh();
   editor.spellcheck = PREFS.spellcheck; snoozeUntil = 0; checkReminder(); renderOutline(); updateTargets();
 });
@@ -4914,7 +5020,7 @@ async function renderHome() {
   <div class="hm-card">
     <h5>Project file</h5>
     <div class="hm-file">${lastFileName ? `<b>${esc(lastFileName)}</b>` : '<b>Not saved to a file yet</b>'}<br><span class="${dirtyFile ? 'dirty' : 'muted'}">${dirtyFile ? 'Unsaved changes, kept in this browser until you save' : lastFileSave ? 'Saved ' + relTime(lastFileSave.toISOString()) : 'No changes since opening'}</span></div>
-    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="primary" id="hmSave">Save</button><button id="hmOpen2">Open…</button><button id="hmNew2">New project…</button></div>
+    <div class="row" style="gap:6px;flex-wrap:wrap"><button class="primary" id="hmSave">Save</button><button id="hmOpen2">Open…</button><button id="hmGh" title="Open a project you backed up to GitHub, e.g. from another device">From GitHub…</button><button id="hmNew2">New project…</button></div>
     ${files.filter(f => f.pid !== P.id).length ? `<label>Recent files</label><ul class="hm-list">${files.map((f, i) => f.pid === P.id ? '' : `<li data-recent="${i}" title="${f.handle ? 'Reopen' : 'Choose this file to reopen it'}"><span class="t">${esc(f.title)}</span><span class="m">${esc(f.name)} · ${relTime(f.opened)}</span></li>`).join('')}</ul>` : ''}
     <p class="small muted" style="margin:10px 0 0">One project at a time. Saving keeps it in its .json file, and opening another replaces this one in the browser.</p>
   </div>
@@ -4931,6 +5037,7 @@ $('#hmArea').addEventListener('click', e => {
   else if (id === 'hmNextBtn' && hmNext) hmNext.act();
   else if (id === 'hmBuild') { openPlan(); $('#plBuild').click(); }
   else if (id === 'hmNewDoc') addDoc(newDoc());
+  else if (id === 'hmGh') openFromGitHub();
   else if (id === 'hmBoard') openBoard();
   else if (id === 'hmReview') openDesk('review');
   else if (id === 'hmSave') saveProject(false).then(renderHome);
@@ -6583,18 +6690,27 @@ async function ghBackup(manual = true) {
     const text = await projectFileText(), b64 = bytesToB64(new TextEncoder().encode(text));
     const words = P.docs.reduce((n, d) => n + docWords(d), 0);
     const message = `Back up “${LOCK ? 'locked project' : P.title}”: ${words.toLocaleString()} words, ${P.docs.length} document${P.docs.length === 1 ? '' : 's'}, ${P.notes.length} notes`;
-    let ref = null;
+    let ref = null, sha = '';
     try { ref = await gh(`${R}/git/ref/heads/${encodeURIComponent(branch)}`); } catch (e) { if (e.status !== 404 && e.status !== 409) throw e; }
+    if (ref) { // another device backed this project up since this browser last did: don't quietly bury its work
+      const head = await ghHead(path).catch(() => null);
+      if (ghIsNewer(head)) {
+        if (!manual) { ghBarShow(head); ghStatus(`Not backed up: GitHub has a newer backup from ${ghWhen(head.at)}.`, true); return; }
+        if (!(await ask('GitHub has a newer backup', `The newest backup of this project is from ${ghWhen(head.at)}, made on another device or browser. Backing up now puts this copy on top. Nothing is lost: the other backup stays in the history.`, 'Back up anyway'))) { ghStatus('Not backed up. Use Open a project to get the newer backup.'); return; }
+      }
+    }
     if (!ref) { // empty repository or new branch: the contents API can create the first commit
-      await gh(`${R}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, { method: 'PUT', body: { message, content: b64, branch } });
+      const r = await gh(`${R}/contents/${path.split('/').map(encodeURIComponent).join('/')}`, { method: 'PUT', body: { message, content: b64, branch } });
+      sha = r && r.commit ? r.commit.sha : '';
     } else {
       const head = await gh(`${R}/git/commits/${ref.object.sha}`);
       const blob = await gh(`${R}/git/blobs`, { method: 'POST', body: { content: b64, encoding: 'base64' } });
       const tree = await gh(`${R}/git/trees`, { method: 'POST', body: { base_tree: head.tree.sha, tree: [{ path, mode: '100644', type: 'blob', sha: blob.sha }] } });
       const commit = await gh(`${R}/git/commits`, { method: 'POST', body: { message, tree: tree.sha, parents: [ref.object.sha] } });
       await gh(`${R}/git/refs/heads/${encodeURIComponent(branch)}`, { method: 'PATCH', body: { sha: commit.sha } });
+      sha = commit.sha;
     }
-    c.paths[P.id] = path; c.last = { at: nowISO(), pid: P.id }; savePrefs();
+    c.paths[P.id] = path; c.last = { at: nowISO(), pid: P.id }; if (sha) ghSeen()[P.id] = sha; savePrefs(); ghBarHide();
     ghStatus(`Backed up ${relTime(nowISO())} to ${c.repo} → ${path}`);
     if (manual) toast('Backed up to GitHub.'); else $('#saveState') && ($('#saveState').title = 'Last GitHub backup: ' + new Date().toLocaleTimeString());
   } catch (e) { ghStatus(e.message, true); if (manual) toast(e.message); else toast('GitHub backup failed: ' + e.message); throw e; }
@@ -6624,10 +6740,12 @@ function ghSaveForm() {
 ['#ghRemember', '#ghAuto'].forEach(s => $(s).addEventListener('change', ghSaveForm));
 $('#ghTest').addEventListener('click', async () => { ghSaveForm(); ghStatus('Checking…'); try { ghStatus(await ghTest()); } catch (e) { ghStatus(e.message, true); } });
 $('#ghNow').addEventListener('click', async () => { ghSaveForm(); try { await ghBackup(true); } catch (e) {} });
+let ghHistLatest = '';
 $('#ghHistory').addEventListener('click', async () => {
   ghSaveForm(); ghStatus('Loading history…');
   try {
     const list = await gh(`${ghRepo()}/commits?path=${encodeURIComponent(ghPath())}&sha=${encodeURIComponent(ghCfg().branch || 'main')}&per_page=30`);
+    ghHistLatest = list[0] ? list[0].sha : '';
     ghStatus(list.length ? `${list.length} backup${list.length === 1 ? '' : 's'} of this project:` : 'No backups of this project yet.');
     $('#ghHist').innerHTML = list.map(c => `<li><span><b>${new Date(c.commit.author.date).toLocaleString([], { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' })}</b> <span class="muted small">${esc(c.commit.message.replace(/^Back up /, ''))}</span></span><button class="small" data-sha="${c.sha}">Open</button></li>`).join('');
   } catch (e) { ghStatus(e.message, true); }
@@ -6635,10 +6753,88 @@ $('#ghHistory').addEventListener('click', async () => {
 $('#ghHist').addEventListener('click', async e => {
   const b = e.target.closest('[data-sha]'); if (!b) return;
   if (!(await ask('Open this backup?', 'It replaces the project open in this browser. Save first if you want to keep the current one.', 'Open backup'))) { $('#ghDlg').open || $('#ghDlg').showModal(); return; }
-  try { const text = await gh(`${ghRepo()}/contents/${ghPath().split('/').map(encodeURIComponent).join('/')}?ref=${b.dataset.sha}`, { raw: true }); $('#ghDlg').open && $('#ghDlg').close(); dirtyFile = false; await loadProjectText(text, null, ghPath().split('/').pop()); toast('Opened the backup. Save it to a file to keep it.'); }
+  try { const path = ghPath(), text = await gh(`${ghRepo()}/contents/${ghEnc(path)}?ref=${b.dataset.sha}`, { raw: true }); $('#ghDlg').open && $('#ghDlg').close(); dirtyFile = false; const before = P; await loadProjectText(text, null, path.split('/').pop()); if (P !== before) { ghCfg().paths[P.id] = path; if (ghHistLatest) ghSeen()[P.id] = ghHistLatest; savePrefs(); ghBarHide(); } toast('Opened the backup. Save it to a file to keep it.'); }
   catch (err) { ghStatus(err.message, true); }
 });
 $('#ghClose').addEventListener('click', () => { ghSaveForm(); $('#ghDlg').close(); });
+
+/* ---------- pick up on another device: open any backed-up project, and notice newer backups ---------- */
+function ghSeen() { const c = ghCfg(); c.seen = c.seen && typeof c.seen === 'object' ? c.seen : {}; return c.seen; }
+const ghEnc = p => p.split('/').map(encodeURIComponent).join('/');
+const ghWhen = iso => new Date(iso).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+async function ghHead(path) {
+  const l = await gh(`${ghRepo()}/commits?path=${encodeURIComponent(path)}&sha=${encodeURIComponent(ghCfg().branch || 'main')}&per_page=1`);
+  return Array.isArray(l) && l[0] ? { sha: l[0].sha, at: l[0].commit.author.date, msg: l[0].commit.message || '' } : null;
+}
+// is the newest backup of this project something this browser hasn't seen (made on another device)?
+function ghIsNewer(head) {
+  if (!head) return false;
+  const seen = ghSeen()[P.id]; if (seen) return head.sha !== seen;
+  // no record (a backup made before 1.5, or a project new to this browser): go by the clock, with slack for our own backups
+  const at = Date.parse(head.at) || 0, last = ghCfg().last;
+  if (last && last.pid === P.id && Math.abs(at - (Date.parse(last.at) || 0)) < 5 * 60e3) return false;
+  return at > (Date.parse(P.modified) || 0) + 2 * 60e3;
+}
+function ghMarkSeen(sha) { if (!sha || !P) return; ghSeen()[P.id] = sha; savePrefs(); }
+async function ghOpenPath(path, sha, latest) {
+  if (dirtyFile && !(await ask('Open the backup?', `“${P.title}” has changes that aren’t saved to a file. Opening the backup replaces it in this browser.`, 'Open backup'))) return false;
+  const text = await gh(`${ghRepo()}/contents/${ghEnc(path)}?ref=${encodeURIComponent(sha || ghCfg().branch || 'main')}`, { raw: true });
+  const before = P; dirtyFile = false;
+  await loadProjectText(text, null, path.split('/').pop());
+  if (P === before) return false;
+  const c = ghCfg(); c.paths[P.id] = path; if (latest) ghSeen()[P.id] = latest; savePrefs(); ghBarHide();
+  toast('Opened the backup from GitHub. Save it to a file on this device to keep a copy here.');
+  return true;
+}
+async function ghListProjects() {
+  ghSaveForm(); const c = ghCfg(), folder = (c.folder || 'anabasis').replace(/^\/+|\/+$/g, '');
+  ghStatus('Looking for backed-up projects…'); $('#ghHist').innerHTML = '';
+  try {
+    let items = [];
+    try { items = await gh(`${ghRepo()}/contents/${ghEnc(folder)}?ref=${encodeURIComponent(c.branch || 'main')}`); } catch (e) { if (e.status !== 404 && e.message !== 'empty') throw e; }
+    items = (Array.isArray(items) ? items : []).filter(f => f.type === 'file' && /\.json$/i.test(f.name)).slice(0, 40);
+    if (!items.length) { ghStatus(`No backed-up projects in ${c.repo} → ${folder}/ yet.`); return; }
+    const heads = await Promise.all(items.map(f => ghHead(f.path).catch(() => null)));
+    const rows = items.map((f, i) => ({ f, h: heads[i] })).sort((a, b) => ((b.h && b.h.at) || '').localeCompare((a.h && a.h.at) || ''));
+    ghStatus(`${rows.length} backed-up project${rows.length === 1 ? '' : 's'} in ${c.repo}:`);
+    $('#ghHist').innerHTML = rows.map(({ f, h }) => {
+      const name = f.name.replace(/-[\w]{6}\.json$/i, '').replace(/\.json$/i, '').replace(/-/g, ' ');
+      const here = P && c.paths[P.id] === f.path;
+      return `<li><span><b>${esc(name)}</b> <span class="muted small">${h ? 'last backed up ' + esc(ghWhen(h.at)) : ''}${f.size ? ' · ' + (f.size / 1024 < 1024 ? Math.max(1, Math.round(f.size / 1024)) + ' KB' : (f.size / 1048576).toFixed(1) + ' MB') : ''}${here ? ' · open now' : ''}</span></span><button class="small" data-ghopen="${esc(f.path)}" data-latest="${h ? h.sha : ''}">Open</button></li>`;
+    }).join('');
+  } catch (e) { ghStatus(e.message, true); }
+}
+$('#ghProjects').addEventListener('click', ghListProjects);
+$('#ghHist').addEventListener('click', async e => {
+  const b = e.target.closest('[data-ghopen]'); if (!b) return;
+  try { if (await ghOpenPath(b.dataset.ghopen, null, b.dataset.latest)) $('#ghDlg').open && $('#ghDlg').close(); }
+  catch (err) { ghStatus(err.message, true); }
+});
+function openFromGitHub() { openGitHub(); if (ghCfg().repo && ghToken()) ghListProjects(); else ghStatus('Enter the repository and token you back up with, then choose Open a project.'); }
+
+// the notice that a newer backup exists
+let ghBarHead = null, ghCheckAt = 0;
+function ghBarHide() { const b = $('#ghBar'); if (b) b.classList.add('hidden'); ghBarHead = null; }
+function ghBarShow(head) {
+  ghBarHead = head;
+  $('#ghBarMsg').textContent = `A newer backup of “${P.title}” is on GitHub, from ${ghWhen(head.at)}, probably made on another device.`;
+  $('#ghBar').classList.remove('hidden');
+}
+async function ghCheckNewer(force) {
+  const c = ghCfg(); if (!P || !c.repo || !ghToken()) return null;
+  if (!force && Date.now() - ghCheckAt < 120e3) return null; ghCheckAt = Date.now();
+  let head; try { head = await ghHead(c.paths[P.id] || ghPath()); } catch (e) { return null; }
+  if (!head || !ghIsNewer(head) || (c.dismissed || {})[P.id] === head.sha) return head;
+  ghBarShow(head); return head;
+}
+$('#ghBar').addEventListener('click', async e => {
+  const a = e.target.closest('[data-gb]'); if (!a || !ghBarHead) return;
+  const head = ghBarHead, c = ghCfg();
+  if (a.dataset.gb === 'open') { try { await ghOpenPath(c.paths[P.id] || ghPath(), head.sha, head.sha); } catch (err) { toast(err.message); } }
+  else if (a.dataset.gb === 'copy') { await saveProject(true); }
+  else { c.dismissed = Object.assign({}, c.dismissed, { [P.id]: head.sha }); savePrefs(); ghBarHide(); }
+});
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') ghCheckNewer(); });
 
 /* ================================================================
    Map layers: provinces, rivers & lakes, scale bar, locator inset
@@ -7262,8 +7458,12 @@ function rmCites(segs) {
     const g = document.createRange(); g.setStartAfter(prev); g.setEndBefore(c);
     if (/^[\s.,;:!?”’"')\]—–-]*$/.test(g.toString())) { out.push(c); prev = c; } else prev = null;
   });
-  return [...new Set(out.flatMap(c => markerItems(c).map(it => it.id)).filter(Boolean))];
+  const items = out.flatMap(markerItems).filter(it => it && it.id), ids = [...new Set(items.map(it => it.id))];
+  ids.locs = {}; items.forEach(it => { const l = locText(it); if (l) (ids.locs[it.id] = ids.locs[it.id] || []).includes(l) || ids.locs[it.id].push(l); });
+  return ids;
 }
+const LOC_ABBR = { page: 'p.', chapter: 'ch.', section: 'sec.', paragraph: 'para.', line: 'l.', figure: 'fig.', table: 'table', volume: 'vol.', part: 'pt.', note: 'n.', column: 'col.', folio: 'fol.', verse: 'v.', book: 'bk.', timestamp: 'at' };
+function locText(it) { const l = String(it.locator || '').trim(); if (!l) return ''; const lab = it.label || 'page'; return (lab === 'page' && /[-–,]/.test(l) ? 'pp.' : LOC_ABBR[lab] || lab) + ' ' + l; }
 function rmCollect(root, d) {
   const by = new Map();
   $$('.rm[data-rm]', root).forEach(s => {
@@ -7309,7 +7509,7 @@ function claimIssues(p, c) {
 function setClaimStatus(id, st) {
   const c = clById(id); if (!c || !(st in CL_ST)) return;
   syncEditor(); c.status = st; c.modified = nowISO();
-  if (st === 'ok') { const p = rmAll('cl').find(x => x.pid === id); c.checkedText = p ? rmNorm(p.text) : ''; c.checkedAt = nowISO(); } else { c.checkedText = ''; c.checkedAt = ''; }
+  if (st === 'ok') { const p = rmAll('cl').find(x => x.pid === id); c.checkedText = p ? rmNorm(p.text) : ''; c.checkedAt = nowISO(); c.checkedBy = (PREFS.myName || '').trim(); } else { c.checkedText = ''; c.checkedAt = ''; c.checkedBy = ''; }
   markDirty(); rmRefresh();
 }
 
@@ -7574,8 +7774,8 @@ function renderResearch() {
   $('#rsQs').innerHTML = qs.length ? qs.slice(0, 10).map(i => { const n = all.filter(p => p.k === 'q' && p.ref === i.id).length; return `<li data-j="${J(() => openDesk('questions', i.id))}"><span><b class="q-mk">?</b> ${esc(i.title || 'Untitled question')}</span><em>${n || ''}</em></li>`; }).join('')
     : '<li class="muted small none">No open questions. Add one, then link passages and notes that bear on it.</li>';
   const JR = P.journal, lastE = JR.log.reduce((a, e) => (e.date > a ? e.date : a), ''), hs = JR.hypotheses;
-  $('#rsJournal').innerHTML = `<button class="small primary-soft" id="rsToday">＋ Today’s entry</button><button class="small" id="rsJOpen">Journal</button>`
-    + `<p class="small muted">${JR.log.length ? `${JR.log.length} entr${JR.log.length === 1 ? 'y' : 'ies'}, last ${esc(relDay(lastE))}` : 'No entries yet.'}${hs.length ? ` · ${hs.length} hypothes${hs.length === 1 ? 'is' : 'es'}: ${Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]).map(([k, n]) => `${n} ${H_ST[k].toLowerCase()}`).join(', ')}` : ''}</p>`;
+  $('#rsJournal').innerHTML = `<button class="small primary-soft" id="rsToday">＋ Today’s entry</button><button class="small" id="rsJOpen">Journal</button><button class="small" id="rsWeek">This week</button>`
+    + `<p class="small muted">${JR.log.length ? `${JR.log.length} entr${JR.log.length === 1 ? 'y' : 'ies'}, last ${esc(relDay(lastE))}` : 'No entries yet.'}${hs.length ? ` · ${hs.length} hypothes${hs.length === 1 ? 'is' : 'es'}: ${Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]).map(([k, n]) => `${n} ${H_ST[k].toLowerCase()}`).join(', ')}` : ''}${(n => n ? ` · ${n} next step${n === 1 ? '' : 's'} to do` : '')(JR.log.filter(e => e.kind === 'next' && !e.done).length)}</p>`;
   const badge = probs.length + due.length; $('#tabResearchBadge').textContent = badge || '';
 }
 const renderResearchSoon = debounce(() => { if (!homeOn && !boardOn && !planOn) renderResearch(); }, 700);
@@ -7588,7 +7788,7 @@ $('#researchPane').addEventListener('click', e => {
 $('#rmShow').addEventListener('change', e => { PREFS.marksOff = !e.target.checked; savePrefs(); rmStyle(); });
 $('#rsNewThread').addEventListener('click', async () => { const n = await ask('New thread', 'Name a theme, argument, person or line of evidence to follow through the piece.', 'Create', ''); if (n) { newThread(n); renderResearch(); if (deskOn) renderDesk(); } });
 $('#rsNewQ').addEventListener('click', () => openQuestionLink(true));
-$('#rsJournal').addEventListener('click', e => { if (e.target.closest('#rsToday')) openJournal('log', true); if (e.target.closest('#rsJOpen')) openJournal(); });
+$('#rsJournal').addEventListener('click', e => { if (e.target.closest('#rsToday')) openJournal('log', true); if (e.target.closest('#rsJOpen')) openJournal(); if (e.target.closest('#rsWeek')) openJournal('week'); });
 $('#btnDesk').addEventListener('click', () => openDesk());
 $('#btnAbout').addEventListener('click', () => openDesk('about'));
 editor.addEventListener('input', renderResearchSoon);
@@ -7667,14 +7867,14 @@ function deskClaims() {
   if (fd) rows = rows.filter(x => x.p.docId === fd);
   if (f === 'prob') rows = rows.filter(x => x.iss.length); else if (f !== 'all') rows = rows.filter(x => x.c.status === f);
   const docs = [...new Set(rmAll('cl').map(p => p.docId))];
-  $('#deskTools').innerHTML = `<button data-j="${DJ(factSheet)}">Fact-check sheet</button><button data-j="${DJ(claimsCSV)}">CSV</button>`;
+  $('#deskTools').innerHTML = `<button data-j="${DJ(() => factSheet())}" title="Download a sheet to print or send to a fact-checker">Fact-check sheet</button><button data-j="${DJ(() => factSheet(true))}" title="The same sheet as a document in this project">As a document</button><button data-j="${DJ(claimsCSV)}">CSV</button>`;
   const orphans = P.claims.filter(c => !rmAll('cl').some(p => p.pid === c.id));
   $('#deskBody').innerHTML = `<div class="desk-pad">
     <div class="cl-filters" role="group" aria-label="Show claims"><button class="${f === 'all' ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = 'all'; savePrefs(); renderDesk(); })}">All <b>${Object.values(counts).reduce((a, b) => a + b, 0)}</b></button><button class="${f === 'prob' ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = 'prob'; savePrefs(); renderDesk(); })}">Needs attention <b>${nProb}</b></button>${Object.entries(CL_ST).map(([k, v]) => `<button class="${f === k ? 'on' : ''}" data-j="${DJ(() => { PREFS.clFilter = k; savePrefs(); renderDesk(); })}"><span class="cl-mk st-${k}" aria-hidden="true"></span>${v.label} <b>${counts[k]}</b></button>`).join('')}
     <select id="clDoc" aria-label="Document"><option value="">All documents</option>${docs.map(id => `<option value="${esc(id)}" ${id === fd ? 'selected' : ''}>${docT(id)}</option>`).join('')}</select></div>
     ${rows.length ? `<table class="cl-table"><thead><tr><th scope="col">Status</th><th scope="col">Claim</th><th scope="col">Sources</th><th scope="col">Note</th></tr></thead><tbody>${rows.map(x => `<tr class="${x.p.pid === deskSel ? 'hot' : ''}" data-pid="${esc(x.p.pid)}">
       <td><select data-cl="status" aria-label="Status">${Object.entries(CL_ST).map(([k, v]) => `<option value="${k}" ${k === x.c.status ? 'selected' : ''}>${v.label}</option>`).join('')}</select></td>
-      <td><a href="#" class="cl-text" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.p.text)}</a><div class="muted small">${docT(x.p.docId)}${x.c.checkedAt && x.c.status === 'ok' ? ' · checked ' + esc(relTime(x.c.checkedAt)) : ''}</div>${x.iss.length ? `<div class="rs-iss small">${x.iss.map(esc).join(' · ')}</div>` : ''}</td>
+      <td><a href="#" class="cl-text" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.p.text)}</a><div class="muted small">${docT(x.p.docId)}${x.c.checkedAt && x.c.status === 'ok' ? ' · checked ' + esc(relTime(x.c.checkedAt)) + (x.c.checkedBy ? ' by ' + esc(x.c.checkedBy) : '') : ''}</div>${x.iss.length ? `<div class="rs-iss small">${x.iss.map(esc).join(' · ')}</div>` : ''}</td>
       <td>${x.p.cites.length ? x.p.cites.map(id => { const s = P.sources.find(v => v.id === id), r = srcRating(id); return `<a href="#" class="cl-src" data-j="${DJ(e => { e.preventDefault(); if (s) openSource(id); })}">${esc(srcShort(s))}</a>${r ? ` <span class="rt rt-${rateTier(r)}">${esc(r)}</span>` : ''}`; }).join('<br>') : '<span class="muted small">none</span>'}</td>
       <td><textarea data-cl="note" rows="1" aria-label="Note" placeholder="What you checked, against what">${esc(x.c.note || '')}</textarea></td></tr>`).join('')}</tbody></table>`
       : `<div class="desk-empty"><p><b>${rmAll('cl').length ? 'No claims match.' : 'Nothing in the register yet.'}</b></p>${rmAll('cl').length ? '' : '<p>Select a factual sentence in a draft and choose <b>Mark → Claim</b> (Ctrl/Cmd+Alt+G, then C). Anabasis finds the citations inside it or right after it, warns when a claim has no source or leans only on low-rated ones, and notices if you edit a claim after marking it supported. The fact-check sheet turns the register into a checklist for you or an editor.</p>'}</div>`}
@@ -7688,19 +7888,33 @@ function deskClaims() {
   const hot = $('#deskBody tr.hot'); if (hot) hot.scrollIntoView({ block: 'center' });
 }
 function citeFull(id) { try { const d = curDoc() || P.docs[0]; return htmlToText(previewCluster((d && d.style) || DEFAULT_STYLE, [{ id }])); } catch (e) { return srcShort(P.sources.find(s => s.id === id)); } }
-function factSheet() {
-  const rows = claimRows().filter(x => x.c.status !== 'cut');
+function factRows() {
+  return claimRows().filter(x => x.c.status !== 'cut').map(x => ({ x,
+    srcs: x.p.cites.map(id => ({ full: citeFull(id), loc: ((x.p.cites.locs || {})[id] || []).join(', '), rating: srcRating(id) })),
+    checked: x.c.status === 'ok' && x.c.checkedAt ? [x.c.checkedBy, new Date(x.c.checkedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })].filter(Boolean).join(', ') : '' }));
+}
+function factSheet(asDoc) {
+  syncEditor();
+  const rows = factRows(), when = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  if (!rows.length) { toast('Mark claims in your drafts first: select a passage and choose Mark → Claim.'); return; }
+  const nOk = rows.filter(r => r.x.c.status === 'ok').length;
+  const srcCell = r => r.srcs.length ? `<ul>${r.srcs.map(s => `<li>${esc(s.full)}${s.loc ? `, <b>${esc(s.loc)}</b>` : ''}${s.rating ? ` [${esc(s.rating)}]` : ''}</li>`).join('')}</ul>` : '<i>none</i>';
+  if (asDoc) {
+    const html = `<h1>Fact-check sheet: ${esc(P.title)}</h1><p><i>${rows.length} claim${rows.length === 1 ? '' : 's'}, ${nOk} checked, as of ${esc(when)}.</i></p><figure class="tbl"><figcaption>Claims to check</figcaption><table><thead><tr><th>#</th><th>Claim</th><th>Sources cited</th><th>Status</th><th>Checked by, date</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td>${i + 1}</td><td>${esc(r.x.p.text)}${r.x.c.note ? ` <i>(${esc(r.x.c.note)})</i>` : ''}${r.x.iss.length ? ` <b>${r.x.iss.map(esc).join('; ')}</b>` : ''}</td><td>${srcCell(r)}</td><td>${CL_ST[r.x.c.status].label}</td><td>${esc(r.checked)}</td></tr>`).join('')}</tbody></table></figure>`;
+    const d = newDoc(`Fact-check sheet (${todayISO()})`, html);
+    closeDesk(); addDoc(d); toast('Made the fact-check sheet as a document. Make it again to bring it up to date.'); return;
+  }
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>${esc(P.title)}: fact-check sheet</title><style>
 body{font:14px/1.45 Georgia,'Times New Roman',serif;color:#111;max-width:1000px;margin:32px auto;padding:0 20px}h1{font-size:22px;margin:0}p.sub{color:#555;margin:4px 0 20px}
 table{border-collapse:collapse;width:100%}th,td{border:1px solid #bbb;padding:7px 8px;vertical-align:top;text-align:left}th{background:#eee;font:600 12px/1.3 system-ui,sans-serif}
-td.n{width:28px;color:#555}td.st{width:110px;font:12px system-ui,sans-serif}td.ck{width:120px}ul{margin:0;padding-left:16px}.iss{color:#a3271b;font:12px system-ui,sans-serif;margin-top:4px}.doc{color:#555;font:12px system-ui,sans-serif;margin-top:4px}
-@media print{body{margin:0}tr{break-inside:avoid}}</style></head><body><h1>${esc(P.title)}: fact-check sheet</h1><p class="sub">${rows.length} claim${rows.length === 1 ? '' : 's'} · ${esc(new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }))}</p>
-<table><thead><tr><th>#</th><th>Claim</th><th>Sources cited</th><th>Status</th><th>Checked by / date</th></tr></thead><tbody>${rows.map((x, i) => `<tr><td class="n">${i + 1}</td><td>${esc(x.p.text)}<div class="doc">${docT(x.p.docId)}</div>${x.c.note ? `<div class="doc">Note: ${esc(x.c.note)}</div>` : ''}${x.iss.length ? `<div class="iss">${x.iss.map(esc).join(' · ')}</div>` : ''}</td><td>${x.p.cites.length ? `<ul>${x.p.cites.map(id => `<li>${esc(citeFull(id))}${srcRating(id) ? ` <b>[${esc(srcRating(id))}]</b>` : ''}</li>`).join('')}</ul>` : '<i>none</i>'}</td><td class="st">${CL_ST[x.c.status].label}</td><td class="ck"></td></tr>`).join('')}</tbody></table></body></html>`;
+td.n{width:28px;color:#555}td.st{width:110px;font:12px system-ui,sans-serif}td.ck{width:130px;font:12px system-ui,sans-serif}ul{margin:0;padding-left:16px}.iss{color:#a3271b;font:12px system-ui,sans-serif;margin-top:4px}.doc{color:#555;font:12px system-ui,sans-serif;margin-top:4px}
+@media print{body{margin:0}tr{break-inside:avoid}}</style></head><body><h1>${esc(P.title)}: fact-check sheet</h1><p class="sub">${rows.length} claim${rows.length === 1 ? '' : 's'}, ${nOk} checked · ${esc(when)}</p>
+<table><thead><tr><th>#</th><th>Claim</th><th>Sources cited</th><th>Status</th><th>Checked by / date</th></tr></thead><tbody>${rows.map((r, i) => `<tr><td class="n">${i + 1}</td><td>${esc(r.x.p.text)}<div class="doc">${docT(r.x.p.docId)}</div>${r.x.c.note ? `<div class="doc">Note: ${esc(r.x.c.note)}</div>` : ''}${r.x.iss.length ? `<div class="iss">${r.x.iss.map(esc).join(' · ')}</div>` : ''}</td><td>${srcCell(r)}</td><td class="st">${CL_ST[r.x.c.status].label}</td><td class="ck">${esc(r.checked)}</td></tr>`).join('')}</tbody></table></body></html>`;
   download(fileSafe(P.title) + ' - fact-check sheet.html', html, 'text/html');
 }
 function claimsCSV() {
   const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
-  const lines = [['Claim', 'Document', 'Status', 'Sources', 'Ratings', 'Issues', 'Note', 'Checked'].map(q).join(',')].concat(claimRows().map(x => [x.p.text, (rmDoc(x.p.docId) || {}).title || '', CL_ST[x.c.status].label, x.p.cites.map(id => citeFull(id)).join(' | '), x.p.cites.map(srcRating).join(' | '), x.iss.join('; '), x.c.note || '', x.c.status === 'ok' ? (x.c.checkedAt || '').slice(0, 10) : ''].map(q).join(',')));
+  const lines = [['Claim', 'Document', 'Status', 'Sources', 'Ratings', 'Issues', 'Note', 'Checked'].map(q).join(',')].concat(claimRows().map(x => [x.p.text, (rmDoc(x.p.docId) || {}).title || '', CL_ST[x.c.status].label, x.p.cites.map(id => citeFull(id)).join(' | '), x.p.cites.map(srcRating).join(' | '), x.iss.join('; '), x.c.note || '', x.c.status === 'ok' ? [x.c.checkedBy, (x.c.checkedAt || '').slice(0, 10)].filter(Boolean).join(', ') : ''].map(q).join(',')));
   download(fileSafe(P.title) + ' - claims.csv', '\ufeff' + lines.join('\r\n'), 'text/csv');
 }
 
@@ -7832,7 +8046,7 @@ function aboutDoc() {
    desk. Research questions are the question items in Plan, shared.
    ================================================================ */
 const H_ST = { untested: 'Untested', supported: 'Supported', mixed: 'Mixed evidence', weakened: 'Weakened', refuted: 'Refuted' };
-const LOG_K = { did: 'Did', found: 'Found', decided: 'Decided', dead: 'Dead end', idea: 'Idea', question: 'Question', auto: 'Recorded' };
+const LOG_K = { did: 'Did', found: 'Found', decided: 'Decided', dead: 'Dead end', idea: 'Idea', question: 'Question', next: 'Next step', auto: 'Recorded' };
 const J_DESIGN = [
   ['purpose', 'Purpose and significance', 'What you’re trying to find out, and why it matters to your readers or your field.'],
   ['methods', 'Approach and methods', 'How you’ll answer the questions: archival research, interviews, open-source investigation, data analysis, case comparison, close reading…'],
@@ -7845,7 +8059,7 @@ const jr = () => P.journal;
 const hById = id => jr().hypotheses.find(h => h.id === id);
 const hNum = h => 'H' + (jr().hypotheses.indexOf(h) + 1);
 function jLog(kind, text, extra = {}) {
-  const e = Object.assign({ id: uid('j'), date: todayISO(), kind, text, tags: [], links: [], created: nowISO(), modified: nowISO() }, extra);
+  const e = Object.assign({ id: uid('j'), date: todayISO(), kind, text, tags: [], links: [], done: false, doneAt: '', created: nowISO(), modified: nowISO() }, extra);
   jr().log.push(e); markDirty(); return e;
 }
 function jLinkLabel(l) {
@@ -7870,13 +8084,14 @@ const jTags = s => [...new Set(String(s || '').split(/[,#]/).map(t => t.trim().t
 function deskJournal() {
   const J = jr(), sec = PREFS.jSec || 'design';
   const hs = J.hypotheses, counts = Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]);
-  const nav = [['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || '']];
+  const nOpen = J.log.filter(e => e.kind === 'next' && !e.done).length;
+  const nav = [['week', 'This week', nOpen ? nOpen + ' to do' : ''], ['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || '']];
   $('#deskTools').innerHTML = `<button data-j="${DJ(() => journalDoc('memo'))}" title="A document summing up the research so far">Research memo</button><button data-j="${DJ(() => journalDoc('appendix'))}" title="Methods, sources, searches and limitations, as back matter">Methods appendix</button>`;
   const side = `<aside class="desk-side j-side"><button class="primary j-today" data-j="${DJ(() => jSection('log', true))}">＋ Today’s entry</button>
     <ul class="desk-list" role="tablist" aria-label="Journal sections">${nav.map(([k, l, n]) => `<li role="tab" aria-selected="${k === sec}" class="${k === sec ? 'on' : ''}" data-j="${DJ(() => jSection(k))}"><span class="t">${l}</span><em>${n}</em></li>`).join('')}</ul>
     ${hs.length ? `<p class="small muted j-sum">${counts.map(([k, n]) => `<span class="h-chip h-${k}">${n} ${H_ST[k].toLowerCase()}</span>`).join(' ')}</p>` : ''}
     ${J.log.length ? `<p class="small muted">Last entry ${esc(relDay(J.log.reduce((a, e) => (e.date > a ? e.date : a), '')))}</p>` : ''}</aside>`;
-  const main = { design: jDesign, hyp: jHyps, log: jLogView, search: jSearches }[sec] || jDesign;
+  const main = { week: jWeek, design: jDesign, hyp: jHyps, log: jLogView, search: jSearches }[sec] || jDesign;
   $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main j-main">${main()}</div></div>`;
   jWire(sec);
 }
@@ -7884,12 +8099,86 @@ function relDay(iso) { if (!iso) return ''; const n = daysUntil(iso); return n =
 function jSection(k, compose) { PREFS.jSec = k; savePrefs(); renderDesk(); if (compose) setTimeout(() => { const t = $('#jText'); if (t) t.focus(); }, 30); }
 function openJournal(sec, compose) { if (sec) { PREFS.jSec = sec; savePrefs(); } openDesk('journal'); if (compose) setTimeout(() => $('#jText')?.focus(), 40); }
 
+const jNextBox = e => `<input type="checkbox" class="j-next" data-jnext="${esc(e.id)}" ${e.done ? 'checked' : ''} aria-label="Done: ${esc(e.text.slice(0, 60))}">`;
+/* ---------- This week: what moved, what's next ---------- */
+function weekRange(off) { // Monday to Sunday, off weeks back
+  const d = dayStart(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7) - 7 * (off || 0));
+  const end = new Date(d); end.setDate(end.getDate() + 6);
+  return { from: todayKey(d), to: todayKey(end), d, end };
+}
+function weekData(off) {
+  const W = weekRange(off), J = jr(), inW = iso => !!iso && iso.slice(0, 10) >= W.from && iso.slice(0, 10) <= W.to;
+  const dayKeys = []; for (let i = 0, x = new Date(W.d); i < 7; i++, x.setDate(x.getDate() + 1)) dayKeys.push(todayKey(x));
+  const words = dayKeys.map(k => (P.stats.days[k] || {}).a || 0);
+  const log = J.log.filter(e => inW(e.date)).sort((a, b) => a.date.localeCompare(b.date) || a.created.localeCompare(b.created));
+  const moves = J.hypotheses.flatMap(h => h.history.filter(x => inW(todayISOof(x.at))).map(x => ({ h, x })));
+  const answered = log.filter(e => e.kind === 'auto' && /^Question answered/.test(e.text));
+  const nextOpen = J.log.filter(e => e.kind === 'next' && !e.done).sort((a, b) => a.date.localeCompare(b.date));
+  const nextDone = J.log.filter(e => e.kind === 'next' && e.done && inW(todayISOof(e.doneAt)));
+  const due = off ? [] : rmAll('rv').map(p => ({ p, r: rvById(p.pid) })).filter(x => x.r && !x.r.done && x.r.due && daysUntil(x.r.due) <= 7).sort((a, b) => a.r.due.localeCompare(b.r.due));
+  return { W, words, total: words.reduce((a, b) => a + b, 0), log, moves, answered, nextOpen, nextDone, due,
+    searches: J.searches.filter(x => inW(x.date)), sources: P.sources.filter(x => inW(todayISOof(x.created))).length, notes: P.notes.filter(x => inW(todayISOof(x.created))).length,
+    checked: P.claims.filter(c => c.status === 'ok' && inW(todayISOof(c.checkedAt))).length };
+}
+function jWeek() {
+  const off = Math.max(0, PREFS.jWeek || 0), w = weekData(off), W = w.W;
+  const span = `${W.d.toLocaleDateString([], { month: 'short', day: 'numeric' })} – ${W.end.toLocaleDateString([], { month: 'short', day: 'numeric', year: W.end.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' })}`;
+  const max = Math.max(1, ...w.words), days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const stat = (n, l) => `<div><b>${nf(n)}</b><span>${l}</span></div>`;
+  const kinds = ['found', 'decided', 'dead', 'idea', 'question', 'did'];
+  const byKind = kinds.map(k => [k, w.log.filter(e => e.kind === k)]).filter(x => x[1].length);
+  const item = e => `<li><span class="muted small">${esc(fmtDay(new Date(e.date + 'T12:00')))}</span> ${esc(e.text.replace(/\s+/g, ' ').slice(0, 240))}</li>`;
+  return `<div class="j-head"><h5>${off ? 'Week of ' + esc(span) : 'This week'}</h5><div class="row" style="gap:6px"><button class="small" data-j="${DJ(() => { PREFS.jWeek = off + 1; savePrefs(); renderDesk(); })}" aria-label="Previous week">‹</button><button class="small" ${off ? '' : 'disabled'} data-j="${DJ(() => { PREFS.jWeek = Math.max(0, off - 1); savePrefs(); renderDesk(); })}" aria-label="Next week">›</button><button class="small" data-j="${DJ(() => weekDoc(off))}" title="A document summing up the week, to send or keep">Week summary</button></div></div>
+    <p class="small muted j-span">${esc(span)}</p>
+    <div class="eg-sum wk-sum">${stat(w.total, 'words written')}${stat(w.log.filter(e => e.kind !== 'auto').length, 'log entries')}${stat(w.searches.length, 'searches')}${stat(w.sources, 'sources added')}${stat(w.notes, 'notes added')}${stat(w.checked, 'claims checked')}</div>
+    ${w.total ? `<div class="wk-bars" role="img" aria-label="Words written each day: ${days.map((d, i) => d + ' ' + w.words[i]).join(', ')}">${w.words.map((n, i) => `<div class="wk-bar"><i style="height:${Math.round(n / max * 100)}%" title="${nf(n)} words"></i><span>${days[i]}</span></div>`).join('')}</div>` : ''}
+    <section class="j-field"><h6>Next steps <button class="ghost small hl" data-j="${DJ(() => { openJournal('log', true); setTimeout(() => { const r = $('#jForm input[value=next]'); if (r) r.checked = true; }, 60); })}">+ Next step</button></h6>
+      ${w.nextOpen.length ? `<ul class="wk-next">${w.nextOpen.map(e => `<li><label class="inline">${jNextBox(e)} ${esc(e.text.replace(/\s+/g, ' '))}</label> <span class="muted small">${esc(relDay(e.date))}</span></li>`).join('')}</ul>` : '<p class="small muted">Nothing on the list. Add a next step so you know where to start next time.</p>'}
+      ${w.nextDone.length ? `<p class="small muted">Done this week: ${w.nextDone.map(e => esc(e.text.slice(0, 60))).join('; ')}</p>` : ''}</section>
+    ${w.moves.length || w.answered.length ? `<section class="j-field"><h6>Thinking that moved</h6><ul>${w.moves.map(m => `<li><b>${hNum(m.h)}</b> ${esc(H_ST[m.x.from])} → <b>${esc(H_ST[m.x.to])}</b>: ${esc((m.h.text || '').slice(0, 100))}${m.x.note ? ` <span class="muted">(${esc(m.x.note)})</span>` : ''}</li>`).join('')}${w.answered.map(e => `<li>${esc(e.text)}</li>`).join('')}</ul></section>` : ''}
+    ${byKind.map(([k, l]) => `<section class="j-field"><h6>${LOG_K[k]}${k === 'dead' ? 's' : ''}</h6><ul class="wk-log">${l.map(item).join('')}</ul></section>`).join('')}
+    ${w.due.length ? `<section class="j-field"><h6>Due for review in the next 7 days</h6><ul>${w.due.map(x => `<li><a href="#" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.r.reason)}</a>: ${esc(x.p.text.slice(0, 80))} <span class="muted small">${esc(fmtDue(x.r.due))}</span></li>`).join('')}</ul></section>` : ''}
+    ${!w.log.length && !w.total && !w.nextOpen.length ? '<div class="desk-empty"><p><b>A quiet week so far.</b></p><p>This page fills from what you do: words written, log entries, searches, hypothesis changes, questions answered and claims checked. Glance at it on Friday, or before you start again on Monday.</p></div>' : ''}`;
+}
+function weekDoc(off) {
+  const w = weekData(off), W = w.W, span = `${W.d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' })} to ${W.end.toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  const li = a => `<ul>${a.join('')}</ul>`;
+  let html = `<h1>Week of ${esc(W.d.toLocaleDateString(undefined, { month: 'long', day: 'numeric' }))}: ${esc(P.title)}</h1><p><i>${esc(span)}. ${nf(w.total)} words written, ${w.log.filter(e => e.kind !== 'auto').length} log entries, ${w.searches.length} searches, ${w.sources} sources added.</i></p>`;
+  if (w.moves.length || w.answered.length) html += `<h2>What changed</h2>` + li([...w.moves.map(m => `<li>${hNum(m.h)} (${esc(m.h.text || '')}) is now <b>${esc(H_ST[m.x.to].toLowerCase())}</b>, was ${esc(H_ST[m.x.from].toLowerCase())}${m.x.note ? `: ${esc(m.x.note)}` : ''}.</li>`), ...w.answered.map(e => `<li>${esc(e.text)}</li>`)]);
+  [['found', 'Found'], ['decided', 'Decided'], ['dead', 'Dead ends'], ['did', 'Done']].forEach(([k, h]) => { const l = w.log.filter(e => e.kind === k); if (l.length) html += `<h2>${h}</h2>` + li(l.map(e => `<li>${esc(e.text.replace(/\s+/g, ' '))}</li>`)); });
+  if (w.nextOpen.length) html += '<h2>Next</h2>' + li(w.nextOpen.map(e => `<li>${esc(e.text.replace(/\s+/g, ' '))}</li>`));
+  if (!/<h2>/.test(html)) { toast('Nothing to sum up for that week yet.'); return; }
+  const d = newDoc(`Week of ${W.from}`, html); closeDesk(); addDoc(d); toast('Made a summary of the week.');
+}
+/* ---------- research design templates: prompts by method, filled into empty fields ---------- */
+const J_TPL = {
+  archival: { label: 'Archival research', methods: 'Archival research in [archives or collections]. Read [series or files] in date order and note gaps in the record.\nFor every document, record collection, box, folder and item, and photograph it with the reference in frame.\nCheck key documents against [published sources or a second archive].', data: 'Collections: [name, finding aid].\nAccess: [reading room dates, permissions, copying and photography rules].\nLanguages and scripts: [ ].', scope: 'Dates: [from–to]. Records: [which series]. Out of scope: [ ].\nArchives keep what institutions chose to keep: note whose voices and which years are missing.', ethics: 'Closed or restricted files: [ ]. Personal data about living people: [how you’ll handle it].\nPermission to quote or reproduce: [ ].' },
+  interviews: { label: 'Interviews or oral history', methods: '[Number] semi-structured interviews with [who], [length] each, recorded with consent.\nTopic guide: [themes]. Same opening questions for everyone; follow-ups as needed.\nTranscribe, then check each transcript against the recording before quoting.', data: 'Who: [roles, how you’ll find them, how many]. Recruitment: [route].\nRecordings and transcripts kept: [where, how secured].', scope: 'Whose views these represent, and whose they don’t. Memory is a source too: date the events, and corroborate what you can in documents.', ethics: 'Consent: [written or recorded], including how quotes will be used.\nAnonymity: [named, described or anonymous], and who decides. Right to withdraw by [date].\nRisk to participants: [ ]. Storage and deletion of recordings: [ ].' },
+  osint: { label: 'Open-source investigation', methods: 'Collect: [platforms, satellite imagery, registries, archived pages].\nVerify each item: original source, date (metadata, shadows, weather, archived copies) and place (geolocation against [maps or imagery]).\nArchive every item at collection time with URL, time and a hash or screenshot.', data: 'Sources: [platforms, imagery providers, databases]. Tools: [ ].\nArchive: [where copies are kept]. A search log is in the Searches section.', scope: 'Period and area: [ ]. What open sources can’t show: [ ].\nConfidence language: [the scale you’ll use].', ethics: 'Personal data and minors: [blur, withhold, don’t publish]. Graphic material: [handling].\nYour own safety and accounts: [separate accounts, no direct contact]. No deception or access to closed systems.' },
+  docs: { label: 'Document or content analysis', methods: 'Corpus: [which documents, speeches, articles or posts], selected by [rule].\nCoding: [categories], defined before reading, revised once after a pilot of [number] items.\nRecord every coding decision in the log.', data: 'Where the corpus comes from: [archive, database, scraping], and how you saved it.\nSize: [number of items].', scope: 'Dates and outlets in and out: [ ]. What the texts say is not what happened: say what claims the analysis can support.', ethics: 'Copyright and terms of service for collected material: [ ]. Private individuals named in the corpus: [ ].' },
+  cases: { label: 'Case study or comparison', methods: 'Cases: [A, B, C], chosen because [they differ on X and are alike on Y].\nFor each case, the same questions: [list]. Process tracing from [cause] to [outcome].\nLook for the case that would break the argument.', data: 'For each case: [main sources, secondary literature, data].', scope: 'What the cases can and can’t generalize to. Cases left out, and why: [ ].', ethics: '[Usually light; note any interviews, closed sources or sensitive subjects.]' },
+  data: { label: 'Data analysis', methods: 'Data: [dataset], variables [ ].\nCleaning: [steps], logged so they can be repeated. Analysis: [descriptive, regression, time series].\nKeep the code and a copy of the raw data unchanged.', data: 'Source and version: [ ]. Licence: [ ]. Download date: [ ].\nKnown problems: [missing values, changes in definitions].', scope: 'Period and units: [ ]. Correlation isn’t cause: say what would.', ethics: 'Personal or identifiable data: [anonymised, aggregated]. Licence terms for republishing: [ ].' },
+  lit: { label: 'Literature review', methods: 'Search [databases] with [terms]; logged in Searches.\nInclude: [criteria]. Exclude: [criteria]. Screen titles, then abstracts, then full text.\nFor each work, note argument, evidence and method.', data: 'Databases and catalogs: [ ]. Reference manager: Sources in this project.', scope: 'Years, languages and kinds of publication: [ ]. Gray literature: [in or out].', ethics: '[Usually none.]' },
+  reporting: { label: 'Investigative reporting', methods: 'Documents: [records, filings, leaks], each checked for authenticity.\nPeople: [sources], each claim corroborated by a second source or a document.\nRight of reply: put every claim to [the people and organisations] before publication.', data: 'Records requests: [agency, date filed, status].\nDocuments held: [where, how secured].', scope: 'What the story claims, and what it doesn’t. Allegations you couldn’t stand up are left out.', ethics: 'Source protection: [how you’ll communicate, what you won’t keep].\nLegal review: [who, when]. Fairness: time given to respond, and the response used fairly.' },
+};
+async function jApplyTpl(key) {
+  const T = J_TPL[key]; if (!T) return;
+  const D = jr().design, fields = ['methods', 'data', 'scope', 'ethics'], full = fields.filter(k => String(D[k] || '').trim());
+  let append = false;
+  if (full.length) { append = await ask(`Add the ${T.label.toLowerCase()} prompts?`, `${full.length === fields.length ? 'Every field already has text.' : 'Some fields already have text.'} Add the prompts below what’s there? (Choose Cancel to fill only the empty fields.)`, 'Add below'); }
+  let n = 0;
+  fields.forEach(k => { const cur = String(D[k] || '').trim(); if (!cur) { D[k] = T[k]; n++; } else if (append) { D[k] = cur + '\n\n' + T[k]; n++; } });
+  if (!n) { toast('Nothing changed: those fields already have text.'); return; }
+  jLog('auto', `Research design: added prompts for ${T.label.toLowerCase()}.`, { tags: ['design'] });
+  markDirty(); renderDesk(); toast('Added prompts. Replace the [brackets] with your own plan.');
+}
 function jDesign() {
   const D = jr().design, qs = qItems();
   const q = `<section class="j-field"><h6>Research questions <button class="ghost small hl" data-j="${DJ(() => openQuestionLink(true))}">+ Question</button></h6>
     ${qs.length ? `<ol class="j-qs">${qs.map(i => { const hn = jr().hypotheses.filter(h => h.questionId === i.id).map(hNum); return `<li class="${i.status === 'answered' ? 'done' : ''}"><label class="inline"><input type="checkbox" data-qdone="${esc(i.id)}" ${i.status === 'answered' ? 'checked' : ''} aria-label="Answered"></label><a href="#" data-j="${DJ(e => { e.preventDefault(); openDesk('questions', i.id); })}">${esc(i.title || 'Untitled question')}</a>${hn.length ? ` <span class="muted small">${hn.join(', ')}</span>` : ''}${i.synopsis ? `<div class="small muted">${esc(i.synopsis.slice(0, 160))}${i.synopsis.length > 160 ? '…' : ''}</div>` : ''}</li>`; }).join('')}</ol>`
       : '<p class="small muted">What do you need to find out? Questions are shared with Plan and the Questions tab, where you can link passages and notes to each one.</p>'}</section>`;
-  return `<div class="j-design">${J_DESIGN.map(([k, l, ph], i) => (i === 1 ? q : '') + `<section class="j-field"><label for="jd-${k}"><h6>${l}</h6></label><textarea id="jd-${k}" data-jd="${k}" rows="${k === 'timeline' ? 2 : 4}" placeholder="${esc(ph)}">${esc(D[k] || '')}</textarea></section>`).join('')}</div>`;
+  const tplRow = `<div class="row j-tpl"><label for="jTpl">Start from a method</label><select id="jTpl"><option value="">Choose…</option>${Object.entries(J_TPL).map(([k, t]) => `<option value="${k}">${esc(t.label)}</option>`).join('')}</select><button class="small" id="jTplGo">Add prompts</button><span class="small muted">Fills empty fields with prompts to replace. Mixed methods: add more than one.</span></div>`;
+  return tplRow + `<div class="j-design">${J_DESIGN.map(([k, l, ph], i) => (i === 1 ? q : '') + `<section class="j-field"><label for="jd-${k}"><h6>${l}</h6></label><textarea id="jd-${k}" data-jd="${k}" rows="${k === 'timeline' ? 2 : 4}" placeholder="${esc(ph)}">${esc(D[k] || '')}</textarea></section>`).join('')}</div>`;
 }
 function jHyps() {
   const hs = jr().hypotheses;
@@ -7927,7 +8216,7 @@ function jLogView() {
   const items = list.map(e => {
     const h = e.date !== lastDate ? `<h6 class="j-date">${esc(relDay(e.date) === 'today' || relDay(e.date) === 'yesterday' ? relDay(e.date)[0].toUpperCase() + relDay(e.date).slice(1) + ' · ' + fmtDay(new Date(e.date + 'T12:00')) : fmtDay(new Date(e.date + 'T12:00')))}</h6>` : ''; lastDate = e.date;
     const links = e.links.map(l => { const L = jLinkLabel(l); return `<a href="#" class="j-link" ${L.go ? `data-j="${DJ(ev => { ev.preventDefault(); L.go(); })}"` : ''}>${esc(L.sub)}: ${esc(L.t.slice(0, 60))}</a>`; }).join(' ');
-    return `${h}<article class="j-entry k-${e.kind}" data-e="${esc(e.id)}"><span class="j-kind-chip k-${e.kind}">${LOG_K[e.kind] || e.kind}</span><div class="j-body">${jParas(e.text).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${e.tags.length || links ? `<div class="j-meta">${e.tags.map(t => `<button class="tag" data-j="${DJ(() => { PREFS.jTag = t; savePrefs(); renderDesk(); })}">#${esc(t)}</button>`).join(' ')} ${links}</div>` : ''}</div>
+    return `${h}<article class="j-entry k-${e.kind}${e.done ? ' done' : ''}" data-e="${esc(e.id)}"><span class="j-kind-chip k-${e.kind}">${e.kind === 'next' ? jNextBox(e) : ''}${LOG_K[e.kind] || e.kind}</span><div class="j-body">${jParas(e.text).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('')}${e.tags.length || links ? `<div class="j-meta">${e.tags.map(t => `<button class="tag" data-j="${DJ(() => { PREFS.jTag = t; savePrefs(); renderDesk(); })}">#${esc(t)}</button>`).join(' ')} ${links}</div>` : ''}</div>
       <div class="j-acts">${e.kind !== 'auto' ? `<button class="ghost small" data-j="${DJ(() => jEdit(e))}" aria-label="Edit entry">Edit</button>` : ''}<button class="ghost small danger" aria-label="Delete entry" data-j="${DJ(() => { rmOp('delete a log entry', () => { jr().log = jr().log.filter(x => x !== e); }); markDirty(); renderDesk(); rmUndoToast('Deleted the entry.'); })}">✕</button></div></article>`;
   }).join('');
   return `<div class="j-head"><h5>Research log</h5></div>${compose}${J.log.length ? filt : ''}${items || (J.log.length ? '<p class="muted">No entries match.</p>' : '<div class="desk-empty"><p><b>Keep a dated record of the research.</b></p><p>A line or two a day is enough: where you looked, what you found, what you decided and why, and the dead ends. Months later it tells you what you already tried, and it becomes the backbone of a methods section. Hypothesis changes are recorded here on their own.</p></div>')}`;
@@ -7936,7 +8225,7 @@ function jEdit(e) {
   const art = $(`[data-e="${rmEsc(e.id)}"]`); if (!art) return;
   art.querySelector('.j-body').innerHTML = `<textarea class="j-edit" rows="4" aria-label="Edit entry">${esc(e.text)}</textarea><div class="row"><input class="j-edit-tags" value="${esc(e.tags.join(', '))}" aria-label="Tags"><input class="j-edit-date" type="date" value="${esc(e.date)}" aria-label="Date"><select class="j-edit-kind" aria-label="Kind">${Object.entries(LOG_K).filter(([k]) => k !== 'auto').map(([k, v]) => `<option value="${k}" ${k === e.kind ? 'selected' : ''}>${v}</option>`).join('')}</select><button class="small primary j-save">Save</button><button class="small j-cancel">Cancel</button></div>`;
   const ta = art.querySelector('.j-edit'); ta.focus();
-  art.querySelector('.j-save').addEventListener('click', () => { e.text = ta.value.trim() || e.text; e.tags = jTags(art.querySelector('.j-edit-tags').value); e.date = art.querySelector('.j-edit-date').value || e.date; e.kind = art.querySelector('.j-edit-kind').value; e.modified = nowISO(); markDirty(); renderDesk(); });
+  art.querySelector('.j-save').addEventListener('click', () => { e.text = ta.value.trim() || e.text; e.tags = jTags(art.querySelector('.j-edit-tags').value); e.date = art.querySelector('.j-edit-date').value || e.date; e.kind = art.querySelector('.j-edit-kind').value; if (e.kind !== 'next') { e.done = false; e.doneAt = ''; } e.modified = nowISO(); markDirty(); renderDesk(); });
   art.querySelector('.j-cancel').addEventListener('click', () => renderDesk());
   ta.addEventListener('keydown', ev => { if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) art.querySelector('.j-save').click(); });
 }
@@ -7958,6 +8247,8 @@ function jWire(sec) {
   const B = $('#deskBody');
   $$('[data-qdone]', B).forEach(cb => cb.addEventListener('change', () => { const i = plItem(cb.dataset.qdone); if (!i) return; i.status = cb.checked ? 'answered' : 'open'; jLog('auto', `Question ${cb.checked ? 'answered' : 'reopened'}: “${i.title || 'Untitled'}”`, { links: [{ k: 'q', id: i.id }] }); markDirty(); rmRefresh(); }));
   $$('[data-jd]', B).forEach(t => t.addEventListener('change', () => { jr().design[t.dataset.jd] = t.value; markDirty(); }));
+  $('#jTplGo')?.addEventListener('click', () => { const v = $('#jTpl').value; if (v) jApplyTpl(v); else $('#jTpl').focus(); });
+  $$('[data-jnext]', B).forEach(cb => cb.addEventListener('change', () => { const e = jr().log.find(x => x.id === cb.dataset.jnext); if (!e) return; e.done = cb.checked; e.doneAt = cb.checked ? nowISO() : ''; e.modified = nowISO(); markDirty(); renderDesk(); renderResearch(); }));
   $$('.h-card', B).forEach(card => {
     const h = hById(card.dataset.h); if (!h) return;
     $$('[data-hf]', card).forEach(f => f.addEventListener('change', () => { h[f.dataset.hf] = f.value; h.modified = nowISO(); markDirty(); if (f.dataset.hf === 'questionId') renderDesk(); }));
@@ -8021,6 +8312,7 @@ function journalDoc(kind) {
       + (qs.length ? `<h2>Research questions</h2><ol>${qs.map(i => `<li><b>${esc(i.title || 'Untitled')}</b> (${i.status === 'answered' ? 'answered' : 'open'})${i.synopsis ? `. ${esc(i.synopsis)}` : ''}</li>`).join('')}</ol>` : '')
       + (J.hypotheses.length ? `<h2>Hypotheses</h2>${J.hypotheses.map(h => { const last = h.history[h.history.length - 1]; return `<h3>${hNum(h)}. ${esc(h.text || 'Untitled hypothesis')}</h3><p><b>${H_ST[h.status]}</b>${last ? ` since ${esc(fmtDay(new Date(last.at)))}${last.note ? `: ${esc(last.note.replace(/[.!?]+$/, ''))}` : ''}` : ''}.</p>${h.rationale ? P2(h.rationale) : ''}${h.links.length ? `<ul>${h.links.map(evLine).join('')}</ul>` : ''}`; }).join('')}` : '')
       + sect('Approach and methods', D.methods) + sect('Sources and data', D.data) + searches + sect('Scope and limitations', D.scope) + sect('Ethics', D.ethics) + sect('Milestones', D.timeline)
+      + ((n => n.length ? `<h2>Next steps</h2><ul>${n.map(e => `<li>${esc(e.text.replace(/\s+/g, ' '))}</li>`).join('')}</ul>` : '')(J.log.filter(e => e.kind === 'next' && !e.done)))
       + (recent.length ? `<h2>Log, last 30 days</h2><ul>${recent.map(e => `<li><b>${esc(e.date)}</b> · ${esc(LOG_K[e.kind] || e.kind)}: ${esc(e.text.replace(/\s+/g, ' '))}</li>`).join('')}</ul>` : '');
   }
   if (!/<h2>/.test(html)) { toast('Fill in some of the journal first.'); return; }
@@ -8038,7 +8330,7 @@ function researchLoose() {
 }
 
 COMMANDS.push(
-  ['Journal: today’s entry', () => openJournal('log', true)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
+  ['Journal: today’s entry', () => openJournal('log', true)], ['Journal: this week (weekly review)', () => openJournal('week')], ['Journal: make a summary of this week', () => weekDoc(0)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
   ['Journal: make a research memo', () => journalDoc('memo')], ['Journal: make a methods appendix', () => journalDoc('appendix')],
   ['Open an example project: thesis chapter', () => openStarter('thesis')], ['Open an example project: long-form article', () => openStarter('article')], ['Open an example project: white paper', () => openStarter('whitepaper')],
   ['Open an example project: book proposal', () => openStarter('proposal')], ['Open an example project: investigative piece', () => openStarter('investigation')],
@@ -8047,7 +8339,7 @@ COMMANDS.push(
   ['Research desk: threads, claims, evidence, review', () => openDesk()], ['Mark the selection as a claim', () => markClaim()], ['Add the selection to a thread…', () => openThreadPick()],
   ['Key the selection for review…', () => openReviewKey()], ['Link the selection to a research question…', () => openQuestionLink()], ['New research question', () => openQuestionLink(true)],
   ['Claims register', () => openDesk('claims')], ['Evidence grid: claims × sources', () => openDesk('grid')], ['Due for review', () => openDesk('review')],
-  ['Everything about… (one name or term across the project)', () => openDesk('about')], ['Fact-check sheet (download)', () => factSheet()], ['Show or hide research marks in the draft', () => { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }]
+  ['Everything about… (one name or term across the project)', () => openDesk('about')], ['Fact-check sheet (download)', () => factSheet()], ['Fact-check sheet as a document', () => factSheet(true)], ['Show or hide research marks in the draft', () => { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }]
 );
 
 /* ================================================================
@@ -8385,6 +8677,7 @@ const STARTERS = {
         [-5, 'found', 'Most halts in the Carduchian mountains mention villages, stores or foraging. Matches Lee’s appendix.', ['halts'], [['src', 'lee']]],
         [-3, 'dead', 'Looked for a published table of daily grain needs for Greek hoplites. Nothing usable beyond Engels’s figures for the Macedonians.', ['rations']],
         [-1, 'decided', 'Use Engels’s rates as a ceiling, and explain the adjustment for a slower force in a footnote.', ['rations', 'method']],
+        [0, 'next', 'Check the Book V halts on the coast: does the pattern hold where supplies came by sea?', ['halts']],
       ],
       searches: [[-4, 'JSTOR', '"Ten Thousand" AND (supply OR logistics OR forage)', '1990–2025, English', 37, 4], [-3, 'Library catalog', 'Greek army logistics', 'Books', 12, 2]],
     },
@@ -8512,6 +8805,7 @@ const STARTERS = {
       log: [
         [-2, 'did', '[Requested filings for [company] from [registry].]', ['registry']],
         [-1, 'dead', '[[Registry] holds no ownership records before [year]; try [other source].]', ['registry']],
+        [0, 'next', '[Ask [person] for comment by [date], with every claim about them listed.]', ['right of reply']],
       ],
       searches: [[-2, '[Company registry]', '[company name]', '', 3, 1]],
     },
@@ -8549,6 +8843,7 @@ function buildStarter(key) {
   const K = STARTERS[key];
   P = blankProject(); P.title = K.title;
   P.goal = { kind: K.goal, target: K.target, deadline: todayKey(new Date(Date.now() + K.days * DAY)), started: todayKey() };
+  if (TIPS[key]) PREFS.tipsFor = Object.assign({}, PREFS.tipsFor, { [P.id]: key });
   const ctx = { src: {}, th: {}, q: {} };
   Object.entries(K.sources).forEach(([k, c]) => { const csl = Object.assign({}, c); const rating = csl._rating; delete csl._rating; const s = { id: uid('s'), csl, created: nowISO(), modified: nowISO() }; if (rating) s.osint = { rating }; P.sources.push(s); ctx.src[k] = s.id; });
   K.threads.forEach(([name, color, note]) => { const t = { id: uid('th'), name, color, note, hidden: false, created: nowISO() }; P.threads.push(t); ctx.th[name] = t.id; });
@@ -8562,7 +8857,7 @@ function buildStarter(key) {
     Object.assign(J.design, K.journal.design || {});
     (K.journal.hyps || []).forEach((h, i) => J.hypotheses.push({ id: uid('h'), text: h.text, rationale: h.rationale || '', status: h.status || 'untested', questionId: h.q ? ctx.q[h.q] : '', links: (h.links || []).map(link).filter(l => l.id),
       history: h.status && h.status !== 'untested' ? [{ at: new Date(Date.now() - (2 - i) * DAY).toISOString(), from: 'untested', to: h.status, note: h.why || '' }] : [], created: nowISO(), modified: nowISO() }));
-    (K.journal.log || []).forEach(([n, kind, text, tags, links]) => J.log.push({ id: uid('j'), date: d0(n), kind, text, tags: tags || [], links: (links || []).map(link).filter(l => l.id), created: nowISO(), modified: nowISO() }));
+    (K.journal.log || []).forEach(([n, kind, text, tags, links]) => J.log.push({ id: uid('j'), date: d0(n), kind, text, tags: tags || [], links: (links || []).map(link).filter(l => l.id), done: false, doneAt: '', created: nowISO(), modified: nowISO() }));
     (K.journal.searches || []).forEach(([n, where, terms, filters, results, kept]) => J.searches.push({ id: uid('js'), date: d0(n), where, terms, filters, results, kept, notes: '', created: nowISO() }));
   }
   // a supported claim remembers the text it was checked against
@@ -9173,4 +9468,5 @@ function sendClip(to, clip) {
   else if (!clip && PREFS.startHome !== false) openHome();
   if (rec && rec.project && dirtyFile && !clip) toast('Restored your unsaved work from this browser.');
   if (clip) handleClip(clip);
+  else setTimeout(() => ghCheckNewer(true), 1500);
 })();
