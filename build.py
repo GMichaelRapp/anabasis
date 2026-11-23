@@ -46,9 +46,15 @@ def fonts_css():
             if f.exists():
                 faces += (f"@font-face{{font-family:'Atkinson Hyperlegible Next';font-style:{st};font-weight:{w};font-display:swap;"
                           f"src:url(data:font/woff2;base64,{base64.b64encode(f.read_bytes()).decode()}) format('woff2');unicode-range:{rng}}}\n")
+    for w, st in ((500, 'normal'), (700, 'normal'), (500, 'italic')):  # display face for titles and headings
+        for sub, rng in ranges.items():
+            f = ASSETS / 'fonts' / f'alegreya-{sub}-{w}-{st}.woff2'
+            if f.exists():
+                faces += (f"@font-face{{font-family:'Alegreya';font-style:{st};font-weight:{w};font-display:swap;"
+                          f"src:url(data:font/woff2;base64,{base64.b64encode(f.read_bytes()).decode()}) format('woff2');unicode-range:{rng}}}\n")
     svg = lambda p: 'url("data:image/svg+xml,' + urllib.parse.quote(read(p), safe=" =:/,.'-") + '")'
     contour = ':root{--contour-light:' + svg(ASSETS / 'contour-light.svg') + ';--contour-dark:' + svg(ASSETS / 'contour-dark.svg') + '}'
-    return '/*! Atkinson Hyperlegible Next | SIL Open Font License 1.1 | Braille Institute of America */\n' + faces + contour
+    return '/*! Atkinson Hyperlegible Next | SIL Open Font License 1.1 | Braille Institute of America */\n/*! Alegreya | SIL Open Font License 1.1 | Juan Pablo del Peral, Huerta Tipográfica */\n' + faces + contour
 
 
 def build():

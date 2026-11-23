@@ -278,5 +278,45 @@
     "license": "OFL-1.1",
     "source": "npm:@fontsource/atkinson-hyperlegible-next@5.3.0",
     "sha256": "5b341909f2746b4ee6c4f5e9bcbf02ad58303f0fdd9621e016c6d069e32f3073"
+  },
+  {
+    "file": "assets/fonts/alegreya-latin-500-italic.woff2",
+    "name": "Alegreya",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/alegreya@5.3.0",
+    "sha256": "654e31dba1d4273655d9a97c36f3456a90c4dc77c070d8d78d7cadd0af9ed518"
+  },
+  {
+    "file": "assets/fonts/alegreya-latin-500-normal.woff2",
+    "name": "Alegreya",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/alegreya@5.3.0",
+    "sha256": "53addbca37745d63946bfb8fefc33570c075a91d5463c4194139b6a2efad3930"
+  },
+  {
+    "file": "assets/fonts/alegreya-latin-700-normal.woff2",
+    "name": "Alegreya",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/alegreya@5.3.0",
+    "sha256": "1c582501cee54f7137a80732266cbd3f0e9ef1f0e85d093228fb4f4db852df4e"
+  },
+  {
+    "file": "assets/fonts/alegreya-latin-ext-500-normal.woff2",
+    "name": "Alegreya",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/alegreya@5.3.0",
+    "sha256": "3c67babba896cc63751b95a7a51ac6f005dc019a4f62ec982b57b0089248ef23"
+  },
+  {
+    "file": "assets/fonts/alegreya-latin-ext-700-normal.woff2",
+    "name": "Alegreya",
+    "version": "5.3.0 (@fontsource)",
+    "license": "OFL-1.1",
+    "source": "npm:@fontsource/alegreya@5.3.0",
+    "sha256": "3fe9918699e06164c1a8a28f26ce87925f769f95bb6692a852d71cf1a3906b43"
   }
 ]

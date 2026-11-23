@@ -21,6 +21,7 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 | [topojson-client](https://github.com/topojson/topojson-client) | 3.1.0 | © Mike Bostock | ISC | map data decoding |
 | [world-atlas](https://github.com/topojson/world-atlas) | 2.0.2 | © Mike Bostock | ISC | country outlines (Crimea assigned to Ukraine; see tools/data) |
 | [Natural Earth](https://www.naturalearthdata.com) | 2026 snapshot | — | Public domain | countries, provinces, rivers, lakes, populated places |
+| [Alegreya](https://www.huertatipografica.com/en/fonts/alegreya-ht-pro) | 5.3.0 (Fontsource) | © 2011 The Alegreya Project Authors (Juan Pablo del Peral, Huerta Tipográfica) | SIL Open Font License 1.1 | titles and headings |
 | [Atkinson Hyperlegible Next](https://www.brailleinstitute.org/freefont/) | 5.3.0 (Fontsource) | © Braille Institute of America | SIL Open Font License 1.1 | interface typeface |
 
 The CSL styles and locale are distributed unmodified under CC BY-SA 3.0. That license covers those files only; it doesn’t extend to the rest of Anabasis.
