@@ -4,6 +4,8 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-11-22
+
 ### Added
 - An epigraph from Xenophon’s *Anabasis* at the top of Help.
 
@@ -49,4 +51,5 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.0.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.1
 [1.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.0
