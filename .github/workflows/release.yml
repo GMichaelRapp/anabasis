@@ -1,9 +1,15 @@
 name: Release
 
-# Push a tag such as v1.0.0 to publish a release. The tag must match APP_VERSION in src/app.js.
+# Publish a release: push a tag such as v1.0.0, or run this workflow from the Actions tab
+# (Run workflow, enter 1.0.0). Either way the version must match APP_VERSION in src/app.js.
 on:
   push:
     tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to release, matching APP_VERSION (for example 1.0.0)
+        required: true
 
 permissions:
   contents: write
@@ -18,10 +24,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Check the tag matches the app version
+      - name: Check the version matches the app
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
         run: |
           v=$(grep -oP "const APP_VERSION = '\K[^']+" src/app.js)
-          if [ "v$v" != "$GITHUB_REF_NAME" ]; then echo "Tag $GITHUB_REF_NAME doesn't match APP_VERSION $v"; exit 1; fi
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then tag="v${INPUT_VERSION#v}"; else tag="$GITHUB_REF_NAME"; fi
+          if [ "v$v" != "$tag" ]; then echo "Release $tag doesn't match APP_VERSION $v"; exit 1; fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
       - name: Install Playwright
         run: |
           pip install playwright==1.63.0
@@ -35,15 +45,16 @@ jobs:
           cd dist
           sha256sum anabasis.html > SHA256SUMS.txt
           # release notes: the changelog section for this version
-          v="${GITHUB_REF_NAME#v}"
+          v="${TAG#v}"
           awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {on=1; next} on && /^## \[/ {exit} on {print}' ../CHANGELOG.md > notes.md
           printf '\n---\n**Download `anabasis.html`**, open it in your browser, and choose Save to keep your project. SHA-256 checksum in `SHA256SUMS.txt`.\n' >> notes.md
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" dist/anabasis.html dist/SHA256SUMS.txt \
-            --title "Anabasis ${GITHUB_REF_NAME#v}" --notes-file dist/notes.md --verify-tag
+          # creates the tag on this commit if it doesn't exist yet
+          gh release create "$TAG" dist/anabasis.html dist/SHA256SUMS.txt \
+            --target "$GITHUB_SHA" --title "Anabasis ${TAG#v}" --notes-file dist/notes.md
       - name: Update the hosted copy
         # A release made with the workflow's own token doesn't trigger other workflows, so start Pages directly.
         env:
