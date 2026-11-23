@@ -4,6 +4,16 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.0.4] — 2026-11-23
+
+### Fixed
+- Typing in the source form no longer freezes the page. Each pause used to rebuild the citation formatter, redraw every source and reformat the whole document (about two seconds on a large project). Now the formatter is reused, only the edited row and the preview are redrawn, and the document's notes update a moment after you stop typing, and only if it cites that source.
+- Searching sources and notes, and find-in-all-documents, stay responsive on large projects (one pass to count citations, documents read once per search session, debounced lists).
+- Returning to a chapter, or exporting it, reuses its formatted citations when nothing has changed.
+
+### Added
+- A typing-latency test (t28) that types in every field of a 120,000-word project and fails if the page freezes for more than a quarter of a second.
+
 ## [1.0.3] — 2026-11-23
 
 ### Added
@@ -66,6 +76,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.0.4]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.4
 [1.0.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.3
 [1.0.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.2
 [1.0.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.1

@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.0.3';
+const APP_VERSION = '1.0.4';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -302,10 +302,16 @@ function itemFor(id) {
 function makeEngine(style) {
   return new CSL.Engine({ retrieveLocale: () => LOCALE, retrieveItem: itemFor }, cslXml(style), 'en-US');
 }
+/* Parsing a CSL style takes a large fraction of a second, so each engine is built once per style.
+   When sources change (srcVersion), the engine's item cache is cleared so it re-reads them. */
 function getEngine(style, cache = engines) {
-  const k = style + '|' + srcVersion;
-  if (cache[style] && cache[style].k === k) return cache[style].e;
-  const e = makeEngine(style); cache[style] = { k, e }; return e;
+  const c = cache[style];
+  if (!c) { const e = makeEngine(style); cache[style] = { e, v: srcVersion }; return e; }
+  if (c.v !== srcVersion) {
+    try { c.e.updateItems([]); if (c.e.updateUncitedItems) c.e.updateUncitedItems([]); } catch (err) { c.e = makeEngine(style); }
+    c.v = srcVersion;
+  }
+  return c.e;
 }
 function cleanCiteItem(it) {
   const o = { id: it.id };
@@ -317,7 +323,7 @@ function cleanCiteItem(it) {
 }
 function previewCluster(style, items) {
   if (STYLES[style].custom) return osintCluster(items, new Set());
-  try { return getEngine(style, previewEngines).makeCitationCluster(items.map(cleanCiteItem)); } catch (e) { console.warn(e); return ''; }
+  try { const e = getEngine(style, previewEngines); e.updateItems([...new Set(items.map(it => it.id))]); return e.makeCitationCluster(items.map(cleanCiteItem)); } catch (e) { console.warn(e); return ''; }
 }
 function previewBib(style, id) {
   if (STYLES[style].custom) return '';
@@ -341,7 +347,20 @@ function markerItems(m) { try { return JSON.parse(m.dataset.items || '[]'); } ca
 function inlineMd(s) { return sanitize(marked.parseInline(String(s || ''))); }
 
 /* Compute numbering, formatted citations, notes and bibliography for a set of markers. */
+/* Formatting a chapter's citations takes a few hundred milliseconds, so results are kept per document and
+   reused until its citations, its style or any source changes (moving between chapters, exporting). */
+const REFS_CACHE = new Map();
 function computeRefs(doc, markers) {
+  const key = [doc.id, doc.style, doc.layout.bib, srcVersion, P.sources.length,
+    markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
+  const hit = REFS_CACHE.get(key);
+  if (hit) { REFS_CACHE.delete(key); REFS_CACHE.set(key, hit); return Object.assign({}, hit, { disp: hit.disp.map((d, i) => Object.assign({}, d, { m: markers[i] })) }); }
+  const out = computeRefsNow(doc, markers);
+  REFS_CACHE.set(key, Object.assign({}, out, { disp: out.disp.map(d => Object.assign({}, d, { m: null })) }));
+  if (REFS_CACHE.size > 60) REFS_CACHE.delete(REFS_CACHE.keys().next().value);
+  return out;
+}
+function computeRefsNow(doc, markers) {
   if (STYLES[doc.style].custom) return computeOsint(doc, markers);
   const style = doc.style, isNote = STYLES[style].note, eng = getEngine(style);
   let n = 0; const citations = [], byId = new Map(), notes = [], disp = [];
@@ -993,24 +1012,38 @@ function sortedSources() {
     return (la.who || la.title).localeCompare(lb.who || lb.title) || la.yr.localeCompare(lb.yr);
   });
 }
+const SOURCE_TYPE_NAME = Object.fromEntries(TYPES);
+function sourceRowHTML(s, uses, nn) {
+  const l = sourceLabel(s);
+  return `<li data-id="${s.id}" class="${panelState?.kind === 'source' && panelState.id === s.id ? 'on' : ''}"><span class="act"><button data-a="cite" title="Cite at cursor">“ Cite</button></span>
+      <div class="t">${esc(l.who || '—')}${l.yr ? ' · ' + esc(l.yr) : ''}</div><div class="s">${esc(l.title)}</div>
+      <div class="meta"><span>${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
+}
 function renderSourceList() {
   const q = $('#qSources').value.toLowerCase().trim();
   const list = sortedSources().filter(s => !q || JSON.stringify(s.csl).toLowerCase().includes(q));
-  const typeName = Object.fromEntries(TYPES);
-  $('#sourceList').innerHTML = list.length ? list.map(s => {
-    const l = sourceLabel(s), uses = citeCount(s.id), nn = P.notes.filter(n => n.sourceId === s.id).length;
-    return `<li data-id="${s.id}" class="${panelState?.kind === 'source' && panelState.id === s.id ? 'on' : ''}"><span class="act"><button data-a="cite" title="Cite at cursor">“ Cite</button></span>
-      <div class="t">${esc(l.who || '—')}${l.yr ? ' · ' + esc(l.yr) : ''}</div><div class="s">${esc(l.title)}</div>
-      <div class="meta"><span>${esc(typeName[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
-  }).join('') : `<div class="empty">${P.sources.length ? 'No sources match.' : 'No sources yet.<br>Add one with <b>+ New</b>, quick-add a DOI or ISBN, or import a Zotero CSL-JSON export.'}</div>`;
+  const uses = citeCounts(), nn = noteCountsBySource();
+  $('#sourceList').innerHTML = list.length ? list.map(s => sourceRowHTML(s, uses.get(s.id) || 0, nn.get(s.id) || 0)).join('')
+    : `<div class="empty">${P.sources.length ? 'No sources match.' : 'No sources yet.<br>Add one with <b>+ New</b>, quick-add a DOI or ISBN, or import a Zotero CSL-JSON export.'}</div>`;
   $('#cntSources').textContent = P.sources.length;
 }
-function citeCount(id) {
-  let n = 0; const needle = '&quot;id&quot;:&quot;' + id + '&quot;';
-  P.docs.forEach(d => { const h = d.id === curDocId ? editor.innerHTML : d.html; n += h.split(needle).length - 1; });
-  return n;
+/* Redraw one row while its source is being edited; the full list (and its sort order) updates when you leave the field. */
+function refreshSourceRow(s) {
+  const li = $(`#sourceList li[data-id="${s.id}"]`); if (!li) return;
+  li.outerHTML = sourceRowHTML(s, citeCount(s.id), P.notes.filter(n => n.sourceId === s.id).length);
 }
-$('#qSources').addEventListener('input', renderSourceList);
+/* Citation counts for every source in one pass over the documents (memoized until the next task). */
+let _citeCounts = null;
+function citeCounts() {
+  if (_citeCounts) return _citeCounts;
+  const m = new Map(), re = /&quot;id&quot;:&quot;([^&]+)&quot;/g;
+  P.docs.forEach(d => { const h = d.id === curDocId ? editor.innerHTML : d.html; let x; re.lastIndex = 0; while ((x = re.exec(h))) m.set(x[1], (m.get(x[1]) || 0) + 1); });
+  _citeCounts = m; setTimeout(() => { _citeCounts = null; }, 0);
+  return m;
+}
+function citeCount(id) { return citeCounts().get(id) || 0; }
+function noteCountsBySource() { const m = new Map(); P.notes.forEach(n => { if (n.sourceId) m.set(n.sourceId, (m.get(n.sourceId) || 0) + 1); }); return m; }
+$('#qSources').addEventListener('input', debounce(renderSourceList, 120));
 $('#sourceList').addEventListener('click', e => {
   const li = e.target.closest('li[data-id]'); if (!li) return;
   if (e.target.closest('button')?.dataset.a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: li.dataset.id }])); toast('Citation inserted. Click it to add a page number.'); return; }
@@ -1211,8 +1244,14 @@ function readSourceForm(s) {
 const commitSource = debounce(s => {
   s.csl = readSourceForm(s); if ($('#osintBox')) s.osint = readOsintForm(); s.modified = nowISO(); srcVersion++;
   const raw = $('#rawCsl'); if (raw && document.activeElement !== raw) raw.value = JSON.stringify(s.csl, null, 2);
-  updateSourcePreview(s); updateOsintPreview(s); renderSourceList(); renderRefs(true); markDirty();
-}, 300);
+  updateSourcePreview(s); updateOsintPreview(s); refreshSourceRow(s); markDirty();
+  refreshRefsFor(s.id);
+}, 250);
+/* Reformat the open document's notes and bibliography after a pause, and only if they include this source. */
+const refreshRefsFor = debounce(id => {
+  const d = curDoc(); if (!d) return;
+  if (d.layout.bib === 'all' || editor.innerHTML.includes('&quot;id&quot;:&quot;' + id + '&quot;')) renderRefs(true);
+}, 1200);
 function updateSourcePreview(s) {
   const doc = curDoc(), style = doc ? doc.style : DEFAULT_STYLE, isNote = STYLES[style].note;
   const bib = previewBib(style, s.id), cite = previewCluster(style, [{ id: s.id }]);
@@ -1230,7 +1269,10 @@ $('#panelBody').addEventListener('input', e => {
     commitSource(s);
   } else if (panelState?.kind === 'note') commitNote();
 });
-$('#panelBody').addEventListener('change', e => { if (panelState?.kind === 'note' && e.target.tagName === 'SELECT') commitNote(); });
+$('#panelBody').addEventListener('change', e => {
+  if (panelState?.kind === 'note' && e.target.tagName === 'SELECT') commitNote();
+  if (panelState?.kind === 'source' && e.target.matches('input, select')) setTimeout(renderSourceList, 300); // after the last commit: re-sort the list
+});
 $('#panelBody').addEventListener('click', async e => {
   if (panelState?.kind === 'note') return noteBodyClick(e);
   if (panelState?.kind !== 'source') return;
@@ -1526,7 +1568,7 @@ function renderNoteList() {
   $('#cntNotes').textContent = P.notes.length;
 }
 const firstLine = s => String(s || '').split('\n').find(x => x.trim())?.replace(/^#+\s*/, '').slice(0, 80) || '';
-$('#qNotes').addEventListener('input', renderNoteList);
+$('#qNotes').addEventListener('input', debounce(renderNoteList, 120));
 $('#tagChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; noteTagFilter = noteTagFilter === c.dataset.t ? null : c.dataset.t; renderNoteList(); });
 $('#noteList').addEventListener('click', e => {
   const li = e.target.closest('li[data-id]'); if (!li) return;
@@ -6699,17 +6741,19 @@ function frScopeDocs() {
   if (sc === 'part') return binderOrder().filter(x => (x.partId || '') === (d.partId || ''));
   return binderOrder();
 }
+const FR_TEXTS = new Map(); // document id → its searchable text runs, re-read only when the document changes
 function frSearch() {
   syncEditor(); $('#frMsg').textContent = ''; const re = frRegex(); FR = { hits: [], re };
   if (!re) { $('#frResults').innerHTML = ''; return; }
   frScopeDocs().forEach(d => {
-    const root = document.createElement('div'); root.innerHTML = d.html;
-    frTextNodes(root).forEach((n, ni) => { re.lastIndex = 0; let m; while ((m = re.exec(n.data))) { if (!m[0]) { re.lastIndex++; continue; } FR.hits.push({ kind: 'doc', id: d.id, title: d.title || 'Untitled', ni, at: m.index, len: m[0].length, ctx: n.data.slice(Math.max(0, m.index - 40), m.index), hit: m[0], after: n.data.slice(m.index + m[0].length, m.index + m[0].length + 40), on: true }); } });
+    let c = FR_TEXTS.get(d.id);
+    if (!c || c.html !== d.html) { const root = document.createElement('div'); root.innerHTML = d.html; c = { html: d.html, texts: frTextNodes(root).map(n => ({ data: n.data })) }; FR_TEXTS.set(d.id, c); }
+    c.texts.forEach((n, ni) => { re.lastIndex = 0; let m; while ((m = re.exec(n.data))) { if (!m[0]) { re.lastIndex++; continue; } FR.hits.push({ kind: 'doc', id: d.id, title: d.title || 'Untitled', ni, at: m.index, len: m[0].length, ctx: n.data.slice(Math.max(0, m.index - 40), m.index), hit: m[0], after: n.data.slice(m.index + m[0].length, m.index + m[0].length + 40), on: true }); } });
   });
   if ($('#frNotes').checked) P.notes.forEach(n => { ['title', 'body'].forEach(f => { const t = n[f] || ''; re.lastIndex = 0; let m; while ((m = re.exec(t))) { if (!m[0]) { re.lastIndex++; continue; } FR.hits.push({ kind: 'note', id: n.id, field: f, title: noteTitle(n) || 'Untitled note', at: m.index, len: m[0].length, ctx: t.slice(Math.max(0, m.index - 40), m.index), hit: m[0], after: t.slice(m.index + m[0].length, m.index + m[0].length + 40), on: true }); } }); });
   const groups = {}; FR.hits.forEach((h, i) => { const k = h.kind + ':' + h.id; (groups[k] = groups[k] || { title: (h.kind === 'note' ? 'Note: ' : '') + h.title, ix: [] }).ix.push(i); });
   $('#frSum').textContent = FR.hits.length ? `${FR.hits.length} match${FR.hits.length === 1 ? '' : 'es'} in ${Object.keys(groups).length} place${Object.keys(groups).length === 1 ? '' : 's'}` : 'No matches.';
-  $('#frResults').innerHTML = Object.values(groups).map(g => `<li class="fr-g"><label class="fr-gh"><input type="checkbox" checked data-grp="${g.ix.join(',')}"> <b>${esc(g.title)}</b> <span class="muted">${g.ix.length}</span></label><ul>${g.ix.slice(0, 60).map(i => { const h = FR.hits[i]; return `<li><label><input type="checkbox" checked data-h="${i}"> <span class="fr-ctx">…${esc(h.ctx)}<mark>${esc(h.hit)}</mark>${esc(h.after)}…</span></label></li>`; }).join('')}${g.ix.length > 60 ? `<li class="muted small">…and ${g.ix.length - 60} more (all included)</li>` : ''}</ul></li>`).join('');
+  $('#frResults').innerHTML = Object.values(groups).map(g => `<li class="fr-g"><label class="fr-gh"><input type="checkbox" checked data-grp="${g.ix.join(',')}"> <b>${esc(g.title)}</b> <span class="muted">${g.ix.length}</span></label><ul>${g.ix.slice(0, 25).map(i => { const h = FR.hits[i]; return `<li><label><input type="checkbox" checked data-h="${i}"> <span class="fr-ctx">…${esc(h.ctx)}<mark>${esc(h.hit)}</mark>${esc(h.after)}…</span></label></li>`; }).join('')}${g.ix.length > 25 ? `<li class="muted small">…and ${g.ix.length - 25} more (all included)</li>` : ''}</ul></li>`).join('');
   $('#frGo').disabled = !FR.hits.length;
 }
 $('#frResults').addEventListener('change', e => {

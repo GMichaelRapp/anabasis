@@ -92,6 +92,16 @@ async def main():
         # ---- paste keeps it
         kept = await pg.evaluate("(() => { const h = sanitize('<p>x ' + citeHTML([{ id: SID }], 'A pasted note.') + '</p>'); return h.includes('data-cnote'); })()")
         check('copy and paste inside Anabasis keeps the note text', kept)
+        # ---- editing a cited source: the form stays quick, and the notes catch up after a pause
+        await pg.evaluate("switchTab('sources'); openSource(SID)"); await pg.wait_for_timeout(400)
+        f = pg.locator('#panelBody input[data-f="title"]')
+        await f.click(); await pg.keyboard.press('End'); await pg.keyboard.type(', or The Expedition of Cyrus', delay=40)
+        await pg.wait_for_timeout(300)
+        check('source list row updates while typing', 'Expedition of Cyrus' in await pg.inner_text(f'#sourceList li[data-id]:has-text("Expedition")') if await pg.locator('#sourceList li:has-text("Expedition")').count() else False)
+        await pg.wait_for_timeout(1800)
+        check('document notes catch up after a pause', 'The Expedition of Cyrus' in await pg.inner_text('#refs'))
+        await f.press('Tab'); await pg.wait_for_timeout(700)
+        check('preview under the form shows the new title', 'Expedition of Cyrus' in await pg.inner_text('#srcPreview'))
         print('ERRS', errs)
         await b.close()
     sys.exit(0 if ok and not errs else 1)
