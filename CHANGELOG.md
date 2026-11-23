@@ -4,6 +4,11 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.0.3] — 2026-11-23
+
+### Added
+- **Note text** in the citation window: your own words after a citation, in the same footnote or endnote. In author-date styles (APA, MLA, Chicago author-date) the parenthetical stays in the text and the note text becomes a numbered footnote. Carried through PDF, Word, ePub, HTML, Markdown and Substack exports, and the OSINT Style Guide.
+
 ## [1.0.2] — 2026-11-23
 
 ### Added
@@ -61,6 +66,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.0.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.3
 [1.0.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.2
 [1.0.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.1
 [1.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.0

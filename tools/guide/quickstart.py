@@ -92,9 +92,10 @@ async def main():
             except Exception: pass
         loc = pg.locator('#citeCluster input').first
         if await loc.count(): await loc.fill('IV.7'); await loc.dispatch_event('input')
+        await pg.fill('#citeNote', 'Where exactly Mount Theches stood is still debated.')
         await pg.wait_for_timeout(500)
         box = await pg.locator('#citeDlg').bounding_box()
-        await shot('05-cite', {'x': box['x'] - 8, 'y': box['y'] - 8, 'width': box['width'] + 16, 'height': box['height'] + 16}, '#citePick li:first-child', '#citeCluster')
+        await shot('05-cite', {'x': box['x'] - 8, 'y': box['y'] - 8, 'width': box['width'] + 16, 'height': box['height'] + 16}, '#citePick li:first-child', '#citeCluster', '#citeNote')
         await pg.click('#citeOk'); await pg.wait_for_timeout(900)
 
         # 6. Notes and bibliography appear under the text

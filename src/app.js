@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.0.2';
+const APP_VERSION = '1.0.3';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -325,8 +325,14 @@ function previewBib(style, id) {
 }
 
 /* ---------------- markers ---------------- */
-function citeHTML(items) {
-  return `<span class="cite" contenteditable="false" data-items="${esc(JSON.stringify(items))}">[cite]</span>`;
+function citeHTML(items, note = '') {
+  return `<span class="cite" contenteditable="false" data-items="${esc(JSON.stringify(items))}"${note && note.trim() ? ` data-cnote="${esc(note.trim())}"` : ''}>[cite]</span>`;
+}
+/* Your own words after a citation, in the same note: "Xenophon, Anabasis, IV.7. Dakyns places it farther east." */
+function withCommentary(html, note) {
+  note = String(note || '').trim(); if (!note) return html;
+  const t = htmlToText(html || '').trim(), sep = !t ? '' : /[.!?:;]["”’)\]]*$/.test(t) ? ' ' : '. ';
+  return (html || '') + sep + inlineMd(note);
 }
 function fnHTML(text) {
   return `<span class="fn" contenteditable="false" data-text="${esc(text)}">*</span>`;
@@ -347,14 +353,15 @@ function computeRefs(doc, markers) {
       if (isNote) notes.push({ n: d.n, html: '<span class="refs-missing">[source deleted. Click the marker to fix it.]</span>' });
       return;
     }
-    const ni = isNote ? ++n : 0, cid = 'c' + i;
+    const ni = isNote ? ++n : 0, cid = 'c' + i, cnote = (m.dataset.cnote || '').trim();
     citations.push({ citationID: cid, citationItems: items.map(cleanCiteItem), properties: { noteIndex: ni } });
-    const d = { m, type: 'cite', n: ni, cid, html: '' }; disp.push(d); byId.set(cid, d);
+    const d = { m, type: 'cite', n: ni, cid, html: '', cnote }; disp.push(d); byId.set(cid, d);
     if (isNote) notes.push({ n: ni, cid });
+    else if (cnote) { d.nref = ++n; notes.push({ n: d.nref, html: inlineMd(cnote) }); }
   });
   try { eng.rebuildProcessorState(citations, 'html').forEach(([cid, , html]) => { const d = byId.get(cid); if (d) d.html = html; }); }
   catch (e) { console.error('citeproc', e); }
-  notes.forEach(x => { if (x.cid) x.html = byId.get(x.cid).html; });
+  notes.forEach(x => { if (x.cid) { const d = byId.get(x.cid); x.html = withCommentary(d.html, d.cnote); } });
   let bib = null;
   if (doc.layout.bib !== 'none') {
     try {
@@ -377,7 +384,9 @@ function applyMarkers(out) {
       if (d.type === 'missing') { m.textContent = '[missing source]'; m.title = 'This source was deleted. Click to fix.'; }
       else {
         const prev = m.previousSibling, glue = prev && prev.nodeType === 3 && /[^\s(\[“"‘'\u00a0]$/.test(prev.data);
-        m.innerHTML = (glue ? ' ' : '') + (d.html || '[?]'); m.title = 'Click to edit citation';
+        m.innerHTML = (glue ? ' ' : '') + (d.html || '[?]') + (d.nref ? `<sup class="cite-nref">${d.nref}</sup>` : '');
+        if (d.nref) m.dataset.cpNref = d.nref; else delete m.dataset.cpNref;
+        m.title = d.nref ? `Note ${d.nref}: ${d.cnote}\nClick to edit citation` : 'Click to edit citation';
       }
     }
   });
@@ -408,7 +417,7 @@ function syncEditor() {
 function renderRefs(force = false) {
   const doc = curDoc(); if (!doc) return;
   const markers = $$('.cite,.fn', editor);
-  const sig = [doc.style, srcVersion, doc.layout.bib, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items)).join('§')].join('|');
+  const sig = [doc.style, srcVersion, doc.layout.bib, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   if (!force && sig === lastSig) return;
   lastSig = sig;
   const out = computeRefs(doc, markers);
@@ -595,7 +604,7 @@ function sanitize(html) {
       }
       [...ch.attributes].forEach(a => {
         const keep = (tag === 'A' && a.name === 'href' && /^(https?:|mailto:|#)/i.test(a.value)) ||
-          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text')) ||
+          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text' || a.name === 'data-cnote')) ||
           (tag === 'IMG' && (a.name === 'data-asset' || a.name === 'alt' || (a.name === 'src' && /^data:image\/(png|jpeg|gif|webp)/i.test(a.value)))) ||
           (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || a.name === 'data-size')) ||
           ((tag === 'TD' || tag === 'TH') && (a.name === 'colspan' || a.name === 'rowspan'));
@@ -681,6 +690,8 @@ function openCite(marker = null) {
   if (!curDoc()) return;
   citeTarget = marker;
   cluster = marker ? markerItems(marker).filter(it => P.sources.some(s => s.id === it.id)) : [];
+  $('#citeNote').value = marker ? (marker.dataset.cnote || '') : '';
+  $('#citeNoteHint').textContent = STYLES[curDoc().style].note ? 'it follows the citation in the same note.' : 'this style cites in parentheses, so your note becomes a numbered footnote.';
   $('#citeDlgTitle').textContent = marker ? 'Edit citation' : 'Insert citation';
   $('#citeOk').textContent = marker ? 'Update' : 'Insert';
   $('#citeRemove').classList.toggle('hidden', !marker);
@@ -737,8 +748,10 @@ $('#citeCluster').addEventListener('click', e => {
 const updateCitePreview = debounce(() => {
   const doc = curDoc();
   if (!cluster.length) { $('#citePreview').innerHTML = '<span class="muted">Choose a source above.</span>'; return; }
-  const h = previewCluster(doc.style, cluster);
-  $('#citePreview').innerHTML = (STYLES[doc.style].note ? '<span class="muted small">First note looks like:</span><br>' : '') + (h || '<span class="muted">—</span>');
+  const h = previewCluster(doc.style, cluster), cn = $('#citeNote').value.trim();
+  $('#citePreview').innerHTML = STYLES[doc.style].note
+    ? '<span class="muted small">First note looks like:</span><br>' + (withCommentary(h, cn) || '<span class="muted">—</span>')
+    : (h || '<span class="muted">—</span>') + (cn ? `<sup>1</sup><div class="small" style="margin-top:6px"><span class="muted">Footnote:</span> 1. ${inlineMd(cn)}</div>` : '');
 }, 120);
 $('#citeLookupBtn').addEventListener('click', async () => {
   const q = $('#citeLookup').value.trim(); if (!q) return;
@@ -753,11 +766,13 @@ $('#citeRemove').addEventListener('click', () => { if (citeTarget) { citeTarget.
 $('#citeOk').addEventListener('click', () => {
   if (!cluster.length) { toast('Pick at least one source.'); return; }
   const items = cluster.map(c => { const o = { id: c.id }; ['locator', 'label', 'prefix', 'suffix'].forEach(k => { if (c[k]) o[k] = c[k]; }); if (c['suppress-author']) o['suppress-author'] = true; if (!o.locator) delete o.label; return o; });
+  const cn = $('#citeNote').value.trim();
   $('#citeDlg').close();
-  if (citeTarget) { citeTarget.dataset.items = JSON.stringify(items); syncEditor(); renderRefs(true); markDirty(); }
-  else insertHTMLAtCursor(citeHTML(items));
+  if (citeTarget) { citeTarget.dataset.items = JSON.stringify(items); if (cn) citeTarget.dataset.cnote = cn; else delete citeTarget.dataset.cnote; syncEditor(); renderRefs(true); markDirty(); refreshChecks(); }
+  else insertHTMLAtCursor(citeHTML(items, cn));
 });
 $('#btnCite').addEventListener('click', () => openCite());
+$('#citeNote').addEventListener('input', () => updateCitePreview());
 
 /* ---------------- footnotes ---------------- */
 let fnTarget = null;
@@ -1367,7 +1382,7 @@ function computeOsint(doc, markers) {
     if (m.classList.contains('fn')) { disp.push({ m, type: 'fn', n }); notes.push({ n, html: inlineMd(m.dataset.text) }); return; }
     const items = markerItems(m).filter(it => P.sources.some(s => s.id === it.id));
     if (!items.length) { disp.push({ m, type: 'missing', n }); notes.push({ n, html: '<span class="refs-missing">[source deleted. Click the marker to fix it.]</span>' }); return; }
-    const html = osintCluster(items, seen);
+    const html = withCommentary(osintCluster(items, seen), m.dataset.cnote);
     disp.push({ m, type: 'cite', n, html }); notes.push({ n, html });
   });
   return { isNote: true, disp, notes, bib: null, heading: '' };
@@ -1689,16 +1704,19 @@ function buildExport(doc, mode = 'html') {
   const markers = $$('.cite,.fn', tmp);
   const out = computeRefs(doc, markers); applyMarkers(out);
   const noteOf = n => (out.notes.find(x => x.n === n) || {}).html || '';
-  markers.forEach(m => {
+  const refFor = n => {
     let r;
-    if (m.classList.contains('sup')) {
-      const n = +m.textContent;
-      if (mode === 'md') r = document.createTextNode(`@@FN${n}@@`);
-      else if (mode === 'paged') { r = document.createElement('span'); r.className = 'fn-note'; r.innerHTML = noteOf(n); }
-      else if (mode === 'epub') { r = document.createElement('sup'); r.innerHTML = `<a class="noteref" data-n="${n}" id="r${n}">${n}</a>`; }
-      else { r = document.createElement('sup'); r.className = 'fnref'; r.textContent = n; }
-    } else { r = document.createElement('span'); r.innerHTML = m.innerHTML; }
-    m.replaceWith(r);
+    if (mode === 'md') r = document.createTextNode(`@@FN${n}@@`);
+    else if (mode === 'paged') { r = document.createElement('span'); r.className = 'fn-note'; r.innerHTML = noteOf(n); }
+    else if (mode === 'epub') { r = document.createElement('sup'); r.innerHTML = `<a class="noteref" data-n="${n}" id="r${n}">${n}</a>`; }
+    else { r = document.createElement('sup'); r.className = 'fnref'; r.textContent = n; }
+    return r;
+  };
+  markers.forEach(m => {
+    if (m.classList.contains('sup')) { m.replaceWith(refFor(+m.textContent)); return; }
+    const r = document.createElement('span'); r.innerHTML = m.innerHTML;
+    const nr = m.dataset.cpNref; $$('.cite-nref', r).forEach(x => x.remove());
+    m.replaceWith(...(nr ? [r, refFor(+nr)] : [r]));
   });
   $$('p', tmp).forEach(p => { if (!p.textContent.trim() && !p.querySelector('img,a.ix-a')) p.remove(); });
   lastSig = ''; renderRefs(true); // restore the open document's citation state

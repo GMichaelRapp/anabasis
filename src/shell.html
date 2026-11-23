@@ -1428,6 +1428,8 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
     <ul class="pick" id="citePick"></ul>
     <label>In this citation <span class="muted">(add several sources for a combined note or parenthetical)</span></label>
     <div id="citeCluster"></div>
+    <label for="citeNote">Note text <span class="muted">(optional, your own words: <span id="citeNoteHint">it follows the citation in the same note.</span> *Italics* with asterisks.)</span></label>
+    <textarea id="citeNote" rows="2" placeholder="e.g. Dakyns places the mountain farther east; see also Bury, *History of Greece*, 512."></textarea>
     <div class="preview-box"><h5>Preview</h5><div id="citePreview" class="muted">Choose a source above.</div></div>
   </div>
   <footer><button id="citeRemove" class="danger left hidden">Remove citation</button><button id="citeCancel">Cancel</button><button id="citeOk" class="primary">Insert</button></footer>
@@ -1956,6 +1958,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
     <h4>Writing</h4>
     <ul>
       <li><b>“ Cite</b> inserts a citation at the cursor. Pick one or more sources, add page or other locators, and it formats in the document’s style. Note styles (Chicago notes &amp; bibliography) number it as a note. Author-date, APA and MLA show a parenthetical.</li>
+      <li><b>Note text</b> in the citation window adds your own words to the note, after the citation: “Xenophon, <i>Anabasis</i>, IV.7. Dakyns places the mountain farther east.” Use *asterisks* for italics. In author-date styles the parenthetical stays in the text and your words become a numbered footnote. It carries through to PDF and Word footnotes and to ePub, HTML, Markdown and Substack notes.</li>
       <li>Click any citation or footnote marker to edit or remove it. Notes and the bibliography rebuild themselves below the text, with <i>Ibid.</i> and short forms handled automatically.</li>
       <li>Switch the style from the menu next to the title. Every citation reformats at once.</li>
       <li>Pasted text keeps basic formatting (headings, bold, italics, lists, links) and drops the rest. Use <kbd>Ctrl/Cmd+Shift+V</kbd> for plain text.</li>

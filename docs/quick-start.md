@@ -41,9 +41,9 @@ You can also import a whole bibliography from Zotero, BibTeX or RIS with **Impor
 
 Put the cursor where the citation belongs, at the end of a sentence. Choose **“ Cite** in the toolbar, pick the source, and add a page or other locator. The preview shows exactly how the note will print. Choose **Insert**.
 
-To cite several sources in one note, pick more than one before you insert.
+To cite several sources in one note, pick more than one before you insert. To comment on the source in the same note, type in **Note text**: your words follow the citation (“Xenophon, *Anabasis*, IV.7. Where exactly Mount Theches stood is still debated.”). In author-date styles like APA, they become a numbered footnote instead.
 
-![The Insert citation window with the source chosen, the locator filled in and a preview of the note](quick-start/05-cite.png)
+![The Insert citation window with the source chosen, a locator, note text, and a preview of the note](quick-start/05-cite.png)
 
 ## 6. Watch the notes and bibliography build
 

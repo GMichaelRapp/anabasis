@@ -31,6 +31,7 @@ SUITES = {
     't24': 'hostile and damaged project files, file-format versions, locked-file read-back',
     't25': 'axe-core accessibility audit of the app (WCAG 2.1 A/AA), light and dark',
     't26': 'performance with a 120,000-word project',
+    't27': 'note text on citations: note styles, author-date, OSINT, and every export',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 
