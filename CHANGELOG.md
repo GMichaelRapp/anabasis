@@ -4,6 +4,9 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+### Added
+- An epigraph from Xenophon’s *Anabasis* at the top of Help.
+
 ## [1.0.0] — 2026-11-22
 
 The first public release.

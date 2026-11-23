@@ -5,6 +5,12 @@
 <p align="center">A writing desk for nonfiction. Documents, notes, sources and citations in one offline HTML file.</p>
 
 <p align="center">
+  <em>θάλαττα θάλαττα</em><br>
+  Presently they could hear the soldiers shouting and passing on the joyful word, “The sea! the sea!”<br>
+  <sub>Xenophon, <em>Anabasis</em> IV.7, translated by H. G. Dakyns</sub>
+</p>
+
+<p align="center">
   <a href="https://github.com/gmichaelrapp/anabasis/releases/latest"><b>Download</b></a> ·
   <a href="https://gmichaelrapp.github.io/anabasis/"><b>Try it in your browser</b></a> ·
   <a href="docs/privacy.md">Privacy</a> ·
