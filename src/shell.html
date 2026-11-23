@@ -26,8 +26,12 @@
 <meta charset="utf-8">
 <!-- What this page may load or contact. Anabasis runs entirely in the browser: it reaches the network only to look up
      a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org; worker-src blob:; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Anabasis">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Anabasis</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E %3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%2324456E%22/%3E %3Cpath d=%22M12 50 L32 14 L52 50%22 fill=%22none%22 stroke=%22%23D9A440%22 stroke-width=%229%22 stroke-linejoin=%22miter%22 stroke-miterlimit=%2210%22/%3E %3C/svg%3E">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
@@ -1115,7 +1119,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 /* ---------- responsive ---------- */
 .only-narrow{display:none}
 @media (max-width:1100px){ .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-shadow:var(--shadow)} }
-@media (max-width:480px){ #btnTheme,#btnHelp,#btnOpen{display:none} .hm-head{display:none} }
+@media (max-width:480px){ .hm-head{display:none} }
 @media (max-width:860px){
   .only-narrow{display:inline-block}
   #sidebar{position:fixed;left:0;top:48px;bottom:0;z-index:45;transform:translateX(-100%);transition:transform .2s;box-shadow:var(--shadow)}
@@ -1124,14 +1128,12 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
   .page{padding:.5in .4in}
   .brand span{display:none}
   .proj-title{max-width:130px}
-  .hide-narrow,.save-state,#btnVersions,#btnRecord{display:none}
+  .hide-narrow{display:none}
   .ent,.ixrow{grid-template-columns:1fr 1fr}
   .pl-meta{display:none} .pl-stats{grid-template-columns:repeat(2,1fr)}
   .reader{position:fixed;inset:48px 0 0 0;width:auto!important;z-index:44}
   .rec-stats{grid-template-columns:repeat(2,1fr)}
   .topbar{gap:4px;padding:0 6px}
-  .toolbar{flex-wrap:nowrap;overflow-x:auto}
-  .toolbar > *{flex:none}
   .doc-bar .doc-title{max-width:none;flex:1 1 100%}
 }
 
@@ -1140,15 +1142,18 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 :root[data-theme="dark"]{--k-research:#C3A6EE;--cl-open:#9AA6B2;--cl-ok:#7CCBA2;--cl-need:#E0B04F;--cl-disp:#F2998B;--cl-cut:#8A8A8A;--rv:#C3A6EE;--rq:#8DB8E8}
 :root .tabs [data-tab=research]{--k:var(--k-research)} :root [data-pane=research]{--k:var(--k-research)}
 .tabs button{min-width:0;font-size:12.5px;padding-left:0;padding-right:0;letter-spacing:-.005em}
-.tabs .count{margin-left:2px}
+.tabs .count{margin-left:1px;font-size:10.5px}
+:root .tabs button.on{letter-spacing:-.012em}
 .mark-pop{position:fixed;right:auto}
 #editor .rm[data-k=th]{background:color-mix(in srgb,var(--c,#E0A526) 26%,transparent);box-shadow:0 2px 0 -0.5px color-mix(in srgb,var(--c,#E0A526) 75%,transparent);border-radius:1px}
 #editor .rm[data-k=th] .rm[data-k=th]{background:color-mix(in srgb,var(--c,#E0A526) 34%,transparent)}
 .rm[data-k=cl]{--cs:var(--cl-open)}
-#editor .rm[data-k=cl]{text-decoration-line:underline;text-decoration-color:var(--cs);text-decoration-thickness:2px;text-underline-offset:4px;text-decoration-skip-ink:none;text-decoration-style:dotted}
-#editor .rm[data-k=cl][data-rm]{text-decoration-style:var(--cl-dec,dotted)}
+/* claim and question lines are drawn as backgrounds, not text-decoration, so the editor's own
+   Underline and Strikethrough buttons never mistake a mark for formatting */
+#editor .rm[data-k=cl]{background-image:var(--cl-bg,repeating-linear-gradient(90deg,var(--cs) 0 2px,transparent 2px 5px));background-repeat:no-repeat;background-position:var(--cl-pos,0 100%);background-size:100% var(--cl-h,2px);padding-bottom:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 #editor .rm[data-k=rv]{border-bottom:2px dashed color-mix(in srgb,var(--rv) 80%,transparent);padding-bottom:1px}
-#editor .rm[data-k=q]{text-decoration-line:underline;text-decoration-style:wavy;text-decoration-color:color-mix(in srgb,var(--rq) 80%,transparent);text-decoration-thickness:1.5px;text-underline-offset:5px;text-decoration-skip-ink:none}
+#editor .rm[data-k=q]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 3 Q2 0 4 2 T8 1' fill='none' stroke='%232F6FAE' stroke-width='1.2'/%3E%3C/svg%3E");background-repeat:repeat-x;background-position:0 100%;background-size:8px 4px;padding-bottom:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+:root[data-theme="dark"] #editor .rm[data-k=q]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 3 Q2 0 4 2 T8 1' fill='none' stroke='%238DB8E8' stroke-width='1.2'/%3E%3C/svg%3E")}
 #editor .rm[data-cp-flash]{animation:flash 1.5s}
 body.marks-off #editor .rm{background:none!important;box-shadow:none!important;text-decoration:none!important;border-bottom:0!important}
 .rm-pop{max-width:min(560px,94vw);padding:6px;display:flex;flex-direction:column;gap:4px}
@@ -1175,6 +1180,7 @@ body.marks-off #editor .rm{background:none!important;box-shadow:none!important;t
 .mk-rv{color:var(--rv)}.mk-q{color:var(--rq);font-weight:700}
 .rs-show{display:flex!important;gap:6px;align-items:center;margin:2px 0 0;color:var(--ink)}
 .rs-threads li{display:flex;align-items:center;gap:4px}
+.rs-threads li.none{display:block}
 .rs-threads li .t{flex:1;min-width:0;cursor:pointer;overflow:hidden;text-overflow:ellipsis}
 .rs-threads li button{padding:1px 6px;min-height:0}
 .rs-tip{margin:14px 2px 6px;line-height:1.5}
@@ -1273,6 +1279,170 @@ table.eg .eg-c a:hover{text-decoration:underline}
 .hm-due h5 .ghost{margin-left:auto}
 @media (max-width:860px){ .desk-split{grid-template-columns:1fr} .desk-side{border-right:0;border-bottom:1px solid var(--line)} .desk-main{padding:14px} .eg-wrap{max-height:none} }
 
+/* ================================================================
+   1.2: refined map sheet. One line-icon set, one type scale, crisper
+   controls and menus, a quieter backdrop, and empty states with a small
+   map vignette. Plus the adaptive bars and narrow-screen layouts.
+   ================================================================ */
+:root{--fs-1:11.5px;--fs-2:12.5px;--fs-3:14px;--fs-4:15.5px;--fs-5:18px;--fs-6:22px;--fs-7:30px;--ctl:32px;
+  --empty-mark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='black' stroke-width='1.6'%3E%3Cpath d='M8 44c6-10 14-14 24-14s18 4 24 14'/%3E%3Cpath d='M15 46c4-7 10-10 17-10s13 3 17 10' opacity='.75'/%3E%3Cpath d='M22 48c2.5-4 6-6 10-6s7.5 2 10 6' opacity='.55'/%3E%3Cpath d='M20 30 32 10l12 20' stroke-width='3' stroke-linejoin='miter'/%3E%3Cpath d='M6 54h52' opacity='.5'/%3E%3C/svg%3E")}
+/* icons: one stroke weight everywhere */
+svg{stroke-width:1.75}
+.toolbar svg,.doc-bar svg,.topbar svg{width:18px;height:18px;vertical-align:middle}
+.pb-pop svg{width:17px;height:17px;color:var(--muted);flex:none}
+.pb-pop button > span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+:root .topbar .proj-title{flex:0 1 260px;min-width:60px}
+/* adaptive bars */
+.pb-off{display:none!important}
+.pbar{flex-wrap:nowrap!important}
+:root .toolbar.pbar,.toolbar.pbar{overflow:visible;scrollbar-width:auto}
+.pbar > *{flex:none}
+.pbar > .pb-flex,.pbar > .spacer{flex:1 1 0;min-width:0}
+.pb-more{position:static}
+.pb-pop{position:fixed;min-width:250px;max-width:min(340px,94vw);max-height:min(72vh,600px);overflow:auto;right:auto}
+.pb-pop button{display:flex;align-items:center;gap:10px;width:100%}
+.pb-pop button kbd{margin-left:auto;padding-left:12px;font:500 11.5px/1 var(--ui);color:var(--muted);background:none;border:0;flex:none}
+@media (pointer:coarse){ .pb-pop button kbd{display:none} }
+.pb-pop [aria-checked]::after{content:'';margin-left:auto;width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line);flex:none}
+.pb-pop [aria-checked=true]::after{background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8.5 2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/14px no-repeat;border-color:var(--accent)}
+:root[data-theme="dark"] .pb-pop [aria-checked=true]::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 8.5 2.5 2.5L12 5.5' fill='none' stroke='%230C1524' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.pb-head{font:italic 600 var(--fs-2)/1.2 var(--display);color:var(--muted);padding:8px 10px 3px}
+.pb-glyph{display:inline-flex;width:17px;justify-content:center;font-family:Georgia,serif;color:var(--muted)}
+/* toolbar */
+:root .toolbar{gap:2px;padding:4px 8px;align-items:center}
+:root .toolbar button{min-height:var(--ctl);min-width:var(--ctl);padding:0 7px;border-radius:5px;color:color-mix(in srgb,var(--ink) 82%,var(--muted))}
+:root .toolbar button:hover{color:var(--ink);background:var(--line2)}
+:root .toolbar button.on{background:var(--accent-soft);color:var(--ink);box-shadow:inset 0 -2px 0 var(--sun)}
+:root .toolbar .sep{width:1px;height:18px;margin:0 5px;background:var(--line)}
+.tb-letter b,.tb-letter i,.tb-letter u,.tb-letter s{font:600 16px/1 Georgia,'Times New Roman',serif}
+.tb-letter b{font-weight:800}
+.tb-lbl{gap:6px;font-weight:650!important;padding:0 10px 0 8px!important}
+:root .toolbar .cite-btn{color:var(--k-outline)}
+:root .toolbar .mark-btn{color:var(--k-research)!important}
+:root .toolbar .cite-btn:hover,:root .toolbar .mark-btn:hover{background:color-mix(in srgb,currentColor 10%,transparent)}
+.mark-btn .caret{font-size:10px;opacity:.7;margin-left:-2px}
+#btnTbMore{border:1px solid var(--line)!important;background:var(--panel)!important}
+.toolbar select#blockSel{min-height:var(--ctl);max-width:150px}
+/* document bar */
+:root .doc-bar{gap:4px;padding:6px 10px;align-items:center}
+:root .doc-bar .doc-title{flex:0 1 300px;min-width:90px;max-width:340px}
+:root .doc-bar select{flex:0 1 auto;min-width:110px;max-width:240px;field-sizing:fixed;width:auto}
+.doc-bar button.ghost{color:var(--muted);gap:6px;padding:0 9px;min-height:var(--ctl)}
+.doc-bar button.ghost:hover{color:var(--ink)}
+.doc-bar button.ghost.on{color:var(--ink);background:var(--line2)}
+.doc-bar .mg-n:empty{display:none}
+.doc-bar .wc{padding:0 6px}
+/* top bar */
+:root .topbar{gap:4px;padding:0 10px}
+.topbar button:not(.brand):not(.search-btn){min-height:var(--ctl)}
+.search-btn{border-radius:999px!important;padding:0 12px 0 10px!important;color:var(--muted)!important;background:var(--page)!important}
+.ex-ic{display:none}
+.search-btn kbd{font-size:10.5px;border:1px solid var(--line);border-radius:4px;padding:1px 4px;color:var(--muted);background:var(--panel)}
+#btnSide{min-width:var(--ctl)}
+/* menus: a neatline frame like a map's legend box */
+:root .menu-pop{border:1px solid var(--neat);border-radius:3px;box-shadow:0 0 0 3px var(--panel),0 0 0 4px color-mix(in srgb,var(--neat) 35%,transparent),0 18px 40px -14px rgba(16,28,44,.45);padding:5px}
+:root .menu-pop button{border-radius:3px;padding:8px 10px}
+:root .menu-pop hr{border-top-color:var(--line);margin:5px 6px}
+:root .pop{border:1px solid var(--neat);border-radius:3px;box-shadow:0 0 0 3px var(--panel),0 0 0 4px color-mix(in srgb,var(--neat) 30%,transparent),0 18px 40px -14px rgba(16,28,44,.45)}
+/* a quieter map behind the page */
+:root .scroller,:root .hm-area,:root .bd-area,:root .pl-area,:root #plArea,:root .desk-body{background-image:linear-gradient(color-mix(in srgb,var(--desk) 42%,transparent),color-mix(in srgb,var(--desk) 42%,transparent)),var(--contour);background-size:auto,420px 420px;background-attachment:local}
+:root .desk-body{background-color:var(--desk)}
+body.focus .scroller{background-image:none!important}
+/* type scale */
+:root .ol-scroll h6,.desk-side h6,.desk-main h6{font:700 var(--fs-4)/1.25 var(--display);letter-spacing:.003em}
+.desk-empty p:first-child b,.ab-g h5{font:700 var(--fs-5)/1.25 var(--display)}
+.list .t{font-size:var(--fs-3)}
+.list .meta,.list .s{font-size:var(--fs-1)}
+/* empty states with a small map vignette */
+.empty::before,.desk-empty::before,.rs-empty::before{content:'';display:block;width:54px;height:54px;margin:2px auto 10px;background:var(--faint);-webkit-mask:var(--empty-mark) center/contain no-repeat;mask:var(--empty-mark) center/contain no-repeat;opacity:.75}
+.desk-empty{text-align:center}
+.desk-empty p{text-align:left}
+.desk-empty p:first-child{text-align:center}
+/* toast: a map label with an action */
+:root .toast{display:flex;align-items:center;gap:14px;background:#1B2E46;color:#F1F4F8;border-left:3px solid var(--sun);border-radius:3px;padding:10px 14px;max-width:min(560px,92vw);box-shadow:0 14px 30px -12px rgba(10,18,30,.6)}
+:root[data-theme="dark"] .toast{background:#E3E8EE;color:#0F1A27}
+.toast.show{pointer-events:auto}
+.toast-act{min-height:0!important;padding:3px 10px!important;background:transparent!important;border:1px solid color-mix(in srgb,currentColor 40%,transparent)!important;color:#F2CF7E!important;font-weight:700!important}
+:root[data-theme="dark"] .toast-act{color:#6E4A00!important}
+/* scrollbars */
+*{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--muted) 45%,transparent) transparent}
+/* writing view: typewriter scrolling and dimming outside focus mode */
+body.tw-on .scroller{padding-bottom:50vh}
+body.dim:not(.focus) #editor > *{opacity:.45;transition:opacity .25s}
+body.dim:not(.focus) #editor > [data-cp-current],body.dim:not(.focus) #editor > *:hover{opacity:1}
+body.focus-marks-off #editor .rm{background:none!important;box-shadow:none!important;text-decoration:none!important;border-bottom:0!important}
+/* customize toolbar, shortcuts */
+.tbc-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px}
+.tbc-row{display:flex!important;align-items:center;gap:9px;margin:0!important;padding:6px 4px;font-size:var(--fs-3)!important;color:var(--ink)!important;border-bottom:1px solid var(--line2)}
+.tbc-ic{display:inline-flex;width:20px;justify-content:center;color:var(--muted)}
+.tbc-ic b,.tbc-ic i,.tbc-ic u,.tbc-ic s{font:600 15px/1 Georgia,serif}
+.keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 28px}
+.keys h4{font:700 var(--fs-4)/1.2 var(--display);margin:10px 0 6px}
+.keys dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;align-items:baseline}
+.keys dt{white-space:nowrap}.keys dd{margin:0;color:var(--ink)}
+.keys kbd,.dlg kbd{font:600 11.5px/1 var(--ui);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:2px 5px;background:var(--page);color:var(--ink)}
+/* sidebar can be put away on any screen */
+body.side-hidden #sidebar{display:none}
+@media (min-width:861px){ body.side-hidden.side-open #sidebar{display:flex} }
+#scrim{display:none}
+
+/* ---------- narrow screens ---------- */
+@media (max-width:1180px){
+  .doc-bar .lbl{display:none}
+  .doc-bar button.ghost{padding:0 7px;min-width:var(--ctl)}
+}
+@media (max-width:860px){
+  #scrim{display:block;position:fixed;inset:0;background:rgba(10,18,30,.4);z-index:44;opacity:0;pointer-events:none;transition:opacity .2s}
+  body.side-open #scrim{opacity:1;pointer-events:auto}
+  #sidebar{width:min(320px,88vw)}
+  body.side-hidden #sidebar{display:flex}
+  .rm-pop{max-width:94vw}
+  .desk-tabs{flex-wrap:nowrap;overflow-x:auto;max-width:100%;order:5;flex-basis:100%}
+  .board-bar{flex-wrap:wrap}
+}
+@media (max-width:600px){
+  :root{--ctl:36px}
+  :root .topbar{padding:0 max(4px,env(safe-area-inset-left)) 0 max(4px,env(safe-area-inset-left))}
+  .brand{padding:4px}
+  :root .doc-bar{padding:5px 8px}
+  :root .toolbar{padding:3px 6px}
+  .toolbar select#blockSel{max-width:118px}
+  .tb-lbl .lbl{display:none}
+  #btnExport .lbl,#btnExport .caret{display:none} #btnExport .ex-ic{display:inline}
+  #btnExport{min-width:var(--ctl);padding:0 8px}
+  .brand-mark{width:24px;height:24px}
+  .tb-lbl{padding:0 7px!important}
+  :root .scroller{padding:0;box-shadow:none!important;background:var(--page)!important}
+  :root .page{box-shadow:none!important;border-radius:0;padding:26px 20px 60px;min-height:100%;max-width:none}
+  .margin{display:none!important}
+  dialog{width:100vw!important;max-width:100vw!important;height:100%;max-height:100%!important;margin:0;border-radius:0!important;box-shadow:none!important}
+  @supports (height:100dvh){ dialog{height:100dvh;max-height:100dvh!important} }
+  :root dialog{border:0}
+  dialog .dlg{display:flex;flex-direction:column;height:100%;max-height:none!important}
+  dialog .dlg h3{padding-top:max(14px,env(safe-area-inset-top))}
+  dialog .dlg .body{flex:1;overflow:auto}
+  dialog .dlg footer{padding-bottom:max(12px,env(safe-area-inset-bottom));flex-wrap:wrap}
+  .grid2,.grid3,#npDlg .grid3{grid-template-columns:1fr!important}
+  .tbc-list,.keys{grid-template-columns:1fr}
+  .toast{bottom:max(16px,env(safe-area-inset-bottom))}
+  .desk-pad{padding:12px}
+  .cl-table thead{display:none}
+  .cl-table,.cl-table tbody,.cl-table tr,.cl-table td{display:block;width:auto!important}
+  .cl-table tr{border-bottom:1px solid var(--line);padding:6px 0}
+  .cl-table td{border:0;padding:4px 8px}
+  .eg-sum div{min-width:0;flex:1 1 40%}
+  table.eg .eg-c{min-width:200px}
+  .th-head input:not([type]),.q-title{font-size:19px}
+  .ab-form{flex-direction:column}
+}
+@media (pointer:coarse){
+  input,select,textarea{font-size:16px!important}
+  .list li{padding:11px 12px}
+  .menu-pop button,.pb-pop button{min-height:42px}
+  .list .act{display:flex}
+}
+@supports (height:100dvh){ body{height:100dvh} }
+
 /* ---------- print ---------- */
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
@@ -1283,20 +1453,20 @@ table.eg .eg-c a:hover{text-decoration:underline}
 <style id="pageRule"></style>
 </head>
 <body>
-<header class="topbar">
-  <button class="icon ghost only-narrow" id="btnSide" aria-label="Show sidebar"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+<header class="topbar pbar" id="topBar">
+  <button class="icon ghost" id="btnSide" aria-label="Show or hide the sidebar" title="Show or hide the sidebar"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
   <button class="brand ghost" id="btnHome" title="Project home"><svg class="brand-mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"> <rect width="64" height="64" rx="14" fill="#24456E"/> <path d="M12 50 L32 14 L52 50" fill="none" stroke="#D9A440" stroke-width="9" stroke-linejoin="miter" stroke-miterlimit="10"/> </svg><span>Anabasis</span></button>
-  <button id="lockBadge" class="ghost lock-badge" title="This project is locked with a password">🔒</button>
-  <input id="projTitle" class="proj-title" aria-label="Project title">
-  <span id="saveState" class="save-state"></span>
+  <button id="lockBadge" class="ghost lock-badge" title="This project is locked with a password" aria-label="Locked project"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></button>
+  <input id="projTitle" class="proj-title" aria-label="Project title" data-minw="84">
+  <span id="saveState" class="save-state" data-pri="3" data-nomenu></span>
   <button id="autoResume" class="ghost small hidden auto-resume" title="Chrome needs one click to let Anabasis write to your project file again">Resume autosave</button>
   <div class="spacer"></div>
-  <button id="btnSearch" class="search-btn" title="Search everything and run commands (Ctrl/Cmd+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="hide-narrow"> Search</span> <kbd class="hide-narrow">⌘K</kbd></button>
-  <button id="btnNewProj" class="hide-narrow" title="New project">New</button>
-  <button id="btnOpen" title="Open a project .json file">Open</button>
+  <button id="btnSearch" class="search-btn" data-pri="6" data-label="Search everything" title="Search everything and run commands (Ctrl/Cmd+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="hide-narrow"> Search</span> <kbd class="hide-narrow">⌘K</kbd></button>
+  <button id="btnNewProj" data-pri="4" data-label="New project" title="New project">New</button>
+  <button id="btnOpen" data-pri="3" data-label="Open a project file…" title="Open a project .json file">Open</button>
   <button id="btnSave" class="primary" title="Save project (Ctrl/Cmd+S)">Save</button>
   <div class="menu">
-    <button id="btnExport">Export ▾</button>
+    <button id="btnExport" aria-label="Export"><svg viewBox="0 0 24 24" aria-hidden="true" class="ex-ic"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="lbl">Export</span> <span class="caret" aria-hidden="true">▾</span></button>
     <div class="menu-pop" id="exportMenu">
       <button data-x="docx">Word (.docx), real footnotes</button>
       <button data-x="pdf">PDF — print / save as PDF <span class="muted small">⌘P</span></button>
@@ -1319,9 +1489,10 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <button data-x="osintlist">Sources as OSINT Citation Generator list</button>
     </div>
   </div>
-  <button id="btnTheme" class="icon ghost" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
-  <button id="btnSettings" class="icon ghost" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-  <button id="btnHelp" class="icon ghost" title="Help & about">?</button>
+  <button id="btnTheme" class="icon ghost" data-pri="5" data-label="Light / dark theme" aria-label="Light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+  <button id="btnSettings" class="icon ghost" data-pri="2" data-label="Settings" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button id="btnHelp" class="icon ghost" data-pri="4" data-label="Help &amp; about" aria-label="Help and about" title="Help &amp; about"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></svg></button>
+  <div class="menu pb-more" id="topMoreWrap"><button id="btnTopMore" class="icon ghost" aria-label="More" title="More" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><div class="menu-pop pb-pop" id="topMore" role="menu"></div></div>
   <input type="file" id="fileOpen" accept=".json,application/json" hidden>
   <input type="file" id="fileTranscript" accept=".srt,.vtt,.txt,.docx,text/plain,text/vtt" hidden>
   <input type="file" id="fileMd" accept=".md,.markdown,.txt,text/markdown,text/plain" multiple hidden>
@@ -1343,7 +1514,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
     </nav>
     <section class="pane on" data-pane="docs">
       <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" title="New part (a folder for chapters)">+ Part</button></div>
-        <div class="row"><button id="btnPlan" class="primary-soft" style="flex:1" title="Plan your piece: outline, argument map, templates, build drafts">▤ Plan</button><button id="btnManuscript" style="flex:1" title="Combine documents into one manuscript">Compile manuscript…</button></div>
+        <div class="row"><button id="btnPlan" class="primary-soft" style="flex:1" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" style="flex:1" title="Combine documents into one manuscript">Compile manuscript…</button></div>
         <div class="row"><button id="btnTemplates" style="flex:1" title="Front and back matter, chronology, annotated bibliography">Templates…</button><button id="btnImportDocx" style="flex:1" title="Bring in a Word document, footnotes included">Import Word…</button></div><div class="row"><button id="btnRel" style="flex:1" title="Who’s connected to whom, from your names list">Relationship map</button></div></div>
       <ul class="list binder" id="docList"></ul>
     </section>
@@ -1365,7 +1536,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
     </section>
     <section class="pane" data-pane="research" id="researchPane">
       <div class="pane-head">
-        <div class="row"><button id="btnDesk" class="primary-soft" style="flex:1" title="Read threads through, check claims, see evidence and what’s due">◈ Research desk</button></div>
+        <div class="row"><button id="btnDesk" class="primary-soft" style="flex:1" title="Read threads through, check claims, see evidence and what’s due"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z"/><path d="M8 20h8M12 16v4"/><path d="M8 12l2.5-3 2 2 3.5-4"/></svg> Research desk</button></div>
         <div class="row"><button id="btnAbout" style="flex:1" title="Everything you have on one name or term, across the project">Everything about…</button></div>
         <label class="inline small rs-show"><input type="checkbox" id="rmShow" checked> Show marks in the draft</label>
       </div>
@@ -1389,7 +1560,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <div class="pane-head">
         <div class="row"><input type="search" id="qSources" placeholder="Search sources"><button id="btnNewSource" class="primary">+ New</button></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
-        <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes">📄 Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis">✂ Web clipper</button></div>
+        <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
         <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import references…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
       </div>
       <ul class="list" id="sourceList"></ul>
@@ -1399,63 +1570,64 @@ table.eg .eg-c a:hover{text-decoration:underline}
   <main id="main">
     <div class="remind hidden" id="tabBar"><span>Anabasis is open in another tab. Edits in two tabs can overwrite each other, so keep working in just one.</span><button id="tabBarClose" class="ghost">Dismiss</button></div>
     <div class="remind hidden" id="remindBar"><span id="remindText"></span><button class="primary" id="remindSave">Save now</button><button id="remindLater" class="ghost">Later</button></div>
-    <div class="doc-bar">
-      <input id="docTitle" class="doc-title" aria-label="Document title">
-      <select id="docStyle" aria-label="Citation style"></select>
-      <button id="btnMargin" class="ghost" title="Show or hide margin notes">✎ <span></span></button>
-      <button id="btnPageSetup" title="Title block, fonts, spacing, bibliography options">Page setup</button>
-      <button id="btnVersions" class="ghost" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)">Drafts</button>
-      <button id="btnRecord" class="ghost" title="Daily words, streak, chapter status and deadlines">Record</button>
-      <div class="spacer"></div>
+    <div class="doc-bar pbar" id="docBar">
+      <input id="docTitle" class="doc-title" aria-label="Document title" data-minw="120">
+      <select id="docStyle" aria-label="Citation style" data-minw="130"></select>
+      <div class="spacer pb-flex"></div>
       <span class="tgt hidden" id="tgtBar"><i id="tgtFill"></i></span>
-      <span class="wc" id="wordCount"></span>
-      <button id="btnFocus" class="ghost" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="hide-narrow"> Focus</span></button>
+      <span class="wc" id="wordCount" data-pri="6" data-label="" data-nomenu></span>
+      <button id="btnMargin" class="ghost" data-pri="5" data-label="Show or hide margin notes" aria-label="Margin notes" title="Show or hide margin notes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M17.5 8.5h1.5M17.5 12h1.5"/></svg><span class="mg-n"></span></button>
+      <button id="btnPageSetup" class="ghost" data-pri="3" data-label="Page setup" aria-label="Page setup" title="Title block, fonts, spacing, bibliography options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Page setup</span></button>
+      <button id="btnVersions" class="ghost" data-pri="2" data-label="Drafts" aria-label="Drafts" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span></button>
+      <button id="btnRecord" class="ghost" data-pri="4" data-label="Record" aria-label="Record" title="Daily words, streak, chapter status and deadlines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M20.5 4l-4.5 4-3-2.5L8 9"/></svg><span class="lbl">Record</span></button>
+      <button id="btnFocus" class="ghost" data-pri="1" data-label="Focus mode" aria-label="Focus mode" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Focus</span></button>
+      <div class="menu pb-more" id="docMoreWrap"><button id="btnDocMore" class="ghost icon" aria-label="More document tools" title="More document tools" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><div class="menu-pop pb-pop" id="docMore" role="menu"></div></div>
     </div>
-    <div class="toolbar" id="toolbar">
+    <div class="toolbar pbar" id="toolbar" role="toolbar" aria-label="Formatting and research tools">
       <select id="blockSel" aria-label="Paragraph style">
         <option value="p">Paragraph</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="blockquote">Block quote</option>
       </select>
-      <button data-cmd="bold" title="Bold (Ctrl/Cmd+B)"><b>B</b></button>
-      <button data-cmd="italic" title="Italic (Ctrl/Cmd+I)"><i style="font-family:Georgia,serif">I</i></button>
-      <button data-cmd="underline" title="Underline (Ctrl/Cmd+U)"><u>U</u></button>
-      <button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+      <button data-cmd="bold" data-tb="bold" data-pri="1" data-label="Bold" aria-label="Bold" title="Bold (Ctrl/Cmd+B)" class="tb-letter"><b>B</b></button>
+      <button data-cmd="italic" data-tb="italic" data-pri="1" data-label="Italic" aria-label="Italic" title="Italic (Ctrl/Cmd+I)" class="tb-letter"><i>I</i></button>
+      <button data-cmd="underline" data-tb="underline" data-pri="5" data-label="Underline" aria-label="Underline" title="Underline (Ctrl/Cmd+U)" class="tb-letter"><u>U</u></button>
+      <button data-cmd="strikeThrough" data-tb="strike" data-pri="7" data-label="Strikethrough" aria-label="Strikethrough" title="Strikethrough" class="tb-letter"><s>S</s></button>
       <span class="sep"></span>
-      <button data-cmd="insertUnorderedList" title="Bulleted list"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
-      <button data-cmd="insertOrderedList" title="Numbered list"><svg viewBox="0 0 24 24"><path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.7 2.8-.9 2.8.6 0 1.2-2.8 2-2.8 3.4h3"/></svg></button>
-      <button data-cmd="outdent" title="Decrease indent"><svg viewBox="0 0 24 24"><path d="M21 5H3M21 19H3M21 12h-9M7 9l-3 3 3 3"/></svg></button>
-      <button data-cmd="indent" title="Increase indent"><svg viewBox="0 0 24 24"><path d="M21 5H3M21 19H3M21 12h-9M4 9l3 3-3 3"/></svg></button>
+      <button data-cmd="insertUnorderedList" data-tb="ul" data-pri="3" data-label="Bulleted list" aria-label="Bulleted list" title="Bulleted list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
+      <button data-cmd="insertOrderedList" data-tb="ol" data-pri="4" data-label="Numbered list" aria-label="Numbered list" title="Numbered list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.7 2.8-.9 2.8.6 0 1.2-2.8 2-2.8 3.4h3"/></svg></button>
+      <button data-cmd="outdent" data-tb="outdent" data-pri="8" data-label="Decrease indent" aria-label="Decrease indent" title="Decrease indent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H3M21 19H3M21 12h-9M7 9l-3 3 3 3"/></svg></button>
+      <button data-cmd="indent" data-tb="indent" data-pri="8" data-label="Increase indent" aria-label="Increase indent" title="Increase indent"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 5H3M21 19H3M21 12h-9M4 9l3 3-3 3"/></svg></button>
       <span class="sep"></span>
-      <button data-cmd="justifyLeft" title="Align left"><svg viewBox="0 0 24 24"><path d="M3 6h18M3 12h12M3 18h16"/></svg></button>
-      <button data-cmd="justifyCenter" title="Center"><svg viewBox="0 0 24 24"><path d="M3 6h18M6 12h12M4 18h16"/></svg></button>
-      <button data-cmd="justifyRight" title="Align right"><svg viewBox="0 0 24 24"><path d="M3 6h18M9 12h12M5 18h16"/></svg></button>
+      <button data-cmd="justifyLeft" data-tb="left" data-pri="9" data-label="Align left" aria-label="Align left" title="Align left"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h12M3 18h16"/></svg></button>
+      <button data-cmd="justifyCenter" data-tb="center" data-pri="9" data-label="Center" aria-label="Center" title="Center"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M6 12h12M4 18h16"/></svg></button>
+      <button data-cmd="justifyRight" data-tb="right" data-pri="9" data-label="Align right" aria-label="Align right" title="Align right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 12h12M5 18h16"/></svg></button>
       <span class="sep"></span>
-      <button id="btnFigure" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
-      <button id="btnTable" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
+      <button id="btnFigure" data-tb="figure" data-pri="5" data-label="Figure: image, chart, map, timeline" aria-label="Figure: image, chart, map, timeline" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
+      <button id="btnTable" data-tb="table" data-pri="6" data-label="Table" aria-label="Table" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
+      <button id="btnLink" data-tb="link" data-pri="5" data-label="Link" aria-label="Link" title="Link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
+      <button data-cmd="removeFormat" data-tb="clear" data-pri="7" data-label="Clear formatting" aria-label="Clear formatting" title="Clear formatting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
       <span class="sep"></span>
-      <button id="btnLink" title="Link"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
-      <button data-cmd="removeFormat" title="Clear formatting"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
+      <button id="btnCite" class="cite-btn tb-lbl" data-tb="cite" data-label="Cite" title="Insert citation (Ctrl/Cmd+Alt+C)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6H5v5h5zM10 11c0 3.5-1.6 5.6-5 7"/><path d="M20 6h-5v5h5zM20 11c0 3.5-1.6 5.6-5 7"/></svg><span class="lbl">Cite</span></button>
+      <button id="btnFootnote" data-tb="footnote" data-pri="2" data-label="Footnote" aria-label="Footnote" title="Insert a text footnote (not a citation)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19h12M3 14h8"/><path d="M17.5 5 19.5 3.5V11M17.5 11h4"/></svg></button>
+      <button id="btnFlag" data-tb="flag" data-pri="3" data-label="Flag (TK, citation needed, check)" aria-label="Flag (TK, citation needed, check)" title="Leave a flag: TK, citation needed, check this (Ctrl/Cmd+Shift+K)" class="flag-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-2.5 4.5L17 13H5"/></svg></button>
+      <button id="btnCapture" data-tb="capture" data-pri="3" data-label="Capture as a note" aria-label="Capture as a note" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6"/><path d="M8 15h7M12.5 12.5 15 15l-2.5 2.5"/></svg></button>
+      <button id="btnComment" data-tb="comment" data-pri="4" data-label="Margin note" aria-label="Margin note" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.3a8 8 0 1 1 15.2-4.2z"/><path d="M9 10h7M9 13.5h4.5"/></svg></button>
+      <button id="btnIndexMark" data-tb="index" data-pri="8" data-label="Index entry" aria-label="Index entry" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5V4h7.5l9.5 9.5-7.5 7.5z"/><circle cx="7.6" cy="8.1" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <button id="btnMark" class="mark-btn tb-lbl" data-tb="mark" data-pri="1" data-label="Mark: thread, claim, review, question" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg><span class="lbl">Mark</span><span class="caret" aria-hidden="true">▾</span></button>
+      <button id="btnLens" data-tb="lens" data-pri="6" data-label="Revision lens" aria-label="Revision lens" title="Revision lens: long sentences, passive voice, hedges, repeats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button id="btnFind" data-tb="find" data-pri="4" data-label="Find &amp; replace" aria-label="Find &amp; replace" title="Find &amp; replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       <span class="sep"></span>
-      <button id="btnCite" class="cite-btn" title="Insert citation">“ Cite</button>
-      <button id="btnFootnote" title="Insert a text footnote (not a citation)">Footnote</button>
-      <button id="btnFlag" class="flag-btn" title="Leave a flag: TK, citation needed, check this (Ctrl/Cmd+Shift+K)">TK</button>
-      <button id="btnCapture" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)">→ Note</button>
- <button id="btnIndexMark" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)">⌗</button>
-      <button id="btnComment" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)">✎</button>
-      <div class="menu" id="markMenuWrap"><button id="btnMark" class="mark-btn" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu">Mark ▾</button>
-        <div class="menu-pop mark-pop" id="markMenu" role="menu">
-          <button data-m="th" role="menuitem"><span class="mk-i mk-th" aria-hidden="true"></span>Highlight in a thread… <kbd>T</kbd></button>
-          <button data-m="cl" role="menuitem"><span class="mk-i mk-cl" aria-hidden="true"></span>Claim to check <kbd>C</kbd></button>
-          <button data-m="rv" role="menuitem"><span class="mk-i mk-rv" aria-hidden="true">⚑</span>Key for review… <kbd>R</kbd></button>
-          <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
-          <hr>
-          <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
-        </div>
+      <button data-cmd="undo" data-tb="undo" data-pri="2" data-label="Undo" aria-label="Undo" title="Undo (Ctrl/Cmd+Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+      <button data-cmd="redo" data-tb="redo" data-pri="5" data-label="Redo" aria-label="Redo" title="Redo (Ctrl/Cmd+Shift+Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+      <div class="spacer pb-flex"></div>
+      <div class="menu pb-more" id="tbMoreWrap"><button id="btnTbMore" class="icon" aria-label="More tools and view options" title="More tools and view options" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><div class="menu-pop pb-pop" id="tbMore" role="menu"></div></div>
+      <div class="menu-pop mark-pop" id="markMenu" role="menu">
+        <button data-m="th" role="menuitem"><span class="mk-i mk-th" aria-hidden="true"></span>Highlight in a thread… <kbd>T</kbd></button>
+        <button data-m="cl" role="menuitem"><span class="mk-i mk-cl" aria-hidden="true"></span>Claim to check <kbd>C</kbd></button>
+        <button data-m="rv" role="menuitem"><span class="mk-i mk-rv" aria-hidden="true">⚑</span>Key for review… <kbd>R</kbd></button>
+        <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
+        <hr>
+        <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
       </div>
-      <button id="btnLens" title="Revision lens: long sentences, passive voice, hedges, repeats">Lens</button>
-      <button id="btnFind" title="Find & replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
-      <span class="sep"></span>
-      <button data-cmd="undo" title="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
-      <button data-cmd="redo" title="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
     </div>
     <div class="scriptbar hidden" id="scriptBar"><span>Run time <b id="scRun">0:00</b></span><span class="muted"><span id="scWords">0</span> narrated words at</span><input id="scWpm" type="number" min="60" max="260" step="5" value="150" aria-label="Words per minute"><span class="muted">wpm</span><span class="sb-sep"></span><button id="scAV" class="small">+ A/V table</button><button id="scCopy" class="small">Copy narration</button><button id="scPrompt" class="small primary">Teleprompter</button></div>
 <div class="lensbar hidden" id="lensBar"></div>
@@ -1849,7 +2021,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
     <div id="ixTerms"></div>
     <div style="display:flex;gap:6px;margin-top:6px"><button id="ixAddTerm" class="small">+ Add term</button><button id="ixPreview" class="small">Preview index</button></div>
     <div class="diffbox hidden" id="ixPrev"></div>
-    <div class="tip">To index a single passage, put the cursor there and click ⌗ in the toolbar (Ctrl/Cmd+Alt+X). Use subentries for depth (Wagner Group → in Africa) and <i>See also</i> for cross-references. Then tick <b>Add an index</b> in Page setup, or <b>Index</b> in Compile manuscript.</div>
+    <div class="tip">To index a single passage, put the cursor there and click the index-entry button (tag) in the toolbar (Ctrl/Cmd+Alt+X). Use subentries for depth (Wagner Group → in Africa) and <i>See also</i> for cross-references. Then tick <b>Add an index</b> in Page setup, or <b>Index</b> in Compile manuscript.</div>
   </div>
   <footer><button id="ixManClose" class="primary">Done</button></footer>
 </div></dialog>
@@ -1929,7 +2101,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
   <footer><button id="pwFresh" class="ghost danger hidden">Forgot it? Start without this copy</button><button id="pwCancel">Cancel</button><button id="pwOk" class="primary">Unlock</button></footer>
 </div></dialog>
 <dialog id="lkDlg"><div class="dlg">
-  <h3>🔒 This project is locked</h3>
+  <h3>This project is locked</h3>
   <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p></div>
   <footer><button id="lkRemove" class="danger">Remove lock</button><button id="lkChange">Change password</button><button id="lkClose" class="primary">Done</button></footer>
 </div></dialog>
@@ -2134,8 +2306,14 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <div><label>“Uncited paragraph” means ≥ words</label><input id="stUncited" inputmode="numeric"></div>
     </div>
     <div class="radio-row" style="margin-top:10px">
-      <label><input type="checkbox" id="stType"> Focus mode: keep the line you’re on centered</label>
-      <label><input type="checkbox" id="stDim"> Focus mode: dim other paragraphs</label>
+    </div>
+    <div class="grid2">
+      <div><label for="stType">Typewriter scrolling <span class="muted">(keep your line mid-screen)</span></label><select id="stType"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
+      <div><label for="stDim">Dim other paragraphs</label><select id="stDim"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
+    </div>
+    <div class="radio-row">
+      <label><input type="checkbox" id="stFocusMarks"> Show research marks in focus mode</label>
+      <button type="button" class="small" id="stToolbar" style="margin:4px 0 6px">Customize toolbar…</button>
       <label><input type="checkbox" id="stSpell"> Spellcheck</label>
       <label><input type="checkbox" id="stHome"> Open to the project home (otherwise straight to the draft)</label>
       <label><input type="checkbox" id="stAuto"> Autosave to the project file (Chrome and Edge)</label><div class="small muted" id="stAutoNote" style="margin:-2px 0 6px 24px"></div>
@@ -2145,6 +2323,21 @@ table.eg .eg-c a:hover{text-decoration:underline}
     <div class="tip">Your work is always copied into this browser as you type. The reminder is for saving the project file, the copy you keep and back up.</div>
   </div>
   <footer><button id="stCancel">Cancel</button><button id="stOk" class="primary">Save settings</button></footer>
+</div></dialog>
+
+<dialog id="tbcDlg"><div class="dlg">
+  <h3>Customize the toolbar</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Untick what you don’t use. Hidden buttons stay one click away in the toolbar’s ⋯ menu, and their shortcuts keep working.</p>
+    <div class="tbc-list" id="tbcList"></div>
+  </div>
+  <footer><span class="left"><button id="tbcReset">Show all</button> <button id="tbcMin">Essentials only</button></span><button id="tbcCancel">Cancel</button><button id="tbcOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<dialog id="keysDlg" class="wide"><div class="dlg">
+  <h3>Keyboard shortcuts</h3>
+  <div class="body keys" id="keysBody"></div>
+  <footer><span class="small muted left">Press <kbd>?</kbd> any time you’re not typing, or <kbd>Ctrl/⌘ /</kbd>.</span><button id="keysClose" class="primary">Done</button></footer>
 </div></dialog>
 
 <!-- generic prompt / confirm -->
@@ -2165,17 +2358,26 @@ table.eg .eg-c a:hover{text-decoration:underline}
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
     <h4>Writing</h4>
     <ul>
-      <li><b>“ Cite</b> inserts a citation at the cursor. Pick one or more sources, add page or other locators, and it formats in the document’s style. Note styles (Chicago notes &amp; bibliography) number it as a note. Author-date, APA and MLA show a parenthetical.</li>
+      <li><b>Cite</b> inserts a citation at the cursor. Pick one or more sources, add page or other locators, and it formats in the document’s style. Note styles (Chicago notes &amp; bibliography) number it as a note. Author-date, APA and MLA show a parenthetical.</li>
       <li><b>Note text</b> in the citation window adds your own words to the note, after the citation: “Xenophon, <i>Anabasis</i>, IV.7. Dakyns places the mountain farther east.” Use *asterisks* for italics. In author-date styles the parenthetical stays in the text and your words become a numbered footnote. It carries through to PDF and Word footnotes and to ePub, HTML, Markdown and Substack notes.</li>
       <li>Click any citation or footnote marker to edit or remove it. Notes and the bibliography rebuild themselves below the text, with <i>Ibid.</i> and short forms handled automatically.</li>
       <li>Switch the style from the menu next to the title. Every citation reformats at once.</li>
       <li>Pasted text keeps basic formatting (headings, bold, italics, lists, links) and drops the rest. Use <kbd>Ctrl/Cmd+Shift+V</kbd> for plain text.</li>
     </ul>
+    <h4>Your screen &amp; your toolbar</h4>
+    <ul>
+      <li>When the window is narrow, toolbar and top-bar buttons that don’t fit move into the <b>⋯</b> menu at the end of their bar. Nothing disappears: every tool is one tap away. On phones the sidebar opens from <b>☰</b> as a drawer, the page fills the screen, and dialogs open full screen.</li>
+      <li><b>☰</b> also puts the sidebar away on a wide screen when you want more room for the page.</li>
+      <li><b>Customize toolbar…</b> (in the toolbar’s ⋯ menu, or Settings) hides buttons you don’t use. They wait in the ⋯ menu, and their shortcuts keep working. <b>Essentials only</b> leaves bold, italic, Cite, Footnote, Mark and Undo.</li>
+      <li><b>Typewriter scrolling</b> keeps the line you’re writing near the middle of the screen, and <b>Dim other paragraphs</b> fades everything but the one you’re in. Turn them on from the ⋯ menu, or choose in Settings whether they apply only in focus mode or always.</li>
+      <li>Press <kbd>?</kbd> when you’re not typing (or <kbd>⌘/Ctrl /</kbd>) for every keyboard shortcut.</li>
+      <li><b>On an iPhone or iPad:</b> open the hosted copy in Safari, tap Share, then <b>Add to Home Screen</b>. It opens full screen and works offline. The Home Screen app keeps its own working copy, separate from Safari’s, so move work between them with your project file.</li>
+    </ul>
     <h4>Drafting</h4>
     <ul>
       <li><b>TK</b> leaves a flag where something’s missing: a fact (TK), a citation (cite?), or something to verify (check). Typing the letters TK counts too. Everything to resolve is listed under <b>Outline</b>. Click an item to jump to it.</li>
       <li><b>Outline</b> also lists your headings with section word counts, and paragraphs of 40+ words with no citation. Tick <i>highlight</i> to mark those in the text.</li>
-      <li><b>→ Note</b> turns selected text into a note, linked to the source if the passage carries a citation. With nothing selected it opens a blank note for a quick idea.</li>
+      <li><b>Capture as a note</b> (the note-with-arrow button) turns selected text into a note, linked to the source if the passage carries a citation. With nothing selected it opens a blank note for a quick idea.</li>
       <li><b>Focus</b> hides everything but the page, keeps your line centered and shows your word count and session progress. Set word targets in Page setup and a session goal in Settings.</li>
       <li><b>Search</b> (<kbd>Ctrl/Cmd+K</kbd>) finds anything in your documents, notes and sources, and runs commands. <kbd>Ctrl/Cmd+F</kbd> is find and replace in the current document.</li>
     </ul>
@@ -2190,7 +2392,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
     <h4>Getting sources in</h4>
     <ul>
       <li>Paste a <b>URL</b>, DOI or ISBN into the Sources tab. URLs are looked up through Wikipedia’s citation service (Citoid) for author, date and publication. If a site blocks it or you’re offline, the URL is saved and you fill in the rest.</li>
-      <li><b>✂ Web clipper</b> gives you a bookmark button that clips any page, plus a selected passage, straight into your project. It needs Anabasis at a web address (GitHub Pages works), not opened as a local file.</li>
+      <li><b>Web clipper</b> gives you a bookmark button that clips any page, plus a selected passage, straight into your project. It needs Anabasis at a web address (GitHub Pages works), not opened as a local file.</li>
       <li>Keep Anabasis open in <b>one tab</b>. Clips sent from other pages go to that tab automatically. If you open a second tab, you’ll get a warning so the two don’t overwrite each other.</li>
     </ul>
     <h4>Nonfiction tools</h4>
@@ -2223,6 +2425,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <li><b>Questions</b> (<kbd>Q</kbd>) link passages to an open research question. Questions are shared with Plan. Record what you’ve found and attach notes on the research desk.</li>
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
+      <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
     </ul>
     <h4>Checking the draft</h4>
     <ul>
@@ -2257,7 +2460,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <li><b>Figures:</b> the picture button inserts an image, chart or map; you can also paste a screenshot or drop image files onto the page. Type the caption underneath. Figures number themselves (Figure 1, 2…). Click an image to resize it, add alt text, or replace it. Large images are scaled down to 1800 px, and they travel inside the project file.</li>
       <li><b>Tables:</b> the grid button inserts one with a caption above. Tab moves between cells and adds a row at the end; the bar above the table adds and removes rows and columns. Word import now keeps images and tables.</li>
       <li><b>List of figures &amp; tables:</b> add it from Templates (front matter), the ⌘K command search, or the manuscript compile options. It fills in on export, with page numbers in PDF.</li>
-      <li><b>Marginalia:</b> <b>✎</b> in the toolbar (⌘/Ctrl+Alt+A) writes a note in the margin beside the line, anchored to the cursor or to selected text. Esc goes back to the text, and an empty note disappears. On narrow screens notes fold into numbered tabs. Page setup decides what exports do with them: Word comments, a separate <i>Marginalia</i> page at the end (with page numbers in PDF and Word), or leave them out.</li>
+      <li><b>Marginalia:</b> the speech-bubble button in the toolbar (⌘/Ctrl+Alt+A) writes a note in the margin beside the line, anchored to the cursor or to selected text. Esc goes back to the text, and an empty note disappears. On narrow screens notes fold into numbered tabs. Page setup decides what exports do with them: Word comments, a separate <i>Marginalia</i> page at the end (with page numbers in PDF and Word), or leave them out.</li>
     </ul>
     <h4>Substack, imports, autosave &amp; locking</h4>
     <ul>
@@ -2274,7 +2477,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
     </ul>
     <h4>Planning</h4>
     <ul>
-      <li><b>▤ Plan</b> (Docs tab) is an outliner for structure before drafting. Enter adds a line, Tab and Shift+Tab indent and outdent, Alt+↑/↓ moves an item, ⌘/Ctrl+. folds it, and ⠿ drags it (drop on the right side to nest). Each item has a synopsis, a word target, a status, and linked notes, sources and document. Drag notes from the Notes list onto an item to link them.</li>
+      <li><b>Plan</b> (Docs tab) is an outliner for structure before drafting. Enter adds a line, Tab and Shift+Tab indent and outdent, Alt+↑/↓ moves an item, ⌘/Ctrl+. folds it, and ⠿ drags it (drop on the right side to nest). Each item has a synopsis, a word target, a status, and linked notes, sources and document. Drag notes from the Notes list onto an item to link them.</li>
       <li>Items can be <b>sections</b>, <b>claims</b>, <b>evidence</b>, <b>counterpoints</b>, <b>research questions</b> or <b>ideas</b>. <b>Argument check</b> lists claims without evidence, evidence without a source, unanswered counterpoints, open questions, and sections running short of their targets.</li>
       <li><b>Index cards</b> shows one level as cards with synopses. Drag to reorder, and double-click to go inside. <b>Focus branch</b> narrows the plan to one chapter.</li>
       <li><b>Templates</b>: argument essay, policy brief / white paper, intelligence brief, op-ed, narrative journalism, explainer / video script, Substack article series, nonfiction book, book proposal.</li>
@@ -2284,13 +2487,13 @@ table.eg .eg-c a:hover{text-decoration:underline}
     </ul>
     <h4>PDF reader</h4>
     <ul>
-      <li><b>📄 Read a PDF</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
+      <li><b>Read a PDF</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
       <li>Select a passage, then click <b>Quote note</b> (saved with the page number) or <b>Paraphrase note</b> (opens so you can rewrite it). If the PDF’s page numbers differ from the printed ones, set the <b>page offset</b> (PDF page 15 = printed 1 → 14). PDFs with built-in page labels are handled automatically.</li>
       <li>Link the PDF to a source with the menu at the top, or choose <i>New source from this PDF</i>. That uses the PDF’s DOI when it has one, otherwise its title, author and date. Linked PDFs are kept in this browser so they reopen from the source, but they’re never put in your project file.</li>
     </ul>
     <h4>Index</h4>
     <ul>
-      <li>Mark single passages with ⌗ (Ctrl/Cmd+Alt+X). List terms, and optionally your Names list, to index every occurrence automatically. Subentries and <i>see also</i> references are supported.</li>
+      <li>Mark single passages with the index-entry button (Ctrl/Cmd+Alt+X). List terms, and optionally your Names list, to index every occurrence automatically. Subentries and <i>see also</i> references are supported.</li>
       <li>Turn on <b>Add an index</b> in Page setup, or <b>Index</b> in Compile manuscript. Book-style PDFs get real page numbers, with ranges joined (12–14). Word files get true index fields that build when Word opens the file. ePub and HTML get links to each passage.</li>
     </ul>
     <h4>Binder &amp; manuscripts</h4>
@@ -2299,7 +2502,7 @@ table.eg .eg-c a:hover{text-decoration:underline}
       <li><b>Compile manuscript…</b> joins documents in binder order into one Word file, PDF, Markdown, HTML or new document. Notes number continuously and short forms carry across chapters.</li>
     </ul>
     <h4>Keyboard</h4>
-    <p><kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl Alt G</kbd> mark (then T, C, R, Q or D) · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
+    <p><kbd>?</kbd> all shortcuts · <kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl Alt G</kbd> mark (then T, C, R, Q or D) · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
     <h4>Saving</h4>
     <ul><li>The browser keeps a working copy of everything as you type. If you forget to save the file for a while (15 minutes by default, set in Settings), a reminder bar appears. If you open a project file and this browser holds newer unsaved work on it, Anabasis asks which to use.</li></ul>
     <h4>OSINT Style Guide citations</h4>
@@ -2363,7 +2566,8 @@ Full license texts ship with the source code: https://github.com/gmichaelrapp/an
 <button id="focusExit" class="focus-ui" title="Exit focus mode (Esc)">Exit focus</button>
 <div id="focusStat" class="focus-ui"></div>
 <div id="printRoot"></div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div id="scrim" aria-hidden="true"></div>
 <div class="tour hidden" id="tour"><div class="tour-spot" id="tourSpot"></div><div class="tour-box" id="tourBox" role="dialog" aria-modal="false" aria-labelledby="tourTitle" aria-describedby="tourText"><div class="tour-step" id="tourStep"></div><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tour-acts"><button id="tourSkip" class="ghost small">Skip tour</button><span class="spacer"></span><button id="tourBack" class="small">Back</button><button id="tourNext" class="primary small">Next</button></div></div></div>
 
 <!--@CSL@-->

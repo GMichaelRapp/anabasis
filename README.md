@@ -22,7 +22,7 @@
 
 Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
 
-The whole app is a single HTML file of about 7.5 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+The whole app is a single HTML file of about 8 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
 
 ## What it does
 
@@ -57,10 +57,11 @@ The whole app is a single HTML file of about 7.5 MB. Download it, open it in you
 |---|---|
 | ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab's checks beside a draft](docs/screenshots/checks.png) |
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
+| ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar's ⋯ menu](docs/screenshots/phone.png) |
 
 ## Getting started
 
-**New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in eleven illustrated steps.
+**New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in twelve illustrated steps.
 
 1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
 2. Open it in your browser. A short tour and a sample project show you around.
@@ -68,13 +69,19 @@ The whole app is a single HTML file of about 7.5 MB. Download it, open it in you
 
 You can also use the [hosted copy](https://gmichaelrapp.github.io/anabasis/). It is the same file and still keeps everything in your browser.
 
+### On an iPhone or iPad
+
+Open the [hosted copy](https://gmichaelrapp.github.io/anabasis/) in Safari, tap **Share**, then **Add to Home Screen**. Anabasis then opens like an app, full screen, and works offline once it has loaded. Android browsers offer **Install app** in their menu.
+
+The installed app keeps its own working copy, separate from Safari's, so save your project file and open it there to carry work across. Saving on a phone or tablet puts the `.json` file in Files (or Downloads) each time.
+
 ### Browsers
 
 Anabasis works best in current desktop **Chrome**, **Edge**, **Brave** or another Chromium browser. In those browsers it can save straight back to your project file and autosave to it.
 
 **Firefox** and **Safari** work too. Saving downloads a fresh copy of the project file each time instead of overwriting it, and some highlights in the checks appear only in the lists, not in the text.
 
-Phones and tablets are fine for reading and light editing. For a long working session, use a computer.
+On phones and tablets the layout adapts: the sidebar becomes a drawer, toolbar buttons that don't fit move into a **⋯** menu, and dialogs open full screen. A computer is still the most comfortable place for a long working session.
 
 ## Your data
 
@@ -95,6 +102,14 @@ To run the tests (Playwright and Chromium):
 ```sh
 pip install playwright && python -m playwright install chromium
 python tests/run_tests.py
+```
+
+Other tools:
+
+```sh
+python tools/site/build_site.py        # the installable hosted copy (site/), as published to GitHub Pages
+python tools/guide/quickstart.py       # the quick-start screenshots
+python tools/guide/screenshots.py      # the interface screenshots in this README
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out.

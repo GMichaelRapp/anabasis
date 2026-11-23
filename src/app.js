@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -126,7 +126,7 @@ function sampleProject() {
   d.html = `<h1>Welcome to Anabasis</h1>
 <p>Anabasis keeps your documents, notes and sources together in one project. <b>Your work stays on this computer.</b> There’s no account and no server: the browser keeps a working copy as you type, and <b>Save</b> writes the whole project to one .json file wherever you choose. Anabasis goes online only when you look up a source by DOI, ISBN or web address, or back up to GitHub.</p>
 <h2>Citations</h2>
-<p>This sample document shows how citations work. Click a highlighted marker to edit it, or use <b>“ Cite</b> in the toolbar to add one. The first citation of Tuchman prints in full, and the second becomes a short note.${c(s1.id, '3')}</p>
+<p>This sample document shows how citations work. Click a highlighted marker to edit it, or use <b>Cite</b> in the toolbar to add one. The first citation of Tuchman prints in full, and the second becomes a short note.${c(s1.id, '3')}</p>
 <p>Proxy strategies let a state act while keeping its distance from the outcome.${c(s2.id, '41–42')} Notes and the bibliography below rebuild as you write.${fnHTML('This is a text footnote, a discursive aside rather than a citation. It is numbered with the citation notes.')}</p>
 <p>Plans built for speed can crowd out diplomacy.${c(s1.id, '17–18')}</p>
 <p>Change the style in the menu next to the title (try <i>Chicago author-date</i>, <i>APA</i>, <i>MLA</i>, or the <i>OSINT Style Guide</i>) and every citation reformats.</p>
@@ -569,7 +569,16 @@ function insertBlocksAtCursor(html) {
   last.nodeType === 1 && last.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   syncEditor(); renderRefs(true); updateWordCount(); markDirty(); refreshChecks();
 }
-function exec(cmd, val = null) { restoreSelection(); document.execCommand(cmd, false, val); onEdit(); updateToolbarState(); }
+function exec(cmd, val = null) {
+  if (cmd === 'undo' && typeof rmCanUndo === 'function' && rmCanUndo()) { rmUndo(); return; }
+  if (cmd === 'redo' && typeof rmCanRedo === 'function' && rmCanRedo()) { rmRedo(); return; }
+  restoreSelection(); document.execCommand(cmd, false, val); onEdit(); updateToolbarState();
+}
+editor.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey; if (!mod || e.altKey) return; const k = e.key.toLowerCase();
+  if (k === 'z' && !e.shiftKey && rmCanUndo()) { e.preventDefault(); e.stopImmediatePropagation(); rmUndo(); }
+  else if (((k === 'z' && e.shiftKey) || k === 'y') && rmCanRedo()) { e.preventDefault(); e.stopImmediatePropagation(); rmRedo(); }
+}, true);
 try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
 $('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('button')) e.preventDefault(); });
 $$('#toolbar [data-cmd]').forEach(b => b.addEventListener('click', () => exec(b.dataset.cmd)));
@@ -1864,13 +1873,23 @@ function ask(title, msg, okLabel = 'OK', inputValue = null) {
   });
 }
 let toastT;
-function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2800); }
+function toast(msg, action) {
+  const t = $('#toast'); t.textContent = msg; t.classList.toggle('has-act', !!action);
+  if (action) { const b = document.createElement('button'); b.className = 'toast-act'; b.textContent = action.label; b.addEventListener('click', () => { t.classList.remove('show'); action.fn(); }); t.append(b); }
+  t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2800);
+}
 function switchTab(name) {
   $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
   $$('.pane').forEach(p => p.classList.toggle('on', p.dataset.pane === name));
 }
 $$('.tabs button').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.tab)));
-$('#btnSide').addEventListener('click', () => document.body.classList.toggle('side-open'));
+$('#btnSide').addEventListener('click', () => {
+  const b = document.body;
+  if (innerWidth > 860) { const hide = !b.classList.contains('side-hidden') || b.classList.contains('side-open'); b.classList.remove('side-open'); b.classList.toggle('side-hidden', hide); PREFS.sideHidden = hide; savePrefs(); pbSoon(); }
+  else b.classList.toggle('side-open');
+});
+$('#scrim').addEventListener('click', () => document.body.classList.remove('side-open'));
+if (PREFS.sideHidden) document.body.classList.add('side-hidden');
 $('#btnSave').addEventListener('click', () => saveProject(false));
 $('#btnOpen').addEventListener('click', openProject);
 $('#btnNewProj').addEventListener('click', () => openNewProject());
@@ -2161,25 +2180,25 @@ editor.addEventListener('input', debounce(updateTargets, 400));
 function toggleFocus(on) {
   const b = document.body, want = on ?? !b.classList.contains('focus');
   b.classList.toggle('focus', want);
-  b.classList.toggle('dim', want && PREFS.dimOthers);
+  applyWritingView();
   if (want) { try { document.documentElement.requestFullscreen?.().catch(() => {}); } catch (e) {} updateTargets(); setTimeout(() => restoreSelection(), 50); }
-  else { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} $$('[data-cp-current]', editor).forEach(x => x.removeAttribute('data-cp-current')); }
+  else { try { if (document.fullscreenElement) document.exitFullscreen(); } catch (e) {} if (!writingView().dim) $$('[data-cp-current]', editor).forEach(x => x.removeAttribute('data-cp-current')); }
 }
 $('#btnFocus').addEventListener('click', () => toggleFocus(true));
 $('#focusExit').addEventListener('click', () => toggleFocus(false));
 document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && document.body.classList.contains('focus')) { /* stay in focus mode; Esc on our side exits */ } });
 function focusTrack() {
-  if (!document.body.classList.contains('focus')) return;
+  const wv = writingView(); if (!wv.tw && !wv.dim) return;
   const sel = getSelection(); if (!sel.rangeCount || !editor.contains(sel.anchorNode)) return;
   let blk = sel.anchorNode; while (blk && blk.parentNode !== editor) blk = blk.parentNode;
   $$('[data-cp-current]', editor).forEach(x => { if (x !== blk) x.removeAttribute('data-cp-current'); });
   if (blk && blk.nodeType === 1) blk.setAttribute('data-cp-current', '');
-  if (PREFS.typewriter) {
+  if (wv.tw && sel.isCollapsed) {
     const r = sel.getRangeAt(0).cloneRange(); let rect = r.getBoundingClientRect();
     if (!rect.height && blk && blk.nodeType === 1) rect = blk.getBoundingClientRect();
     const sc = $('#scroller'), sr = sc.getBoundingClientRect();
     const target = sr.top + sr.height * 0.42;
-    if (rect.height && Math.abs(rect.top - target) > 24) sc.scrollTop += rect.top - target;
+    if (rect.height && Math.abs(rect.top - target) > 24) { const d = rect.top - target; if (Math.abs(d) > sr.height * 0.6 || matchMedia('(prefers-reduced-motion: reduce)').matches) sc.scrollTop += d; else sc.scrollBy({ top: d, behavior: 'smooth' }); }
   }
 }
 document.addEventListener('selectionchange', debounce(focusTrack, 30));
@@ -2187,15 +2206,15 @@ document.addEventListener('selectionchange', debounce(focusTrack, 30));
 /* ---------- settings ---------- */
 function openSettings() {
   $('#stRemind').value = String(PREFS.remindMins); $('#stGoal').value = PREFS.sessionGoal || '';
-  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stType').checked = !!PREFS.typewriter; $('#stDim').checked = !!PREFS.dimOthers; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
+  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
   $('#settingsDlg').showModal(); renderStorageStatus();
 }
 $('#btnSettings').addEventListener('click', openSettings);
 $('#stCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#stOk').addEventListener('click', () => {
   PREFS.remindMins = +$('#stRemind').value; PREFS.sessionGoal = Math.max(0, parseInt($('#stGoal').value, 10) || 0);
-  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.typewriter = $('#stType').checked; PREFS.dimOthers = $('#stDim').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
-  savePrefs(); $('#settingsDlg').close();
+  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
+  savePrefs(); $('#settingsDlg').close(); applyWritingView();
   editor.spellcheck = PREFS.spellcheck; snoozeUntil = 0; checkReminder(); renderOutline(); updateTargets();
 });
 $('#remindSave').addEventListener('click', () => saveProject(false));
@@ -2919,7 +2938,7 @@ const dfWhen = iso => new Date(iso).toLocaleString([], { month: 'short', day: 'n
 function updateDraftBtn() {
   const d = curDoc(), b = $('#btnVersions'); if (!d || !b) return;
   const n = d.snapshots.filter(isDraft).length;
-  b.innerHTML = `Drafts${n ? ` <span class="df-count">${n}</span>` : ''}`;
+  b.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span>${n ? ` <span class="df-count">${n}</span>` : ''}`;
   b.title = n ? `${n} saved draft${n === 1 ? '' : 's'}. Save, compare side by side, restore (⌘/Ctrl+Alt+D saves one)` : 'Save a draft of this document to compare against later (⌘/Ctrl+Alt+D)';
 }
 
@@ -4753,7 +4772,7 @@ async function renderHome() {
       <button class="primary" id="hmResume">Resume writing →</button>
     </div>
     <div class="hm-next"><span><b>Next:</b> ${esc(hmNext.text)}</span><button id="hmNextBtn">${esc(hmNext.btn)}</button></div>
-    <div class="hm-quick"><button data-q="plan">▤ Plan</button><button data-q="board">Board</button><button data-q="fw">Freewrite</button><button data-q="reader">PDF reader</button><button data-q="record">Writing record</button><button data-q="ms">Compile manuscript</button></div>
+    <div class="hm-quick"><button data-q="plan"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button data-q="board">Board</button><button data-q="fw">Freewrite</button><button data-q="reader">PDF reader</button><button data-q="record">Writing record</button><button data-q="ms">Compile manuscript</button></div>
   </div>
 
   <div class="hm-card">
@@ -5637,7 +5656,7 @@ function openSpecEditor(spec, fig) {
 /* the toolbar figure button becomes a small menu */
 function openFigureMenu() {
   saveSelectionNow(); closePop();
-  const b = $('#btnFigure').getBoundingClientRect();
+  const b = tbAnchor('#btnFigure').getBoundingClientRect();
   popEl = document.createElement('div'); popEl.className = 'pop fig-menu';
   popEl.innerHTML = [['img', 'Image from a file…', 'Photo, scan, screenshot or chart you made elsewhere'], ['chart', 'Chart from data…', 'Paste a table: columns, bars, lines'], ['map', 'Map…', 'Shade countries, place markers, draw routes and areas'], ['timeline', 'Timeline…', 'From your dated notes'], ['network', 'Relationship map…', 'Who’s connected to whom, from your names list']]
     .map(([k, t, d]) => `<button data-f="${k}"><b>${t}</b><span>${d}</span></button>`).join('');
@@ -7219,9 +7238,12 @@ function rmApply(range, k, extra = {}) {
 }
 function markClaim() {
   const r = rmRange(); if (!r) return;
-  const id = uid('cl'); const pid = rmApply(r, 'cl', { pid: id }); if (!pid) return;
-  P.claims.push({ id, status: 'open', note: '', checkedText: '', checkedAt: '', created: nowISO(), modified: nowISO() });
-  markDirty(); rmRefresh(); toast('Marked as a claim. Click it to set whether it’s supported.');
+  const ok = rmOp('mark a claim', () => {
+    const id = uid('cl'); const pid = rmApply(r, 'cl', { pid: id }); if (!pid) return false;
+    P.claims.push({ id, status: 'open', note: '', checkedText: '', checkedAt: '', created: nowISO(), modified: nowISO() });
+    markDirty(); rmRefresh(); return true;
+  });
+  if (ok) rmUndoToast('Marked as a claim. Click it to set whether it’s supported.');
 }
 let thRange = null;
 function openThreadPick() {
@@ -7237,8 +7259,9 @@ function thAddTo(id) {
   $('#thDlg').close(); editor.focus();
   if (!thRange) return;
   const s = getSelection(); s.removeAllRanges(); s.addRange(thRange);
-  const pid = rmApply(thRange, 'th', { ref: id }); thRange = null;
-  if (pid) { const t = thById(id); toast(`Added to “${t ? t.name : 'thread'}”.`); }
+  const rg = thRange; thRange = null;
+  const pid = rmOp('highlight in a thread', () => rmApply(rg, 'th', { ref: id }));
+  if (pid) { const t = thById(id); rmUndoToast(`Added to “${t ? t.name : 'thread'}”.`); }
 }
 $('#thPickList').addEventListener('click', e => { const b = e.target.closest('[data-th]'); if (b) thAddTo(b.dataset.th); });
 function newThread(name, color) {
@@ -7247,7 +7270,7 @@ function newThread(name, color) {
 }
 $('#thNew').addEventListener('click', () => {
   const name = $('#thName').value.trim(); if (!name) { $('#thName').focus(); return; }
-  const t = newThread(name, $('#thColors .on')?.dataset.c); thAddTo(t.id);
+  rmOp('highlight in a new thread', () => { const t = newThread(name, $('#thColors .on')?.dataset.c); thAddTo(t.id); });
 });
 $('#thName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#thNew').click(); } });
 $('#thCancel').addEventListener('click', () => { thRange = null; $('#thDlg').close(); });
@@ -7270,9 +7293,10 @@ $('#rvOk').addEventListener('click', () => {
   $('#rvDlg').close();
   if (rvEdit) { Object.assign(rvEdit, v); markDirty(); rmRefresh(); rvEdit = null; return; }
   editor.focus(); const s = getSelection(); if (rvRange) { s.removeAllRanges(); s.addRange(rvRange); }
-  const id = uid('rv'); const pid = rmApply(rvRange, 'rv', { pid: id }); rvRange = null; if (!pid) return;
-  P.reviewKeys.push(Object.assign({ id, done: false, doneAt: '', created: nowISO() }, v)); markDirty(); rmRefresh();
-  toast(v.due ? `Keyed for review ${fmtDue(v.due)}.` : 'Keyed for review.');
+  const rg = rvRange; rvRange = null;
+  const ok = rmOp('key for review', () => { const id = uid('rv'); const pid = rmApply(rg, 'rv', { pid: id }); if (!pid) return false;
+    P.reviewKeys.push(Object.assign({ id, done: false, doneAt: '', created: nowISO() }, v)); markDirty(); rmRefresh(); return true; });
+  if (ok) rmUndoToast(v.due ? `Keyed for review ${fmtDue(v.due)}.` : 'Keyed for review.');
 });
 $('#rvCancel').addEventListener('click', () => { rvRange = rvEdit = null; $('#rvDlg').close(); });
 $('#rvNote').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) $('#rvOk').click(); });
@@ -7291,19 +7315,25 @@ function openQuestionLink(newOnly = false) {
 function qLink(id) {
   $('#qDlg').close(); if (!qRange) { rmRefresh(); return; }
   editor.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(qRange);
-  rmApply(qRange, 'q', { ref: id }); qRange = null; toast('Passage linked to the question.');
+  const rg = qRange; qRange = null;
+  if (rmOp('link to a question', () => rmApply(rg, 'q', { ref: id }))) rmUndoToast('Passage linked to the question.');
 }
 $('#qPickList').addEventListener('click', e => { const b = e.target.closest('[data-q]'); if (b) qLink(b.dataset.q); });
 $('#qNew').addEventListener('click', () => {
   const t = $('#qText').value.trim(); if (!t) { $('#qText').focus(); return; }
-  const it = plNewItem('', null, { type: 'question', title: t, status: 'open' }); markDirty();
-  if (qRange) qLink(it.id); else { $('#qDlg').close(); rmRefresh(); toast('Question added. It also appears in Plan and on Project home.'); }
+  if (qRange) { rmOp('link to a new question', () => { const it = plNewItem('', null, { type: 'question', title: t, status: 'open' }); markDirty(); qLink(it.id); }); return; }
+  plNewItem('', null, { type: 'question', title: t, status: 'open' }); markDirty();
+  $('#qDlg').close(); rmRefresh(); toast('Question added. It also appears in Plan and on Project home.');
 });
 $('#qText').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qNew').click(); } });
 $('#qCancel').addEventListener('click', () => { qRange = null; $('#qDlg').close(); });
 
-function removeMark(k, pidOrRecord) {
-  const pid = pidOrRecord;
+function removeMark(k, pid, quiet) {
+  const did = rmOp(`remove a ${(RM_KINDS[k] || 'mark').toLowerCase()}`, () => removeMarkNow(k, pid));
+  if (!quiet && !rmOpDepth) rmUndoToast(`Removed the ${(RM_KINDS[k] || 'mark').toLowerCase()}.`);
+  return did;
+}
+function removeMarkNow(k, pid) {
   const p = rmAll().find(x => x.pid === pid);
   if (p && p.docId !== curDocId) { const d = rmDoc(p.docId); if (d) { const t = document.createElement('div'); t.innerHTML = d.html; rmUnwrap(pid, t); d.html = t.innerHTML; d.modified = nowISO(); } }
   else if (rmUnwrap(pid)) syncEditor();
@@ -7388,10 +7418,9 @@ editor.addEventListener('keydown', e => { if (rmPopEl && e.key !== 'Shift') clos
 $('#scroller').addEventListener('scroll', () => closeRmPop(), { passive: true });
 
 /* ---------- the Mark menu and its quick keys ---------- */
-function openMarkMenu() { const m = $('#markMenu'), r = $('#btnMark').getBoundingClientRect(); m.classList.add('open'); const w = m.offsetWidth; m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; m.style.top = (r.bottom + 4) + 'px'; }
+function openMarkMenu() { const m = $('#markMenu'), r = tbAnchor('#btnMark').getBoundingClientRect(); closeMenusExcept(m); m.classList.add('open'); const w = m.offsetWidth; m.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px'; m.style.top = (r.bottom + 4) + 'px'; }
 $('#btnMark').addEventListener('click', e => { e.stopPropagation(); if ($('#markMenu').classList.contains('open')) $('#markMenu').classList.remove('open'); else openMarkMenu(); });
-$('#toolbar').addEventListener('scroll', () => $('#markMenu').classList.remove('open'), { passive: true });
-document.addEventListener('click', e => { if (!e.target.closest('#markMenuWrap')) $('#markMenu').classList.remove('open'); });
+document.addEventListener('click', e => { if (!e.target.closest('#btnMark,#markMenu,#tbMore')) $('#markMenu').classList.remove('open'); });
 function rmDo(a) {
   if (a === 'th') openThreadPick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
   if (a === 'desk') openDesk(); if (a === 'tab') { switchTab('research'); document.body.classList.add('side-open'); }
@@ -7399,7 +7428,7 @@ function rmDo(a) {
 $('#markMenu').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.m; if (!a) return; $('#markMenu').classList.remove('open'); rmDo(a); });
 document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey;
-  if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; $('#btnMark').scrollIntoView({ block: 'nearest', inline: 'nearest' }); openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
+  if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
   if ($('#markMenu').classList.contains('open') && !mod && !e.altKey) {
     const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', d: 'desk' }[e.key.toLowerCase()];
     if (m) { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); rmDo(m); }
@@ -7408,10 +7437,16 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- styles for threads (colors, show / hide) ---------- */
+const CL_LINE = {
+  ok: '--cl-bg:linear-gradient(var(--cs),var(--cs))',
+  need: '--cl-bg:repeating-linear-gradient(90deg,var(--cs) 0 6px,transparent 6px 10px)',
+  disp: '--cl-bg:linear-gradient(var(--cs) 0 1.5px,transparent 1.5px 3.5px,var(--cs) 3.5px 5px);--cl-h:5px',
+  cut: '--cl-bg:linear-gradient(var(--cs),var(--cs));--cl-pos:0 58%;--cl-h:1.5px',
+};
 function rmStyle() {
   let st = $('#rmStyle'); if (!st) { st = document.createElement('style'); st.id = 'rmStyle'; document.head.append(st); }
   st.textContent = P.threads.map(t => `.rm[data-ref="${rmEsc(t.id)}"]{--c:${t.color}}` + (t.hidden ? `#editor .rm[data-k=th][data-ref="${rmEsc(t.id)}"]{background:none;box-shadow:none}` : '')).join('\n')
-    + P.claims.map(c => c.status !== 'open' ? `.rm[data-rm="${rmEsc(c.id)}"]{--cs:var(--cl-${c.status});--cl-dec:${{ ok: 'solid', need: 'dashed', disp: 'double', cut: 'solid' }[c.status]}}` + (c.status === 'cut' ? `#editor .rm[data-rm="${rmEsc(c.id)}"]{text-decoration-line:line-through}` : '') : '').join('')
+    + P.claims.map(c => c.status !== 'open' ? `.rm[data-rm="${rmEsc(c.id)}"]{--cs:var(--cl-${c.status});${CL_LINE[c.status]}}` : '').join('')
     + P.reviewKeys.filter(r => r.done).map(r => `#editor .rm[data-rm="${rmEsc(r.id)}"]{border-bottom-color:transparent}`).join('');
   document.body.classList.toggle('marks-off', !!PREFS.marksOff);
 }
@@ -7508,7 +7543,7 @@ function deskThreads() {
       <textarea id="thNote" rows="2" placeholder="What this thread is tracking, and what you want it to add up to">${esc(t.note)}</textarea>
       <p class="small muted">${ps.length} passage${ps.length === 1 ? '' : 's'} in ${new Set(ps.map(p => p.docId)).size} document${new Set(ps.map(p => p.docId)).size === 1 ? '' : 's'}, in manuscript order.</p>
       <div class="th-read">${ps.length ? ps.map((p, i) => { const h = p.docId !== lastDoc ? `<h4>${docT(p.docId)}</h4>` : ''; lastDoc = p.docId; return `${h}<div class="th-p" style="--c:${t.color}"><p>${esc(p.text)}</p><div class="th-pb"><span class="muted small">${i + 1}</span><button class="ghost small" data-j="${DJ(() => rmGo(p))}">Go to passage</button><button class="ghost small danger" data-j="${DJ(() => removeMark('th', p.pid))}">Remove</button></div></div>`; }).join('') : '<p class="muted">No passages in this thread yet. Select text in a draft and add it with Mark → Add to thread.</p>'}</div>`;
-    $('#deskTools').innerHTML = `<button data-j="${DJ(() => threadDoc(t))}" ${ps.length ? '' : 'disabled'}>New document from thread</button><button class="danger" data-j="${DJ(async () => { if (await ask('Delete thread', `Delete “${t.name}”? Its ${ps.length} passage${ps.length === 1 ? '' : 's'} stay in your drafts, unhighlighted.`, 'Delete')) { ps.forEach(p => removeMark('th', p.pid)); P.threads = P.threads.filter(x => x.id !== t.id); deskSel = null; markDirty(); rmRefresh(); } })}">Delete thread</button>`;
+    $('#deskTools').innerHTML = `<button data-j="${DJ(() => threadDoc(t))}" ${ps.length ? '' : 'disabled'}>New document from thread</button><button class="danger" data-j="${DJ(async () => { if (await ask('Delete thread', `Delete “${t.name}”? Its ${ps.length} passage${ps.length === 1 ? '' : 's'} stay in your drafts, unhighlighted.`, 'Delete')) { rmOp('delete a thread', () => { ps.forEach(p => removeMark('th', p.pid, true)); P.threads = P.threads.filter(x => x.id !== t.id); }); deskSel = null; markDirty(); rmRefresh(); rmUndoToast(`Deleted “${t.name}”.`); } })}">Delete thread</button>`;
   }
   $('#deskBody').innerHTML = `<div class="desk-split"><aside class="desk-side"><h6>Threads <button class="ghost small hl" data-j="${DJ(async () => { const n = await ask('New thread', 'Name a theme, argument, person or line of evidence.', 'Create', ''); if (n) { deskSel = newThread(n).id; renderDesk(); renderResearch(); } })}">+ New</button></h6><ul class="desk-list">${list || '<li class="muted small">None yet</li>'}</ul></aside><div class="desk-main">${main}</div></div>`;
   if (t) {
@@ -7616,7 +7651,7 @@ function deskQuestions() {
   else {
     const ps = all.filter(p => p.ref === it.id), notes = it.notes.map(id => P.notes.find(n => n.id === id)).filter(Boolean);
     main = `<input id="qTitle" class="q-title" value="${esc(it.title)}" aria-label="Question">
-      <div class="row" style="gap:10px;align-items:center"><label class="inline"><input type="checkbox" id="qDone" ${it.status === 'answered' ? 'checked' : ''}> Answered</label><button class="ghost small" data-j="${DJ(() => openPlanItem(it.id))}">Open in Plan</button><div class="spacer"></div><button class="ghost small danger" data-j="${DJ(async () => { if (await ask('Delete question', `Delete “${it.title || 'this question'}”? Linked passages stay in your drafts.`, 'Delete')) { ps.forEach(p => removeMark('q', p.pid)); P.plan.items = PLI().filter(x => x.id !== it.id); deskSel = null; markDirty(); rmRefresh(); } })}">Delete</button></div>
+      <div class="row" style="gap:10px;align-items:center"><label class="inline"><input type="checkbox" id="qDone" ${it.status === 'answered' ? 'checked' : ''}> Answered</label><button class="ghost small" data-j="${DJ(() => openPlanItem(it.id))}">Open in Plan</button><div class="spacer"></div><button class="ghost small danger" data-j="${DJ(async () => { if (await ask('Delete question', `Delete “${it.title || 'this question'}”? Linked passages stay in your drafts.`, 'Delete')) { rmOp('delete a question', () => { ps.forEach(p => removeMark('q', p.pid, true)); P.plan.items = PLI().filter(x => x.id !== it.id); }); deskSel = null; markDirty(); rmRefresh(); rmUndoToast('Deleted the question.'); } })}">Delete</button></div>
       <label>What you’ve found so far / the answer</label><textarea id="qAns" rows="4" placeholder="Write what you know, what’s still missing, and where to look next">${esc(it.synopsis || '')}</textarea>
       <h6>Passages linked to this question <span class="badge">${ps.length || ''}</span></h6>${ps.length ? ps.map(p => `<div class="th-p q-p"><p>${esc(p.text)}</p><div class="th-pb"><span class="muted small">${docT(p.docId)}</span><button class="ghost small" data-j="${DJ(() => rmGo(p))}">Go to passage</button><button class="ghost small danger" data-j="${DJ(() => removeMark('q', p.pid))}">Unlink</button></div></div>`).join('') : '<p class="muted small">Select a passage in a draft, then <b>Mark → Question</b>.</p>'}
       <h6>Notes <span class="badge">${notes.length || ''}</span></h6>${notes.length ? `<ul class="desk-list">${notes.map(n => `<li data-j="${DJ(() => openNote(n.id))}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><em>${esc(n.kind || '')}</em></li>`).join('')}</ul>` : ''}
@@ -7705,6 +7740,224 @@ COMMANDS.push(
   ['Everything about… (one name or term across the project)', () => openDesk('about')], ['Fact-check sheet (download)', () => factSheet()], ['Show or hide research marks in the draft', () => { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }]
 );
 
+/* ================================================================
+   Adaptive bars. When the top bar, the document bar or the toolbar runs
+   out of room, its least-needed buttons (highest data-pri) move into the
+   bar's ⋯ menu, so nothing is ever out of reach on a narrow screen.
+   Toolbar buttons you hide yourself (Customize toolbar) live there too.
+   ================================================================ */
+const PBARS = [];
+function pbar(bar, moreWrap, menu, opts = {}) {
+  const pb = { bar, moreWrap, menu, opts };
+  const items = () => [...bar.children].filter(el => el !== moreWrap && el.id !== 'markMenu' && !(el.tagName === 'INPUT' && el.type === 'file'));
+  const isSep = el => el.classList.contains('sep');
+  const isFlex = el => el.classList.contains('pb-flex');
+  pb.layout = function () {
+    if (!bar.offsetParent && getComputedStyle(bar).display === 'none') return;
+    const all = items(), user = new Set(opts.userHidden ? opts.userHidden() : []);
+    all.forEach(el => { el.classList.remove('pb-off'); if (el.dataset.tb && user.has(el.dataset.tb)) el.classList.add('pb-off'); });
+    moreWrap.classList.remove('pb-off');
+    const cs = getComputedStyle(bar), gap = parseFloat(cs.columnGap) || 0;
+    const avail = bar.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const width = el => (el.classList.contains('pb-off') || el.classList.contains('hidden') || getComputedStyle(el).display === 'none') ? 0
+      : (isFlex(el) ? 0 : (el.dataset.minw ? +el.dataset.minw : el.getBoundingClientRect().width) + (parseFloat(getComputedStyle(el).marginLeft) || 0) + (parseFloat(getComputedStyle(el).marginRight) || 0)) + gap;
+    const fixSeps = () => {
+      let prevVisible = null;
+      all.forEach(el => { if (isSep(el)) { el.classList.remove('pb-off'); } });
+      all.forEach(el => {
+        if (el.classList.contains('pb-off') || isFlex(el)) return;
+        if (isSep(el)) { if (!prevVisible || isSep(prevVisible)) el.classList.add('pb-off'); else prevVisible = el; }
+        else prevVisible = el;
+      });
+      if (prevVisible && isSep(prevVisible)) prevVisible.classList.add('pb-off');
+    };
+    fixSeps();
+    const moreW = moreWrap.getBoundingClientRect().width + gap + 1;
+    const total = () => all.reduce((s, el) => s + width(el), 0);
+    const cand = all.filter(el => el.dataset.pri && !el.classList.contains('pb-off')).sort((a, b) => (+b.dataset.pri - +a.dataset.pri) || (all.indexOf(b) - all.indexOf(a)));
+    let t = total();
+    const needMoreAlways = !!opts.alwaysMore;
+    if (t + (needMoreAlways || user.size ? moreW : 0) > avail + 0.5) {
+      for (const el of cand) { if (t + moreW <= avail + 0.5) break; el.classList.add('pb-off'); fixSeps(); t = total(); }
+    }
+    const hidden = all.filter(el => el.classList.contains('pb-off') && el.dataset.label !== undefined && !isSep(el));
+    const menuItems = hidden.filter(el => !('nomenu' in el.dataset));
+    moreWrap.classList.toggle('pb-off', !needMoreAlways && !menuItems.length);
+    bar.classList.toggle('pb-squeezed', hidden.length > 0);
+    pb.hidden = menuItems;
+  };
+  pb.fill = function () {
+    const rows = (pb.hidden || []).map((el, i) => {
+      const ic = el.querySelector('svg') ? el.querySelector('svg').outerHTML : `<span class="pb-glyph">${el.querySelector('b,i,u,s') ? el.querySelector('b,i,u,s').outerHTML : ''}</span>`;
+      const tog = el.matches('[data-cmd=bold],[data-cmd=italic],[data-cmd=underline],[data-cmd=strikeThrough],[data-cmd=insertUnorderedList],[data-cmd=insertOrderedList],#btnMargin');
+      const on = tog ? ` aria-checked="${el.classList.contains('on')}"` : '';
+      return `<button role="${tog ? 'menuitemcheckbox' : 'menuitem'}" data-pbi="${i}"${on}>${ic}<span>${esc(el.dataset.label)}</span>${el.title && /\((Ctrl|⌘)/.test(el.title) ? `<kbd>${esc(fmtKey(el.title.match(/\(([^)]*(Ctrl|⌘)[^)]*)\)/)[1]))}</kbd>` : ''}</button>`;
+    });
+    menu.innerHTML = rows.join('') + (opts.extras ? (rows.length ? '<hr>' : '') + opts.extras() : '');
+  };
+  pb.open = function () {
+    pb.fill(); closeMenusExcept(menu);
+    const r = moreWrap.getBoundingClientRect(); menu.classList.add('open'); menu.style.position = 'fixed';
+    const w = menu.offsetWidth, h = menu.offsetHeight;
+    menu.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.right - w)) + 'px';
+    menu.style.top = Math.max(8, Math.min(r.bottom + 4, innerHeight - h - 8)) + 'px'; menu.style.right = 'auto';
+  };
+  moreWrap.querySelector('button').addEventListener('click', e => { e.stopPropagation(); if (menu.classList.contains('open')) menu.classList.remove('open'); else { pb.open(); if (e.detail === 0) menu.querySelector('button')?.focus({ preventScroll: true }); } });
+  menu.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    menu.classList.remove('open');
+    if (b.dataset.pbi !== undefined) { const el = pb.hidden[+b.dataset.pbi]; if (!el) return; pbProxy = moreWrap; const t = el.tagName === 'BUTTON' ? el : el.querySelector('button'); restoreSelection(); t && t.click(); setTimeout(() => { pbProxy = null; }, 0); }
+    else if (opts.onExtra) opts.onExtra(b.dataset.x, b);
+  });
+  PBARS.push(pb);
+  return pb;
+}
+const IS_MAC = /Mac|iP(hone|ad|od)/.test(navigator.platform || navigator.userAgent);
+const fmtKey = k => IS_MAC ? k.replace(/Ctrl\/Cmd|⌘\/Ctrl/g, '⌘').replace(/\bAlt\b/g, '⌥').replace(/\bShift\b/g, '⇧').replace(/\+/g, '') : k.replace(/Ctrl\/Cmd|⌘\/Ctrl/g, 'Ctrl');
+let pbProxy = null; // the ⋯ button standing in for a hidden one, so menus open beside it
+function tbAnchor(id) { const el = $(id); return pbProxy && (!el || el.classList.contains('pb-off') || !el.offsetParent) ? pbProxy : el; }
+function closeMenusExcept(keep) { $$('.menu-pop.open').forEach(m => { if (m !== keep) m.classList.remove('open'); }); }
+const pbLayoutAll = () => PBARS.forEach(p => p.layout());
+let pbRaf = 0; const pbSoon = () => { cancelAnimationFrame(pbRaf); pbRaf = requestAnimationFrame(pbLayoutAll); };
+document.addEventListener('click', e => { PBARS.forEach(p => { if (!p.moreWrap.contains(e.target) && !p.menu.contains(e.target)) p.menu.classList.remove('open'); }); });
+
+const TOP_PB = pbar($('#topBar'), $('#topMoreWrap'), $('#topMore'));
+const DOC_PB = pbar($('#docBar'), $('#docMoreWrap'), $('#docMore'));
+const TB_PB = pbar($('#toolbar'), $('#tbMoreWrap'), $('#tbMore'), {
+  alwaysMore: true,
+  userHidden: () => PREFS.tbHidden || [],
+  extras: () => {
+    const v = writingView();
+    return `<div class="pb-head" role="presentation">View</div>
+      <button role="menuitemcheckbox" data-x="tw" aria-checked="${v.tw}">${TB_ICON.tw}<span>Typewriter scrolling</span></button>
+      <button role="menuitemcheckbox" data-x="dim" aria-checked="${v.dim}">${TB_ICON.dim}<span>Dim other paragraphs</span></button>
+      <button role="menuitemcheckbox" data-x="marks" aria-checked="${!PREFS.marksOff}">${TB_ICON.marks}<span>Show research marks</span></button>
+      <hr><button role="menuitem" data-x="custom">${TB_ICON.custom}<span>Customize toolbar…</span></button>
+      <button role="menuitem" data-x="keys">${TB_ICON.keys}<span>Keyboard shortcuts</span><kbd>?</kbd></button>`;
+  },
+  onExtra: x => {
+    if (x === 'tw') { PREFS.twAlways = !writingView().tw; if (PREFS.twAlways) PREFS.typewriter = true; savePrefs(); applyWritingView(); toast(PREFS.twAlways ? 'Typewriter scrolling on: the line you’re writing stays near the middle.' : 'Typewriter scrolling off (still on in focus mode).'); }
+    if (x === 'dim') { PREFS.dimAlways = !writingView().dim; if (PREFS.dimAlways) PREFS.dimOthers = true; savePrefs(); applyWritingView(); }
+    if (x === 'marks') { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }
+    if (x === 'custom') openTbCustom();
+    if (x === 'keys') openKeys();
+  },
+});
+const TB_ICON = {
+  tw: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 19h16M4 12h11"/><path d="m18 9.5 2.5 2.5-2.5 2.5"/></svg>',
+  dim: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 18h16" opacity=".35"/><path d="M4 12h16"/></svg>',
+  marks: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg>',
+  custom: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
+  keys: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
+};
+if (window.ResizeObserver) { const ro = new ResizeObserver(pbSoon); PBARS.forEach(p => ro.observe(p.bar)); }
+addEventListener('resize', pbSoon);
+document.fonts && document.fonts.ready.then(pbSoon);
+
+/* ---------- Customize toolbar ---------- */
+function openTbCustom() {
+  const hid = new Set(PREFS.tbHidden || []);
+  $('#tbcList').innerHTML = $$('#toolbar [data-tb]').map(el => `<label class="tbc-row"><input type="checkbox" data-tb="${el.dataset.tb}" ${hid.has(el.dataset.tb) ? '' : 'checked'} ${el.dataset.tb === 'cite' ? 'disabled' : ''}><span class="tbc-ic">${el.querySelector('svg') ? el.querySelector('svg').outerHTML : (el.querySelector('b,i,u,s') || {}).outerHTML || ''}</span><span>${esc(el.dataset.label)}</span></label>`).join('');
+  $('#tbcDlg').showModal();
+}
+$('#tbcOk').addEventListener('click', () => { PREFS.tbHidden = $$('#tbcList input').filter(i => !i.checked).map(i => i.dataset.tb); savePrefs(); $('#tbcDlg').close(); TB_PB.layout(); toast(PREFS.tbHidden.length ? `${PREFS.tbHidden.length} button${PREFS.tbHidden.length === 1 ? '' : 's'} moved to the ⋯ menu.` : 'Every button is back on the toolbar.'); });
+$('#tbcReset').addEventListener('click', () => $$('#tbcList input').forEach(i => { i.checked = true; }));
+$('#tbcMin').addEventListener('click', () => { const keep = new Set(['bold', 'italic', 'cite', 'footnote', 'mark', 'undo']); $$('#tbcList input').forEach(i => { i.checked = keep.has(i.dataset.tb); }); });
+$('#tbcCancel').addEventListener('click', () => $('#tbcDlg').close());
+
+/* ---------- Keyboard shortcuts (press ?) ---------- */
+const KEYS = [
+  ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
+  ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
+  ['Moving around', [['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
+  ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
+];
+function openKeys() {
+  const fix = k => IS_MAC ? k.replace(/⌘\/Ctrl/g, '⌘').replace(/\bAlt\b/g, '⌥').replace(/\bShift\b/g, '⇧') : k.replace(/⌘\/Ctrl/g, 'Ctrl');
+  $('#keysBody').innerHTML = KEYS.map(([h, rows]) => `<section><h4>${h}</h4><dl>${rows.map(([k, d]) => `<dt>${fix(k).split(/( · |, then )/).map(x => / · |, then /.test(x) ? `<span class="muted">${x.replace(' · ', ' / ')}</span>` : `<kbd>${esc(x)}</kbd>`).join('')}</dt><dd>${esc(d)}</dd>`).join('')}</dl></section>`).join('');
+  $('#keysDlg').showModal();
+}
+$('#keysClose').addEventListener('click', () => $('#keysDlg').close());
+$('#stToolbar').addEventListener('click', () => { $('#settingsDlg').close(); openTbCustom(); });
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.key === '/') { e.preventDefault(); openKeys(); return; }
+  if (e.key === '?' && !mod && !e.altKey) {
+    const a = document.activeElement;
+    if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+    if ($$('dialog[open]').length) return;
+    e.preventDefault(); openKeys();
+  }
+});
+
+/* ---------- Writing view: typewriter scrolling and dimming, in focus mode or always ---------- */
+function writingView() {
+  const focus = document.body.classList.contains('focus');
+  return { tw: !!PREFS.typewriter && (focus || !!PREFS.twAlways), dim: !!PREFS.dimOthers && (focus || !!PREFS.dimAlways), twAlways: !!PREFS.twAlways, dimAlways: !!PREFS.dimAlways };
+}
+function applyWritingView() {
+  const v = writingView(), b = document.body;
+  b.classList.toggle('dim', v.dim); b.classList.toggle('tw-on', v.tw);
+  b.classList.toggle('focus-marks-off', b.classList.contains('focus') && PREFS.focusMarks === false);
+  if (!v.dim) $$('[data-cp-current]', editor).forEach(x => x.removeAttribute('data-cp-current'));
+  else focusTrack();
+}
+
+/* ================================================================
+   Undo for research marks. Marking and unmarking change the page outside
+   the browser's own undo history, so each one is recorded here and
+   ⌘/Ctrl+Z takes it back while the text hasn't changed since.
+   ================================================================ */
+const RM_UNDO = [], RM_REDO = []; let rmOpDepth = 0;
+function rmSnap() { syncEditor(); return { docs: P.docs.map(d => [d.id, d.html]), recs: JSON.stringify({ threads: P.threads, claims: P.claims, reviewKeys: P.reviewKeys, items: P.plan && P.plan.items }), cur: curDocId }; }
+function rmOp(label, fn) {
+  if (rmOpDepth) return fn();
+  rmOpDepth++; const before = rmSnap(); let out;
+  try { out = fn(); } finally { rmOpDepth--; }
+  const after = rmSnap();
+  if (before.recs !== after.recs || before.docs.some(([id, h], i) => !after.docs[i] || after.docs[i][0] !== id || after.docs[i][1] !== h)) {
+    RM_UNDO.push({ label, before, after }); if (RM_UNDO.length > 40) RM_UNDO.shift(); RM_REDO.length = 0;
+  }
+  return out;
+}
+function rmMatches(s) { syncEditor(); const d = curDoc(); const e = d && s.docs.find(x => x[0] === d.id); return !!(e && e[1] === d.html); }
+const rmCanUndo = () => RM_UNDO.length && rmMatches(RM_UNDO[RM_UNDO.length - 1].after);
+const rmCanRedo = () => RM_REDO.length && rmMatches(RM_REDO[RM_REDO.length - 1].before);
+function rmRestore(s) {
+  const map = new Map(s.docs);
+  P.docs.forEach(d => { if (map.has(d.id) && d.html !== map.get(d.id)) { d.html = map.get(d.id); d.modified = nowISO(); } });
+  const r = JSON.parse(s.recs); P.threads = r.threads; P.claims = r.claims; P.reviewKeys = r.reviewKeys; if (P.plan && r.items) P.plan.items = r.items;
+  const d = curDoc();
+  if (d && editor.innerHTML !== d.html) {
+    const st = $('#scroller').scrollTop; closeRmPop();
+    editor.innerHTML = d.html || '<p><br></p>'; tidyTopLevel(); prepFigureDom(editor); hydrateImages(); renumberFigures();
+    lastSig = ''; renderRefs(true); updateWordCount(); renderMargin(); $('#scroller').scrollTop = st;
+  }
+  rmDirty(); markDirty(); rmRefresh();
+}
+function rmUndo() { const op = RM_UNDO.pop(); if (!op) return; rmRestore(op.before); RM_REDO.push(op); toast(`Undid: ${op.label}.`); }
+function rmRedo() { const op = RM_REDO.pop(); if (!op) return; rmRestore(op.after); RM_UNDO.push(op); toast(`Redid: ${op.label}.`); }
+function rmUndoToast(label) {
+  toast(label, { label: 'Undo', fn: () => { if (rmCanUndo()) rmUndo(); else toast('Can’t undo that now: the text has changed since.'); } });
+}
+
+/* ================================================================
+   Installable app. On the hosted copy (GitHub Pages), Anabasis registers a
+   service worker so it can be added to the Home Screen and opened offline.
+   Opened as a file, none of this runs.
+   ================================================================ */
+function setupInstall() {
+  // only the hosted copy built by tools/site/build_site.py carries this marker (and ships sw.js beside it)
+  if (!document.querySelector('meta[name=anabasis-installable]') || !('serviceWorker' in navigator) || !window.isSecureContext || location.protocol === 'file:') return;
+  navigator.serviceWorker.register('sw.js').then(() => {
+    if (!$('link[rel=manifest]')) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = 'manifest.webmanifest'; document.head.append(l); }
+    document.documentElement.classList.add('installable');
+  }).catch(() => {});
+}
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+if (isStandalone()) document.documentElement.classList.add('standalone');
+{ const k = $('#btnSearch kbd'); if (k) k.textContent = IS_MAC ? '⌘K' : 'Ctrl K'; }
+
 /* ---------------- boot ---------------- */
 function sendClip(to, clip) {
   return new Promise(res => {
@@ -7746,7 +7999,7 @@ function sendClip(to, clip) {
   if (!P.docs.length) P.docs.push(newDoc());
   openDoc(P.docs.find(d => d.id === curDocId) ? curDocId : binderOrder()[0].id, true);
   renderAll(); updateSaveState();
-  appReady = true;
+  appReady = true; applyWritingView(); pbLayoutAll(); setupInstall();
   restoreAutosaveHandle();
   if (!clip) findOtherTab(false).then(o => { if (o) showTabWarning(); });
   if (!clip && FIRST_VISIT && !PREFS.toured) setTimeout(() => startTour(), 350);

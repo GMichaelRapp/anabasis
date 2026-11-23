@@ -34,6 +34,7 @@ SUITES = {
     't27': 'note text on citations: note styles, author-date, OSINT, and every export',
     't28': 'typing latency in every field, and one-off actions, on a 120,000-word project',
     't29': 'research marks: threads, claims, review keys, questions, the research desk, clean exports',
+    't30': 'adaptive bars at every width, toolbar trimming, shortcut sheet, writing view, undo for marks, phone layouts, installable hosted copy',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

@@ -22,7 +22,10 @@ VIEWS = [
     ('review dialog', "$('#thDlg').close(); const r = document.createRange(); r.selectNodeContents(editor.querySelector('p')); getSelection().removeAllRanges(); getSelection().addRange(r); openReviewKey()"),
     ('question dialog', "$('#rvDlg').close(); openQuestionLink(true)"),
     ('marked passage popover', "$('#qDlg').close(); const s = editor.querySelector('.rm[data-k=cl]'); showRmPop(rmMarksAt(s), s)"),
-    ('home', "closeRmPop(); openHome()"),
+    ('toolbar more menu', "closeRmPop(); TB_PB.open()"),
+    ('customize toolbar dialog', "$('#tbMore').classList.remove('open'); openTbCustom()"),
+    ('shortcuts dialog', "$('#tbcDlg').close(); openKeys()"),
+    ('home', "$('#keysDlg').close(); openHome()"),
     ('help', "closeHome(); $('#helpDlg').showModal()"),
     ('chart dialog', "$('#helpDlg').close(); openChart()"),
     ('map dialog', "$('#chDlg').close(); openMap()"),
@@ -51,6 +54,18 @@ async def main():
                     k = (v['id'], v['help'])
                     total.setdefault(k, []).append(f"{theme}/{name}: {v['n']} e.g. {v['eg'][:2]}")
             await pg.evaluate("endTour && endTour()")
+        # the same audit on a phone-sized screen
+        await pg.evaluate("endTour && endTour(); document.documentElement.dataset.theme='light'")
+        await pg.set_viewport_size({'width': 390, 'height': 844}); await pg.wait_for_timeout(400)
+        for name, js in [('phone editor', "closeHome && homeOn && closeHome(); openDoc(curDocId)"), ('phone toolbar menu', "TB_PB.open()"),
+                         ('phone document menu', "$('#tbMore').classList.remove('open'); DOC_PB.open()"), ('phone top menu', "$('#docMore').classList.remove('open'); TOP_PB.open()"),
+                         ('phone drawer', "$('#topMore').classList.remove('open'); document.body.classList.add('side-open')"), ('phone settings dialog', "document.body.classList.remove('side-open'); openSettings()")]:
+            await pg.evaluate(f"(()=>{{ try {{ {js} }} catch(e) {{ console.warn(e) }} }})()"); await pg.wait_for_timeout(350)
+            ctx = "document.querySelector('dialog[open]') || document" if 'dialog' in name else "document"
+            res = await pg.evaluate(f"""axe.run({ctx}, {{ runOnly: {{ type: 'tag', values: ['wcag2a','wcag2aa','wcag21a','wcag21aa'] }}, resultTypes: ['violations'] }})
+                .then(r => r.violations.map(v => ({{ id: v.id, impact: v.impact, n: v.nodes.length, help: v.help, eg: v.nodes.slice(0,3).map(n => n.target.join(' ') + ' :: ' + (n.failureSummary||'').split('\\n').slice(1,2).join('')) }})))""")
+            for v in res:
+                total.setdefault((v['id'], v['help']), []).append(f"phone/{name}: {v['n']} e.g. {v['eg'][:2]}")
         for (rid, hlp), where in sorted(total.items()):
             print(f'== {rid}: {hlp}')
             for w in where[:6]: print('   ', w[:400])

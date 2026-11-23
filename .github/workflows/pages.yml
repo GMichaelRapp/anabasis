@@ -27,12 +27,8 @@ jobs:
         with:
           python-version: '3.12'
       - run: python build.py --check
-      - name: Prepare site
-        run: |
-          mkdir site
-          cp dist/anabasis.html site/index.html
-          cp dist/anabasis.html site/anabasis.html
-          touch site/.nojekyll
+      - name: Prepare site (the app, plus the manifest and service worker that make it installable)
+        run: python tools/site/build_site.py
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

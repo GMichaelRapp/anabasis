@@ -23,6 +23,8 @@ data/                map and gazetteer data (see tools/data/README.md)
 assets/              fonts, background and icon
 build.py             inlines everything into dist/anabasis.html
 tests/               Playwright suites (see tests/run_tests.py for what each covers)
+tools/site/          builds the installable hosted copy for GitHub Pages (manifest, service worker, icons)
+tools/guide/         regenerates the quick-start and README screenshots
 ```
 
 The app is deliberately a single file with no framework and no build step beyond inlining. Keep it that way: plain JavaScript, no new runtime dependencies without discussion, and everything must work offline from `file://`.
@@ -43,6 +45,8 @@ Before you open a pull request:
 - If you change what a project file holds, follow [Changing the format](docs/file-format.md#changing-the-format).
 - If the change is user-visible, add a line to `CHANGELOG.md` under **Unreleased**, and update Help in `src/shell.html` if it explains the feature.
 - If the change alters a screen shown in the [quick start](docs/quick-start.md), regenerate its screenshots with `python tools/guide/quickstart.py` (after `python build.py`).
+- Interface screenshots in the README come from `python tools/guide/screenshots.py`.
+- New toolbar, document-bar or top-bar buttons need `data-pri` (higher moves into the ⋯ menu sooner) and `data-label` (their name in that menu); toolbar buttons also need `data-tb`, so they can be hidden in Customize toolbar. Check the layout at 390 px wide as well as on a desktop.
 - Interface text: plain verbs, sentence case, and a button says what it does (“Save checkpoint”, not “Submit”).
 
 Don’t commit `dist/`. Releases are built by GitHub Actions from the tagged commit.

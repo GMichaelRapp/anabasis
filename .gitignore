@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 .DS_Store
 node_modules/
+
+# hosted copy built by tools/site/build_site.py
+/site/

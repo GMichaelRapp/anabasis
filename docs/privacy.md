@@ -9,6 +9,8 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **Checkpoints** of the whole project are kept in the same browser storage. Download a checkpoint to keep it anywhere else.
 - **Preferences**, such as theme and check settings, are kept in localStorage.
 
+- **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.
+
 If you open the hosted copy on GitHub Pages, the same rules apply. GitHub serves the file, but your work stays in your browser. GitHub’s own [privacy statement](https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement) covers serving the page.
 
 ## When Anabasis goes online

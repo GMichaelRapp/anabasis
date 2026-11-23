@@ -4,6 +4,23 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-11-23
+
+### Added
+- **Works on any screen.** The top bar, the document bar and the toolbar now adapt to the window: buttons that don't fit move into a **⋯** menu at the end of their bar, in order of how often they're needed, so every tool stays one tap away. Drafts, Record and Page setup, which were hidden on small screens before, are now always reachable.
+- **Phones and tablets.** The sidebar is a drawer that a tap beside it closes, the page fills the screen, dialogs open full screen, touch targets are larger, and text fields no longer make iPhone zoom in.
+- **Install on iPhone, iPad and Android.** The hosted copy on GitHub Pages can be added to the Home Screen (or installed from the browser menu). It opens full screen and works offline. The downloaded file is unchanged and still needs nothing.
+- **Customize the toolbar.** Hide the buttons you don't use (they wait in the ⋯ menu, and their shortcuts keep working), or keep **Essentials only**.
+- **Keyboard shortcuts sheet.** Press **?** when you're not typing, or Ctrl/⌘+/.
+- **Undo for research marks.** Marking, unmarking and deleting a thread or question can be undone with Ctrl/⌘+Z, Redo with Ctrl/⌘+Shift+Z, or **Undo** in the message that appears.
+- **Typewriter scrolling and paragraph dimming outside focus mode.** Turn them on from the toolbar's ⋯ menu, or choose in Settings whether they apply in focus mode only or always. Research marks can be hidden in focus mode.
+- **☰ puts the sidebar away** on a wide screen too, for more room on the page.
+
+### Changed
+- **A refined map-sheet look.** One set of line icons replaces the mixed text symbols and emoji in the toolbar, document bar and sidebar; menus and popovers are framed like a map legend; the contour backdrop is quieter; empty lists and views show a small map vignette with what to do next; messages look like map labels and can carry an action.
+- The document bar shows icons alone when space is short, with the names in tooltips and the ⋯ menu.
+- Claim and question marks are drawn as lines under the text rather than as underlining, so the Underline and Strikethrough buttons no longer light up inside a marked claim.
+
 ## [1.1.0] — 2026-11-23
 
 ### Added
@@ -89,6 +106,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.2.0
 [1.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.1.0
 [1.0.4]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.4
 [1.0.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.3
