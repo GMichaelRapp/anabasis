@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write   # to start the Pages workflow after publishing
 
 jobs:
   release:
@@ -43,3 +44,8 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" dist/anabasis.html dist/SHA256SUMS.txt \
             --title "Anabasis ${GITHUB_REF_NAME#v}" --notes-file dist/notes.md --verify-tag
+      - name: Update the hosted copy
+        # A release made with the workflow's own token doesn't trigger other workflows, so start Pages directly.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --ref main

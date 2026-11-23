@@ -2,7 +2,9 @@
 
 All notable changes to Anabasis. Versions follow [semantic versioning](https://semver.org): a major version can change the project file format in ways older versions can’t read, a minor version adds features, and a patch fixes bugs.
 
-## [1.0.0] — Unreleased
+## [Unreleased]
+
+## [1.0.0] — 2026-11-22
 
 The first public release.
 

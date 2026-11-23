@@ -36,7 +36,7 @@ The **CI** workflow runs on every push: it builds, runs every test suite in Chro
    git push && git push --tags
    ```
 
-The **Release** workflow checks that the tag matches `APP_VERSION`, builds, runs the tests, and publishes a GitHub release. The release attaches `anabasis.html` and `SHA256SUMS.txt`, with the changelog section as its notes. Publishing the release triggers **Publish to GitHub Pages**, which updates the hosted copy.
+The **Release** workflow checks that the tag matches `APP_VERSION`, builds, runs the tests, and publishes a GitHub release. The release attaches `anabasis.html` and `SHA256SUMS.txt`, with the changelog section as its notes. Its last step starts **Publish to GitHub Pages**, which updates the hosted copy.
 
 If something goes wrong, delete the tag (`git push --delete origin v1.0.0` and `git tag -d v1.0.0`), fix the problem, and tag again.
 
