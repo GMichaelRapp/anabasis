@@ -4,6 +4,21 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-11-23
+
+### Added
+- **55 citation styles**, grouped by field in the style menu: Chicago 17th and 18th (with ibid., archives cited place first, or an annotated bibliography), MLA with notes, MHRA, New Hart's Rules, Oxford, SBL, APA 6th and annotated, APSA, AJPS, ISA, ASA, AAA, four Harvard variants, OSCOLA, Bluebook, AMA, NLM/Vancouver, CSE, Nature, Science, Cell, The Lancet, BMJ, ACS, RSC, APS, AIP, AGU, Springer, Elsevier, IEEE, ASCE and ISO 690.
+- **Export references** (Sources → Export…) as BibTeX/BibLaTeX, RIS or CSL-JSON, for all sources or only those cited in the open document. Each source gets a stable, readable key (`tuchman1962guns`).
+- **Pandoc / Quarto package** and **LaTeX package** exports: the document with citations as keys (`[@key, p. 12]` or `\autocite`), its bibliography, the citation style and its images, zipped with a README.
+- **Suggest mode**: typing and deleting become suggestions signed with your name, to accept or reject one at a time or all at once, with undo. Word exports keep them as tracked changes; **Word import** brings tracked changes back as suggestions and Word comments as margin notes on the same words.
+- **Example projects**: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece, each with sources, notes, a plan, threads, claims, review keys and questions (New → Or open a finished example).
+- **Listen**: read the draft aloud from the cursor with the system's voices, highlighting each sentence; pause, skip, speed and voice; note numbers and citations read only if you want them.
+- **Your name** in Settings, used on suggestions and new margin notes.
+
+### Changed
+- The size budget is now 25 MB (the app is about 10 MB).
+- Sources as CSL-JSON now use the same readable keys as the BibTeX export.
+
 ## [1.2.0] — 2026-11-23
 
 ### Added
@@ -106,6 +121,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.3.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.3.0
 [1.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.2.0
 [1.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.1.0
 [1.0.4]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.0.4

@@ -12,8 +12,8 @@ import argparse, base64, hashlib, json, pathlib, re, sys, urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC, VJ, CSL, DATA, ASSETS, DIST = (ROOT / d for d in ('src', 'vendor/js', 'vendor/csl', 'data', 'assets', 'dist'))
-BUDGET = 10 * 1024 * 1024  # the whole app must stay under 10 MB
-STYLES = ['chicago-notes-bibliography', 'chicago-shortened-notes-bibliography', 'chicago-author-date', 'apa', 'modern-language-association']
+BUDGET = 25 * 1024 * 1024  # the whole app must stay under 25 MB
+STYLES = sorted(p.stem for p in (ROOT / 'vendor/csl').glob('*.csl'))  # every vendored CSL style is bundled
 EAGER = ['purify.min.js', 'citeproc.min.js', 'marked.min.js', 'turndown.min.js', 'osint.js', 'docx.min.js', 'mammoth.min.js', 'diff.min.js']
 
 

@@ -22,17 +22,21 @@
 
 Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
 
-The whole app is a single HTML file of about 8 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+The whole app is a single HTML file of about 10 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
 
 ## What it does
 
 **Write and cite**
 - A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
-- Citations in Chicago (notes and bibliography, shortened notes, author-date), APA 7, MLA 9 and the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
-- Add sources by DOI, ISBN or web address, or import BibTeX and RIS. Each source can carry an Admiralty reliability rating.
+- Citations in 55 styles: Chicago (notes or author-date), APA, MLA, MHRA, Harvard, APSA, ASA, OSCOLA, Bluebook, AMA, Vancouver, CSE, IEEE, Nature and more, plus the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
+- Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero's CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating.
+- **Suggest mode** marks your edits for review, like tracked changes, and Word files carry them both ways: tracked changes and comments in, tracked changes and comments out.
+- **Pandoc / Quarto and LaTeX packages**: the text with citation keys, its .bib file and the style, ready for `pandoc --citeproc`, Overleaf or `latexmk`.
+- **Listen** reads the draft aloud, sentence by sentence, with the browser's own voices.
 - A binder of chapters and parts that compiles into a manuscript, with an index, front and back matter, and a chronology built from dated notes.
 
 **Research**
+- Five example projects to learn from or build on: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece.
 - Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, and a web clipper captures from other tabs.
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).

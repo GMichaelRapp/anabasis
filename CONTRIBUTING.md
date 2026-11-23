@@ -41,7 +41,8 @@ python tests/smoke.py --browser firefox   # quick check in another engine
 Before you open a pull request:
 
 - Run the full suite. Add or extend a test for what you changed.
-- Keep `dist/anabasis.html` under the 10 MB budget. `build.py` refuses to go over it.
+- Keep `dist/anabasis.html` under the 25 MB budget. `build.py` refuses to go over it. Size isn't the only budget: anything large should stay packed until it's first used, so the app opens as fast as it does now.
+- To add a citation style, copy an independent style (no `independent-parent` link) from the CSL styles repository into `vendor/csl/`, add its entry to `vendor/manifest.json`, and give it a label and group in `STYLES` in `src/app.js`.
 - If you change what a project file holds, follow [Changing the format](docs/file-format.md#changing-the-format).
 - If the change is user-visible, add a line to `CHANGELOG.md` under **Unreleased**, and update Help in `src/shell.html` if it explains the feature.
 - If the change alters a screen shown in the [quick start](docs/quick-start.md), regenerate its screenshots with `python tools/guide/quickstart.py` (after `python build.py`).

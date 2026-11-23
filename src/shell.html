@@ -1443,6 +1443,36 @@ body.side-hidden #sidebar{display:none}
 }
 @supports (height:100dvh){ body{height:100dvh} }
 
+.re-grid{display:grid;gap:8px;margin-top:12px}
+.re-grid button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;text-align:left;min-height:0}
+#docStyle optgroup,#msStyle optgroup,#npStyle optgroup{font-style:normal;font-weight:700;color:var(--muted)}
+
+/* suggestions */
+#editor ins.sg{text-decoration:none;color:var(--sg-ins);background:color-mix(in srgb,var(--sg-ins) 12%,transparent);border-bottom:1.5px solid color-mix(in srgb,var(--sg-ins) 70%,transparent);border-radius:1px}
+#editor del.sg{text-decoration:none;color:var(--sg-del);background-image:linear-gradient(color-mix(in srgb,var(--sg-del) 85%,transparent),color-mix(in srgb,var(--sg-del) 85%,transparent));background-repeat:no-repeat;background-size:100% 1.5px;background-position:0 56%;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+:root{--sg-ins:#1F6B4A;--sg-del:#A3271B}
+:root[data-theme="dark"]{--sg-ins:#86D4AB;--sg-del:#F2998B}
+.sg-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:color-mix(in srgb,var(--sg-ins) 9%,var(--panel));border-bottom:1px solid var(--line);font-size:var(--fs-2)}
+.sg-bar button{min-height:28px}
+body.sg-on .sg-bar{background:color-mix(in srgb,var(--sg-ins) 16%,var(--panel))}
+.sg-mk{display:inline-flex;width:20px;height:20px;border-radius:50%;align-items:center;justify-content:center;font-weight:800;flex:none}
+.sg-mk.sg-ins{background:color-mix(in srgb,var(--sg-ins) 18%,transparent);color:var(--sg-ins)}.sg-mk.sg-del{background:color-mix(in srgb,var(--sg-del) 18%,transparent);color:var(--sg-del)}
+:root .toolbar #btnSuggest.on{background:color-mix(in srgb,var(--sg-ins) 16%,transparent);color:var(--sg-ins);box-shadow:inset 0 -2px 0 var(--sg-ins)}
+body.desk-on .sg-bar,body.rel-on .sg-bar,body.board-on .sg-bar,body.drafts-on .sg-bar,body.home-on .sg-bar,body.plan-on .sg-bar,body.focus:not(.sg-on) .sg-bar{display:none!important}
+@media (max-width:600px){ .sg-bar{flex-wrap:wrap;gap:4px 6px} .sg-bar .spacer{flex-basis:100%;height:0} }
+@media print{ ins.sg{text-decoration:none;background:none;border:0;color:inherit} del.sg{display:none} }
+
+.np-examples{margin:12px 0 4px}
+.np-examples summary{cursor:pointer;font-weight:600}
+.np-ex{border-style:dashed!important}
+
+.tts-bar{display:flex;align-items:center;gap:8px;padding:5px 12px;background:color-mix(in srgb,var(--sun) 12%,var(--panel));border-bottom:1px solid var(--line);font-size:var(--fs-2)}
+.tts-bar select{width:auto;min-height:28px;font-size:12.5px;max-width:180px}
+.tts-bar button{min-height:28px}
+::highlight(tts){background-color:color-mix(in srgb,var(--sun) 38%,transparent);color:inherit}
+body.desk-on .tts-bar,body.rel-on .tts-bar,body.board-on .tts-bar,body.drafts-on .tts-bar,body.home-on .tts-bar,body.plan-on .tts-bar{display:none!important}
+@media (max-width:600px){ .tts-bar{flex-wrap:wrap} .tts-bar .spacer{flex-basis:100%;height:0} .tts-bar label{flex-basis:100%} }
+
 /* ---------- print ---------- */
 @media print{
   html,body{height:auto;overflow:visible;background:#fff}
@@ -1473,6 +1503,8 @@ body.side-hidden #sidebar{display:none}
       <button data-x="html">Document as HTML</button>
       <button data-x="epub">ePub (e-book)</button>
       <button data-x="md">Document as Markdown</button>
+      <button data-x="pandoc">Pandoc / Quarto package (.md + .bib + style)</button>
+      <button data-x="latex">LaTeX package (.tex + .bib)</button>
       <button data-x="substack">Substack post: endnotes, images, tables…</button>
       <button data-x="promo">Promo kit: thread, subtitle, quote cards…</button>
       <button data-x="copy">Copy formatted text (for Docs, email…)</button>
@@ -1485,7 +1517,7 @@ body.side-hidden #sidebar{display:none}
       <button data-x="github">Back up to GitHub…</button>
       <button data-x="notesmd">All notes as Markdown</button>
       <button data-x="annot">Annotated bibliography (new document)</button>
-      <button data-x="csl">Sources as CSL-JSON (Zotero-compatible)</button>
+      <button data-x="refs">Sources as BibTeX, RIS or CSL-JSON…</button>
       <button data-x="osintlist">Sources as OSINT Citation Generator list</button>
     </div>
   </div>
@@ -1561,7 +1593,7 @@ body.side-hidden #sidebar{display:none}
         <div class="row"><input type="search" id="qSources" placeholder="Search sources"><button id="btnNewSource" class="primary">+ New</button></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
-        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import references…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -1580,6 +1612,7 @@ body.side-hidden #sidebar{display:none}
       <button id="btnPageSetup" class="ghost" data-pri="3" data-label="Page setup" aria-label="Page setup" title="Title block, fonts, spacing, bibliography options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Page setup</span></button>
       <button id="btnVersions" class="ghost" data-pri="2" data-label="Drafts" aria-label="Drafts" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span></button>
       <button id="btnRecord" class="ghost" data-pri="4" data-label="Record" aria-label="Record" title="Daily words, streak, chapter status and deadlines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M20.5 4l-4.5 4-3-2.5L8 9"/></svg><span class="lbl">Record</span></button>
+      <button id="btnListen" class="ghost" data-pri="5" data-label="Listen: read aloud" aria-label="Listen: read the draft aloud" title="Read the draft aloud from the cursor, highlighting each sentence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><span class="lbl">Listen</span></button>
       <button id="btnFocus" class="ghost" data-pri="1" data-label="Focus mode" aria-label="Focus mode" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Focus</span></button>
       <div class="menu pb-more" id="docMoreWrap"><button id="btnDocMore" class="ghost icon" aria-label="More document tools" title="More document tools" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><div class="menu-pop pb-pop" id="docMore" role="menu"></div></div>
     </div>
@@ -1612,6 +1645,7 @@ body.side-hidden #sidebar{display:none}
       <button id="btnCapture" data-tb="capture" data-pri="3" data-label="Capture as a note" aria-label="Capture as a note" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6"/><path d="M8 15h7M12.5 12.5 15 15l-2.5 2.5"/></svg></button>
       <button id="btnComment" data-tb="comment" data-pri="4" data-label="Margin note" aria-label="Margin note" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.3a8 8 0 1 1 15.2-4.2z"/><path d="M9 10h7M9 13.5h4.5"/></svg></button>
       <button id="btnIndexMark" data-tb="index" data-pri="8" data-label="Index entry" aria-label="Index entry" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5V4h7.5l9.5 9.5-7.5 7.5z"/><circle cx="7.6" cy="8.1" r="1.2" fill="currentColor" stroke="none"/></svg></button>
+      <button id="btnSuggest" data-tb="suggest" data-pri="4" data-label="Suggest changes" aria-label="Suggest changes" aria-pressed="false" title="Suggest mode: your edits are marked for review, like tracked changes in Word"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/><path d="M15 20h6M18 17v6" transform="translate(0 -2)"/></svg></button>
       <button id="btnMark" class="mark-btn tb-lbl" data-tb="mark" data-pri="1" data-label="Mark: thread, claim, review, question" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg><span class="lbl">Mark</span><span class="caret" aria-hidden="true">▾</span></button>
       <button id="btnLens" data-tb="lens" data-pri="6" data-label="Revision lens" aria-label="Revision lens" title="Revision lens: long sentences, passive voice, hedges, repeats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button id="btnFind" data-tb="find" data-pri="4" data-label="Find &amp; replace" aria-label="Find &amp; replace" title="Find &amp; replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
@@ -1628,6 +1662,19 @@ body.side-hidden #sidebar{display:none}
         <hr>
         <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
       </div>
+    </div>
+    <div class="tts-bar hidden" id="ttsBar" role="region" aria-label="Read aloud">
+      <button class="small primary-soft" id="ttsPlay">Pause</button><button class="small ghost" id="ttsPrev" aria-label="Previous sentence" title="Previous sentence">‹</button><button class="small ghost" id="ttsNext" aria-label="Next sentence" title="Next sentence">›</button>
+      <span class="muted small" id="ttsPos"></span><div class="spacer"></div>
+      <label class="inline small"><input type="checkbox" id="ttsCites"> Read note numbers and citations</label>
+      <select id="ttsRate" aria-label="Speed"><option value="0.8">0.8×</option><option value="0.9">0.9×</option><option value="1">1×</option><option value="1.15">1.15×</option><option value="1.3">1.3×</option><option value="1.5">1.5×</option><option value="1.75">1.75×</option></select>
+      <select id="ttsVoice" aria-label="Voice"></select>
+      <button class="small" id="ttsStop">Stop</button>
+    </div>
+    <div class="sg-bar hidden" id="sgBar" role="region" aria-label="Suggestions">
+      <span id="sgState"></span><span class="muted small" id="sgCount"></span><div class="spacer"></div>
+      <button class="small ghost" data-sga="prev" aria-label="Previous suggestion" title="Previous suggestion">‹</button><button class="small ghost" data-sga="next" aria-label="Next suggestion" title="Next suggestion">›</button>
+      <button class="small" data-sga="accall">Accept all</button><button class="small" data-sga="rejall">Reject all</button><button class="small primary-soft" data-sga="toggle" id="sgToggle">Suggest</button>
     </div>
     <div class="scriptbar hidden" id="scriptBar"><span>Run time <b id="scRun">0:00</b></span><span class="muted"><span id="scWords">0</span> narrated words at</span><input id="scWpm" type="number" min="60" max="260" step="5" value="150" aria-label="Words per minute"><span class="muted">wpm</span><span class="sb-sep"></span><button id="scAV" class="small">+ A/V table</button><button id="scCopy" class="small">Copy narration</button><button id="scPrompt" class="small primary">Teleprompter</button></div>
 <div class="lensbar hidden" id="lensBar"></div>
@@ -2053,6 +2100,7 @@ body.side-hidden #sidebar{display:none}
   <div class="body">
     <label style="margin-top:0">Working title</label><input id="npTitle" placeholder="e.g. The March of the Ten Thousand">
     <label>What are you writing?</label><div class="np-kinds" id="npKinds"></div>
+    <details class="np-examples"><summary>Or open a finished example to learn from</summary><p class="small muted">Each example arrives with documents, sources, notes, a plan, threads, claims to check and questions, so you can see how the pieces fit. It replaces the project open now.</p><div class="np-kinds" id="npExamples"></div></details>
     <div class="grid3"><div><label>Citation style</label><select id="npStyle"></select></div><div><label>Word target</label><input id="npTarget" inputmode="numeric" placeholder="none"></div><div><label>Deadline</label><input type="date" id="npDeadline"></div></div>
     <div class="radio-row"><label><input type="checkbox" id="npPlan" checked> <span id="npPlanLbl">Start the plan from a template</span></label></div>
     <div class="tip" id="npWarn"></div>
@@ -2299,6 +2347,7 @@ body.side-hidden #sidebar{display:none}
 <dialog id="settingsDlg"><div class="dlg">
   <h3>Settings <span class="muted small">(this browser)</span></h3>
   <div class="body">
+    <label for="stName">Your name <span class="muted">(on your suggestions and margin notes)</span></label><input id="stName" autocomplete="name" placeholder="e.g. Michael Rapp">
     <div class="grid2">
       <div><label>Remind me to save after</label><select id="stRemind"><option value="0">Never</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
       <div><label>Session word goal</label><input id="stGoal" inputmode="numeric" placeholder="e.g. 750 (blank = none)"></div>
@@ -2338,6 +2387,20 @@ body.side-hidden #sidebar{display:none}
   <h3>Keyboard shortcuts</h3>
   <div class="body keys" id="keysBody"></div>
   <footer><span class="small muted left">Press <kbd>?</kbd> any time you’re not typing, or <kbd>Ctrl/⌘ /</kbd>.</span><button id="keysClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<dialog id="refExpDlg"><div class="dlg">
+  <h3>Export references</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Take your sources to Zotero, EndNote, Mendeley, JabRef or a LaTeX project. Each source gets a readable key such as <code>tuchman1962guns</code>, the same one the Pandoc and LaTeX exports cite.</p>
+    <label class="inline"><input type="checkbox" id="reCited"> Only sources cited in this document</label> <span class="small muted">(<span id="reCount">0</span>)</span>
+    <div class="re-grid">
+      <button data-re="bib"><b>BibTeX / BibLaTeX</b><span class="small muted">.bib · LaTeX, JabRef, Overleaf, Pandoc</span></button>
+      <button data-re="ris"><b>RIS</b><span class="small muted">.ris · EndNote, Mendeley, Zotero, RefWorks</span></button>
+      <button data-re="json"><b>CSL-JSON</b><span class="small muted">.json · Zotero, Pandoc, any CSL tool</span></button>
+    </div>
+  </div>
+  <footer><button id="reClose">Close</button></footer>
 </div></dialog>
 
 <!-- generic prompt / confirm -->
@@ -2426,6 +2489,27 @@ body.side-hidden #sidebar{display:none}
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
       <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
+    </ul>
+    <h4>Suggest mode &amp; working with editors</h4>
+    <ul>
+      <li>Turn on <b>Suggest</b> in the toolbar (the pen with a plus) and your edits are marked for review instead of made: new text in green, deleted text struck through in red, each signed with your name (set it in Settings). Deleting text you suggested yourself removes it outright.</li>
+      <li>The bar above the page counts the changes; step through them with ‹ ›, or click one to accept or reject it. <b>Accept all</b> and <b>Reject all</b> do the lot, and ⌘/Ctrl+Z undoes any of it.</li>
+      <li><b>Word (.docx)</b> exports keep suggestions as tracked changes and margin notes as Word comments. <b>Import Word</b> brings an editor’s tracked changes back as suggestions and their comments as margin notes on the same words. Other exports show suggestions as accepted.</li>
+    </ul>
+    <h4>Listening to the draft</h4>
+    <ul>
+      <li><b>Listen</b> (the speaker in the document bar) reads from the cursor, highlighting each sentence. Pause, skip a sentence either way, change the speed or the voice in the bar above the page. Typing pauses it. Hearing a draft catches repeated words, missing words and sentences that run on.</li>
+      <li>Citations and note numbers are skipped unless you tick <b>Read note numbers and citations</b>. The voices are your system’s own, so nothing leaves the computer (a voice marked “online” is the exception).</li>
+    </ul>
+    <h4>Citation styles, Zotero, Pandoc &amp; LaTeX</h4>
+    <ul>
+      <li>The style menu next to the title has 55 styles grouped by field: Chicago (17th and 18th, notes or author-date, with ibid. or archives cited place first), APA, MLA, MHRA, New Hart’s Rules, SBL, Harvard, APSA, ASA, ISA, OSCOLA and Bluebook, AMA, NLM/Vancouver, CSE, IEEE, Nature, Science, ISO 690 and more.</li>
+      <li><b>Sources → Export…</b> saves your sources as BibTeX, RIS or CSL-JSON for Zotero, EndNote, Mendeley or JabRef, all of them or only those cited in the open document. Each source gets a readable key such as <code>tuchman1962guns</code>.</li>
+      <li><b>Export → Pandoc / Quarto package</b> gives the document as Markdown with citations as <code>[@key, p. 12]</code>, its bibliography and the citation style file, ready for <code>pandoc --citeproc</code>. <b>LaTeX package</b> gives a <code>main.tex</code> with BibLaTeX <code>\autocite</code> commands and the .bib file, ready for Overleaf or <code>latexmk -xelatex</code>.</li>
+    </ul>
+    <h4>Example projects</h4>
+    <ul>
+      <li><b>New</b> → <b>Or open a finished example</b> loads a complete thesis chapter, long-form article, white paper, book proposal or investigative piece, with sources, notes, a plan, threads, claims, review keys and questions in place. Each has a pinned “Read me first” note. Opening one replaces the project in this browser, so save yours first.</li>
     </ul>
     <h4>Checking the draft</h4>
     <ul>

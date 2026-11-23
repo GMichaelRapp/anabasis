@@ -18,6 +18,8 @@ Choose **New** in the top bar. Give the project a working title, pick what youâ€
 
 The kind of writing sets up a starting plan and turns on the checks that suit it. You can change all of it later.
 
+Would rather see a finished project first? In the same window, **Or open a finished example** loads a complete thesis chapter, article, white paper, book proposal or investigative piece, with sources, notes, threads and claims already in place.
+
 ![The New project window with a title and "Article or essay" selected](quick-start/02-new-project.png)
 
 ## 3. Write

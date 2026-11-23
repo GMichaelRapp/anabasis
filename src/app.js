@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -35,7 +35,60 @@ const STYLES = {
   'apa': { label: 'APA 7th', bib: 'References', ds: true },
   'modern-language-association': { label: 'MLA 9th', bib: 'Works Cited', ds: true },
   'osint': { label: 'OSINT Style Guide v1.5', bib: '', custom: true, note: true },
+  'chicago-notes-bibliography-subsequent-ibid': { label: "Chicago 18th · notes & bibliography, with ibid.", bib: "Bibliography", group: "Humanities & history" },
+  'chicago-notes-archive-place-first': { label: "Chicago 18th · notes, archives cited place first", bib: "Bibliography", group: "Humanities & history" },
+  'chicago-notes-bibliography-annotated': { label: "Chicago 18th · notes & annotated bibliography", bib: "Bibliography", group: "Humanities & history" },
+  'chicago-notes-bibliography-17th-edition': { label: "Chicago 17th · notes & bibliography", bib: "Bibliography", group: "Humanities & history" },
+  'chicago-author-date-17th-edition': { label: "Chicago 17th · author-date", bib: "References", group: "Humanities & history" },
+  'modern-language-association-notes': { label: "MLA 9th · with notes", bib: "Works Cited", group: "Humanities & history", ds: true },
+  'modern-language-association-annotated-bibliography': { label: "MLA 9th · annotated bibliography", bib: "Works Cited", group: "Humanities & history", ds: true },
+  'mhra-notes': { label: "MHRA 4th · notes", bib: "Bibliography", group: "Humanities & history" },
+  'mhra-author-date': { label: "MHRA 4th · author-date", bib: "Bibliography", group: "Humanities & history" },
+  'new-harts-rules-notes': { label: "New Hart’s Rules · notes", bib: "Bibliography", group: "Humanities & history" },
+  'new-harts-rules-author-date': { label: "New Hart’s Rules · author-date", bib: "References", group: "Humanities & history" },
+  'oxford-guide-to-style-notes': { label: "Oxford Guide to Style · notes", bib: "Bibliography", group: "Humanities & history" },
+  'society-of-biblical-literature-fullnote-bibliography': { label: "SBL 2nd · notes & bibliography", bib: "Bibliography", group: "Humanities & history" },
+  'apa-6th-edition': { label: "APA 6th", bib: "References", group: "Social sciences", ds: true },
+  'apa-annotated-bibliography': { label: "APA 7th · annotated bibliography", bib: "References", group: "Social sciences", ds: true },
+  'american-political-science-association': { label: "APSA (political science)", bib: "References", group: "Social sciences" },
+  'american-journal-of-political-science': { label: "American Journal of Political Science", bib: "References", group: "Social sciences" },
+  'international-studies-association': { label: "International Studies Association", bib: "References", group: "Social sciences" },
+  'american-sociological-association': { label: "ASA (sociology)", bib: "References", group: "Social sciences" },
+  'american-anthropological-association': { label: "American Anthropological Association", bib: "References Cited", group: "Social sciences" },
+  'harvard-cite-them-right': { label: "Harvard · Cite Them Right", bib: "Reference list", group: "Social sciences" },
+  'harvard-anglia-ruskin-university': { label: "Harvard · Anglia Ruskin", bib: "References", group: "Social sciences" },
+  'sage-harvard': { label: "Harvard · SAGE", bib: "References", group: "Social sciences" },
+  'elsevier-harvard': { label: "Harvard · Elsevier", bib: "References", group: "Social sciences" },
+  'taylor-and-francis-chicago-author-date': { label: "Taylor & Francis · Chicago author-date", bib: "References", group: "Social sciences" },
+  'oscola': { label: "OSCOLA 4th (UK law)", bib: "Bibliography", group: "Law" },
+  'bluebook-law-review': { label: "Bluebook · law review (notes)", bib: "", group: "Law" },
+  'bluebook-inline': { label: "Bluebook · inline", bib: "", group: "Law" },
+  'american-medical-association': { label: "AMA 11th", bib: "References", group: "Sciences & medicine" },
+  'nlm-citation-sequence': { label: "NLM / Vancouver", bib: "References", group: "Sciences & medicine" },
+  'cse-citation-sequence': { label: "CSE 9th · citation-sequence", bib: "References", group: "Sciences & medicine" },
+  'cse-name-year': { label: "CSE 9th · name-year", bib: "References", group: "Sciences & medicine" },
+  'nature': { label: "Nature", bib: "References", group: "Sciences & medicine" },
+  'science': { label: "Science", bib: "References and Notes", group: "Sciences & medicine" },
+  'cell': { label: "Cell", bib: "References", group: "Sciences & medicine" },
+  'the-lancet': { label: "The Lancet", bib: "References", group: "Sciences & medicine" },
+  'bmj': { label: "BMJ", bib: "References", group: "Sciences & medicine" },
+  'american-chemical-society': { label: "ACS (chemistry)", bib: "References", group: "Sciences & medicine" },
+  'royal-society-of-chemistry': { label: "Royal Society of Chemistry", bib: "References", group: "Sciences & medicine" },
+  'american-physics-society': { label: "American Physical Society", bib: "References", group: "Sciences & medicine" },
+  'american-institute-of-physics': { label: "AIP (physics)", bib: "References", group: "Sciences & medicine" },
+  'american-geophysical-union': { label: "AGU (geosciences)", bib: "References", group: "Sciences & medicine" },
+  'springer-basic-author-date': { label: "Springer · author-date", bib: "References", group: "Sciences & medicine" },
+  'springer-basic-brackets': { label: "Springer · numeric", bib: "References", group: "Sciences & medicine" },
+  'elsevier-with-titles': { label: "Elsevier · numeric", bib: "References", group: "Sciences & medicine" },
+  'ieee': { label: "IEEE", bib: "References", group: "Engineering & standards" },
+  'american-society-of-civil-engineers': { label: "ASCE (civil engineering)", bib: "References", group: "Engineering & standards" },
+  'iso690-author-date-en': { label: "ISO 690 · author-date", bib: "References", group: "Engineering & standards" },
+  'iso690-numeric-en': { label: "ISO 690 · numeric", bib: "References", group: "Engineering & standards" },
 };
+const STYLE_GROUPS = ['Most used', 'Humanities & history', 'Social sciences', 'Law', 'Sciences & medicine', 'Engineering & standards'];
+for (const k in STYLES) STYLES[k].group = STYLES[k].group || 'Most used';
+/* the style picker: grouped options, the same everywhere a style is chosen */
+const styleOptions = sel => STYLE_GROUPS.map(g => `<optgroup label="${esc(g)}">${Object.keys(STYLES).filter(k => STYLES[k].group === g).map(k => `<option value="${k}"${k === sel ? ' selected' : ''}>${esc(STYLES[k].label)}</option>`).join('')}</optgroup>`).join('');
 const DEFAULT_STYLE = 'chicago-notes-bibliography';
 const cslXml = k => document.getElementById('csl-' + k).textContent;
 const LOCALE = document.getElementById('csl-locale').textContent;
@@ -475,6 +528,7 @@ function openDoc(id, skipSync = false) {
   if (draftsOn) closeDrafts();
   if (relOn) closeRel();
   if (typeof deskOn !== 'undefined' && deskOn) closeDesk();
+  if (typeof TTS !== 'undefined' && TTS.on) ttsStop();
   curDocId = d.id;
   editor.innerHTML = d.html || '<p><br></p>'; tidyTopLevel(); prepFigureDom(editor); hydrateImages(); renumberFigures();
   $('#docTitle').value = d.title;
@@ -487,11 +541,11 @@ function openDoc(id, skipSync = false) {
   if (!$('#findBar').classList.contains('hidden')) runFind();
   $('#scroller').scrollTop = 0;
   document.body.classList.remove('side-open');
-  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch();
+  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
 function updateWordCount() {
   const clone = editor.cloneNode(true);
-  $$('.cite,.fn,.flag', clone).forEach(m => m.remove());
+  $$('.cite,.fn,.flag,del.sg', clone).forEach(m => m.remove());
   const words = (clone.innerText || '').trim().split(/\s+/).filter(Boolean).length;
   const cites = $$('.cite', editor).length;
   $('#wordCount').textContent = `${words.toLocaleString()} words · ${cites} citation${cites === 1 ? '' : 's'}`;
@@ -835,7 +889,7 @@ $('#fnOk').addEventListener('click', () => {
 });
 
 /* ---------------- document list / doc bar ---------------- */
-for (const k in STYLES) $('#docStyle').insertAdjacentHTML('beforeend', `<option value="${k}">${esc(STYLES[k].label)}</option>`);
+$('#docStyle').innerHTML = styleOptions();
 $('#docStyle').addEventListener('change', e => { const d = curDoc(); d.style = e.target.value; applyLayout($('#page'), d); renderRefs(true); markDirty(); });
 $('#docTitle').addEventListener('input', e => { const d = curDoc(); d.title = e.target.value; d.modified = nowISO(); $('#titleBlock').innerHTML = titleBlockHTML(d); renderDocList(); markDirty(); });
 $('#projTitle').addEventListener('input', e => { P.title = e.target.value; markDirty(); });
@@ -1764,7 +1818,19 @@ function buildExport(doc, mode = 'html') {
   const mgWant = doc.layout.marginalia || 'word';
   const mg = mgWant === 'page' && mode !== 'substack' ? collectMarginalia(tmp, mode) : [];
   if (mode !== 'docx' || mgWant !== 'word') $$('.cmt', tmp).forEach(c => c.replaceWith(...c.childNodes));
-  $$('.rm', tmp).forEach(c => c.replaceWith(...c.childNodes)); tmp.normalize();
+  $$('.rm', tmp).forEach(c => c.replaceWith(...c.childNodes));
+  if (mode !== 'docx') { $$('del.sg', tmp).forEach(d => d.remove()); $$('ins.sg', tmp).forEach(d => d.replaceWith(...d.childNodes)); }
+  tmp.normalize();
+  if (mode === 'scholar') { // citations and text footnotes become placeholders the Pandoc and LaTeX writers fill in
+    $$('.ixm', tmp).forEach(m => m.remove());
+    const cites = [], fns = [];
+    $$('.cite,.fn', tmp).forEach(m => {
+      if (m.classList.contains('fn')) { fns.push(m.dataset.text || ''); m.replaceWith(document.createTextNode(`ZZF${fns.length - 1}ZZ`)); }
+      else { cites.push({ items: markerItems(m), note: m.dataset.cnote || '' }); m.replaceWith(document.createTextNode(`ZZC${cites.length - 1}ZZ`)); }
+    });
+    $$('p', tmp).forEach(p => { if (!p.textContent.trim() && !p.querySelector('img')) p.remove(); });
+    return { body: tmp.innerHTML, cites, fns, title: titleBlockHTML(doc), figs };
+  }
   let index = '';
   if (doc.layout.index && mode !== 'md') index = buildIndex(tmp, mode); else $$('.ixm', tmp).forEach(m => m.remove());
   const markers = $$('.cite,.fn', tmp);
@@ -1837,6 +1903,7 @@ $('#exportMenu').addEventListener('click', e => {
   const x = e.target.closest('button')?.dataset.x; if (!x) return;
   $('#exportMenu').classList.remove('open');
   const doc = curDoc();
+  if (doc && /^(pdf|html|epub|md|substack|copy|pandoc|latex)$/.test(x) && doc.id === curDocId && sgAll().length) setTimeout(() => toast(`This export shows the ${sgAll().length} suggestion${sgAll().length === 1 ? '' : 's'} as if accepted. Word exports keep them as tracked changes.`), 900);
   if (x === 'pdf') exportPDF();
   if (x === 'docx') exportDocx(doc);
   if (x === 'ms') openManuscript();
@@ -1854,7 +1921,10 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'epub') exportEpub(doc);
   if (x === 'annot') annotatedBibliography();
   if (x === 'osintlist') download(fileSafe(P.title) + ' - OSINT sources.json', exportOsintList(), 'application/json');
-  if (x === 'csl') download(fileSafe(P.title) + ' - sources.json', JSON.stringify(P.sources.map(s => Object.assign({ id: s.id }, s.csl)), null, 2), 'application/json');
+  if (x === 'csl') download(fileSafe(P.title) + ' - sources.json', toCSLJSON(), 'application/json');
+  if (x === 'refs') openRefExport();
+  if (x === 'pandoc') exportPandoc(doc);
+  if (x === 'latex') exportLatex(doc);
 });
 
 /* ---------------- dialogs, toast, misc ---------------- */
@@ -2206,15 +2276,15 @@ document.addEventListener('selectionchange', debounce(focusTrack, 30));
 /* ---------- settings ---------- */
 function openSettings() {
   $('#stRemind').value = String(PREFS.remindMins); $('#stGoal').value = PREFS.sessionGoal || '';
-  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
+  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
   $('#settingsDlg').showModal(); renderStorageStatus();
 }
 $('#btnSettings').addEventListener('click', openSettings);
 $('#stCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#stOk').addEventListener('click', () => {
   PREFS.remindMins = +$('#stRemind').value; PREFS.sessionGoal = Math.max(0, parseInt($('#stGoal').value, 10) || 0);
-  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
-  savePrefs(); $('#settingsDlg').close(); applyWritingView();
+  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
+  savePrefs(); $('#settingsDlg').close(); applyWritingView(); sgRefresh();
   editor.spellcheck = PREFS.spellcheck; snoozeUntil = 0; checkReminder(); renderOutline(); updateTargets();
 });
 $('#remindSave').addEventListener('click', () => saveProject(false));
@@ -2225,7 +2295,7 @@ function openManuscript(partId = '__all') {
   syncEditor();
   $('#msScope').innerHTML = '<option value="__all">Whole project, in binder order</option>' + P.parts.map(p => `<option value="${p.id}">Part: ${esc(p.name)}</option>`).join('');
   $('#msScope').value = P.parts.some(p => p.id === partId) ? partId : '__all';
-  $('#msStyle').innerHTML = Object.keys(STYLES).map(k => `<option value="${k}">${esc(STYLES[k].label)}</option>`).join('');
+  $('#msStyle').innerHTML = styleOptions();
   $('#msStyle').value = curDoc()?.style || DEFAULT_STYLE;
   if (!$('#msTitle').value) $('#msTitle').value = P.title;
   renderMsList(); $('#msDlg').showModal();
@@ -2362,6 +2432,7 @@ function htmlToDocx(html, ctx, opt = {}) {
     node.childNodes.forEach(ch => {
       if (ch.nodeType === 3) {
         const t = ch.data.replace(/\s+/g, ' '); if (!t) return;
+        if (f.track) { const o = Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz }, f.ta); r.push(f.track === 'INS' ? new D.InsertedTextRun(o) : new D.DeletedTextRun(o)); return; }
         r.push(new D.TextRun({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz, color: f.link ? '1F4E9A' : undefined, highlight: f.mark ? 'yellow' : undefined }));
         return;
       }
@@ -2369,6 +2440,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (ch.nodeType !== 1) return;
       const tag = ch.nodeName;
       if (tag === 'BR') { r.push(new D.TextRun({ break: 1 })); return; }
+      if ((tag === 'INS' || tag === 'DEL') && ch.classList.contains('sg')) { r.push(...runs(ch, Object.assign({}, f, { track: tag, ta: sgAttrs(ch) }), sz)); return; }
       if (tag === 'SPAN' && ch.classList.contains('cmt') && ctx.comments && ch.dataset.cmt in ctx.comments) { const id = ctx.comments[ch.dataset.cmt]; r.push(new D.CommentRangeStart(id), ...runs(ch, f, sz), new D.CommentRangeEnd(id), new D.TextRun({ children: [new D.CommentReference(id)] })); return; }
       if (tag === 'A' && ch.classList.contains('ix-a')) { r.push(new D.SimpleField('XE "' + (ch.dataset.ix || '').replace(/"/g, '') + '"', '')); return; }
       if (tag === 'SUP' && ch.classList.contains('fnref')) { const n = +ch.textContent; r.push(ctx.footnotes[n] ? new D.FootnoteReferenceRun(n) : new D.TextRun({ text: ch.textContent, superScript: true, font: ctx.font, size: sz })); return; }
@@ -2881,7 +2953,8 @@ function pagedHTMLFor(doc) { // used by tests and for saving a print-ready page
 async function importDocx(file) {
   toast('Reading “' + file.name + '”…');
   let r;
-  try { r = await mammoth.convertToHtml({ arrayBuffer: await file.arrayBuffer() }); }
+  let mk = { comments: {}, changes: 0 };
+  try { mk = await docxMarkChanges(await file.arrayBuffer()); r = await mammoth.convertToHtml({ arrayBuffer: mk.buf }); }
   catch (e) { toast('Couldn’t read that Word file: ' + e.message); return; }
   const tmp = document.createElement('div'); tmp.innerHTML = r.value;
   const notes = {};
@@ -2906,9 +2979,12 @@ async function importDocx(file) {
   $$('figure.fig', clean).forEach(f => { const nx = f.nextElementSibling; if (nx && nx.nodeName === 'P' && /^\s*(Figure|Fig\.|Map|Chart)\s*\d+[.:]/i.test(nx.textContent)) { f.querySelector('figcaption').innerHTML = stripCapLabel(nx.innerHTML, 'Figure|Fig\\.|Map|Chart'); nx.remove(); } });
   const h1 = tmp.querySelector('h1');
   const title = (h1 && h1.textContent.trim()) || file.name.replace(/\.docx$/i, '');
-  const d = newDoc(title, stripCp(clean.innerHTML) || '<p><br></p>');
+  const d = newDoc(title, '<p><br></p>');
+  const marks = docxApplyMarks(clean, mk.comments || {}, d);
+  d.html = stripCp(clean.innerHTML) || '<p><br></p>';
   addDoc(d); switchTab('docs');
-  const bits = [fnCount && `${fnCount} footnote${fnCount > 1 ? 's' : ''}`, imgs && `${imgs} image${imgs > 1 ? 's' : ''}`, tables && `${tables} table${tables > 1 ? 's' : ''}`].filter(Boolean);
+  if (marks.nSg) { sgRefresh(); }
+  const bits = [marks.nSg && `${marks.nSg} tracked change${marks.nSg > 1 ? 's' : ''} to review`, marks.nCm && `${marks.nCm} comment${marks.nCm > 1 ? 's' : ''} as margin notes`, fnCount && `${fnCount} footnote${fnCount > 1 ? 's' : ''}`, imgs && `${imgs} image${imgs > 1 ? 's' : ''}`, tables && `${tables} table${tables > 1 ? 's' : ''}`].filter(Boolean);
   toast(`Imported “${title}”${bits.length ? ' with ' + bits.join(', ').replace(/, ([^,]*)$/, ' and $1') : ''}.`);
 }
 $('#btnImportDocx').addEventListener('click', () => $('#fileDocx').click());
@@ -4871,12 +4947,14 @@ function npApplyKind(k) {
 }
 async function openNewProject() {
   $('#npKinds').innerHTML = Object.entries(PKINDS).map(([k, v]) => `<button type="button" class="np-kind" data-k="${k}"><b>${esc(v.label)}</b><span>${esc(v.blurb)}</span></button>`).join('');
-  $('#npStyle').innerHTML = Object.keys(STYLES).map(k => `<option value="${k}">${esc(STYLES[k].label)}</option>`).join('');
+  $('#npStyle').innerHTML = styleOptions();
+  $('#npExamples').innerHTML = Object.entries(STARTERS).map(([k, v]) => `<button type="button" class="np-kind np-ex" data-ex="${k}"><b>${esc(v.label)}</b><span>${esc(v.blurb)}</span></button>`).join('');
   $('#npTitle').value = ''; npApplyKind(npKind);
   $('#npWarn').innerHTML = dirtyFile ? `<b>“${esc(P.title)}” has unsaved changes.</b> Save it first. The new project replaces it in this browser. <button id="npSaveFirst" class="small">Save “${esc(P.title)}” now</button>` : `“${esc(P.title)}” stays in ${lastFileName ? esc(lastFileName) : 'this browser only, so save it first if you want to keep it'}. The new project replaces it here.`;
   $('#npDlg').showModal(); setTimeout(() => $('#npTitle').focus(), 30);
 }
 $('#npKinds').addEventListener('click', e => { const b = e.target.closest('.np-kind'); if (b) npApplyKind(b.dataset.k); });
+$('#npExamples').addEventListener('click', e => { const b = e.target.closest('[data-ex]'); if (b) openStarter(b.dataset.ex); });
 $('#npWarn').addEventListener('click', async e => { if (e.target.id === 'npSaveFirst') { await saveProject(false); if (!dirtyFile) $('#npWarn').textContent = `Saved to ${lastFileName}. The new project replaces it in this browser.`; } });
 $('#npCancel').addEventListener('click', () => $('#npDlg').close());
 $('#npOk').addEventListener('click', async () => {
@@ -5288,7 +5366,7 @@ async function addComment() {
   const id = uid('c'), span = document.createElement('span'); span.className = 'cmt'; span.dataset.cmt = id;
   if (!r.collapsed && blk(r.startContainer) === blk(r.endContainer) && !r.cloneContents().querySelector('figure,table,.cmt')) { span.appendChild(r.extractContents()); r.insertNode(span); }
   else { r.collapse(false); span.classList.add('cmt-pt'); span.setAttribute('contenteditable', 'false'); r.insertNode(span); }
-  doc.comments.push({ id, text: '', author: doc.meta.author || '', date: nowISO() });
+  doc.comments.push({ id, text: '', author: PREFS.myName || doc.meta.author || '', date: nowISO() });
   if (PREFS.showMargin === false) { PREFS.showMargin = true; savePrefs(); }
   syncEditor(); markDirty();
   renderMargin(id); renderOutline();
@@ -7734,11 +7812,826 @@ function researchLoose() {
 }
 
 COMMANDS.push(
+  ['Open an example project: thesis chapter', () => openStarter('thesis')], ['Open an example project: long-form article', () => openStarter('article')], ['Open an example project: white paper', () => openStarter('whitepaper')],
+  ['Open an example project: book proposal', () => openStarter('proposal')], ['Open an example project: investigative piece', () => openStarter('investigation')],
+  ['Export: Pandoc / Quarto package', () => exportPandoc()], ['Export: LaTeX package', () => exportLatex()], ['Export sources as BibTeX, RIS or CSL-JSON…', () => openRefExport()],
+  ['Listen: read the draft aloud from the cursor', () => ttsStart(true)], ['Suggest mode: track my changes', () => toggleSuggest()], ['Accept every suggestion', () => sgDoAll(true)], ['Reject every suggestion', () => sgDoAll(false)],
   ['Research desk: threads, claims, evidence, review', () => openDesk()], ['Mark the selection as a claim', () => markClaim()], ['Add the selection to a thread…', () => openThreadPick()],
   ['Key the selection for review…', () => openReviewKey()], ['Link the selection to a research question…', () => openQuestionLink()], ['New research question', () => openQuestionLink(true)],
   ['Claims register', () => openDesk('claims')], ['Evidence grid: claims × sources', () => openDesk('grid')], ['Due for review', () => openDesk('review')],
   ['Everything about… (one name or term across the project)', () => openDesk('about')], ['Fact-check sheet (download)', () => factSheet()], ['Show or hide research marks in the draft', () => { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }]
 );
+
+/* ================================================================
+   Suggest mode. With it on, typing becomes <ins class="sg"> and deleting
+   wraps the text in <del class="sg"> instead of removing it. Each change
+   can be accepted or rejected, one at a time or all at once. Word files
+   carry them both ways as tracked changes.
+   ================================================================ */
+let sgOn = false;
+const sgName = () => (PREFS.myName || '').trim() || (curDoc() && curDoc().meta.author) || 'Author';
+const sgMine = el => el && el.dataset.by === sgName();
+const SG_SKIP = 'figure,nav,[contenteditable="false"]';
+function sgMake(tag, id) { const e = document.createElement(tag); e.className = 'sg'; e.dataset.sg = id || uid('sg'); e.dataset.by = sgName(); e.dataset.at = nowISO(); return e; }
+function sgSetCaret(node, off) { const r = document.createRange(); r.setStart(node, off); r.collapse(true); const s = getSelection(); s.removeAllRanges(); s.addRange(r); savedRange = r.cloneRange(); }
+function sgMerge(el) { // join with a neighbouring change of the same kind and author, so a run of typing is one suggestion
+  const prev = el.previousSibling;
+  if (prev && prev.nodeType === 1 && prev.nodeName === el.nodeName && prev.classList.contains('sg') && prev.dataset.by === el.dataset.by) { prev.append(...el.childNodes); el.remove(); prev.normalize(); return prev; }
+  const next = el.nextSibling;
+  if (next && next.nodeType === 1 && next.nodeName === el.nodeName && next.classList.contains('sg') && next.dataset.by === el.dataset.by) { el.append(...next.childNodes); next.remove(); el.normalize(); }
+  return el;
+}
+/* Mark a range as deleted. Text the same author inserted is simply removed. Returns false when there was
+   nothing to mark (a paragraph break), so the browser can handle it. */
+function sgDelete(range) {
+  let root = range.commonAncestorContainer; if (root.nodeType === 3) root = root.parentNode;
+  const items = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: n => n.nodeType === 1 && n.matches('.cite,.fn') ? NodeFilter.FILTER_ACCEPT : n.nodeType === 1 ? NodeFilter.FILTER_SKIP : NodeFilter.FILTER_ACCEPT });
+  while (w.nextNode()) {
+    const n = w.currentNode; if (!range.intersectsNode(n) || !editor.contains(n)) continue;
+    if (n.nodeType === 3) { const pe = n.parentElement; if (!n.data.length || !pe || pe.closest('.cite,.fn,' + SG_SKIP) || pe.closest('del.sg')) continue; }
+    items.push(n);
+  }
+  if (!items.length) return false;
+  let first = null, last = null;
+  items.forEach(n => {
+    if (n.nodeType === 1) { // a citation or footnote marker, whole
+      if (n.closest('del.sg')) return;
+      const own = n.closest('ins.sg'); if (own && sgMine(own)) { n.remove(); return; }
+      const d = sgMake('del'); n.replaceWith(d); d.append(n); const m = sgMerge(d); first = first || m; last = m; return;
+    }
+    let s = 0, e = n.data.length;
+    if (n === range.startContainer) s = range.startOffset; if (n === range.endContainer) e = range.endOffset;
+    if (e <= s) return;
+    if (e < n.data.length) n.splitText(e); if (s > 0) n = n.splitText(s);
+    const own = n.parentElement.closest('ins.sg');
+    if (own && sgMine(own)) { n.data = ''; if (!own.textContent) { const at = document.createTextNode(''); own.replaceWith(at); } return; }
+    const d = sgMake('del'); n.parentNode.insertBefore(d, n); d.append(n); const m = sgMerge(d); first = first || m; last = m;
+  });
+  return { first, last };
+}
+function sgInsert(range, text) {
+  range.collapse(true);
+  let at = range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer;
+  const del = at && at.closest && at.closest('del.sg');
+  if (del) { range.setStartAfter(del); range.collapse(true); at = del.parentElement; }
+  const own = at && at.closest && at.closest('ins.sg');
+  const sp = (before, after) => { // a space at an edge, or next to another space, must be non-breaking to show
+    let s = text; if (s.startsWith(' ') && (!before || /[\s\u00a0]$/.test(before))) s = '\u00a0' + s.slice(1);
+    if (s.endsWith(' ') && (!after || /^[\s\u00a0]/.test(after))) s = s.slice(0, -1) + '\u00a0';
+    return s;
+  };
+  const ctx = () => { const blk = (at && at.closest && at.closest(RM_BLOCK)) || editor; const a = document.createRange(); a.selectNodeContents(blk); a.setEnd(range.startContainer, range.startOffset); const z = document.createRange(); z.selectNodeContents(blk); z.setStart(range.startContainer, range.startOffset); return [a.toString(), z.toString()]; };
+  const [bt, af] = ctx();
+  if (own && sgMine(own)) {
+    let tn = range.startContainer, off = range.startOffset;
+    if (tn.nodeType !== 3) { const t = document.createTextNode(''); range.insertNode(t); tn = t; off = 0; }
+    const s = sp(bt, af);
+    if (!/^[\s\u00a0]/.test(s) && off > 0 && tn.data[off - 1] === '\u00a0' && !(off > 1 && /[\s\u00a0]/.test(tn.data[off - 2]))) { tn.replaceData(off - 1, 1, ' '); }
+    tn.insertData(off, s); sgSetCaret(tn, off + s.length); return;
+  }
+  const ins = sgMake('ins'); ins.textContent = sp(bt, af); range.insertNode(ins);
+  const m = sgMerge(ins); const tn = [...m.childNodes].reverse().find(n => n.nodeType === 3) || m.lastChild;
+  if (m !== ins) { // merged into the previous insertion: put the caret after the new text
+    const r = document.createRange(); r.selectNodeContents(m); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); savedRange = r.cloneRange();
+  } else sgSetCaret(tn, tn.data.length);
+}
+let sgLast = 0, sgNative = false;
+const sgInOwn = n => { const e = n && (n.nodeType === 3 ? n.parentElement : n); const i = e && e.closest && e.closest('ins.sg'); return i && sgMine(i) && !e.closest('del.sg') ? i : null; };
+function sgEdit(label, fn) { // typing within a moment of the last change extends one undo step
+  const now = Date.now(), top = RM_UNDO[RM_UNDO.length - 1];
+  if (top && top.sg === label && now - sgLast < 1500 && rmMatches(top.after)) { fn(); top.after = rmSnap(); }
+  else { rmOp(label, fn); const t = RM_UNDO[RM_UNDO.length - 1]; if (t) t.sg = label; }
+  sgLast = now; markDirty(); sgRefreshSoon();
+}
+editor.addEventListener('beforeinput', e => {
+  if (!sgOn || sgNative) return;
+  const t = e.inputType, sel = getSelection(); if (!sel.rangeCount) return;
+  if (/^(insertText|insertReplacementText|insertFromPaste|insertFromDrop|insertFromYank)$/.test(t)) {
+    const text = e.data != null ? e.data : (e.dataTransfer && e.dataTransfer.getData('text/plain')) || '';
+    if (!text) return;
+    e.preventDefault();
+    const tr = e.getTargetRanges && e.getTargetRanges()[0];
+    const r = tr ? (() => { const x = document.createRange(); x.setStart(tr.startContainer, tr.startOffset); x.setEnd(tr.endContainer, tr.endOffset); return x; })() : sel.getRangeAt(0).cloneRange();
+    sgEdit('suggest', () => { if (!r.collapsed) { const d = sgDelete(r); if (d && d.last) { r.setStartAfter(d.last); r.collapse(true); } } sgInsert(r, text.replace(/\r?\n/g, ' ')); });
+    return;
+  }
+  if (/^delete/.test(t) && t !== 'deleteByDrag') {
+    e.preventDefault();
+    let r = sel.getRangeAt(0).cloneRange();
+    if (r.collapsed) {
+      const dir = /Backward/.test(t) ? 'backward' : 'forward', unit = /Word/.test(t) ? 'word' : /Line|Hard|Soft/.test(t) ? 'lineboundary' : 'character';
+      for (let i = 0; i < 40; i++) { // step over text already marked as deleted
+        sel.modify('extend', dir, unit); r = sel.getRangeAt(0).cloneRange(); if (r.collapsed) break;
+        const c = r.cloneContents(), txt = c.textContent; const tmp = document.createElement('div'); tmp.append(c);
+        const live = [...tmp.querySelectorAll('del.sg')].reduce((s, d) => s + d.textContent.length, 0);
+        const inside = (r.startContainer.parentElement || r.startContainer).closest && (r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer).closest('del.sg');
+        if (txt && !inside && live < txt.length) break;
+        const d = inside || (dir === 'backward' ? null : null);
+        if (inside) { const x = document.createRange(); dir === 'backward' ? x.setStartBefore(inside) : x.setStartAfter(inside); x.collapse(true); sel.removeAllRanges(); sel.addRange(x); }
+        else break;
+      }
+    }
+    if (r.collapsed) return;
+    const dir = /Backward/.test(t) ? -1 : 1;
+    let ok;
+    sgEdit('suggest', () => { ok = sgDelete(r); if (ok) { const x = document.createRange(); if (dir < 0 && ok.first) x.setStartBefore(ok.first); else if (ok.last) x.setStartAfter(ok.last); else { x.setStart(r.startContainer, r.startOffset); } x.collapse(true); sel.removeAllRanges(); sel.addRange(x); savedRange = x.cloneRange(); } });
+    if (!ok) { // nothing to mark: a paragraph break. Let it be joined without a record.
+      sel.removeAllRanges(); sel.addRange(r); document.execCommand('delete'); onEdit();
+    }
+  }
+});
+/* a paste in suggest mode goes in as one insertion */
+editor.addEventListener('paste', e => {
+  if (!sgOn) return;
+  e.preventDefault(); e.stopImmediatePropagation();
+  const text = (e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if (!text) return;
+  const sel = getSelection(); if (!sel.rangeCount) return; const r = sel.getRangeAt(0).cloneRange();
+  sgEdit('paste a suggestion', () => { if (!r.collapsed) { const d = sgDelete(r); if (d && d.last) { r.setStartAfter(d.last); r.collapse(true); } } sgInsert(r, text.replace(/\s*\r?\n\s*/g, ' ')); });
+}, true);
+
+/* ---------- reviewing ---------- */
+const sgAll = (root = editor) => { const by = new Map(); $$('ins.sg,del.sg', root).forEach(el => { const k = el.dataset.sg; if (!by.has(k)) by.set(k, []); by.get(k).push(el); }); return [...by.values()]; };
+function sgResolve(els, accept) {
+  els.forEach(el => { const keep = (el.nodeName === 'INS') === accept; const p = el.parentNode; if (!p) return; if (keep) el.replaceWith(...el.childNodes); else el.remove(); p.normalize(); });
+}
+function sgDo(id, accept) {
+  const els = $$(`[data-sg="${rmEsc(id)}"]`, editor); if (!els.length) return;
+  rmOp(accept ? 'accept a suggestion' : 'reject a suggestion', () => { sgResolve(els, accept); syncEditor(); });
+  closeRmPop(); onEdit(); sgRefresh();
+}
+function sgDoAll(accept) {
+  const all = sgAll(); if (!all.length) return;
+  rmOp(accept ? 'accept every suggestion' : 'reject every suggestion', () => { all.forEach(g => sgResolve(g, accept)); syncEditor(); });
+  onEdit(); sgRefresh(); rmUndoToast(`${accept ? 'Accepted' : 'Rejected'} ${all.length} suggestion${all.length === 1 ? '' : 's'}.`);
+}
+function sgStep(dir) {
+  const all = sgAll(); if (!all.length) return;
+  const sel = getSelection(), here = sel.rangeCount ? sel.getRangeAt(0) : null;
+  const starts = all.map(g => g[0]);
+  let i = here ? starts.findIndex(el => here.comparePoint(el, 0) > 0 || (dir < 0 && false)) : 0;
+  if (dir > 0) { if (i < 0) i = 0; } else { const prev = here ? starts.map((el, k) => [el, k]).filter(([el]) => here.comparePoint(el, 0) < 0 && !el.contains(here.startContainer)) : []; i = prev.length ? prev[prev.length - 1][1] : starts.length - 1; }
+  const el = starts[i]; el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  const r = document.createRange(); r.setStartAfter(el); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange();
+  showSgPop(el);
+}
+function showSgPop(el) {
+  closeRmPop(); closePop();
+  const g = $$(`[data-sg="${rmEsc(el.dataset.sg)}"]`, editor), isIns = el.nodeName === 'INS';
+  const txt = g.map(x => x.textContent).join('').replace(/\s+/g, ' ').trim();
+  rmPopEl = document.createElement('div'); rmPopEl.className = 'pop rm-pop sg-pop'; rmPopEl.setAttribute('role', 'dialog'); rmPopEl.setAttribute('aria-label', 'Suggestion');
+  rmPopEl.innerHTML = `<div class="rp-row"><span class="sg-mk ${isIns ? 'sg-ins' : 'sg-del'}" aria-hidden="true">${isIns ? '+' : '−'}</span><span class="rp-t"><b>${esc(el.dataset.by || 'Someone')} ${isIns ? 'added' : 'deleted'}</b><span class="muted small">“${esc(txt.length > 70 ? txt.slice(0, 68) + '…' : txt)}”${el.dataset.at ? ' · ' + esc(relTime(el.dataset.at)) : ''}</span></span><button class="small primary-soft" data-a="acc">Accept</button><button class="small" data-a="rej">Reject</button></div>`;
+  document.body.appendChild(rmPopEl);
+  const r = el.getClientRects()[0] || el.getBoundingClientRect(), pw = rmPopEl.offsetWidth;
+  rmPopEl.style.left = Math.max(8, Math.min(innerWidth - pw - 8, r.left - 10)) + 'px';
+  rmPopEl.style.top = (r.bottom + 6 + rmPopEl.offsetHeight > innerHeight ? r.top - rmPopEl.offsetHeight - 6 : r.bottom + 6) + 'px';
+  rmPopEl.addEventListener('click', e => { const a = e.target.closest('button')?.dataset.a; if (a) sgDo(el.dataset.sg, a === 'acc'); });
+}
+editor.addEventListener('click', e => {
+  const s = e.target.closest && e.target.closest('ins.sg,del.sg'); if (!s || sgOn) return;
+  const sel = getSelection(); if (sel && !sel.isCollapsed) return;
+  setTimeout(() => showSgPop(s), 0);
+});
+function sgRefresh() {
+  const n = sgAll().length, bar = $('#sgBar'); if (!bar) return;
+  document.body.classList.toggle('sg-on', sgOn);
+  $('#btnSuggest').classList.toggle('on', sgOn); $('#btnSuggest').setAttribute('aria-pressed', sgOn);
+  bar.classList.toggle('hidden', !sgOn && !n);
+  $('#sgState').innerHTML = sgOn ? `<b>Suggesting</b> as ${esc(sgName())}` : '<b>Suggestions</b> to review';
+  $('#sgCount').textContent = n ? `${n} change${n === 1 ? '' : 's'}` : 'No changes yet';
+  $$('#sgBar [data-sga]').forEach(b => { if (b.dataset.sga !== 'toggle') b.disabled = !n; });
+  $('#sgToggle').textContent = sgOn ? 'Stop suggesting' : 'Suggest';
+}
+const sgRefreshSoon = debounce(sgRefresh, 300);
+function toggleSuggest(on = !sgOn) {
+  sgOn = on; closeRmPop();
+  if (on && !(PREFS.myName || '').trim() && !(curDoc() && curDoc().meta.author)) toast('Suggesting as “Author”. Add your name in Settings so your changes are labeled.');
+  else if (on) toast('Suggest mode: what you type and delete is marked for review.');
+  sgRefresh(); editor.focus();
+}
+$('#btnSuggest').addEventListener('click', () => toggleSuggest());
+$('#sgBar').addEventListener('click', e => {
+  const a = e.target.closest('[data-sga]')?.dataset.sga; if (!a) return;
+  if (a === 'toggle') toggleSuggest(); if (a === 'prev') sgStep(-1); if (a === 'next') sgStep(1);
+  if (a === 'accall') sgDoAll(true); if (a === 'rejall') sgDoAll(false);
+});
+editor.addEventListener('input', sgRefreshSoon);
+
+/* ---------- Word: suggestions out as tracked changes; tracked changes and comments in ---------- */
+function sgAttrs(el) { return { id: Math.abs(hashStr(el.dataset.sg || '')) % 2000000000, author: el.dataset.by || 'Author', date: el.dataset.at || nowISO() }; }
+function hashStr(s) { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return h; }
+/* Minimal zip reader for .docx (stored and deflated entries). */
+async function unzip(buf) {
+  const u8 = new Uint8Array(buf), dv = new DataView(buf), files = {};
+  let eocd = -1; for (let i = u8.length - 22; i >= Math.max(0, u8.length - 65557); i--) if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  if (eocd < 0) throw new Error('not a zip file');
+  let p = dv.getUint32(eocd + 16, true); const n = dv.getUint16(eocd + 10, true);
+  for (let k = 0; k < n; k++) {
+    const method = dv.getUint16(p + 10, true), csize = dv.getUint32(p + 20, true), nlen = dv.getUint16(p + 28, true), xlen = dv.getUint16(p + 30, true), clen = dv.getUint16(p + 32, true), off = dv.getUint32(p + 42, true);
+    const name = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + nlen));
+    const lnlen = dv.getUint16(off + 26, true), lxlen = dv.getUint16(off + 28, true), start = off + 30 + lnlen + lxlen, raw = u8.subarray(start, start + csize);
+    files[name] = method === 0 ? raw.slice() : method === 8 ? new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer()) : null;
+    p += 46 + nlen + xlen + clen;
+  }
+  return files;
+}
+/* Before mammoth reads a .docx, tracked changes and comment ranges become visible markers in the text. */
+async function docxMarkChanges(buf) {
+  if (typeof DecompressionStream === 'undefined') return { buf, comments: {}, changes: 0 };
+  let files; try { files = await unzip(buf); } catch (e) { return { buf, comments: {}, changes: 0 }; }
+  const dec = new TextDecoder(), enc = new TextEncoder(), doc = files['word/document.xml']; if (!doc) return { buf, comments: {}, changes: 0 };
+  let xml = dec.decode(doc).replace(/<w:(ins|del)\b[^>]*\/>/g, ''), changes = 0; // paragraph-mark changes carry no text
+  const tok = s => `<w:r><w:t xml:space="preserve">${s}</w:t></w:r>`;
+  const attr = (a, k) => { const m = a.match(new RegExp(`w:${k}="([^"]*)"`)); return m ? m[1].replace(/[^\w .:,@'-]/g, '') : ''; };
+  xml = xml.replace(/<w:ins\b([^>]*)>([\s\S]*?)<\/w:ins>/g, (m, a, body) => { if (!/<w:t[\s>]/.test(body)) return body; changes++; return `${tok(`⟦SGI|${attr(a, 'id')}|${attr(a, 'author')}|${attr(a, 'date')}⟧`)}${body}${tok('⟦/SG⟧')}`; });
+  xml = xml.replace(/<w:del\b([^>]*)>([\s\S]*?)<\/w:del>/g, (m, a, body) => { if (!/<w:delText/.test(body)) return ''; changes++; return `${tok(`⟦SGD|${attr(a, 'id')}|${attr(a, 'author')}|${attr(a, 'date')}⟧`)}${body.replace(/<w:delText\b/g, '<w:t').replace(/<\/w:delText>/g, '</w:t>')}${tok('⟦/SG⟧')}`; });
+  xml = xml.replace(/<w:commentRangeStart\b[^>]*w:id="(\d+)"[^>]*\/>/g, (m, id) => tok(`⟦CS|${id}⟧`)).replace(/<w:commentRangeEnd\b[^>]*w:id="(\d+)"[^>]*\/>/g, (m, id) => tok(`⟦CE|${id}⟧`));
+  const comments = {};
+  if (files['word/comments.xml']) {
+    const cx = new DOMParser().parseFromString(dec.decode(files['word/comments.xml']), 'application/xml');
+    [...cx.getElementsByTagName('w:comment')].forEach(c => {
+      const id = c.getAttribute('w:id'), paras = [...c.getElementsByTagName('w:p')].map(p => [...p.getElementsByTagName('w:t')].map(t => t.textContent).join('')).filter(Boolean);
+      comments[id] = { author: c.getAttribute('w:author') || '', date: c.getAttribute('w:date') || '', text: paras.join('\n') };
+    });
+  }
+  if (!changes && !Object.keys(comments).length) return { buf, comments, changes };
+  files['word/document.xml'] = enc.encode(xml);
+  const out = zipStore(Object.entries(files).filter(([, d]) => d).map(([name, data]) => ({ name, data })));
+  return { buf: await out.arrayBuffer(), comments, changes };
+}
+/* After mammoth: markers become suggestions and margin notes. */
+function docxApplyMarks(root, comments, doc) {
+  let nSg = 0, nCm = 0;
+  // replace each marker with an empty comment node we can range over, then wrap what lies between
+  const marks = []; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const texts = []; let t; while ((t = w.nextNode())) texts.push(t);
+  texts.forEach(tn => {
+    const parts = tn.data.split(/(⟦[^⟧]*⟧)/); if (parts.length === 1) return;
+    const frag = document.createDocumentFragment();
+    parts.forEach(p => { if (/^⟦[^⟧]*⟧$/.test(p)) { const c = document.createComment(p.slice(1, -1)); frag.append(c); marks.push(c); } else if (p) frag.append(document.createTextNode(p)); });
+    tn.replaceWith(frag);
+  });
+  const stack = [];
+  marks.forEach(c => {
+    const v = c.data;
+    if (/^SG[ID]\|/.test(v) || /^CS\|/.test(v)) { stack.push(c); return; }
+    let openIdx = -1;
+    if (v === '/SG') openIdx = stack.map(x => /^SG[ID]\|/.test(x.data)).lastIndexOf(true);
+    else if (/^CE\|/.test(v)) openIdx = stack.findIndex(x => x.data === 'CS|' + v.slice(3));
+    if (openIdx < 0) return;
+    const o = stack.splice(openIdx, 1)[0], r = document.createRange(); r.setStartAfter(o); r.setEndBefore(c);
+    if (/^SG/.test(o.data)) {
+      const [k, , author, date] = o.data.split('|'), tag = k === 'SGI' ? 'ins' : 'del', id = uid('sg');
+      const segs = []; const tw = document.createTreeWalker(r.commonAncestorContainer.nodeType === 3 ? r.commonAncestorContainer.parentNode : r.commonAncestorContainer, NodeFilter.SHOW_TEXT); let x;
+      while ((x = tw.nextNode())) if (r.intersectsNode(x) && x.data) segs.push(x);
+      segs.forEach(s => { const e = document.createElement(tag); e.className = 'sg'; e.dataset.sg = id; e.dataset.by = author || 'Reviewer'; e.dataset.at = date || nowISO(); s.replaceWith(e); e.append(s); });
+      if (segs.length) nSg++;
+    } else {
+      const cid = o.data.slice(3), cm = comments[cid]; if (!cm) return;
+      const id = uid('c'); doc.comments.push({ id, text: cm.text, author: cm.author, date: cm.date || nowISO() }); nCm++;
+      const blk = n => { while (n && n.parentNode !== root) n = n.parentNode; return n; };
+      const span = document.createElement('span'); span.className = 'cmt'; span.dataset.cmt = id;
+      if (!r.collapsed && blk(r.startContainer) === blk(r.endContainer) && !r.cloneContents().querySelector('figure,table,.cmt')) { span.append(r.extractContents()); r.insertNode(span); }
+      else { r.collapse(true); span.classList.add('cmt-pt'); span.setAttribute('contenteditable', 'false'); r.insertNode(span); }
+    }
+  });
+  // anything left over (an unmatched marker) simply goes away
+  const cw = document.createTreeWalker(root, NodeFilter.SHOW_COMMENT); const left = []; let cc; while ((cc = cw.nextNode())) left.push(cc); left.forEach(x => x.remove());
+  return { nSg, nCm };
+}
+
+/* ================================================================
+   Starter projects: five complete examples to learn from or build on.
+   Each arrives with documents, sources, notes, a plan, threads, claims,
+   review keys and questions already in place.
+   Inline shorthand in the text below:
+     {c:key:locator}          a citation (several: {c:a:12;b:40})
+     {fn:text}                a text footnote
+     ⟪th:Thread|text⟫         a passage in a thread
+     ⟪cl:ok|text⟫             a claim (open, ok, need, disp, cut)
+     ⟪rv:reason|days|note|text⟫   a review key, due in so many days
+     ⟪q:key|text⟫             a passage linked to a question
+   (Marks may sit inside marks; [square brackets] are placeholders for your own text.)
+   ================================================================ */
+const STARTERS = {
+  thesis: {
+    label: 'Thesis chapter', blurb: 'A history chapter with a working argument, archival-style notes and open questions.', style: 'chicago-notes-bibliography', goal: 'book', target: 9000, days: 60,
+    title: 'Supply and Survival: The March of the Ten Thousand',
+    sources: {
+      xen: { type: 'book', title: 'The Persian Expedition', author: [{ family: 'Xenophon' }], translator: [{ family: 'Warner', given: 'Rex' }], publisher: 'Penguin', 'publisher-place': 'Harmondsworth', issued: { 'date-parts': [[1972]] }, _rating: 'B2' },
+      lee: { type: 'book', title: 'A Greek Army on the March: Soldiers and Survival in Xenophon’s Anabasis', author: [{ family: 'Lee', given: 'John W. I.' }], publisher: 'Cambridge University Press', 'publisher-place': 'Cambridge', issued: { 'date-parts': [[2007]] }, _rating: 'A2' },
+      wat: { type: 'book', title: 'Xenophon’s Retreat: Greece, Persia, and the End of the Golden Age', author: [{ family: 'Waterfield', given: 'Robin' }], publisher: 'Belknap Press of Harvard University Press', 'publisher-place': 'Cambridge, MA', issued: { 'date-parts': [[2006]] }, _rating: 'B2' },
+      eng: { type: 'book', title: 'Alexander the Great and the Logistics of the Macedonian Army', author: [{ family: 'Engels', given: 'Donald W.' }], publisher: 'University of California Press', 'publisher-place': 'Berkeley', issued: { 'date-parts': [[1978]] }, _rating: 'A2' },
+    },
+    threads: [['Logistics', '#2A9D8F', 'Food, water, pack animals: what the army needed and how it got it'], ['Command', '#D1495B', 'How decisions were made once the generals were gone']],
+    questions: { grain: 'How much grain did the army need each day, and where did it come from?', numbers: 'How many people were actually with the army, counting servants and camp followers?' },
+    docs: [
+      { title: 'Chapter 2: An Army That Had to Eat', blocks: [
+        ['h1', 'An Army That Had to Eat'],
+        ['p', 'Histories of the retreat of the Ten Thousand usually turn on courage and command. This chapter argues that ⟪th:Logistics|the march is better read as a long negotiation with hunger⟫, one that shaped the army’s route, its pace and its politics.{c:lee:21–24}'],
+        ['p', '⟪cl:ok|Xenophon’s narrative names food or forage at nearly every halt⟫{c:xen:Book IV} and ties several of the army’s hardest choices to it. ⟪q:numbers|The army that left Cunaxa was far larger than its hoplite count suggests, because servants, women and traders travelled with it.⟫{c:lee:259–275}'],
+        ['h2', 'Living off the land'],
+        ['p', '⟪th:Logistics|Where villages had grain, the army stopped; where they had none, it moved on quickly or fought its way to the next stores.⟫ ⟪cl:need|Daily needs ran into many tons of grain for a force of this size⟫, a figure the chapter still has to establish from comparable armies.{fn:Engels’s method for Alexander’s army, which counts rations per person and per pack animal, is the model here; the numbers have to be rebuilt for a smaller, slower force.}'],
+        ['p', '⟪rv:Verify a fact|7|Check the halt-by-halt list against Lee’s appendix|Of the stops Xenophon describes in the Carduchian mountains, most turn on the question of supplies.⟫{c:lee:31}'],
+        ['h2', 'Who decided'],
+        ['p', '⟪th:Command|After the generals were seized, the army chose new leaders in assembly⟫, and ⟪th:Logistics|several of the assemblies that followed argued about food before they argued about strategy.⟫{c:wat:118}'],
+        ['p', '⟪cl:disp|Waterfield reads these assemblies as genuinely democratic⟫{c:wat:120–122}; Lee is more cautious, stressing the weight of the officers. The chapter takes Lee’s side, but the disagreement should be stated in the text.'],
+      ] },
+      { title: 'Notes for Chapter 3', blocks: [
+        ['h1', 'Toward Chapter 3: The Black Sea'],
+        ['p', 'Pick up the thread of supply at the coast: markets, ships and the end of foraging. ⟪q:grain|Does the arrival at Trapezus change how the army fed itself, or only where?⟫'],
+      ] },
+    ],
+    plan: [['Introduction: hunger as a historical actor', ''], ['Living off the land', 'Route, pace and foraging'], ['Who decided', 'Assemblies, officers and food'], ['Conclusion', 'What a logistical reading adds']],
+    notes: [
+      { title: 'Read me first', kind: 'idea', body: 'This example thesis chapter shows Anabasis at work:\n\n- **Threads** (Logistics, Command) are highlighted in the draft. Step through them in the **Research** tab.\n- **Claims** are underlined: one supported, one that still needs a source, one contested. Open **Research desk → Claims** to see the register and the fact-check sheet.\n- A **review key** marks a passage to check by next week.\n- Two **open questions** live in **Plan** and on Project home.\n\nDelete this example or start a new project when you’re ready.' },
+      { title: 'Rations per head', kind: 'paraphrase', source: 'eng', locator: '18–22', tags: ['logistics', 'method'], body: 'Engels works out daily needs per soldier, servant and animal, then multiplies by the size of the army and the days between supply points. Useful model; numbers differ for a mercenary force.' },
+      { title: 'Camp followers', kind: 'summary', source: 'lee', locator: '259–275', tags: ['numbers'], body: 'Lee argues the non-combatant population was large and mattered: servants carried, cooked and foraged. Any supply estimate has to count them.' },
+    ],
+  },
+  article: {
+    label: 'Long-form article', blurb: 'A narrative feature with notes, a thread to follow and a claim to check.', style: 'chicago-notes-bibliography', goal: 'article', target: 4000, days: 21,
+    title: 'The Wire That Shrank the World',
+    sources: {
+      stand: { type: 'book', title: 'The Victorian Internet: The Remarkable Story of the Telegraph and the Nineteenth Century’s On-Line Pioneers', author: [{ family: 'Standage', given: 'Tom' }], publisher: 'Walker', 'publisher-place': 'New York', issued: { 'date-parts': [[1998]] }, _rating: 'B2' },
+      carey: { type: 'article-journal', title: 'Technology and Ideology: The Case of the Telegraph', author: [{ family: 'Carey', given: 'James W.' }], 'container-title': 'Prospects', volume: '8', page: '303–325', issued: { 'date-parts': [[1983]] }, _rating: 'A2' },
+    },
+    threads: [['Speed', '#E0A526', 'Every place the piece shows news getting faster, and what that changed']],
+    questions: { price: 'What did a telegram cost an ordinary sender in the 1850s?' },
+    docs: [
+      { title: 'The Wire That Shrank the World', blocks: [
+        ['h1', 'The Wire That Shrank the World'],
+        ['p', 'In May 1844, ⟪cl:ok|Samuel Morse sent “What hath God wrought” from Washington to Baltimore⟫{c:stand:44}, and ⟪th:Speed|news began, for the first time, to move faster than the people who carried it.⟫'],
+        ['p', '⟪th:Speed|Within a decade, wires linked most large American cities⟫, and ⟪cl:need|newspapers that could afford the wire began to beat their rivals by a day or more⟫.{fn:Find a paper that tracked its own scoops, or a contemporary complaint about one.}'],
+        ['h2', 'A new kind of time'],
+        ['p', 'Carey argues that the telegraph separated communication from transportation, and that this separation ⟪th:Speed|changed how people imagined markets, distance and even time zones.⟫{c:carey:303–305}'],
+        ['p', '⟪rv:Check a quote|3|Confirm the wording and date against a facsimile|The first lasting transatlantic cable, in 1866, made a London morning and a New York afternoon part of the same story.⟫{c:stand:83–90} ⟪q:price|Who could afford to send a message, and who only read about it?⟫'],
+      ] },
+    ],
+    plan: [['Hook: the first message', ''], ['A new kind of time', 'Carey’s argument, told through scenes'], ['Who got the news first', 'Prices, access, the press'], ['Ending: what we inherited', '']],
+    notes: [
+      { title: 'Read me first', kind: 'idea', body: 'A long-form feature in progress. The **Speed** thread runs through the piece; one claim is supported and one still needs a source; a review key asks you to check a quote. Try **Export → Pandoc / Quarto package** to see the citations as keys.' },
+      { title: 'Communication without transport', kind: 'summary', source: 'carey', locator: '303–305', tags: ['argument'], body: 'Carey: before the telegraph, messages moved only as fast as people and goods. The wire broke that link, and with it changed commerce and the idea of a shared present.' },
+    ],
+  },
+  whitepaper: {
+    label: 'White paper', blurb: 'Findings, evidence and recommendations, with every claim tracked.', style: 'chicago-author-date', goal: 'whitepaper', target: 6000, days: 30,
+    title: 'Counting What Matters: Measuring Readiness',
+    sources: {
+      betts: { type: 'book', title: 'Military Readiness: Concepts, Choices, Consequences', author: [{ family: 'Betts', given: 'Richard K.' }], publisher: 'Brookings Institution Press', 'publisher-place': 'Washington, DC', issued: { 'date-parts': [[1995]] }, _rating: 'A2' },
+    },
+    threads: [['Measurement', '#3A7CC3', 'Where the paper says what is counted, and what is missed']],
+    questions: { data: 'Which readiness data are public, and which only appear in summaries?' },
+    docs: [
+      { title: 'Counting What Matters', blocks: [
+        ['h1', 'Counting What Matters: Measuring Readiness'],
+        ['h2', 'Summary'],
+        ['p', '⟪th:Measurement|Readiness is usually reported as an inventory: units, equipment, people on hand.⟫ This paper argues that ⟪cl:ok|readiness is a question of “ready for what, when and for how long,” not a single number⟫{c:betts:33–39}, and recommends three changes to how it is measured and reported.'],
+        ['h2', 'Findings'],
+        ['ul', ['⟪cl:need|[Finding 1: state it as a claim the evidence can support.]⟫', '⟪cl:open|[Finding 2: what current reporting misses.]⟫', '⟪cl:open|[Finding 3: the cost of the gap.]⟫']],
+        ['h2', 'Recommendations'],
+        ['ol', ['[Measure readiness against named scenarios.]', '[Report how long a force can sustain operations, not only whether it can start them.]', '⟪rv:Legal or sensitivity read|10|Check what can be said publicly|[Publish a summary each year.]⟫']],
+        ['p', 'Replace the bracketed text with your own findings. ⟪q:data|Each finding should cite data a reader can check.⟫'],
+      ] },
+    ],
+    plan: [['Summary', ''], ['The problem', 'What is measured now and why it misleads'], ['Findings', 'Three, each with its evidence'], ['Recommendations', ''], ['Annex: data and method', '']],
+    notes: [
+      { title: 'Read me first', kind: 'idea', body: 'A white paper skeleton with the argument in place and the findings left for you. Every finding is a **claim** in the register; the evidence grid on the **Research desk** shows which rest on what.' },
+      { title: 'Ready for what?', kind: 'summary', source: 'betts', locator: '33–39', tags: ['definition'], body: 'Betts breaks readiness into questions of time, purpose and sustainability. A force can be ready for one mission and not another.' },
+    ],
+  },
+  proposal: {
+    label: 'Book proposal', blurb: 'Overview, comparable titles, chapter outline and author bio.', style: 'chicago-notes-bibliography', goal: 'book', target: 7000, days: 45,
+    title: 'Book Proposal: [Your Title]',
+    sources: {
+      tuch: { type: 'book', title: 'The Guns of August', author: [{ family: 'Tuchman', given: 'Barbara W.' }], publisher: 'Macmillan', 'publisher-place': 'New York', issued: { 'date-parts': [[1962]] } },
+      keeg: { type: 'book', title: 'The Face of Battle', author: [{ family: 'Keegan', given: 'John' }], publisher: 'Jonathan Cape', 'publisher-place': 'London', issued: { 'date-parts': [[1976]] } },
+    },
+    threads: [['Hook', '#E07A2E', 'Lines that could open the overview or the jacket copy']],
+    questions: { comps: 'Which three recent books would an editor compare this to, and how is this one different?' },
+    docs: [
+      { title: 'Overview', blocks: [
+        ['h1', 'Overview'],
+        ['p', '⟪th:Hook|[One paragraph that makes an editor want to read on: the story, the stakes, why now.]⟫'],
+        ['p', '[What the book argues, in two or three sentences.] [What readers will come away with.]'],
+        ['h2', 'Comparable titles'],
+        ['p', 'Like *The Guns of August*{c:tuch:}, this book [how it is similar]; unlike it, [how it differs]. Like *The Face of Battle*{c:keeg:}, it [similarity]. ⟪q:comps|Add at least one comparable title from the last five years.⟫'],
+        ['h2', 'Market'],
+        ['p', '[Who buys this book, where they already read about the subject, and the size of that audience.]'],
+      ] },
+      { title: 'Chapter outline', blocks: [
+        ['h1', 'Chapter outline'],
+        ['h2', 'Chapter 1: [Title]'], ['p', '[Two or three sentences: what happens, what it shows.]'],
+        ['h2', 'Chapter 2: [Title]'], ['p', '[Two or three sentences.]'],
+        ['h2', 'Chapter 3: [Title]'], ['p', '[Two or three sentences.]'],
+      ] },
+      { title: 'About the author', blocks: [
+        ['h1', 'About the author'],
+        ['p', '⟪rv:Rewrite|14|Tailor to each agent or press|[Why you are the person to write this book: expertise, access, platform, previous writing.]⟫'],
+      ] },
+    ],
+    plan: [['Overview', ''], ['Comparable titles', ''], ['Market and platform', ''], ['Chapter outline', ''], ['About the author', ''], ['Sample chapter', '']],
+    notes: [{ title: 'Read me first', kind: 'idea', body: 'A proposal laid out the way agents and editors expect, with each part in its own document. Bracketed text is for you to replace. **Compile manuscript** puts the parts together for sending.' }],
+  },
+  investigation: {
+    label: 'Investigative piece', blurb: 'A claims ledger from the start: every assertion sourced, rated and checked.', style: 'chicago-notes-bibliography', goal: 'article', target: 5000, days: 30,
+    title: 'Investigation: [Working Title]',
+    sources: {
+      verif: { type: 'book', title: 'Verification Handbook: An Ultimate Guideline on Digital Age Sourcing for Emergency Coverage', editor: [{ family: 'Silverman', given: 'Craig' }], publisher: 'European Journalism Centre', 'publisher-place': 'Maastricht', issued: { 'date-parts': [[2014]] }, URL: 'https://verificationhandbook.com', _rating: 'A2' },
+      sbi: { type: 'book', title: 'Story-Based Inquiry: A Manual for Investigative Journalists', author: [{ family: 'Hunter', given: 'Mark Lee' }], publisher: 'UNESCO', 'publisher-place': 'Paris', issued: { 'date-parts': [[2011]] }, _rating: 'A2' },
+    },
+    threads: [['Money', '#5B9A3C', 'Every place the story follows payments, owners or contracts'], ['People', '#8A5CC2', 'Named individuals: what each is said to have done']],
+    questions: { owner: 'Who ultimately owns [the company]? Check registries in every jurisdiction involved.', reply: 'Has every person named been given a fair chance to respond?' },
+    docs: [
+      { title: 'Draft', blocks: [
+        ['h1', '[Working Title]'],
+        ['p', '⟪cl:need|[Your central finding, stated as precisely as the evidence allows.]⟫'],
+        ['p', '⟪th:Money|⟪cl:need|[Company] received [amount] from [payer] between [dates].⟫⟫ ⟪q:owner|[Who controls the company, and how you know.]⟫'],
+        ['p', '⟪th:People|⟪cl:open|[Name] signed the contract on behalf of [organization].⟫⟫ ⟪rv:Legal or sensitivity read|5|Lawyer to read every sentence naming a person|⟪q:reply|[Name] did not respond to detailed questions sent on [date].⟫⟫'],
+        ['h2', 'How we know'],
+        ['p', 'Start from a hypothesis that can be proved or disproved, and list the documents that would do either.{c:sbi:13–20} Verify images and accounts before relying on them.{c:verif:}'],
+      ] },
+    ],
+    plan: [['The finding', 'One sentence'], ['The evidence', 'Documents, records, sources'], ['The people', 'Who did what; their responses'], ['What it means', ''], ['Method box', 'How the reporting was done']],
+    notes: [
+      { title: 'Read me first', kind: 'idea', body: 'An investigation built around a **claims ledger**. Every factual sentence is marked as a claim, starting as *needs a source*. Rate each source on its card (reliability and credibility); the **evidence grid** shows claims resting on one source or on weak ones, and the **fact-check sheet** is ready for your editor or lawyer.\n\nNothing in this example is a real finding: replace every bracket.' },
+      { title: 'Hypothesis first', kind: 'summary', source: 'sbi', locator: '13–20', tags: ['method'], body: 'Hunter: frame the story as a hypothesis you can verify, then plan the reporting around proving or disproving it.' },
+    ],
+  },
+};
+function starterInline(src, ctx) {
+  let h = esc(src);
+  h = h.replace(/\*([^*]+)\*/g, '<i>$1</i>');
+  h = h.replace(/\{c:([^}]*)\}/g, (m, body) => citeHTML(body.split(';').map(p => { const [k, loc] = p.split(':'); const o = { id: ctx.src[k.trim()] }; if (loc) Object.assign(o, { locator: loc.trim(), label: 'page' }); return o; }).filter(o => o.id)));
+  const unesc = t => t.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  h = h.replace(/\{fn:([^}]*)\}/g, (m, t) => fnHTML(unesc(t)));
+  // marks, innermost first so marks can sit inside marks
+  for (let guard = 0; guard < 6 && /⟪(th|cl|rv|q):/.test(h); guard++) {
+    h = h.replace(/⟪(th|cl|rv|q):([^⟪⟫]*)⟫/g, (m, k, body) => {
+      const parts = body.split('|'), text = parts.pop();
+      const pid = uid('m');
+      if (k === 'th') return `<span class="rm" data-rm="${pid}" data-k="th" data-ref="${ctx.th[parts[0]]}">${text}</span>`;
+      if (k === 'q') return `<span class="rm" data-rm="${pid}" data-k="q" data-ref="${ctx.q[parts[0]]}">${text}</span>`;
+      if (k === 'cl') { const id = uid('cl'); P.claims.push({ id, status: parts[0] || 'open', note: '', checkedText: '', checkedAt: parts[0] === 'ok' ? nowISO() : '', created: nowISO(), modified: nowISO(), _text: text }); return `<span class="rm" data-rm="${id}" data-k="cl">${text}</span>`; }
+      if (k === 'rv') { const id = uid('rv'); P.reviewKeys.push({ id, reason: parts[0], due: addDaysISO(todayISO(), +parts[1] || 7), note: parts[2] || '', done: false, doneAt: '', created: nowISO() }); return `<span class="rm" data-rm="${id}" data-k="rv">${text}</span>`; }
+      return text;
+    });
+  }
+  return h;
+}
+function starterBlocks(blocks, ctx) {
+  return blocks.map(([t, v]) => t === 'ul' || t === 'ol' ? `<${t}>${v.map(x => `<li>${starterInline(x, ctx)}</li>`).join('')}</${t}>` : t === 'bq' ? `<blockquote><p>${starterInline(v, ctx)}</p></blockquote>` : `<${t}>${starterInline(v, ctx)}</${t}>`).join('');
+}
+function buildStarter(key) {
+  const K = STARTERS[key];
+  P = blankProject(); P.title = K.title;
+  P.goal = { kind: K.goal, target: K.target, deadline: todayKey(new Date(Date.now() + K.days * DAY)), started: todayKey() };
+  const ctx = { src: {}, th: {}, q: {} };
+  Object.entries(K.sources).forEach(([k, c]) => { const csl = Object.assign({}, c); const rating = csl._rating; delete csl._rating; const s = { id: uid('s'), csl, created: nowISO(), modified: nowISO() }; if (rating) s.osint = { rating }; P.sources.push(s); ctx.src[k] = s.id; });
+  K.threads.forEach(([name, color, note]) => { const t = { id: uid('th'), name, color, note, hidden: false, created: nowISO() }; P.threads.push(t); ctx.th[name] = t.id; });
+  Object.entries(K.questions).forEach(([k, title]) => { const it = plNewItem('', null, { type: 'question', title, status: 'open' }); ctx.q[k] = it.id; });
+  const docs = K.docs.map((d, i) => { const doc = newDoc(d.title, starterBlocks(d.blocks, ctx)); doc.style = K.style; doc.order = i; P.docs.push(doc); return doc; });
+  K.plan.forEach(([title, synopsis], i) => plNewItem('', null, { type: 'section', title, synopsis, docId: i === 0 ? docs[0].id : '' }));
+  K.notes.forEach((n, i) => { const note = Object.assign(newNote(), { title: n.title, body: n.body, kind: n.kind || 'idea', tags: n.tags || [], sourceId: n.source ? ctx.src[n.source] : '', locator: n.locator || '', pinned: i === 0, order: i }); P.notes.push(note); });
+  // a supported claim remembers the text it was checked against
+  P.claims.forEach(c => { const tmp = document.createElement('div'); tmp.innerHTML = c._text || ''; if (c.status === 'ok') c.checkedText = rmNorm(tmp.textContent); delete c._text; });
+  return docs[0];
+}
+async function openStarter(key) {
+  const K = STARTERS[key]; if (!K) return;
+  if (dirtyFile && !(await ask('Replace the current project?', `“${P.title}” has changes that aren’t saved to a file. Opening an example replaces them in this browser.`, 'Open the example'))) return;
+  syncEditor();
+  LOCK = null; document.body.classList.remove('locked'); pendingHandle = null;
+  const d = buildStarter(key);
+  fileHandle = null; dirtyFile = true; dirtySince = Date.now(); lastFileSave = null; lastFileName = ''; srcVersion++; curDocId = d.id;
+  if (typeof R !== 'undefined' && R.doc) { try { R.doc.destroy(); } catch (e) {} R.doc = null; showReader(false); }
+  $$('dialog[open]').forEach(x => x.close()); closePanel();
+  openDoc(d.id, true); renderAll(); persistLocal(); updateSaveState();
+  switchTab('research'); rmRefresh();
+  toast(`Opened the ${K.label.toLowerCase()} example. The pinned note “Read me first” explains what’s set up.`);
+}
+
+/* ================================================================
+   Listen: read the draft aloud with the browser's own voices, sentence by
+   sentence, highlighting each as it is spoken. Hearing a draft catches
+   what the eye skips. Nothing leaves the computer.
+   ================================================================ */
+const TTS = { on: false, paused: false, list: [], i: 0, voices: [] };
+const ttsOK = () => 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
+function ttsLoadVoices() {
+  if (!ttsOK()) return;
+  const all = speechSynthesis.getVoices(); const lang = (document.documentElement.lang || 'en').slice(0, 2);
+  TTS.voices = all.filter(v => (v.lang || '').toLowerCase().startsWith(lang)).sort((a, b) => (b.localService - a.localService) || a.name.localeCompare(b.name));
+  const sel = $('#ttsVoice'); if (!sel) return;
+  sel.innerHTML = '<option value="">Default voice</option>' + TTS.voices.map(v => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === PREFS.ttsVoice ? 'selected' : ''}>${esc(v.name)}${v.localService ? '' : ' (online)'}</option>`).join('');
+}
+if (ttsOK()) { ttsLoadVoices(); speechSynthesis.addEventListener && speechSynthesis.addEventListener('voiceschanged', ttsLoadVoices); }
+/* The sentences of the draft, each with the stretch of text it covers. */
+function ttsSentences() {
+  const out = [], skip = '.cite,.fn,.flag,.ixm,.ix-a,del.sg,figure,nav,.cmt-pt';
+  const seg = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('en', { granularity: 'sentence' }) : null;
+  $$('h1,h2,h3,p,li', editor).forEach(blk => {
+    if (blk.closest('figure,nav') || (blk.matches('p') && blk.closest('li'))) return;
+    const nodes = []; let text = '';
+    const w = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: n => n.nodeType === 1 ? (n.matches(skip) || (n !== blk && n.matches('p,li,ul,ol'))) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP : NodeFilter.FILTER_ACCEPT });
+    let n; while ((n = w.nextNode())) { nodes.push({ n, at: text.length }); text += n.data; }
+    if (!text.trim()) return;
+    const spans = seg ? [...seg.segment(text)].map(s => [s.index, s.index + s.segment.length]) : (text.match(/[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g) || [text]).reduce((a, s) => { const st = a.length ? a[a.length - 1][1] : 0; a.push([st, st + s.length]); return a; }, []);
+    spans.forEach(([a, z]) => {
+      const raw = text.slice(a, z); if (!raw.trim()) return;
+      const lead = raw.length - raw.trimStart().length, trail = raw.length - raw.trimEnd().length; a += lead; z -= trail;
+      const pos = off => { let k = nodes.length - 1; while (k > 0 && nodes[k].at > off) k--; const x = nodes[k]; return [x.n, Math.min(off - x.at, x.n.data.length)]; };
+      const r = document.createRange(); const [sn, so] = pos(a), [en, eo] = pos(z); try { r.setStart(sn, so); r.setEnd(en, eo); } catch (e) { return; }
+      let say = text.slice(a, z).replace(/\s+/g, ' ');
+      if (blk.matches('h1,h2,h3')) say += '.';
+      out.push({ r, say, blk });
+    });
+    if (PREFS.ttsCites) { // say each note number or in-text citation after the sentence it follows
+      const mine = out.filter(s => s.blk === blk);
+      $$('.cite,.fn', blk).forEach(m => {
+        const s = [...mine].reverse().find(x => x.r.comparePoint(m, 0) >= 0); if (!s) return;
+        const t = m.textContent.trim(); if (!t) return;
+        const end = (s.say.match(/[.!?…]["”’)]*$/) || [''])[0];
+        s.say = s.say.slice(0, s.say.length - end.length) + (/^\d+$/.test(t) ? `, note ${t}` : `, ${t.replace(/^\(|\)$/g, '')}`) + (end || '.');
+      });
+    }
+  });
+  return out;
+}
+function ttsMark(r) {
+  if (window.CSS && CSS.highlights && typeof Highlight === 'function') { if (r) CSS.highlights.set('tts', new Highlight(r)); else CSS.highlights.delete('tts'); }
+  else if (r) { const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  if (r) { const rect = r.getBoundingClientRect(), sc = $('#scroller').getBoundingClientRect(); if (rect.top < sc.top + 60 || rect.bottom > sc.bottom - 60) $('#scroller').scrollBy({ top: rect.top - sc.top - sc.height * 0.35, behavior: 'smooth' }); }
+}
+function ttsSpeak() {
+  if (!TTS.on) return;
+  const s = TTS.list[TTS.i];
+  if (!s) { ttsStop(); toast('Finished reading.'); return; }
+  ttsMark(s.r); $('#ttsPos').textContent = `${TTS.i + 1} / ${TTS.list.length}`;
+  const u = new SpeechSynthesisUtterance(s.say);
+  u.rate = +PREFS.ttsRate || 1; u.lang = 'en';
+  const v = TTS.voices.find(x => x.voiceURI === PREFS.ttsVoice); if (v) u.voice = v;
+  const my = TTS.gen;
+  u.onend = () => { if (TTS.on && !TTS.paused && my === TTS.gen) { TTS.i++; ttsSpeak(); } };
+  u.onerror = e => { if (e.error === 'interrupted' || e.error === 'canceled') return; if (TTS.on && my === TTS.gen) { TTS.i++; ttsSpeak(); } };
+  speechSynthesis.speak(u);
+}
+function ttsStart(fromCursor = true) {
+  if (!ttsOK()) { toast('This browser can’t read aloud.'); return; }
+  speechSynthesis.cancel();
+  TTS.list = ttsSentences(); if (!TTS.list.length) { toast('Nothing to read yet.'); return; }
+  TTS.i = 0;
+  const sel = getSelection();
+  if (fromCursor && sel.rangeCount && editor.contains(sel.anchorNode)) { const c = sel.getRangeAt(0); const k = TTS.list.findIndex(s => s.r.compareBoundaryPoints(Range.END_TO_START, c) >= 0 || s.r.isPointInRange(c.startContainer, c.startOffset)); if (k > 0) TTS.i = k; }
+  TTS.on = true; TTS.paused = false; TTS.gen = (TTS.gen || 0) + 1;
+  $('#ttsBar').classList.remove('hidden'); ttsUI(); ttsSpeak();
+}
+function ttsPause() {
+  if (!TTS.on) return;
+  TTS.paused = !TTS.paused; TTS.gen++;
+  if (TTS.paused) speechSynthesis.cancel(); else ttsSpeak(); // cancel and restart the sentence: pause() is unreliable across browsers
+  ttsUI();
+}
+function ttsSkip(d) { if (!TTS.on) return; TTS.gen++; speechSynthesis.cancel(); TTS.i = Math.max(0, Math.min(TTS.list.length - 1, TTS.i + d)); TTS.paused = false; ttsUI(); ttsSpeak(); }
+function ttsStop() { TTS.on = false; TTS.paused = false; TTS.gen = (TTS.gen || 0) + 1; if (ttsOK()) speechSynthesis.cancel(); ttsMark(null); $('#ttsBar').classList.add('hidden'); ttsUI(); }
+function ttsUI() {
+  $('#ttsPlay').textContent = !TTS.on || TTS.paused ? 'Play' : 'Pause'; $('#ttsPlay').setAttribute('aria-label', !TTS.on || TTS.paused ? 'Play' : 'Pause');
+  $('#btnListen').classList.toggle('on', TTS.on);
+  $('#ttsRate').value = String(PREFS.ttsRate || 1); $('#ttsCites').checked = !!PREFS.ttsCites;
+}
+$('#btnListen').addEventListener('click', () => (TTS.on ? ttsStop() : ttsStart(true)));
+$('#ttsPlay').addEventListener('click', () => (TTS.on ? ttsPause() : ttsStart(true)));
+$('#ttsPrev').addEventListener('click', () => ttsSkip(-1));
+$('#ttsNext').addEventListener('click', () => ttsSkip(1));
+$('#ttsStop').addEventListener('click', ttsStop);
+$('#ttsRate').addEventListener('change', e => { PREFS.ttsRate = +e.target.value; savePrefs(); if (TTS.on && !TTS.paused) ttsSkip(0); });
+$('#ttsCites').addEventListener('change', e => { PREFS.ttsCites = e.target.checked; savePrefs(); if (TTS.on) { const i = TTS.i; TTS.list = ttsSentences(); TTS.i = Math.min(i, TTS.list.length - 1); ttsSkip(0); } });
+$('#ttsVoice').addEventListener('change', e => { PREFS.ttsVoice = e.target.value; savePrefs(); if (TTS.on && !TTS.paused) ttsSkip(0); });
+editor.addEventListener('keydown', e => { if (TTS.on && !TTS.paused && !e.metaKey && !e.ctrlKey && e.key.length === 1) ttsPause(); });
+if (!ttsOK()) $('#btnListen').remove();
+
+/* ================================================================
+   Scholarly exchange: citation keys, BibTeX / RIS / CSL-JSON export of
+   sources, and Pandoc Markdown and LaTeX packages of a document.
+   ================================================================ */
+const ascii = s => String(s || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/ß/g, 'ss').replace(/[æÆ]/g, 'ae').replace(/[øØ]/g, 'o');
+/* Stable, readable keys: tuchman1962guns. A key set by hand in the raw CSL (citation-key) wins. */
+function citeKeys(sources = P.sources) {
+  const keys = new Map(), used = new Set();
+  const stop = /^(the|a|an|on|of|in|and|to|for|la|le|les|el|los|die|der|das)$/i;
+  [...sources].sort((a, b) => String(a.created).localeCompare(String(b.created)) || a.id.localeCompare(b.id)).forEach(s => {
+    const c = s.csl || {};
+    let k = c['citation-key'] && /^[\w:.-]+$/.test(c['citation-key']) ? c['citation-key'] : '';
+    if (!k) {
+      const who = (c.author && c.author[0]) || (c.editor && c.editor[0]) || {};
+      const name = ascii(who.family || who.literal || c.publisher || 'anon').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'anon';
+      const y = (c.issued && c.issued['date-parts'] && c.issued['date-parts'][0] && c.issued['date-parts'][0][0]) || 'nd';
+      const word = ascii(c.title || '').split(/[^A-Za-z0-9]+/).find(w => w && !stop.test(w)) || '';
+      k = `${name}${y}${word.toLowerCase().slice(0, 16)}`;
+    }
+    let u = k, i = 0; while (used.has(u)) u = k + String.fromCharCode(97 + (i++ % 26)) + (i > 26 ? i : '');
+    used.add(u); keys.set(s.id, u);
+  });
+  return keys;
+}
+const texEsc = s => String(s || '').replace(/\\/g, '\\textbackslash{}').replace(/([&%$#_{}])/g, '\\$1').replace(/~/g, '\\textasciitilde{}').replace(/\^/g, '\\textasciicircum{}');
+const BIB_OUT = { 'article-journal': 'article', 'article-magazine': 'article', 'article-newspaper': 'article', article: 'article', book: 'book', chapter: 'incollection', 'paper-conference': 'inproceedings', report: 'report', thesis: 'thesis', webpage: 'online', 'post-weblog': 'online', post: 'online', dataset: 'dataset', manuscript: 'unpublished', 'motion_picture': 'video', broadcast: 'video', interview: 'misc', 'personal_communication': 'letter', map: 'misc', legislation: 'legislation', 'legal_case': 'jurisdiction', speech: 'misc', document: 'misc' };
+const cslDate = d => { const p = d && d['date-parts'] && d['date-parts'][0]; if (p && p[0]) return p.map((x, i) => i ? String(x).padStart(2, '0') : String(x)).join('-'); return d && d.raw ? String(d.raw) : ''; };
+const bibNames = list => (list || []).map(n => n.literal ? `{${n.literal}}` : [n.family && (n['non-dropping-particle'] ? n['non-dropping-particle'] + ' ' : '') + n.family, n.given].filter(Boolean).join(', ')).join(' and ');
+function toBibTeX(sources = P.sources) {
+  const keys = citeKeys(P.sources);
+  return sources.map(s => {
+    const c = s.csl || {}, t = BIB_OUT[c.type] || 'misc', f = [];
+    const add = (k, v, raw) => { if (v != null && String(v).trim()) f.push(`  ${k} = {${raw ? v : texEsc(v)}}`); };
+    add('author', bibNames(c.author), true); add('editor', bibNames(c.editor), true); add('translator', bibNames(c.translator), true);
+    add('title', c.title);
+    if (t === 'incollection' || t === 'inproceedings') add('booktitle', c['container-title']);
+    else if (t === 'online') add('organization', c['container-title']); else add('journaltitle', c['container-title']);
+    if (c.type === 'article-newspaper' || c.type === 'article-magazine') add('entrysubtype', c.type === 'article-newspaper' ? 'newspaper' : 'magazine');
+    add('date', cslDate(c.issued)); const y = c.issued && c.issued['date-parts'] && c.issued['date-parts'][0] && c.issued['date-parts'][0][0]; add('year', y);
+    add('volume', c.volume); add('number', c.issue); add('pages', String(c.page || '').replace(/[–—]/g, '--'));
+    add('edition', c.edition); add('publisher', c.publisher); add('location', c['publisher-place']);
+    if (t === 'thesis') add('type', c.genre || 'phdthesis');
+    if (t === 'report') add('institution', c.publisher);
+    add('doi', c.DOI); add('url', c.URL); add('urldate', cslDate(c.accessed)); add('isbn', c.ISBN); add('issn', c.ISSN);
+    add('note', c.note); add('abstract', c.abstract);
+    return `@${t}{${keys.get(s.id)},\n${f.join(',\n')}\n}`;
+  }).join('\n\n') + '\n';
+}
+const RIS_OUT = { 'article-journal': 'JOUR', 'article-magazine': 'MGZN', 'article-newspaper': 'NEWS', book: 'BOOK', chapter: 'CHAP', 'paper-conference': 'CPAPER', report: 'RPRT', thesis: 'THES', webpage: 'ELEC', 'post-weblog': 'BLOG', dataset: 'DATA', manuscript: 'UNPB', 'motion_picture': 'VIDEO', broadcast: 'VIDEO', interview: 'PCOMM', map: 'MAP', legislation: 'STAT', 'legal_case': 'CASE', speech: 'GEN', document: 'GEN' };
+function toRIS(sources = P.sources) {
+  const risDateOut = d => { const p = d && d['date-parts'] && d['date-parts'][0]; return p && p[0] ? `${p[0]}/${p[1] ? String(p[1]).padStart(2, '0') : ''}/${p[2] ? String(p[2]).padStart(2, '0') : ''}/` : ''; };
+  return sources.map(s => {
+    const c = s.csl || {}, L = [`TY  - ${RIS_OUT[c.type] || 'GEN'}`];
+    const add = (k, v) => { if (v != null && String(v).trim()) L.push(`${k}  - ${String(v).replace(/\s+/g, ' ').trim()}`); };
+    (c.author || []).forEach(n => add('AU', n.literal || [n.family, n.given].filter(Boolean).join(', ')));
+    (c.editor || []).forEach(n => add('A2', n.literal || [n.family, n.given].filter(Boolean).join(', ')));
+    add('TI', c.title); add(c.type === 'chapter' ? 'T2' : 'JO', c['container-title']);
+    const y = c.issued && c.issued['date-parts'] && c.issued['date-parts'][0] && c.issued['date-parts'][0][0]; add('PY', y); add('DA', risDateOut(c.issued));
+    add('VL', c.volume); add('IS', c.issue); const pg = String(c.page || '').split(/[–—-]+/); add('SP', pg[0]); add('EP', pg[1]);
+    add('PB', c.publisher); add('CY', c['publisher-place']); add('ET', c.edition); add('DO', c.DOI); add('UR', c.URL); add('SN', c.ISBN || c.ISSN);
+    add('Y2', risDateOut(c.accessed)); add('AB', c.abstract); add('N1', c.note); add('M3', c.genre);
+    L.push('ER  - '); return L.join('\r\n');
+  }).join('\r\n\r\n') + '\r\n';
+}
+const toCSLJSON = (sources = P.sources) => { const keys = citeKeys(P.sources); return JSON.stringify(sources.map(s => Object.assign({ id: keys.get(s.id) }, s.csl)), null, 2); };
+function citedSources(doc) {
+  const ids = new Set(); const t = document.createElement('div'); if (doc.id === curDocId) syncEditor(); t.innerHTML = doc.html;
+  $$('.cite', t).forEach(m => markerItems(m).forEach(it => ids.add(it.id)));
+  return P.sources.filter(s => ids.has(s.id));
+}
+
+/* export references dialog */
+function openRefExport() { $('#reCited').checked = false; $('#reCited').disabled = !curDoc(); $('#reCount').textContent = P.sources.length; $('#refExpDlg').showModal(); }
+$('#refExpDlg').addEventListener('click', e => {
+  const b = e.target.closest('[data-re]'); if (!b) return;
+  const list = $('#reCited').checked && curDoc() ? citedSources(curDoc()) : P.sources;
+  if (!list.length) { toast('No sources to export.'); return; }
+  const base = fileSafe(P.title) + ($('#reCited').checked ? ' - ' + fileSafe(curDoc().title) : '') + ' - sources';
+  if (b.dataset.re === 'bib') download(base + '.bib', toBibTeX(list), 'application/x-bibtex');
+  if (b.dataset.re === 'ris') download(base + '.ris', toRIS(list), 'application/x-research-info-systems');
+  if (b.dataset.re === 'json') download(base + '.json', toCSLJSON(list), 'application/json');
+  $('#refExpDlg').close(); toast(`Exported ${list.length} source${list.length === 1 ? '' : 's'}.`);
+});
+$('#reClose').addEventListener('click', () => $('#refExpDlg').close());
+$('#btnExportRefs').addEventListener('click', openRefExport);
+$('#reCited').addEventListener('change', () => { $('#reCount').textContent = $('#reCited').checked && curDoc() ? citedSources(curDoc()).length : P.sources.length; });
+
+/* ---------- a document's citations as keys ---------- */
+const LOC_PANDOC = { page: 'p.', chapter: 'chap.', section: 'sec.', paragraph: 'para.', line: 'l.', figure: 'fig.', table: 'tbl.', volume: 'vol.', part: 'pt.', note: 'n.', column: 'col.', folio: 'fol.', verse: 'v.', book: 'bk.' };
+function pandocCite(c, keys) {
+  const parts = c.items.map((it, i) => {
+    const k = keys.get(it.id) || 'missing-source';
+    let s = (it.prefix ? it.prefix.trim() + ' ' : '') + (it['suppress-author'] ? '-@' : '@') + k;
+    if (it.locator) s += ', ' + (LOC_PANDOC[it.label || 'page'] ? LOC_PANDOC[it.label || 'page'] + ' ' : (it.label ? it.label + ' ' : '')) + it.locator;
+    if (it.suffix) s += (it.locator ? ' ' : ', ') + it.suffix.trim();
+    if (i === c.items.length - 1 && c.note) s += (it.locator || it.suffix ? '. ' : ', ') + c.note.trim();
+    return s;
+  });
+  return '[' + parts.join('; ') + ']';
+}
+function latexCite(c, keys) {
+  const one = it => { const post = it.locator ? (it.label && it.label !== 'page' ? (LOC_PANDOC[it.label] || it.label) + '~' : '') + texEsc(it.locator) + (it.suffix ? ', ' + texEsc(it.suffix) : '') : texEsc(it.suffix || ''); const pre = texEsc(it.prefix || ''); return (pre ? `[${pre}]` : '') + (pre || post ? `[${post}]` : '') + `{${keys.get(it.id) || 'missing-source'}}`; };
+  if (c.items.length === 1) return `\\autocite${one(c.items[0]).replace(/^\[/, '[')}` + (c.note ? `\\footnote{${texEsc(c.note)}}` : '');
+  return `\\autocites${c.items.map(one).join('')}` + (c.note ? `\\footnote{${texEsc(c.note)}}` : '');
+}
+/* images in the exported body move to files beside the text */
+function extractImages(tmp, dir = 'figures') {
+  const files = []; let n = 0;
+  $$('img', tmp).forEach(img => {
+    const m = String(img.getAttribute('src') || '').match(/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,(.+)$/); if (!m) return;
+    const ext = m[1] === 'jpeg' ? 'jpg' : m[1] === 'svg+xml' ? 'svg' : m[1];
+    const name = `${dir}/figure-${++n}.${ext}`, bin = atob(m[2]), data = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) data[i] = bin.charCodeAt(i);
+    files.push({ name, data }); img.setAttribute('src', name);
+  });
+  return files;
+}
+function scholarParts(doc) {
+  const x = buildExport(doc, 'scholar'), tmp = document.createElement('div'); tmp.innerHTML = x.body;
+  const images = extractImages(tmp);
+  const used = new Set(x.cites.flatMap(c => c.items.map(it => it.id)));
+  const keys = citeKeys(P.sources), sources = P.sources.filter(s => used.has(s.id));
+  return { x, tmp, images, keys, sources };
+}
+function exportPandoc(doc = curDoc()) {
+  if (!doc) return;
+  const { x, tmp, images, keys, sources } = scholarParts(doc);
+  const td = addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' }));
+  let md = td.turndown(tmp.innerHTML);
+  md = md.replace(/ZZC(\d+)ZZ/g, (m, i) => pandocCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `^[${x.fns[+i].replace(/[\[\]]/g, '\\$&')}]`);
+  const style = STYLES[doc.style] && !STYLES[doc.style].custom ? doc.style : '';
+  const y = v => JSON.stringify(String(v));
+  const front = ['---', `title: ${y(doc.title)}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', sources.length ? 'bibliography: references.bib' : '', style && sources.length ? `csl: ${style}.csl` : '', sources.length && STYLES[doc.style] && STYLES[doc.style].bib ? `reference-section-title: ${y(STYLES[doc.style].bib)}` : '', 'link-citations: true', '---', ''].filter(s => s !== '').join('\n');
+  const name = fileSafe(doc.title);
+  const readme = `${doc.title}: Pandoc / Quarto package from Anabasis ${APP_VERSION}\n\n  ${name}.md         the text, citations as [@key, p. 12]\n  references.bib       the ${sources.length} source${sources.length === 1 ? '' : 's'} it cites (BibLaTeX)\n${style ? `  ${style}.csl   the citation style the document uses\n` : ''}${images.length ? '  figures/             its images\n' : ''}\nTo make a Word file or PDF:\n\n  pandoc "${name}.md" --citeproc -o "${name}.docx"\n  pandoc "${name}.md" --citeproc -o "${name}.pdf"\n\nQuarto renders the .md file as it is (quarto render "${name}.md").\n`;
+  const files = [{ name: `${name}/${name}.md`, data: front + '\n' + md.replace(/\n{3,}/g, '\n\n') + '\n' }, { name: `${name}/README.txt`, data: readme }];
+  if (sources.length) files.push({ name: `${name}/references.bib`, data: toBibTeX(sources) });
+  if (style && sources.length) files.push({ name: `${name}/${style}.csl`, data: cslXml(style) });
+  images.forEach(f => files.push({ name: `${name}/${f.name}`, data: f.data }));
+  download(name + ' - pandoc.zip', zipStore(files), 'application/zip');
+  toast(`Pandoc package: text, ${sources.length} source${sources.length === 1 ? '' : 's'}${images.length ? `, ${images.length} image${images.length === 1 ? '' : 's'}` : ''}.`);
+}
+/* HTML of the page, as LaTeX */
+function htmlToLatex(root, x, keys) {
+  const inl = n => [...n.childNodes].map(node).join('');
+  const node = n => {
+    if (n.nodeType === 3) return texEsc(n.data).replace(/ZZC(\d+)ZZ/g, (m, i) => latexCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `\\footnote{${texEsc(x.fns[+i])}}`).replace(/[“”]/g, q => q === '“' ? '``' : "''").replace(/—/g, '---').replace(/–/g, '--').replace(/\u00a0/g, '~');
+    if (n.nodeType !== 1) return '';
+    const t = n.tagName.toLowerCase();
+    switch (t) {
+      case 'h1': return `\n\\section{${inl(n)}}\n`;
+      case 'h2': return `\n\\subsection{${inl(n)}}\n`;
+      case 'h3': case 'h4': return `\n\\subsubsection{${inl(n)}}\n`;
+      case 'p': return `\n${inl(n).trim()}\n`;
+      case 'br': return '\\\\\n';
+      case 'b': case 'strong': return `\\textbf{${inl(n)}}`;
+      case 'i': case 'em': case 'cite': return `\\emph{${inl(n)}}`;
+      case 'u': return `\\uline{${inl(n)}}`;
+      case 's': case 'strike': case 'del': return `\\sout{${inl(n)}}`;
+      case 'sup': return `\\textsuperscript{${inl(n)}}`;
+      case 'sub': return `\\textsubscript{${inl(n)}}`;
+      case 'mark': return `\\textbf{${inl(n)}}`;
+      case 'a': { const h = n.getAttribute('href') || ''; return /^https?:|^mailto:/.test(h) ? `\\href{${h.replace(/([%#\\])/g, '\\$1')}}{${inl(n)}}` : inl(n); }
+      case 'blockquote': return `\n\\begin{quote}\n${[...n.childNodes].map(node).join('').trim()}\n\\end{quote}\n`;
+      case 'ul': case 'ol': return `\n\\begin{${t === 'ul' ? 'itemize' : 'enumerate'}}\n${[...n.children].map(li => `  \\item ${inl(li).trim()}`).join('\n')}\n\\end{${t === 'ul' ? 'itemize' : 'enumerate'}}\n`;
+      case 'figure': {
+        const cap = n.querySelector('figcaption'), capTex = cap ? inl(cap).replace(/^\s*(Figure|Table)\s+\d+\.\s*/, '').trim() : '';
+        const table = n.querySelector('table');
+        if (table) {
+          const rows = [...table.rows], cols = Math.max(1, ...rows.map(r => r.cells.length));
+          return `\n\\begin{table}[htbp]\n\\centering\n${capTex ? `\\caption{${capTex}}\n` : ''}\\begin{tabular}{${'l'.repeat(cols)}}\n\\hline\n${rows.map((r, i) => [...r.cells].map(c => inl(c).trim()).join(' & ') + ' \\\\' + (i === 0 && r.querySelector('th') ? ' \\hline' : '')).join('\n')}\n\\hline\n\\end{tabular}\n\\end{table}\n`;
+        }
+        const img = n.querySelector('img'), src = img && img.getAttribute('src');
+        if (src && !/\.svg$/.test(src)) return `\n\\begin{figure}[htbp]\n\\centering\n\\includegraphics[width=\\linewidth]{${src}}\n${capTex ? `\\caption{${capTex}}\n` : ''}\\end{figure}\n`;
+        return capTex ? `\n% A figure that LaTeX can't include directly (${src || 'interactive'}): ${capTex.replace(/\n/g, ' ')}\n` : '';
+      }
+      case 'table': return node(Object.assign(document.createElement('figure'), { innerHTML: n.outerHTML }));
+      case 'hr': return '\n\\bigskip\\centerline{* * *}\\bigskip\n';
+      case 'script': case 'style': return '';
+      default: return inl(n);
+    }
+  };
+  return [...root.childNodes].map(node).join('').replace(/\n{3,}/g, '\n\n');
+}
+function biblatexFor(style) {
+  const s = style || '', note = STYLES[s] && STYLES[s].note;
+  if (/^chicago/.test(s)) return note ? '\\usepackage[notes,backend=biber]{biblatex-chicago}' : '\\usepackage[authordate,backend=biber]{biblatex-chicago}';
+  if (/^apa/.test(s)) return '\\usepackage[style=apa,backend=biber]{biblatex}';
+  if (/^modern-language/.test(s)) return '\\usepackage[style=mla,backend=biber]{biblatex}';
+  if (/^ieee/.test(s)) return '\\usepackage[style=ieee,backend=biber]{biblatex}';
+  if (/^(american-medical|nlm|cse-citation|nature|science|cell|the-lancet|bmj|american-chem|royal-society|american-phys|american-inst|springer-basic-brackets|elsevier-with|iso690-numeric)/.test(s)) return '\\usepackage[style=numeric-comp,backend=biber]{biblatex}';
+  if (note) return '\\usepackage[style=verbose-trad2,backend=biber]{biblatex}';
+  return '\\usepackage[style=authoryear-comp,backend=biber]{biblatex}';
+}
+function exportLatex(doc = curDoc()) {
+  if (!doc) return;
+  const { x, tmp, images, keys, sources } = scholarParts(doc);
+  const body = htmlToLatex(tmp, x, keys);
+  const name = fileSafe(doc.title), L = doc.layout || {};
+  const tex = `% ${doc.title}: exported from Anabasis ${APP_VERSION}. Build with: latexmk -xelatex main.tex (Biber runs automatically)
+\\documentclass[12pt,${L.paper === 'A4' ? 'a4paper' : 'letterpaper'}]{article}
+\\usepackage{fontspec}
+\\usepackage[margin=1in]{geometry}
+\\usepackage{graphicx}
+\\usepackage[normalem]{ulem}
+\\usepackage{csquotes}
+${L.spacing === '2' ? '\\usepackage[doublespacing]{setspace}\n' : L.spacing === '1.5' ? '\\usepackage[onehalfspacing]{setspace}\n' : ''}${sources.length ? biblatexFor(doc.style) + '\n\\addbibresource{references.bib}\n' : ''}\\usepackage[hidelinks]{hyperref}
+
+\\title{${texEsc(doc.title)}${doc.meta.subtitle ? `\\\\\\large ${texEsc(doc.meta.subtitle)}` : ''}}
+\\author{${texEsc(doc.meta.author || '')}}
+\\date{${texEsc(doc.meta.date || '')}}
+
+\\begin{document}
+\\maketitle
+${body.trim()}
+${sources.length ? `\n\\printbibliography${STYLES[doc.style] && STYLES[doc.style].bib ? `[title={${texEsc(STYLES[doc.style].bib)}}]` : ''}\n` : ''}
+\\end{document}
+`;
+  const files = [{ name: `${name}/main.tex`, data: tex }];
+  if (sources.length) files.push({ name: `${name}/references.bib`, data: toBibTeX(sources) });
+  images.forEach(f => files.push({ name: `${name}/${f.name}`, data: f.data }));
+  files.push({ name: `${name}/README.txt`, data: `${doc.title}: LaTeX package from Anabasis ${APP_VERSION}\n\n  main.tex          the text, citations as \\autocite commands (BibLaTeX)\n  references.bib    the ${sources.length} source${sources.length === 1 ? '' : 's'} it cites\n${images.length ? '  figures/          its images\n' : ''}\nBuild with XeLaTeX or LuaLaTeX and Biber, for example: latexmk -xelatex main.tex\nOverleaf: upload the folder as a new project and set the compiler to XeLaTeX.\n${/^chicago/.test(doc.style) ? 'The Chicago setup uses the biblatex-chicago package (included in TeX Live and on Overleaf).\n' : ''}` });
+  download(name + ' - latex.zip', zipStore(files), 'application/zip');
+  toast(`LaTeX package: main.tex, ${sources.length} source${sources.length === 1 ? '' : 's'}${images.length ? `, ${images.length} image${images.length === 1 ? '' : 's'}` : ''}.`);
+}
 
 /* ================================================================
    Adaptive bars. When the top bar, the document bar or the toolbar runs

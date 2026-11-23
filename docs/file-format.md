@@ -64,6 +64,7 @@ Unknown fields are kept when Anabasis saves, so add-ons and future versions can 
 | `<figure class="fig"><img data-asset="a_…" alt="…"><figcaption>…</figcaption></figure>` | A figure. The image comes from `assets`; `src` is never stored. |
 | `<figure class="tbl"><table>…</table><figcaption>…</figcaption></figure>` | A numbered table. `tbl av` is a script’s A/V table. |
 | `<span class="cmt" data-cmt="c_…">…</span>` | Text a margin note is attached to (an empty `cmt cmt-pt` marks a point). The note itself is in `comments`. |
+| `<ins class="sg" data-sg="sg_…" data-by="Name" data-at="ISO date">…</ins>`, `<del class="sg" …>…</del>` | A suggested insertion or deletion, waiting to be accepted or rejected. Pieces of one suggestion share `data-sg`. Word exports write them as tracked changes; every other export shows them as accepted. Since 1.3. |
 | `<span class="rm" data-rm="m_…" data-k="th" data-ref="th_…">…</span>` | A research mark. One passage can be split into several spans (one per run of text, across paragraphs and around citations) that share `data-rm`. `data-k` is `th` (thread; `data-ref` is the thread id), `cl` (claim; `data-rm` is the id in `claims`), `rv` (review key; `data-rm` is the id in `reviewKeys`) or `q` (question; `data-ref` is a plan item id). Marks are removed from every export. |
 
 Anything outside this subset is removed when a file is opened (see [privacy](privacy.md#files-from-other-people)).

@@ -5,7 +5,7 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 | Component | Version | Copyright | License | Used for |
 |---|---|---|---|---|
 | [citeproc-js](https://github.com/Juris-M/citeproc-js) | 2.4.63 | © 2009–2019 Frank Bennett | CPAL-1.0 or AGPL-3.0-or-later (used here under the AGPL) | formatting citations and bibliographies |
-| [CSL styles](https://github.com/citation-style-language/styles): Chicago 18th notes-bibliography, shortened notes, author-date; APA 7th; MLA 9th | 2026 snapshot | their respective authors | CC BY-SA 3.0 | citation styles |
+| [CSL styles](https://github.com/citation-style-language/styles): 54 styles, from Chicago, APA and MLA to IEEE, AMA, Vancouver, OSCOLA and Bluebook; each file is listed in vendor/manifest.json | 2026 snapshots (latest: 23 November 2026, commit 7fa488b) | their respective authors | CC BY-SA 3.0 | citation styles |
 | [CSL locale en-US](https://github.com/citation-style-language/locales) | 2026 snapshot | their respective authors | CC BY-SA 3.0 | citation terms |
 | [OSINT Citation Generator](https://gmichaelrapp.github.io/OSINT_Cites/) core and OSINT Style Guide | 3.2.1 / 1.5 | © 2026 G. Michael Rapp | MIT (code), CC BY 4.0 (guide content) | OSINT citations |
 | [DOMPurify](https://github.com/cure53/DOMPurify) | 3.5.0 | © Cure53 and contributors | Apache-2.0 or MPL-2.0 (used here under Apache-2.0) | cleaning opened files |

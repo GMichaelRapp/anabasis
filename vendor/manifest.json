@@ -318,5 +318,397 @@
     "license": "OFL-1.1",
     "source": "npm:@fontsource/alegreya@5.3.0",
     "sha256": "3fe9918699e06164c1a8a28f26ce87925f769f95bb6692a852d71cf1a3906b43"
+  },
+  {
+    "file": "vendor/csl/chicago-notes-bibliography-subsequent-ibid.csl",
+    "name": "CSL style: chicago-notes-bibliography-subsequent-ibid",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "39c868e65da74bff51f5be6cbaefc39f809841ab81758a378b883ef767eb500a"
+  },
+  {
+    "file": "vendor/csl/chicago-notes-archive-place-first.csl",
+    "name": "CSL style: chicago-notes-archive-place-first",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "60261595e9ccc4a7d9a923d488bd48054d8036dea65ff55e55b913370c184bd5"
+  },
+  {
+    "file": "vendor/csl/chicago-notes-bibliography-annotated.csl",
+    "name": "CSL style: chicago-notes-bibliography-annotated",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "79e4e1b13c0709d938ed5c76ae575f23e161cf2cde91520582f657123c8c1ae2"
+  },
+  {
+    "file": "vendor/csl/chicago-notes-bibliography-17th-edition.csl",
+    "name": "CSL style: chicago-notes-bibliography-17th-edition",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "8abfd3dfb798db2fa05d836d2794cdba0ae9ee30bdb376c7a75d6e1ae7062161"
+  },
+  {
+    "file": "vendor/csl/chicago-author-date-17th-edition.csl",
+    "name": "CSL style: chicago-author-date-17th-edition",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "72e5568fe512aeb8fd608da4ee1989b4a53bc9d4814b3d34fe1b7cd7becca4e4"
+  },
+  {
+    "file": "vendor/csl/modern-language-association-notes.csl",
+    "name": "CSL style: modern-language-association-notes",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "cb5ecbfbac99b9338ef3752560d495f5b12d94d3e1bf2f01e602138de910b517"
+  },
+  {
+    "file": "vendor/csl/modern-language-association-annotated-bibliography.csl",
+    "name": "CSL style: modern-language-association-annotated-bibliography",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "5aa5d5df2037a1add16a5ccf2db08fd3483f1a6a461f5e7b7ba634bc5dff9b2d"
+  },
+  {
+    "file": "vendor/csl/mhra-notes.csl",
+    "name": "CSL style: mhra-notes",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "9fa37e7faabf28795309b74b42c459b9586fd8f58529ed2db9f40722db3a7637"
+  },
+  {
+    "file": "vendor/csl/mhra-author-date.csl",
+    "name": "CSL style: mhra-author-date",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "b5bb3dd5b8fcfbaed80d21a721f0257723fbf8b3e67dc5b4a6933bc8f69c0b66"
+  },
+  {
+    "file": "vendor/csl/new-harts-rules-notes.csl",
+    "name": "CSL style: new-harts-rules-notes",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "23aa73e6b79a229a2b7c78b153de90b6fb9e1111fa883e9566cef4ffc73dc23a"
+  },
+  {
+    "file": "vendor/csl/new-harts-rules-author-date.csl",
+    "name": "CSL style: new-harts-rules-author-date",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "669c9761dc6bcb4c47729c01a67926a5d296793cb4db81469109149e1a6eb676"
+  },
+  {
+    "file": "vendor/csl/oxford-guide-to-style-notes.csl",
+    "name": "CSL style: oxford-guide-to-style-notes",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "fc6b468d8257b651e13abc3f8f88322fa69125581c53f50aaad647a7dd60073c"
+  },
+  {
+    "file": "vendor/csl/society-of-biblical-literature-fullnote-bibliography.csl",
+    "name": "CSL style: society-of-biblical-literature-fullnote-bibliography",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "83ff693a4a88c4fbefc57c58d6d9b0b126ab2f0c4f4ee728cff0420bf7cbd84c"
+  },
+  {
+    "file": "vendor/csl/apa-6th-edition.csl",
+    "name": "CSL style: apa-6th-edition",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "1de98b9a7c95e97551d6fd99a2f7f22fae20aca8df2e9544f68395f6b7d06eaa"
+  },
+  {
+    "file": "vendor/csl/apa-annotated-bibliography.csl",
+    "name": "CSL style: apa-annotated-bibliography",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "c0c03ff2f9da4c2a5217596f39d8df38df54d6509d4859d6ed255e4443cfefd5"
+  },
+  {
+    "file": "vendor/csl/american-political-science-association.csl",
+    "name": "CSL style: american-political-science-association",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "ab2794dbdfcb4930044d03ee250d8fbb9a27c441b741b7b265c2b174008045a2"
+  },
+  {
+    "file": "vendor/csl/american-journal-of-political-science.csl",
+    "name": "CSL style: american-journal-of-political-science",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "eb00f98792786a56a76f156a5908091d1aaeec6c856e8f050661f378c40d41c9"
+  },
+  {
+    "file": "vendor/csl/international-studies-association.csl",
+    "name": "CSL style: international-studies-association",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "e610aba21d9f2eee70abdc3f8bc080b47f1265ac7814b7afc906a50f05673a18"
+  },
+  {
+    "file": "vendor/csl/american-sociological-association.csl",
+    "name": "CSL style: american-sociological-association",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "da8f401c2af2c405a1b58836089a7fe287311207028dd569070ed3f035521f1f"
+  },
+  {
+    "file": "vendor/csl/american-anthropological-association.csl",
+    "name": "CSL style: american-anthropological-association",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "524cec048be724c25b11f8eda872af9eec50c59df83861908718ecdf9655c678"
+  },
+  {
+    "file": "vendor/csl/harvard-cite-them-right.csl",
+    "name": "CSL style: harvard-cite-them-right",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "0ca3d2c7c881cd98cdd81098b5349f5921edf430498aa9a5a41918621cf7cc45"
+  },
+  {
+    "file": "vendor/csl/harvard-anglia-ruskin-university.csl",
+    "name": "CSL style: harvard-anglia-ruskin-university",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "4b61efd38ecc3cbcd9e1f530b7fd0a67790a6f4843347b36b5539b803d07085f"
+  },
+  {
+    "file": "vendor/csl/sage-harvard.csl",
+    "name": "CSL style: sage-harvard",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "46a6c286931d30437f91c6f033387a8a0b8cd4d2206df1a97dedcdb312de11b6"
+  },
+  {
+    "file": "vendor/csl/elsevier-harvard.csl",
+    "name": "CSL style: elsevier-harvard",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "71e5cbd5906f4c1a03f0772a3d8b014ac06fe3f87a848397b94c66139003568c"
+  },
+  {
+    "file": "vendor/csl/taylor-and-francis-chicago-author-date.csl",
+    "name": "CSL style: taylor-and-francis-chicago-author-date",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "244a0059f67da81036f76f1fd0fc83ca674e38938db1b5f44327d9835017cb74"
+  },
+  {
+    "file": "vendor/csl/oscola.csl",
+    "name": "CSL style: oscola",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "b51ea5728f78c460746174d1a3944383d8bb6027b606e0c651f14b3af521c923"
+  },
+  {
+    "file": "vendor/csl/bluebook-law-review.csl",
+    "name": "CSL style: bluebook-law-review",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "9f842bac2287e12066140d26d940a69cd2cbd2367d27bff350fedab8f2419336"
+  },
+  {
+    "file": "vendor/csl/bluebook-inline.csl",
+    "name": "CSL style: bluebook-inline",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "d7b0b838dc45d5526abf3272000094bb40f0e01f323540c009dd05adfb3cc97e"
+  },
+  {
+    "file": "vendor/csl/american-medical-association.csl",
+    "name": "CSL style: american-medical-association",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "d70f843d93c2b1e8c59c0e26e2396bea4ed99fb4a1aac69b6dddc249a10fadf7"
+  },
+  {
+    "file": "vendor/csl/nlm-citation-sequence.csl",
+    "name": "CSL style: nlm-citation-sequence",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "492f7935df42054b33d515f7275122f419780df990ea35925dcbbff0fecf1137"
+  },
+  {
+    "file": "vendor/csl/cse-citation-sequence.csl",
+    "name": "CSL style: cse-citation-sequence",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "ab4aa70c46ae60a8fc0bbc86e209a189202426abd97bb1020fd4bb04b8c9ab30"
+  },
+  {
+    "file": "vendor/csl/cse-name-year.csl",
+    "name": "CSL style: cse-name-year",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "130cf5f200be44e6534f86374e702163ad09cd2c09add9fd5b5e5830eba93252"
+  },
+  {
+    "file": "vendor/csl/nature.csl",
+    "name": "CSL style: nature",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "15b1272a3c360168e0b51ab9257534b08ced67190ed57be7a1c32cea8fc87be8"
+  },
+  {
+    "file": "vendor/csl/science.csl",
+    "name": "CSL style: science",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "90b515c57773a7d926ae596561a289710875cbb2ba5f5d857c62f39c63e1930e"
+  },
+  {
+    "file": "vendor/csl/cell.csl",
+    "name": "CSL style: cell",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "2b51943c53a9d721dcac20e1657185ce19d368f281c4f3d3e0606fa9cbf68297"
+  },
+  {
+    "file": "vendor/csl/the-lancet.csl",
+    "name": "CSL style: the-lancet",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "327b4f4b08765ddc05a68cbaa1fe898442da9f0e669b0eae279cd75f631c412b"
+  },
+  {
+    "file": "vendor/csl/bmj.csl",
+    "name": "CSL style: bmj",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "ec0ca3cbe28c7bd7ef086492bd9e508ccd1cc124f1b94354ff9bcc8b60221ccc"
+  },
+  {
+    "file": "vendor/csl/american-chemical-society.csl",
+    "name": "CSL style: american-chemical-society",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "6dac0308d4c0e2b462ef4c7607b970fda9be9a730784c93568e6e3cc8639bce6"
+  },
+  {
+    "file": "vendor/csl/royal-society-of-chemistry.csl",
+    "name": "CSL style: royal-society-of-chemistry",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "08078b7df00369958a44226d70d4e57e164dae29c7f2e978171f07a5c2849c93"
+  },
+  {
+    "file": "vendor/csl/american-physics-society.csl",
+    "name": "CSL style: american-physics-society",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "cbe194ca976f7ca152b7e889dff8c261273754140ac6dafca47ce64eab6b54ba"
+  },
+  {
+    "file": "vendor/csl/american-institute-of-physics.csl",
+    "name": "CSL style: american-institute-of-physics",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "673dae8c6c921251e44fd9741728b98242d4c27f2d55ec8ba35369c1354c2c21"
+  },
+  {
+    "file": "vendor/csl/american-geophysical-union.csl",
+    "name": "CSL style: american-geophysical-union",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "2c343e722c03bbda4722edbd234ca0ae21173a3f5088bf239145df433a9a59f7"
+  },
+  {
+    "file": "vendor/csl/springer-basic-author-date.csl",
+    "name": "CSL style: springer-basic-author-date",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "4d531a58f1c8a3ab3d6c7543ff5efe552d0e385e1d4fff50b476c4d4051eab38"
+  },
+  {
+    "file": "vendor/csl/springer-basic-brackets.csl",
+    "name": "CSL style: springer-basic-brackets",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "2f39b2c93cf7a90cb41c72a2945700c4d227ad233682d7fe843c77364a11ba82"
+  },
+  {
+    "file": "vendor/csl/elsevier-with-titles.csl",
+    "name": "CSL style: elsevier-with-titles",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "392ae4204ad19d6538437492889c899bede1f5935ef58c3ab0beebb247d16dd4"
+  },
+  {
+    "file": "vendor/csl/ieee.csl",
+    "name": "CSL style: ieee",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "b4c7619fc16c45a31e4cc3271eab94ffe83192d3b4c7fc729470a3b459448de3"
+  },
+  {
+    "file": "vendor/csl/american-society-of-civil-engineers.csl",
+    "name": "CSL style: american-society-of-civil-engineers",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "9789bde97128d0b5ece38a887c2be493cb3e732f04b39b8d73801d0ea99356f0"
+  },
+  {
+    "file": "vendor/csl/iso690-author-date-en.csl",
+    "name": "CSL style: iso690-author-date-en",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "e7b28ecc92cfa2993a7b6bc3fd29c1c3c780ae3d38088cb003d6fe83022eb8e6"
+  },
+  {
+    "file": "vendor/csl/iso690-numeric-en.csl",
+    "name": "CSL style: iso690-numeric-en",
+    "version": "snapshot 2026-11-23 (7fa488b)",
+    "license": "CC-BY-SA-3.0",
+    "source": "https://github.com/citation-style-language/styles",
+    "sha256": "27635fde30896a748dcaaeaf29251b03c50acad0819f85257fa3d5988589bbf0"
   }
 ]
