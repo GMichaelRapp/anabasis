@@ -469,6 +469,10 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 #editor figure.fig{cursor:default}
 #editor figure.fig img{cursor:pointer}
 #editor figcaption{outline:none;min-height:1.2em}
+#editor .dnum{border-bottom:1.5px dotted color-mix(in srgb,var(--accent) 70%,transparent);cursor:pointer}
+#editor figure[data-dl]{position:relative}
+#editor figure[data-dl]::after{content:'Linked to data';position:absolute;top:4px;right:4px;padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--panel) 88%,transparent);font:11px/1.7 system-ui,sans-serif;font-style:normal;color:var(--muted);pointer-events:none}
+@media print{#editor .dnum{border:0}#editor figure[data-dl]::after{content:none}}
 #editor figcaption[data-cp-n]::before{content:attr(data-cp-n) "\00a0";font-weight:600;font-style:normal;color:var(--page-ink)}
 #editor figcaption:empty::after,#editor figcaption:has(> br:only-child)::after{content:'Caption';color:#9ca3af;font-style:italic}
 #editor table td:focus-within,#editor table th:focus-within{outline:2px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:-2px}
@@ -1979,7 +1983,7 @@ body.focus .tip-card{display:none}
     <div class="scroller" id="scroller" tabindex="0" aria-label="Document page">
       <article class="page docbody" id="page">
         <aside class="margin" id="margin" aria-label="Margin notes"></aside>
-        <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
+        <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="dlup" class="dl-only hidden" title="Redraw this table from its dataset">Update from data</button><button data-t="dlun" class="dl-only hidden" title="Keep the table as it is and stop following the dataset">Unlink</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
         <header class="title-block" id="titleBlock"></header>
         <div id="editor" contenteditable="true" spellcheck="true"></div>
         <aside class="tip-card hidden" id="tipCard" aria-label="Getting-started tips"></aside>
@@ -2738,8 +2742,15 @@ body.focus .tip-card{display:none}
     <ul>
       <li><b>Data</b> on the research desk keeps datasets: a CSV or TSV file, a table pasted from a spreadsheet, or a table from your document. Give each its source and a note; columns are recognized as numbers, dates, text, latitude or longitude. Download any dataset as CSV.</li>
       <li>A <b>dashboard</b> lays out tiles from your datasets: a headline <b>number</b> (total, average, latest and so on, with the change from the previous value and a small trend line), any <b>chart</b>, a <b>map</b> of places from latitude and longitude, a <b>timeline</b> from a column of dates, a <b>table</b> readers can filter and sort, <b>text</b>, an <b>image</b> or a <b>video</b> link. Choose each tile’s width and height, drag tiles to reorder them, and use <b>Preview</b> to see it without the controls.</li>
-      <li>Every tile credits its dataset’s source (or its own). <b>Insert</b> puts a chart, map or timeline tile in the document as a figure. <b>Export page…</b> writes the dashboard as one web page, with the sources and the data as CSV downloads, ready to publish anywhere that hosts a web page.</li>
+      <li>Every tile credits its dataset’s source (or its own). <b>Export page…</b> writes the dashboard as one web page, with the sources and the data as CSV downloads, ready to publish anywhere that hosts a web page.</li>
       <li>Video plays from YouTube, Vimeo or the link only in the exported page; inside Anabasis it’s shown as a link, because Anabasis doesn’t load outside content by itself.</li>
+    </ul>
+    <h4>Data in the writing</h4>
+    <ul>
+      <li>Put the caret where it should go, then use <b>Insert</b> on a dashboard tile. A <b>number</b> tile drops its value into the sentence (“4.1% of GDP”); <b>Cite the source</b> in the message that follows adds the dataset’s citation right after it. A <b>table</b> tile goes in as a real table, with the tile’s columns and order, its title and a source line. A <b>chart</b>, <b>map</b> or <b>timeline</b> tile goes in as a figure. <b>Insert as table</b> in the Data view puts a whole dataset in (up to 300 rows).</li>
+      <li>These remember their dataset, and are marked <i>Linked to data</i> on screen. When the data changes, use <b>Update from data</b> in the command palette, <b>Update the writing</b> in the Data view (which counts what uses that dataset), or <b>Update from data</b> on the toolbar of a linked table. Every document is updated, open or not; source lines follow the dataset’s source, but a caption you rewrote is left alone. Replacing a dataset’s data offers to do this for you.</li>
+      <li>Updating redraws a linked table from the data, so changes typed into its cells are replaced. To keep a table or number as it is, <b>Unlink</b> it: on the table toolbar, or by clicking the number. Editing a linked figure in the chart, map or timeline editor unlinks it too.</li>
+      <li>They export to Word, PDF and the web like anything else you wrote: the table is a table and the number is text.</li>
     </ul>
     <h4>Beside the writing &amp; in other windows</h4>
     <ul>

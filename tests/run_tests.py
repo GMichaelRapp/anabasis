@@ -42,6 +42,7 @@ SUITES = {
     't35': 'source types on sources and notes, the grouped bibliography, scatter, histogram, heatmap and shaded-map charts',
     't36': 'datasets and the data dashboard: tiles, the tile editor, layout, insert as figure, the exported page',
     't37': 'split view beside the writing, and pop-out windows kept in step with the main window',
+    't38': 'data in the writing: tables, numbers and figures that follow their dataset, Update from data',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

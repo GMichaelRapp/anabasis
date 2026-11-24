@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.7.0';
+const APP_VERSION = '1.7.1';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -182,15 +182,21 @@ function normalize(p) {
   { // datasets and dashboards (1.7)
     const arr = v => (Array.isArray(v) ? v : []), obj = v => v && typeof v === 'object' && !Array.isArray(v), strs = v => arr(v).map(rstr).filter(Boolean);
     out.datasets = arr(out.datasets).filter(obj).map(d => ({ id: rstr(d.id) || uid('ds'), name: rstr(d.name) || 'Data', cols: arr(d.cols).map(rstr).slice(0, 500), rows: arr(d.rows).filter(Array.isArray).slice(0, 100000).map(r => r.slice(0, 500).map(rstr)), sourceId: rstr(d.sourceId), note: rstr(d.note), created: rstr(d.created) || nowISO(), modified: rstr(d.modified) || nowISO() }));
-    const TT = new Set(['stat', 'chart', 'map', 'timeline', 'table', 'text', 'image', 'video']), KS = new Set(['bar', 'hbar', 'stack', 'line', 'area', 'multi', 'dot', 'scatter', 'hist', 'heat', 'choro']), clamp = (v, a, b, d) => { v = Math.round(+v); return v >= a && v <= b ? v : d; };
     out.dashboards = arr(out.dashboards).filter(obj).map(b => ({ id: rstr(b.id) || uid('db'), title: rstr(b.title) || 'Dashboard', subtitle: rstr(b.subtitle), created: rstr(b.created) || nowISO(), modified: rstr(b.modified) || nowISO(),
-      tiles: arr(b.tiles).filter(t => obj(t) && TT.has(t.type)).map(t => ({ id: rstr(t.id) || uid('tl'), type: t.type, w: clamp(t.w, 1, 4, 2), h: clamp(t.h, 1, 3, 2), title: rstr(t.title), note: rstr(t.note), ds: rstr(t.ds), sourceId: rstr(t.sourceId),
-        col: rstr(t.col), agg: AGG.some(a => a[0] === t.agg) ? t.agg : 'latest', fmt: ['n', 'd1', 'pct', 'usd', 'k'].includes(t.fmt) ? t.fmt : 'n', prefix: rstr(t.prefix), suffix: rstr(t.suffix),
-        kind: KS.has(t.kind) ? t.kind : 'bar', labelCol: rstr(t.labelCol), valueCols: strs(t.valueCols), groupCol: rstr(t.groupCol), region: rstr(t.region) || 'world', bins: clamp(t.bins, 0, 60, 0), ylabel: rstr(t.ylabel),
-        latCol: rstr(t.latCol), lonCol: rstr(t.lonCol), dateCol: rstr(t.dateCol), cols: strs(t.cols), sortCol: rstr(t.sortCol), sortDir: t.sortDir === 'desc' ? 'desc' : 'asc',
-        body: rstr(t.body), asset: rstr(t.asset), url: /^https:\/\//i.test(rstr(t.url)) ? rstr(t.url) : '' })) }));
+      tiles: arr(b.tiles).map(normTile).filter(Boolean) }));
   }
   return out;
+}
+/* a dashboard tile, tidied: used for saved dashboards and for the copies data-linked figures, tables and numbers keep */
+function normTile(t) {
+  const rstr = v => (typeof v === 'string' ? v : typeof v === 'number' ? String(v) : ''), arr = v => (Array.isArray(v) ? v : []), strs = v => arr(v).map(rstr).filter(Boolean);
+  const TT = new Set(['stat', 'chart', 'map', 'timeline', 'table', 'text', 'image', 'video']), KS = new Set(['bar', 'hbar', 'stack', 'line', 'area', 'multi', 'dot', 'scatter', 'hist', 'heat', 'choro']), clamp = (v, a, b, d) => { v = Math.round(+v); return v >= a && v <= b ? v : d; };
+  if (!t || typeof t !== 'object' || Array.isArray(t) || !TT.has(t.type)) return null;
+  return { id: rstr(t.id) || uid('tl'), type: t.type, w: clamp(t.w, 1, 4, 2), h: clamp(t.h, 1, 3, 2), title: rstr(t.title), note: rstr(t.note), ds: rstr(t.ds), sourceId: rstr(t.sourceId),
+    col: rstr(t.col), agg: AGG.some(a => a[0] === t.agg) ? t.agg : 'latest', fmt: ['n', 'd1', 'pct', 'usd', 'k'].includes(t.fmt) ? t.fmt : 'n', prefix: rstr(t.prefix), suffix: rstr(t.suffix),
+    kind: KS.has(t.kind) ? t.kind : 'bar', labelCol: rstr(t.labelCol), valueCols: strs(t.valueCols), groupCol: rstr(t.groupCol), region: rstr(t.region) || 'world', bins: clamp(t.bins, 0, 60, 0), ylabel: rstr(t.ylabel),
+    latCol: rstr(t.latCol), lonCol: rstr(t.lonCol), dateCol: rstr(t.dateCol), cols: strs(t.cols), sortCol: rstr(t.sortCol), sortDir: t.sortDir === 'desc' ? 'desc' : 'asc',
+    body: rstr(t.body), asset: rstr(t.asset), url: /^https:\/\//i.test(rstr(t.url)) ? rstr(t.url) : '' };
 }
 function sampleProject() {
   const p = blankProject();
@@ -728,7 +734,7 @@ function snapRange(r) {
 }
 function rescueStrayInline() {
   [...editor.childNodes].forEach(n => {
-    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag')) {
+    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag,.dnum')) {
       const prev = n.previousElementSibling;
       if (prev && /^(P|H[1-6]|BLOCKQUOTE)$/.test(prev.nodeName)) { const nx = n.nextSibling; prev.append(n); if (nx && nx.nodeType === 3 && nx.parentNode === editor && nx.data.trim() === '') { prev.append('\u00a0'); nx.remove(); } else if (nx && nx.nodeType === 3 && nx.parentNode === editor) prev.append(nx); }
       else { const pp = document.createElement('p'); n.replaceWith(pp); pp.append(n); }
@@ -741,17 +747,17 @@ function insertHTMLAtCursor(html) {
   restoreSelection();
   const sel = getSelection(); if (sel.rangeCount && !sel.isCollapsed) sel.collapseToEnd();
   if (sel.rangeCount) { const r = snapRange(sel.getRangeAt(0)); sel.removeAllRanges(); sel.addRange(r); }
-  const before = $$('.cite,.fn', editor).length;
+  const before = $$('.cite,.fn,.dnum', editor).length;
   const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
   document.execCommand('insertHTML', false, html);
   // Chrome can silently refuse insertHTML right beside a non-editable marker; fall back to a plain DOM insert
-  if ($$('.cite,.fn', editor).length === before && /class="(cite|fn)"/.test(html) && range) {
+  if ($$('.cite,.fn,.dnum', editor).length === before && /class="(cite|fn|dnum)"/.test(html) && range) {
     const frag = range.createContextualFragment(html), last = frag.lastChild;
     range.insertNode(frag);
     const r = document.createRange(); r.setStartAfter(last); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange();
   }
   // Chrome sometimes drops contenteditable=false from inserted markers; restore it
-  $$('.cite,.fn,.flag', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
+  $$('.cite,.fn,.flag,.dnum', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
   rescueStrayInline();
   syncEditor(); renderRefs(true); updateWordCount(); markDirty();
 }
@@ -829,7 +835,7 @@ function sanitize(html) {
       if (/^(SCRIPT|STYLE|META|LINK|TITLE|HEAD|IFRAME|OBJECT|EMBED|SVG|MATH)$/.test(tag)) { ch.remove(); return; }
       if (/^H[4-6]$/.test(tag)) { const h = doc.createElement('h3'); h.append(...ch.childNodes); ch.replaceWith(h); walk(h); return; }
       if (!ALLOWED[tag]) { walk(ch); ch.replaceWith(...ch.childNodes); return; }
-      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn'));
+      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum'));
       if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
         const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
         walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
@@ -850,9 +856,9 @@ function sanitize(html) {
       }
       [...ch.attributes].forEach(a => {
         const keep = (tag === 'A' && a.name === 'href' && /^(https?:|mailto:|#)/i.test(a.value)) ||
-          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text' || a.name === 'data-cnote')) ||
+          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text' || a.name === 'data-cnote' || a.name === 'data-dl')) ||
           (tag === 'IMG' && (a.name === 'data-asset' || a.name === 'alt' || (a.name === 'src' && /^data:image\/(png|jpeg|gif|webp)/i.test(a.value)))) ||
-          (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || a.name === 'data-size')) ||
+          (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || a.name === 'data-size' || a.name === 'data-dl')) ||
           ((tag === 'TD' || tag === 'TH') && (a.name === 'colspan' || a.name === 'rowspan'));
         if (!keep) ch.removeAttribute(a.name);
       });
@@ -5256,6 +5262,8 @@ function tableOp(op) {
   const cell = selCell(); if (!cell) return;
   const tr = cell.parentElement, table = cell.closest('table'), fig = table.closest('figure') || table, idx = cell.cellIndex;
   const blank = tag => { const c = document.createElement(tag); c.innerHTML = '<br>'; return c; };
+  if (op === 'dlun') { dlUnlink(fig); tblBar.classList.add('hidden'); return; }
+  if (op === 'dlup') { dlUpdate(fig).then(r => { renumberFigures(); onEdit(); toast(r === 'gone' ? 'Couldn’t update: the dataset is gone or no longer has those columns.' : r === 'same' ? 'This table is up to date with its data.' : 'Table updated from the data.'); }).catch(e => toast(e.message)); tblBar.classList.add('hidden'); return; }
   if (op === 'row') { const nr = document.createElement('tr'); [...tr.cells].forEach(() => nr.append(blank('td'))); if (tr.parentElement.nodeName === 'THEAD') { let tb = table.tBodies[0]; if (!tb) { tb = document.createElement('tbody'); table.append(tb); } tb.prepend(nr); } else tr.after(nr); caretInto(nr.cells[0]); }
   if (op === 'col') { [...table.rows].forEach(r => { const c = r.cells[Math.min(idx, r.cells.length - 1)]; if (c) c.after(blank(c.nodeName.toLowerCase())); }); caretInto(tr.cells[idx + 1]); }
   if (op === 'delrow') { const next = tr.nextElementSibling || tr.previousElementSibling; tr.remove(); if (!table.rows.length) { fig.remove(); } else if (next && next.cells[0]) caretInto(next.cells[0]); else caretInto(table.rows[0].cells[0]); $$('thead,tbody', table).forEach(s => { if (!s.rows.length) s.remove(); }); }
@@ -5278,6 +5286,7 @@ function placeTblBar() {
   tblBar.style.top = Math.max(0, tr.top - pr.top - tblBar.offsetHeight - 6) + 'px';
   tblBar.style.left = Math.max(0, tr.left - pr.left) + 'px';
   $('[data-t=head]', tblBar).classList.toggle('on', !!t.tHead);
+  const dl = !!t.closest('figure[data-dl]'); $$('.dl-only', tblBar).forEach(b => b.classList.toggle('hidden', !dl));
 }
 document.addEventListener('selectionchange', debounce(placeTblBar, 60));
 
@@ -5876,7 +5885,7 @@ async function renderSpec(spec) {
   throw new Error('Unknown figure type');
 }
 let specTarget = null; // the figure being edited, if any
-async function placeSpecFigure(spec, oldSpec) {
+async function placeSpecFigure(spec, oldSpec, link) {
   const r = await renderSpec(spec);
   const id = addAsset(r.data, spec.type, r.w, r.h); P.assets[id].spec = JSON.parse(JSON.stringify(spec));
   const fig = specTarget; specTarget = null;
@@ -5884,12 +5893,14 @@ async function placeSpecFigure(spec, oldSpec) {
     fig.querySelector('img').dataset.asset = id;
     const cap = fig.querySelector('figcaption'), auto = oldSpec ? captionFor(oldSpec) : '';
     if (cap && (!cap.textContent.trim() || cap.textContent.trim() === auto.trim())) { const t = captionFor(spec); if (t) cap.textContent = t; else cap.innerHTML = '<br>'; }
-    hydrateImages(); renumberFigures(); onEdit(); toast('Figure updated.');
+    const was = fig.hasAttribute('data-dl'); fig.removeAttribute('data-dl');
+    hydrateImages(); renumberFigures(); onEdit(); toast(was ? 'Figure updated. Because you edited it by hand, it no longer follows the dataset.' : 'Figure updated.');
     return;
   }
   if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (relOn) closeRel(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
   restoreSelection();
   insertBlocksAtCursor(figHTML(id, captionFor(spec)) + '<p><br></p>');
+  if (link) { const f = editor.querySelector(`img[data-asset="${id}"]`)?.closest('figure'); if (f) { f.setAttribute('data-dl', link); syncEditor(); } }
   hydrateImages(); renumberFigures(); markDirty();
   toast('Figure added. Click it any time to edit.');
 }
@@ -7566,6 +7577,9 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '1.7.1': ['Data in the writing: on a dashboard, Insert puts a table tile in the document as a real table with its source line, and a number tile into the sentence you’re writing, with its citation one click away. A whole dataset goes in with Insert as table.',
+    'Figures, tables and numbers taken from a dataset keep track of it. When the data changes, Update from data (in the command palette, the Data view or the table toolbar) redraws them in every document.',
+    'Click a number that came from the data to see where it comes from, or unlink it to keep it as plain text.'],
   '1.7.0': ['Notes, sources, the research desk or another document beside the writing: press Ctrl+\\ (⌘\\ on a Mac), or use the new button above the page. The ↗ button opens any of them in a window of its own, kept in step with this one.',
     'Data and dashboards, on the research desk: bring in a CSV or a table, then lay out numbers, charts, maps, timelines, tables, text, images and video, each crediting its source. Export the dashboard as one web page.',
     'New charts: scatter and bubble, histogram, heatmap, and shaded maps of countries, US states or regions.',
@@ -8167,7 +8181,7 @@ function importDataset(replace) {
     const take = (text, name) => {
       const grid = gridFromText(text); if (!grid || !grid.rows.length) { $('#dsImpErr').textContent = 'That doesn’t look like a table: the first row should name the columns, with at least one row of data under it.'; return; }
       if (grid.rows.length > 100000) { $('#dsImpErr').textContent = 'More than 100,000 rows. Trim it in a spreadsheet first.'; return; }
-      if (replace) { Object.assign(replace, grid, { modified: nowISO() }); tileCache.clear(); markDirty(); toast(`Replaced the data: ${grid.rows.length} rows, ${grid.cols.length} columns.`); fin(replace); return; }
+      if (replace) { Object.assign(replace, grid, { modified: nowISO() }); tileCache.clear(); markDirty(); const k = dlCount(replace.id), id = replace.id; toast(`Replaced the data: ${grid.rows.length} rows, ${grid.cols.length} columns.${k ? ` ${k} thing${k === 1 ? '' : 's'} in your writing ${k === 1 ? 'comes' : 'come'} from it.` : ''}`, k ? { label: 'Update the writing', fn: () => refreshFromData({ ds: id }) } : undefined); fin(replace); return; }
       const nd = newDataset(name || `Data ${(P.datasets || []).length + 1}`, grid); toast(`Added “${nd.name}”: ${grid.rows.length} rows, ${grid.cols.length} columns.`); fin(nd);
     };
     $('#dsImpFile').onclick = async () => { const f = await pickFile('.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain'); if (f) take(await f.text(), f.name.replace(/\.(csv|tsv|txt)$/i, '')); };
@@ -8252,6 +8266,12 @@ function tileSourceText(t) {
 const TILE_PX = (t, width) => [Math.max(280, Math.round(width || t.w * 292 - 36)), { 1: 200, 2: 320, 3: 500 }[t.h] || 320];
 const tileCache = new Map();
 function uniqIds(svg) { const tag = Math.random().toString(36).slice(2, 7), ids = [...svg.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]); ids.forEach(id => { svg = svg.split(`id="${id}"`).join(`id="${id}-${tag}"`).split(`#${id})`).join(`#${id}-${tag})`).split(`href="#${id}"`).join(`href="#${id}-${tag}"`); }); return svg; }
+function tileRows(t, ds) { // the columns and rows a table tile shows, sorted as it asks
+  const cols = (t.cols && t.cols.length ? t.cols : ds.cols).filter(c => ds.cols.includes(c)), ix = cols.map(c => colIdx(ds, c));
+  let rows = ds.rows; const sc = colIdx(ds, t.sortCol);
+  if (sc >= 0) { const num = colType(ds, sc) === 'number'; rows = [...rows].sort((a, b) => { const x = num ? (numOf(a[sc]) ?? -Infinity) - (numOf(b[sc]) ?? -Infinity) : String(a[sc]).localeCompare(String(b[sc])); return t.sortDir === 'desc' ? -x : x; }); }
+  return { cols, ix, rows, numc: ix.map(i => colType(ds, i) === 'number') };
+}
 async function tileBody(t, forExport, width) {
   const ds = dsById(t.ds), px = TILE_PX(t, forExport ? 0 : width);
   const none = msg => `<div class="tl-empty">${msg}</div>`;
@@ -8276,10 +8296,7 @@ async function tileBody(t, forExport, width) {
     return uniqIds(html);
   }
   if (t.type === 'table') {
-    const cols = (t.cols && t.cols.length ? t.cols : ds.cols).filter(c => ds.cols.includes(c)), ix = cols.map(c => colIdx(ds, c));
-    let rows = ds.rows; const sc = colIdx(ds, t.sortCol);
-    if (sc >= 0) { const num = colType(ds, sc) === 'number'; rows = [...rows].sort((a, b) => { const x = num ? (numOf(a[sc]) ?? -Infinity) - (numOf(b[sc]) ?? -Infinity) : String(a[sc]).localeCompare(String(b[sc])); return t.sortDir === 'desc' ? -x : x; }); }
-    const numc = ix.map(i => colType(ds, i) === 'number');
+    const { cols, ix, rows, numc } = tileRows(t, ds);
     return `${rows.length > 8 ? `<input class="tl-q" type="search" placeholder="Filter ${rows.length} rows" aria-label="Filter rows">` : ''}<div class="tl-tbl"><table><thead><tr>${cols.map((c, k) => `<th${numc[k] ? ' class="n"' : ''}><button class="tl-sort" data-k="${k}">${esc(c)}</button></th>`).join('')}</tr></thead><tbody>${rows.slice(0, forExport ? 5000 : 500).map(r => `<tr>${ix.map((i, k) => `<td${numc[k] ? ' class="n"' : ''}>${esc(r[i] ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
   }
   if (t.type === 'text') return `<div class="tl-text">${t.body ? mdNote(t.body) : '<p class="muted">Write a short explanation, key finding or method note.</p>'}</div>`;
@@ -8318,7 +8335,8 @@ function deskData() {
 const DEMO_CSV = 'Year,Poland,Estonia,Germany\n2019,2.0,2.0,1.3\n2020,2.2,2.3,1.4\n2021,2.2,2.0,1.3\n2022,2.4,2.1,1.4\n2023,3.8,2.7,1.6\n2024,4.1,3.4,2.1';
 function dataSetView(d) {
   const types = d.cols.map((_, i) => colType(d, i)), srcOpts = sortedSources().map(s => { const l = sourceLabel(s); return `<option value="${s.id}" ${s.id === d.sourceId ? 'selected' : ''}>${esc(((l.who ? l.who + ', ' : '') + l.title).slice(0, 70))}</option>`; }).join('');
-  $('#deskTools').innerHTML = `<button data-j="${DJ(async () => { if (await importDataset(d)) renderDesk(); })}">Replace data…</button><button data-j="${DJ(() => download(fileSafe(d.name) + '.csv', datasetCSV(d), 'text/csv'))}">Download CSV</button><button class="danger" data-j="${DJ(async () => { const used = (P.dashboards || []).reduce((n, b) => n + b.tiles.filter(t => t.ds === d.id).length, 0); if (!(await ask('Delete this dataset?', `“${d.name}” ${used ? `is used by ${used} tile${used === 1 ? '' : 's'}, which will be left empty` : 'isn’t used by any dashboard'}.`, 'Delete'))) return; P.datasets = P.datasets.filter(x => x !== d); dataSel = null; markDirty(); renderDesk(); })}">Delete</button>`;
+  const linked = dlCount(d.id);
+  $('#deskTools').innerHTML = `<button data-j="${DJ(() => dataInsert(Object.assign(newTile('table', d), { title: d.name })))}" title="Put this data in the document as a table, with its source">Insert as table</button>${linked ? `<button data-j="${DJ(() => refreshFromData({ ds: d.id }))}" title="Redraw the figures, tables and numbers in your writing that come from this data">Update the writing (${linked})</button>` : ''}<button data-j="${DJ(async () => { if (await importDataset(d)) renderDesk(); })}">Replace data…</button><button data-j="${DJ(() => download(fileSafe(d.name) + '.csv', datasetCSV(d), 'text/csv'))}">Download CSV</button><button class="danger" data-j="${DJ(async () => { const used = (P.dashboards || []).reduce((n, b) => n + b.tiles.filter(t => t.ds === d.id).length, 0); if (!(await ask('Delete this dataset?', `“${d.name}” ${used ? `is used by ${used} tile${used === 1 ? '' : 's'}, which will be left empty` : 'isn’t used by any dashboard'}.${linked ? ` ${linked} figure${linked === 1 ? '' : 's'}, table${linked === 1 ? '' : 's'} or number${linked === 1 ? '' : 's'} in your writing will keep their last values.` : ''}`, 'Delete'))) return; P.datasets = P.datasets.filter(x => x !== d); dataSel = null; markDirty(); renderDesk(); })}">Delete</button>`;
   return `<div class="j-head"><input class="d-title" id="dsName" value="${esc(d.name)}" aria-label="Dataset name"></div>
     <div class="grid2"><div><label for="dsSrc">Source</label><select id="dsSrc"><option value="">— none —</option>${srcOpts}</select></div><div><label for="dsNote">Note</label><input id="dsNote" value="${esc(d.note)}" placeholder="How it was collected, what’s missing"></div></div>
     <p class="small muted">${d.rows.length} row${d.rows.length === 1 ? '' : 's'}, ${d.cols.length} columns: ${d.cols.map((c, i) => `<span class="d-col t-${types[i]}">${esc(c)} <i>${{ number: '123', date: 'date', text: 'text', lat: 'lat', lon: 'lon' }[types[i]]}</i></span>`).join(' ')}</p>
@@ -8334,7 +8352,7 @@ function dashView(b) {
   return `<div class="db-head">${dbEdit ? `<input class="d-title" id="dbTitle" value="${esc(b.title)}" aria-label="Dashboard title" placeholder="Dashboard title"><input class="d-sub" id="dbSub" value="${esc(b.subtitle)}" aria-label="Subtitle" placeholder="A line on what this shows, and as of when">` : `<h2 class="db-title">${esc(b.title)}</h2>${b.subtitle ? `<p class="db-sub">${esc(b.subtitle)}</p>` : ''}`}</div>
     ${dbEdit ? `<div class="db-add" role="group" aria-label="Add a tile"><span class="small muted">Add:</span>${TILE_TYPES.map(([k, l]) => `<button class="small" data-j="${DJ(() => { const t = newTile(k); b.tiles.push(t); b.modified = nowISO(); markDirty(); renderDesk(); editTile(b, t); })}">${l}</button>`).join('')}</div>` : ''}
     <div class="db-grid ${dbEdit ? 'edit' : ''}" id="dbGrid">${b.tiles.map(t => `<section class="db-tile w${t.w} h${t.h} tt-${t.type}" data-tile="${t.id}" ${dbEdit ? 'draggable="true"' : ''} aria-label="${esc(t.title || TILE_NAME[t.type])}">
-      ${dbEdit ? `<div class="db-tbar"><span class="db-grip" aria-hidden="true">⠿</span><span class="small muted">${TILE_NAME[t.type]}</span><span class="spacer"></span><button class="ghost small" data-tact="w" title="Width" aria-label="Change width">↔ ${['', '¼', '½', '¾', 'Full'][t.w]}</button><button class="ghost small" data-tact="h" title="Height" aria-label="Change height">↕ ${t.h}</button><button class="ghost small" data-tact="edit">Edit</button>${['chart', 'map', 'timeline'].includes(t.type) ? '<button class="ghost small" data-tact="ins" title="Insert this as a figure in the document">Insert</button>' : ''}<button class="ghost small" data-tact="up" aria-label="Move earlier">←</button><button class="ghost small" data-tact="down" aria-label="Move later">→</button><button class="ghost small" data-tact="rm" aria-label="Delete tile">✕</button></div>` : ''}
+      ${dbEdit ? `<div class="db-tbar"><span class="db-grip" aria-hidden="true">⠿</span><span class="small muted">${TILE_NAME[t.type]}</span><span class="spacer"></span><button class="ghost small" data-tact="w" title="Width" aria-label="Change width">↔ ${['', '¼', '½', '¾', 'Full'][t.w]}</button><button class="ghost small" data-tact="h" title="Height" aria-label="Change height">↕ ${t.h}</button><button class="ghost small" data-tact="edit">Edit</button>${['chart', 'map', 'timeline', 'table', 'stat'].includes(t.type) ? `<button class="ghost small" data-tact="ins" title="${{ stat: 'Insert this number in the sentence you’re writing', table: 'Insert this as a table in the document' }[t.type] || 'Insert this as a figure in the document'}">Insert</button>` : ''}<button class="ghost small" data-tact="up" aria-label="Move earlier">←</button><button class="ghost small" data-tact="down" aria-label="Move later">→</button><button class="ghost small" data-tact="rm" aria-label="Delete tile">✕</button></div>` : ''}
       ${t.title && t.type !== 'stat' ? `<h4 class="tl-title">${esc(t.title)}</h4>` : ''}${t.type === 'stat' ? `<div class="tl-label">${esc(t.title || t.col || 'Number')}</div>` : ''}
       <div class="tl-body" data-body="${t.id}"><div class="tl-empty">…</div></div>
       ${t.note ? `<p class="tl-note">${esc(t.note)}</p>` : ''}${tileSourceText(t) ? `<p class="tl-src">Source: ${esc(tileSourceText(t))}</p>` : ''}</section>`).join('') || (dbEdit ? '<div class="desk-empty"><p>Add a tile above: a headline number, a chart, a map, a timeline, a table, text, an image or a video.</p></div>' : '')}</div>`;
@@ -8347,7 +8365,7 @@ async function dashRender(b) {
     grid.addEventListener('click', e => { const a = e.target.closest('[data-tact]'); if (!a) return; const id = a.closest('[data-tile]').dataset.tile, t = b.tiles.find(x => x.id === id), i = b.tiles.indexOf(t); if (!t) return;
       const act = a.dataset.tact;
       if (act === 'edit') { editTile(b, t); return; }
-      if (act === 'ins') { insertTileFigure(t); return; }
+      if (act === 'ins') { dataInsert(t); return; }
       if (act === 'rm') { b.tiles.splice(i, 1); toast('Tile removed.', { label: 'Undo', fn: () => { b.tiles.splice(i, 0, t); markDirty(); renderDesk(); } }); }
       if (act === 'w') t.w = t.w % 4 + 1; if (act === 'h') t.h = t.h % 3 + 1;
       if (act === 'up' && i > 0) b.tiles.splice(i - 1, 0, b.tiles.splice(i, 1)[0]); if (act === 'down' && i < b.tiles.length - 1) b.tiles.splice(i + 1, 0, b.tiles.splice(i, 1)[0]);
@@ -8369,13 +8387,136 @@ function tableWire(root) {
     tile.querySelectorAll('.tl-sort').forEach(btn => btn.addEventListener('click', () => { const k = +btn.dataset.k, dir = btn.dataset.dir === 'asc' ? 'desc' : 'asc'; tile.querySelectorAll('.tl-sort').forEach(x => { delete x.dataset.dir; x.removeAttribute('aria-sort'); }); btn.dataset.dir = dir; btn.closest('th').setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending'); const n = btn.closest('th').classList.contains('n'), val = r => r.cells[k].textContent, num = s => parseFloat(s.replace(/[^\d.\-−]/g, '').replace('−', '-')); [...tb.rows].sort((a, c) => { const x = n ? (num(val(a)) || 0) - (num(val(c)) || 0) : val(a).localeCompare(val(c)); return dir === 'asc' ? x : -x; }).forEach(r => tb.append(r)); }));
   });
 }
-async function insertTileFigure(t) {
-  const px = [960, 560], spec = t.type === 'chart' ? tileChartSpec(t, px) : t.type === 'map' ? tileMapSpec(t, px) : tileTimelineSpec(t, px);
-  if (!spec) { toast('Finish setting up this tile first.'); return; }
-  delete spec.size; if (spec.type === 'map') { spec.w = 960; spec.h = 600; }
-  closeDesk(); openDoc(curDocId);
-  try { await placeSpecFigure(spec); toast('Inserted as a figure. Edit it like any other figure; it no longer follows the dataset.'); } catch (e) { toast(e.message); }
+/* ---- data in the writing (1.7.1) ----
+   A tile (or a whole dataset) goes into the document as a figure, a real table or a number in the
+   sentence. Each keeps a copy of the tile's settings in data-dl, so "Update from data" can redraw it
+   from the dataset as it is now. Editing a figure by hand, or Unlink, lets it go. */
+const DL_SKIP = ['id', 'w', 'h', 'note', 'body', 'asset', 'url'];
+function dlOf(t) { const c = normTile(t) || {}; DL_SKIP.forEach(k => delete c[k]); return JSON.stringify(c); }
+function dlRead(el) { try { return normTile(JSON.parse(el.getAttribute('data-dl') || '')); } catch (e) { return null; } }
+const DL_MAX_ROWS = 300;
+function dataTableParts(t) {
+  const ds = dsById(t.ds); if (!ds) return null;
+  const { cols, ix, rows } = tileRows(t, ds); if (!cols.length) return null;
+  const table = `<table><thead><tr>${cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.slice(0, DL_MAX_ROWS).map(r => `<tr>${ix.map(i => `<td>${esc(r[i] ?? '') || '<br>'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  return { table, cap: captionFor({ caption: t.title || ds.name, source: tileSourceText(t) }), more: Math.max(0, rows.length - DL_MAX_ROWS) };
 }
+function dataNumberText(t) {
+  const ds = dsById(t.ds); if (!ds) return null;
+  const v = aggregate(colVals(ds, t.col), t.agg); if (v == null) return null;
+  return (t.prefix || '') + fmtNum(v, t.agg === 'count' ? 'n' : t.fmt) + (t.suffix || '');
+}
+function dataFigSpec(t) {
+  const px = [960, 560], spec = t.type === 'chart' ? tileChartSpec(t, px) : t.type === 'map' ? tileMapSpec(t, px) : t.type === 'timeline' ? tileTimelineSpec(t, px) : null;
+  if (!spec) return null;
+  delete spec.size; if (spec.type === 'map') { spec.w = 960; spec.h = 600; }
+  return spec;
+}
+function toWriting() { // back to the draft without redrawing it, so the caret stays where it was
+  if (deskOn) closeDesk(); if (boardOn) closeBoard(); if (relOn) closeRel(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts();
+}
+/* what a tile's Insert button does; the dataset view's "Insert as table" makes a table tile on the fly */
+async function dataInsert(t) {
+  t = normTile(t); if (!t) return;
+  if (!dsById(t.ds)) { toast('Choose a dataset for this tile first.'); return; }
+  if (['chart', 'map', 'timeline'].includes(t.type)) {
+    const spec = dataFigSpec(t); if (!spec) { toast('Finish setting up this tile first.'); return; }
+    toWriting();
+    try { await placeSpecFigure(spec, null, dlOf(t)); toast('Inserted as a figure that keeps track of its data. When the data changes, use Update from data.'); } catch (e) { toast(e.message); }
+    return;
+  }
+  if (t.type === 'table') {
+    const d = dataTableParts(t); if (!d) { toast('Finish setting up this tile first.'); return; }
+    toWriting();
+    insertBlocksAtCursor(`<figure class="tbl" data-dl="${esc(dlOf(t))}"><figcaption>${d.cap ? esc(d.cap) : '<br>'}</figcaption>${d.table}</figure><p><br></p>`);
+    renumberFigures(); toast(d.more ? `Inserted the first ${DL_MAX_ROWS} rows as a table (${d.more} more are in the dataset). For a long table, sort or pick columns in a table tile first.` : 'Inserted as a table that keeps track of its data. It exports to Word and PDF like any table.');
+    return;
+  }
+  if (t.type === 'stat') {
+    const txt = dataNumberText(t); if (txt == null) { toast('Choose a column of numbers for this tile first.'); return; }
+    toWriting();
+    const before = new Set($$('.dnum', editor)), r0 = savedRange && editor.contains(savedRange.startContainer) ? savedRange : null;
+    const prev = r0 && r0.startContainer.nodeType === 3 && r0.startOffset > 0 ? r0.startContainer.data[r0.startOffset - 1] : '';
+    insertHTMLAtCursor(`<span class="dnum" contenteditable="false" data-dl="${esc(dlOf(t))}">${esc(txt)}</span>`);
+    const el = $$('.dnum', editor).find(x => !before.has(x)), sid = t.sourceId || (dsById(t.ds) || {}).sourceId, src = sid && P.sources.find(x => x.id === sid);
+    // a word space before the number, which the browser can drop at the end of a line
+    if (el && prev && !/[(\[“"‘'\/$€£¥#-]/.test(prev)) { const p = el.previousSibling; if (p && p.nodeType === 3 && !/\s$/.test(p.data)) { p.data += ' '; syncEditor(); } }
+    toast(`Inserted ${txt}.`, src && el ? { label: 'Cite the source', fn: () => { if (!el.isConnected) return; const r = document.createRange(); r.setStartAfter(el); r.collapse(true); savedRange = r; insertHTMLAtCursor(citeHTML([{ id: src.id }])); } } : undefined);
+    return;
+  }
+  toast('This kind of tile stays on the dashboard.');
+}
+const dlCapSource = (cap, src) => { // swap the "Source: …" line of a caption the writer hasn't rewritten
+  if (!cap) return; const t = cap.textContent, m = /\s*Source: [^]*$/.exec(t); if (!m) return;
+  const n = t.slice(0, m.index) + (src ? ' Source: ' + src.trim().replace(/([^.!?])$/, '$1.') : '');
+  if (n.trim() !== t.trim()) { cap.textContent = n.trim(); if (!cap.textContent) cap.innerHTML = '<br>'; }
+};
+/* redraw one linked thing; says what happened: 'same', 'gone' (no such dataset any more) or what it changed */
+async function dlUpdate(el) {
+  const t = dlRead(el); if (!t) return 'gone';
+  const ds = dsById(t.ds); if (!ds) return 'gone';
+  if (el.matches('span.dnum')) {
+    const txt = dataNumberText(t); if (txt == null) return 'gone';
+    if (el.textContent === txt) return 'same'; el.textContent = txt; return 'numbers';
+  }
+  if (el.matches('figure.tbl')) {
+    const d = dataTableParts(t); if (!d) return 'gone';
+    const tb = el.querySelector('table'), tpl = document.createElement('template'); tpl.innerHTML = d.table;
+    const changed = !tb || tb.outerHTML !== tpl.content.firstChild.outerHTML;
+    if (changed) { if (tb) tb.replaceWith(tpl.content.firstChild); else el.append(tpl.content.firstChild); }
+    const cap = el.querySelector(':scope > figcaption'), was = cap && cap.textContent; dlCapSource(cap, tileSourceText(t));
+    return changed || (cap && cap.textContent !== was) ? 'tables' : 'same';
+  }
+  if (el.matches('figure.fig')) {
+    const img = el.querySelector('img[data-asset]'), spec = dataFigSpec(t); if (!img || !spec) return 'gone';
+    const old = P.assets[img.dataset.asset];
+    if (old && old.spec && JSON.stringify(old.spec) === JSON.stringify(spec)) return 'same';
+    const r = await renderSpec(spec), id = addAsset(r.data, spec.type, r.w, r.h); P.assets[id].spec = JSON.parse(JSON.stringify(spec));
+    img.dataset.asset = id; img.removeAttribute('src');
+    dlCapSource(el.querySelector(':scope > figcaption'), spec.source);
+    return 'figures';
+  }
+  return 'gone';
+}
+/* Update from data: every linked figure, table and number in every document (or those from one dataset) */
+async function refreshFromData(o = {}) {
+  syncEditor();
+  const n = { figures: 0, tables: 0, numbers: 0, gone: 0, same: 0 }, docs = new Set();
+  for (const d of P.docs) {
+    const live = d.id === curDocId && !POPOUT;
+    if (!live && !(d.html || '').includes('data-dl')) continue;
+    const root = live ? editor : new DOMParser().parseFromString('<body>' + d.html + '</body>', 'text/html').body;
+    let changed = false;
+    for (const el of root.querySelectorAll('[data-dl]')) {
+      if (o.ds) { const t = dlRead(el); if (!t || t.ds !== o.ds) continue; }
+      let r; try { r = await dlUpdate(el); } catch (e) { console.warn(e); r = 'gone'; }
+      n[r]++; if (r !== 'same' && r !== 'gone') { changed = true; docs.add(d.id); }
+    }
+    if (!changed) continue;
+    if (live) { hydrateImages(); renumberFigures(); syncEditor(); renderRefs(true); updateWordCount(); }
+    else { d.html = stripCp(root.innerHTML); d.modified = nowISO(); }
+  }
+  const did = n.figures + n.tables + n.numbers, parts = [[n.figures, 'figure'], [n.tables, 'table'], [n.numbers, 'number']].filter(x => x[0]).map(([k, w]) => `${k} ${w}${k === 1 ? '' : 's'}`);
+  if (did) markDirty();
+  if (!o.quiet) toast(did ? `Updated ${parts.join(', ')} from the data${docs.size > 1 ? ` in ${docs.size} documents` : ''}.${n.gone ? ` ${n.gone} could not be updated: their dataset is gone or no longer has those columns.` : ''}` : n.gone ? `${n.gone} linked item${n.gone === 1 ? '' : 's'} could not be updated: the dataset is gone or no longer has those columns.` : (n.same ? 'Everything taken from the data is up to date.' : 'Nothing in the writing comes from a dataset yet. Use Insert on a dashboard tile.'));
+  return Object.assign(n, { docs: docs.size });
+}
+/* how many places in the writing use a dataset (for the Data view and the delete warning) */
+function dlCount(dsId) {
+  let k = 0; syncEditor();
+  for (const d of P.docs) { const h = d.html || ''; if (!h.includes('data-dl')) continue; new DOMParser().parseFromString('<body>' + h + '</body>', 'text/html').body.querySelectorAll('[data-dl]').forEach(el => { const t = dlRead(el); if (t && (!dsId || t.ds === dsId)) k++; }); }
+  return k;
+}
+function dlUnlink(el) {
+  if (!el) return;
+  if (el.matches('span.dnum')) el.replaceWith(document.createTextNode(el.textContent)); else el.removeAttribute('data-dl');
+  onEdit(); toast('Unlinked. It stays as it is and no longer follows the data.');
+}
+editor.addEventListener('click', e => {
+  const el = e.target.closest('span.dnum'); if (!el || !editor.contains(el)) return;
+  const t = dlRead(el), ds = t && dsById(t.ds), how = t && (AGG.find(a => a[0] === t.agg) || [])[1];
+  toast(ds ? `From “${ds.name}”: ${(how || '').toLowerCase()}, ${t.col}.` : 'Its dataset is no longer in this project.', { label: 'Unlink', fn: () => dlUnlink(el) });
+});
 /* ---- the tile editor ---- */
 let tlEditing = null;
 function editTile(b, t) {
@@ -9007,7 +9148,7 @@ function researchLoose() {
 }
 
 COMMANDS.push(
-  ['Journal: today’s entry', () => openJournal('log', true)], ['Beside the writing: notes', () => splitOpen('notes')], ['Beside the writing: sources', () => splitOpen('sources')], ['Beside the writing: research desk', () => splitOpen('desk')], ['Beside the writing: another document', () => splitOpen('doc')], ['New window: notes', () => popOut('notes')], ['New window: sources', () => popOut('sources')], ['New window: research desk', () => popOut('desk', { dv: deskView })], ['Data and dashboards', () => openDesk('data')], ['Journal: this week (weekly review)', () => openJournal('week')], ['Journal: make a summary of this week', () => weekDoc(0)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
+  ['Journal: today’s entry', () => openJournal('log', true)], ['Beside the writing: notes', () => splitOpen('notes')], ['Beside the writing: sources', () => splitOpen('sources')], ['Beside the writing: research desk', () => splitOpen('desk')], ['Beside the writing: another document', () => splitOpen('doc')], ['New window: notes', () => popOut('notes')], ['New window: sources', () => popOut('sources')], ['New window: research desk', () => popOut('desk', { dv: deskView })], ['Data and dashboards', () => openDesk('data')], ['Update from data: redraw figures, tables and numbers', () => refreshFromData()], ['Journal: this week (weekly review)', () => openJournal('week')], ['Journal: make a summary of this week', () => weekDoc(0)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
   ['Journal: make a research memo', () => journalDoc('memo')], ['Journal: make a methods appendix', () => journalDoc('appendix')],
   ['Open an example project: thesis chapter', () => openStarter('thesis')], ['Open an example project: long-form article', () => openStarter('article')], ['Open an example project: white paper', () => openStarter('whitepaper')],
   ['Open an example project: book proposal', () => openStarter('proposal')], ['Open an example project: investigative piece', () => openStarter('investigation')],
@@ -10195,10 +10336,16 @@ function popRun(c, a) {
   else if (c === 'go') { const p = rmAll().find(x => x.pid === a.pid); if (p) rmGo(p); else if (P.docs.some(d => d.id === a.docId)) openDoc(a.docId); }
   else if (c === 'addDoc' && a.doc && typeof a.doc === 'object') { const d = Object.assign(newDoc(), a.doc, { id: uid('d') }); d.html = DOMPurify.sanitize(String(d.html || '')); closeDesk(); addDoc(d); }
   else if (c === 'placeSpec' && a.spec) { closeDesk(); openDoc(curDocId); placeSpecFigure(a.spec).catch(err => toast(err.message)); }
+  else if (c === 'dataInsert' && a.t) dataInsert(a.t);
+  else if (c === 'dataRefresh') refreshFromData({ ds: typeof a.ds === 'string' ? a.ds : '' });
 }
 // pop-out window side
 let popPeer = { shared: {} }, popPending = false, popReady = false;
-function popCmd(c, a) { if (window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'cmd', c, a }, '*'); }
+function popCmd(c, a) {
+  if (!window.opener || window.opener.closed) return;
+  if (popReady) { const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*'); } // changes first, so the command sees them
+  window.opener.postMessage({ app: 'anabasis', t: 'cmd', c, a }, '*');
+}
 const popPush = debounce(() => {
   if (!POPOUT || !popReady || !window.opener || window.opener.closed) return;
   const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*');
@@ -10239,6 +10386,8 @@ async function popoutBoot() {
   rmGo = p => popCmd('go', { pid: p.pid, docId: p.docId });
   addDoc = d => { popCmd('addDoc', { doc: d }); toast('Made in the main window.'); };
   placeSpecFigure = async spec => { popCmd('placeSpec', { spec }); };
+  dataInsert = async t => { popCmd('dataInsert', { t }); toast('Inserted in the main window.'); };
+  refreshFromData = async o => { popCmd('dataRefresh', { ds: (o && o.ds) || '' }); return null; };
   document.addEventListener('focusout', () => setTimeout(popRefresh, 50));
   window.addEventListener('beforeunload', () => { popPush.flush ? popPush.flush() : null; const d = popDiff(popPeer, SYNC_KEYS); if (d && window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*'); window.opener && !window.opener.closed && window.opener.postMessage({ app: 'anabasis', t: 'bye' }, '*'); });
   window.opener.postMessage({ app: 'anabasis', t: 'hello', view: POPOUT.view }, '*');

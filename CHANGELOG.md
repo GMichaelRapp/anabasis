@@ -4,7 +4,16 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
-## [1.7.0] — 2026-11-24
+## [1.7.1] — 2026-11-24
+
+### Added
+- **Data in the writing.** On a dashboard, **Insert** on a table tile puts it in the document as a real table (sorted and with the columns the tile shows), titled and with a source line, numbered with the other tables and exported to Word and PDF like any table. **Insert as table** in the Data view does the same for a whole dataset (up to 300 rows). **Insert** on a number tile drops its value into the sentence at the caret, as one piece, with **Cite the source** a click away.
+- **Kept in step with the data.** Figures, tables and numbers taken from a dataset remember it. **Update from data** (command palette; **Update the writing** in the Data view; the table toolbar for one table) redraws them in every document, open or not, and updates their source lines; a caption you rewrote is left alone. Replacing a dataset's data offers to update the writing straight away, and deleting one says how much of the writing will keep its last values.
+- Linked tables and figures are marked on screen (never in print or exports). Click a linked number to see where it comes from; **Unlink** on a number or table keeps it as it is and stops it following the data. Editing a linked figure by hand unlinks it, and says so.
+
+### Changed
+- Inserting a chart, map or timeline tile now puts it at the caret rather than at the end of the document.
+
 
 ### Added
 - **Beside the writing**: notes, sources, the research desk or another document (read only) in a panel next to the page. ⌘/Ctrl \ opens and closes it; drag to resize, swap sides (⌘/Ctrl Shift \), widen it for a while, and F6 moves between it and the writing. On phones it fills the screen with a switch back to the writing.
@@ -170,6 +179,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.7.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.1
 [1.7.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.0
 [1.6.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.6.0
 [1.5.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.5.0
