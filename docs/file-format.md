@@ -21,7 +21,8 @@ The format is open on purpose. Your work should never depend on this app to be r
   "assets": {}, "acronyms": [], "acroIgnore": [], "places": [], "relations": [], "relLayout": {},
   "house": {}, "checkpoints": [],
   "threads": [], "claims": [], "reviewKeys": [],
-  "journal": { "design": {}, "hypotheses": [], "log": [], "searches": [] }
+  "journal": { "design": {}, "hypotheses": [], "log": [], "searches": [] },
+  "datasets": [], "dashboards": []
 }
 ```
 
@@ -36,8 +37,11 @@ The format is open on purpose. Your work should never depend on this app to be r
 | `house` | House-style rules. |
 | `checkpoints` | Names and dates of whole-project checkpoints. The checkpoint contents stay in the browser that made them. |
 | `threads` | Research threads: `{ id, name, color, note, hidden }`. Their passages are marked in document `html` (below). Since 1.1. |
+| `sources` (1.7) | A source may carry `stype`: `primary`, `secondary` or `tertiary`. A note may carry `stype` too, overriding its source’s; `none` means no type. |
 | `claims` | The claims register: `{ id, status, note, checkedText, checkedAt, checkedBy }` (`checkedBy` since 1.5: the name in Settings when the claim was marked supported). `status` is `open` (not checked), `ok` (supported), `need` (needs a source), `disp` (contested) or `cut`. `checkedText` is the claim's text when it was marked supported, so later edits can be flagged. Since 1.1. |
 | `reviewKeys` | Review keys: `{ id, reason, due, note, done, doneAt }`, with `due` as `YYYY-MM-DD` or empty. Since 1.1. |
+| `datasets` | Since 1.7. Tables kept in the project: `{ id, name, cols, rows, sourceId, note }`, `cols` a list of column names and `rows` a list of rows of strings. |
+| `dashboards` | Since 1.7. `{ id, title, subtitle, tiles }`. A tile is `{ id, type, w, h, title, note, ds, sourceId, … }` with `type` one of `stat`, `chart`, `map`, `timeline`, `table`, `text`, `image`, `video`, `w` from 1 to 4 (quarters of the width) and `h` from 1 to 3; the other fields depend on the type (`col` and `agg` for numbers, `kind`, `labelCol` and `valueCols` for charts, `latCol` and `lonCol` for maps, `dateCol` for timelines, `cols` and `sortCol` for tables, `body` for text, `asset` for images, `url` for video). |
 | `journal` | The research journal. Since 1.4. `design` has text fields `purpose`, `methods`, `data`, `scope`, `ethics`, `timeline`. `hypotheses`: `{ id, text, rationale, status, questionId, links, history }`, `status` one of `untested`, `supported`, `mixed`, `weakened`, `refuted`; `history` entries are `{ at, from, to, note }`. `log`: `{ id, date, kind, text, tags, links, done, doneAt }`, `date` as `YYYY-MM-DD`, `kind` one of `did`, `found`, `decided`, `dead`, `idea`, `question`, `next` (a next step, since 1.5; `done` and `doneAt` apply only to these), `auto` (recorded by Anabasis). `searches`: `{ id, date, where, terms, filters, results, kept, notes }`. A link is `{ k, id, stance }`: `k` is `cl` (a claim id), `note`, `src` (a source id) or `q` (a plan question id), and `stance` is `for`, `against` or empty. |
 | `plan` | The plan (outline and argument map). Items of `type: "question"` are also the research questions passages can be linked to. |
 

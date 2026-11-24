@@ -39,6 +39,9 @@ SUITES = {
     't32': 'research journal: design, hypotheses and evidence, the dated log, the search log, memo and appendix',
     't33': 'picking up on another device from GitHub, weekly review and next steps, design templates, fact-check sheet, getting-started tips',
     't34': 'what’s new, send feedback, the opt-in update check, screen-only text size and typeface, the refreshed tour',
+    't35': 'source types on sources and notes, the grouped bibliography, scatter, histogram, heatmap and shaded-map charts',
+    't36': 'datasets and the data dashboard: tiles, the tile editor, layout, insert as figure, the exported page',
+    't37': 'split view beside the writing, and pop-out windows kept in step with the main window',
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

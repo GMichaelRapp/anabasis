@@ -45,6 +45,12 @@ async def main():
                 await pg.screenshot(path=str(OUT / 'research.png'))
                 await pg.evaluate("async () => { dirtyFile = false; await openStarter('thesis'); openJournal('hyp'); }"); await pg.wait_for_timeout(900); await pg.evaluate("() => $('#toast').classList.remove('show')"); await pg.wait_for_timeout(400)
                 await pg.screenshot(path=str(OUT / 'journal.png'))
+                await pg.evaluate("() => { const d = newDataset('Defense spending, share of GDP', gridFromText(DEMO_CSV)); const b = newDashboard(); b.title = 'Defense spending on NATO’s eastern flank'; b.subtitle = 'Share of GDP, 2019–2024 (illustrative figures)'; b.tiles = [Object.assign(newTile('stat', d), { title: 'Poland, 2024', col: 'Poland', agg: 'latest', suffix: '% of GDP', fmt: 'd1', w: 1, h: 1 }), Object.assign(newTile('stat', d), { title: 'Estonia, 2024', col: 'Estonia', agg: 'latest', suffix: '% of GDP', fmt: 'd1', w: 1, h: 1 }), Object.assign(newTile('chart', d), { title: 'Share of GDP spent on defense', kind: 'line', labelCol: 'Year', valueCols: ['Poland', 'Estonia', 'Germany'], fmt: 'd1', ylabel: '% of GDP', w: 2, h: 2 }), Object.assign(newTile('table', d), { title: 'All figures', w: 2, h: 1 })]; dataSel = b.id; dbEdit = false; openDesk('data'); }"); await pg.wait_for_timeout(2500)
+                await pg.evaluate("() => $('#toast').classList.remove('show')"); await pg.wait_for_timeout(300)
+                await pg.screenshot(path=str(OUT / 'dashboard.png'))
+                await pg.evaluate("() => { closeDesk(); openDoc(P.docs[0].id); splitOpen('notes'); }"); await pg.wait_for_timeout(900)
+                await pg.screenshot(path=str(OUT / 'split.png'))
+                await pg.evaluate("() => splitClose()")
             await ctx.close()
         # a phone: the draft, and the toolbar's ⋯ menu
         ctx = await b.new_context(viewport={'width': 390, 'height': 760}, device_scale_factor=2, is_mobile=True, has_touch=True)
@@ -61,9 +67,9 @@ async def main():
     sheet.paste(a, (gap, gap)); sheet.paste(c, (a.width + gap * 2, gap))
     sheet = sheet.resize((W // 2, (a.height + gap * 2) // 2), Image.LANCZOS)
     sheet.save(OUT / 'phone.png', optimize=True)
-    for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png'):
+    for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png', 'dashboard.png', 'split.png'):
         p = OUT / f; Image.open(p).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)
-    print('wrote editor-light.png, editor-dark.png, research.png, journal.png, phone.png to', OUT.relative_to(ROOT))
+    print('wrote editor-light.png, editor-dark.png, research.png, journal.png, dashboard.png, split.png, phone.png to', OUT.relative_to(ROOT))
 
 
 if __name__ == '__main__':

@@ -1571,6 +1571,69 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
 .j-kind-chip .j-next{margin:0;width:14px;height:14px}
 .j-entry.done .j-body{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
 .j-span{margin:-6px 0 12px}
+/* split view and pop-outs */
+.split{position:relative;flex:none;width:42vw;min-width:300px;max-width:72vw;border-left:1px solid var(--hair,var(--line));background:var(--bg);display:flex;flex-direction:column;min-height:0}
+body.split-left .split{order:-1;border-left:0;border-right:1px solid var(--hair,var(--line))}body.split-left #sidebar{order:-2}
+.sp-resize{position:absolute;left:-4px;top:0;bottom:0;width:8px;cursor:col-resize;z-index:3}.sp-resize:hover,.sp-resize:focus-visible{background:color-mix(in srgb,var(--accent) 25%,transparent);outline:none}
+body.split-left .sp-resize{left:auto;right:-4px}
+.sp-head{display:flex;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid var(--hair,var(--line));background:var(--panel);flex:none}
+.sp-tabs{display:flex;gap:2px;flex-wrap:wrap}.sp-tabs button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:4px 8px;min-height:30px;color:var(--muted);font-weight:500}.sp-tabs button.on{color:var(--ink);border-bottom-color:var(--accent)}
+.sp-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+#spBody > .pane{display:flex!important;flex:1}
+#spBody > .desk{display:flex!important;flex:1}#spBody .desk-head .desk-back,#spBody #deskBack{display:none}
+#spBody .desk-split{grid-template-columns:minmax(150px,200px) 1fr}
+.sp-docbar{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--hair,var(--line));flex:none}.sp-docbar select{flex:1;min-width:0}
+.sp-docscroll{flex:1;overflow:auto;padding:18px}.sp-page{margin:0 auto;max-width:100%;padding:.6in .6in;min-height:auto;box-shadow:0 0 0 1px rgba(22,32,44,.08)}.sp-doct{font-size:1.5em;margin-top:0}
+body.split-max #main{display:none}body.split-max .split{flex:1;max-width:none;width:auto!important}
+.sp-toggle{display:none}.sp-ptitle{display:none}body.popout .sp-ptitle{display:block;font:600 15px/1.2 var(--display,Georgia);padding:4px 6px}
+.pop-wait{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:var(--bg);text-align:center;padding:24px}.pop-wait.hidden{display:none}
+body.popout .topbar,body.popout #sidebar,body.popout #main,body.popout #reader,body.popout .sp-resize,body.popout #spTabs,body.popout #spSwap,body.popout #spMax,body.popout #spPop{display:none!important}
+body.popout .layout{height:100%}body.popout .split{flex:1;width:auto!important;max-width:none;border:0}
+body.popout #spBody .desk-split{grid-template-columns:minmax(170px,220px) 1fr}
+@media (max-width:860px){
+  .split{position:fixed;inset:48px 0 0 0;width:auto!important;max-width:none;z-index:43;border:0}.sp-resize,#spSwap,#spMax{display:none}
+  body.split-hide .split{display:none}
+  body.split-on .sp-toggle{display:inline-flex;align-items:center;gap:6px;position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:60;border-radius:999px;padding:8px 16px;background:var(--ink);color:var(--bg);border:0;box-shadow:0 8px 24px rgba(0,0,0,.25);font-weight:600}
+  body.split-on:not(.split-hide) .sp-ts,body.split-on.split-hide .sp-tw{display:none}
+  body.popout .sp-toggle{display:none}
+  body.popout .split{position:relative;inset:auto;z-index:auto}
+}
+@media print{.split,.sp-toggle{display:none!important}}
+/* data and dashboards */
+.d-side h6 button{float:right;min-height:0;padding:0 6px}
+.d-title{font:600 20px/1.2 var(--display,Georgia);border:1px solid transparent;background:transparent;padding:4px 6px;margin-left:-6px;width:100%}.d-title:hover,.d-title:focus{border-color:var(--line);background:var(--panel)}
+.d-sub{border:1px solid transparent;background:transparent;padding:3px 6px;margin:2px 0 0 -6px;width:100%;color:var(--muted)}.d-sub:hover,.d-sub:focus{border-color:var(--line);background:var(--panel)}
+.d-col{display:inline-block;border:1px solid var(--hair,var(--line));border-radius:999px;padding:0 8px;margin:2px 2px 0 0;font-size:12px}.d-col i{font-style:normal;color:var(--muted);font-size:11px}
+.d-tbl{max-height:min(60vh,560px)}
+.db-head{margin-bottom:10px}.db-title{font:700 24px/1.2 var(--display,Georgia);margin:4px 0 2px}.db-sub{color:var(--muted);margin:0}
+.db-add{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:6px 0 14px}
+.db-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;grid-auto-flow:dense}
+.db-tile{background:var(--page,#fff);color:var(--page-ink,var(--ink));border:1px solid var(--hair,var(--line));border-radius:10px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;box-shadow:var(--soft-shadow,none)}
+.db-tile.w1{grid-column:span 1}.db-tile.w2{grid-column:span 2}.db-tile.w3{grid-column:span 3}.db-tile.w4{grid-column:span 4}
+.db-tile.h1{min-height:150px;align-self:start}.tl-tbl th.n{text-align:right}.db-tile.h2{min-height:330px}.db-tile.h3{min-height:500px}
+.db-grid.edit .db-tile{cursor:default}.db-tile.dragging{opacity:.5}
+.db-tbar{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:-6px -8px 6px;padding-bottom:6px;border-bottom:1px dashed var(--hair,var(--line))}.db-tbar button{min-height:24px;padding:1px 6px;font-size:12px}.db-grip{cursor:grab;color:var(--muted);padding:0 4px}
+.tl-title{font:600 14.5px/1.3 var(--ui);margin:0 0 8px}.tl-label{font-size:13px;font-weight:600;color:var(--muted)}
+.tl-body{flex:1;min-width:0}.tl-body svg,.tl-body .tl-img{display:block;width:100%;height:auto;border-radius:4px}
+.tl-stat b{display:block;font:700 32px/1.1 var(--display,Georgia);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.tl-delta{font-size:12.5px;font-weight:600}.tl-delta.up{color:#0b6e4f}.tl-delta.down{color:#a3271b}:root[data-theme="dark"] .tl-delta.up{color:#6fd3a8}:root[data-theme="dark"] .tl-delta.down{color:#f19a8f}
+.tl-spark{display:block;margin-top:8px;width:100%;max-width:220px;height:auto}
+.tl-note{font-size:12.5px;color:var(--muted);margin:8px 0 0}.tl-src{font-size:11.5px;color:var(--muted);margin:4px 0 0}
+.tl-empty{color:var(--muted);font-size:13px;padding:10px 0}
+.tl-q{width:100%;margin-bottom:8px}.tl-tbl{overflow:auto;max-height:420px;border:1px solid var(--hair,var(--line));border-radius:6px}.tl-tbl table{border-collapse:collapse;width:100%;font-size:13px}
+.tl-tbl th{position:sticky;top:0;background:var(--panel);text-align:left;padding:0;border-bottom:1px solid var(--line)}.tl-tbl th button,.tl-tbl th:not(:has(button)){display:block;width:100%;text-align:inherit;padding:6px 9px;font-weight:600;background:none;border:0;min-height:0;border-radius:0}
+.tl-tbl th[aria-sort=ascending] button::after{content:" ▲"}.tl-tbl th[aria-sort=descending] button::after{content:" ▼"}
+.tl-tbl td{padding:5px 9px;border-bottom:1px solid var(--hair,var(--line))}.tl-tbl td.n,.tl-tbl th.n button{text-align:right;font-variant-numeric:tabular-nums}
+.tl-text{font-size:14.5px}.tl-text p:first-child{margin-top:0}
+.tl-vidph{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:16px;border-radius:8px;background:color-mix(in srgb,var(--ink) 6%,transparent);text-decoration:none;color:inherit}.tl-vidph span{font-size:26px;line-height:1}.tl-vidph small{color:var(--muted)}
+.tl-dlg{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:20px;align-items:start}.tl-prevwrap{position:sticky;top:0}.db-tile.prev{min-height:200px}
+.tl-cols{display:flex;flex-wrap:wrap;gap:4px 12px;max-height:150px;overflow:auto;padding:4px 0}
+@media (max-width:900px){.db-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.db-tile.w3,.db-tile.w4{grid-column:span 2}.tl-dlg{grid-template-columns:1fr}}
+@media (max-width:560px){.db-grid{grid-template-columns:1fr}.db-tile.w1,.db-tile.w2,.db-tile.w3,.db-tile.w4{grid-column:span 1}}
+.stype{display:inline-block;font:600 10.5px/1.6 var(--ui);padding:0 6px;border-radius:999px;border:1px solid;letter-spacing:.02em}
+.stype.st-primary{color:#7a4a00;border-color:#d9b26a;background:#fbf2df}.stype.st-secondary{color:#1f4f7a;border-color:#9dbbd8;background:#eaf2fa}.stype.st-tertiary{color:#4f5560;border-color:#c4c8cf;background:#f1f2f4}
+:root[data-theme="dark"] .stype.st-primary{color:#f0cc85;border-color:#7a6232;background:#3a2f1a}:root[data-theme="dark"] .stype.st-secondary{color:#a9cbef;border-color:#38536e;background:#1c2a38}:root[data-theme="dark"] .stype.st-tertiary{color:#c3c8d0;border-color:#4a505a;background:#2a2e34}
+.chip.stc{font-weight:600}
 @media screen{
   #page.docbody{font-size:calc(var(--doc-size) * var(--scr-scale,1));line-height:var(--scr-lh,var(--doc-lh))}
   #page.docbody[data-scr-font=serif]{--doc-font:Charter,"Bitstream Charter","Iowan Old Style","Sitka Text",Cambria,Georgia,serif}
@@ -1724,6 +1787,7 @@ body.focus .tip-card{display:none}
     <section class="pane" data-pane="sources">
       <div class="pane-head">
         <div class="row"><input type="search" id="qSources" placeholder="Search sources"><button id="btnNewSource" class="primary">+ New</button></div>
+        <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
         <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
@@ -1741,6 +1805,7 @@ body.focus .tip-card{display:none}
       <div class="spacer pb-flex"></div>
       <span class="tgt hidden" id="tgtBar"><i id="tgtFill"></i></span>
       <span class="wc" id="wordCount" data-pri="6" data-label="" data-nomenu></span>
+      <button id="btnSplit" class="ghost" data-pri="5" data-label="Beside the writing" aria-label="Beside the writing" title="Notes, sources, the research desk or another document beside the writing (Ctrl+\\)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M12 4v16M15 8h3M15 11h3M15 14h2"/></svg></button>
       <button id="btnMargin" class="ghost" data-pri="5" data-label="Show or hide margin notes" aria-label="Margin notes" title="Show or hide margin notes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M17.5 8.5h1.5M17.5 12h1.5"/></svg><span class="mg-n"></span></button>
       <button id="btnPageSetup" class="ghost" data-pri="3" data-label="Page setup" aria-label="Page setup" title="Title block, fonts, spacing, bibliography options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Page setup</span></button>
       <button id="btnVersions" class="ghost" data-pri="2" data-label="Drafts" aria-label="Drafts" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span></button>
@@ -1823,7 +1888,7 @@ body.focus .tip-card{display:none}
       <div class="board-bar">
         <button id="deskBack" class="ghost">← Back to draft</button>
         <b class="rel-head">Research desk</b>
-        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
         <div class="spacer"></div>
         <span id="deskTools" class="desk-tools"></span>
       </div>
@@ -1923,6 +1988,12 @@ body.focus .tip-card{display:none}
     </div>
   </main>
 
+  <aside class="split hidden" id="split" aria-label="Beside the writing">
+    <div class="sp-resize" id="spResize" role="separator" aria-orientation="vertical" aria-label="Resize the side panel" aria-valuemin="20" aria-valuemax="72" aria-valuenow="42" tabindex="0" title="Drag to resize"></div>
+    <div class="sp-head"><nav class="sp-tabs" id="spTabs" role="tablist" aria-label="Show beside the writing"><button role="tab" data-sv="notes">Notes</button><button role="tab" data-sv="sources">Sources</button><button role="tab" data-sv="desk">Research desk</button><button role="tab" data-sv="doc">A document</button></nav>
+      <b class="sp-ptitle" id="spPTitle"></b><span class="spacer"></span><button class="ghost icon" id="spSwap" title="Swap sides (Ctrl+Shift+\\)" aria-label="Swap sides">⇄</button><button class="ghost icon" id="spMax" title="Wide: hide the writing for now" aria-label="Wide" aria-pressed="false">⤢</button><button class="ghost icon" id="spPop" title="Open in a window of its own (for a second screen)" aria-label="Open in a new window">↗</button><button class="ghost icon" id="spClose" title="Close (Ctrl+\\)" aria-label="Close the side panel">✕</button></div>
+    <div class="sp-body" id="spBody"></div>
+  </aside>
   <aside class="reader hidden" id="reader">
     <div class="rd-resize" id="rdResize" title="Drag to resize"></div>
     <div class="rd-bar"><button id="rdOpen" title="Open a PDF file">Open…</button><b class="rd-name" id="rdName">PDF reader</b><select id="rdSource" aria-label="Linked source"></select><button class="icon ghost" id="rdClose" aria-label="Close reader">✕</button></div>
@@ -1943,6 +2014,8 @@ body.focus .tip-card{display:none}
   </aside>
 </div>
 
+<button class="sp-toggle" id="spToggle" aria-label="Switch between the writing and the side panel">⇄ <span class="sp-tw">Writing</span><span class="sp-ts">Side panel</span></button>
+<div class="pop-wait hidden" id="popWait" role="status"><div><b>Connecting to Anabasis…</b></div></div>
 <!-- citation dialog -->
 <dialog id="citeDlg" class="wide"><div class="dlg">
   <h3 id="citeDlgTitle">Insert citation</h3>
@@ -1988,7 +2061,7 @@ body.focus .tip-card{display:none}
     </div>
     <div class="grid2">
       <div><label>Paper (PDF)</label><select id="suPaper"><option value="letter">US Letter</option><option value="A4">A4</option></select></div>
-      <div><label>Bibliography lists</label><select id="suBib"><option value="cited">Only sources cited</option><option value="all">Every source in project</option><option value="none">No bibliography</option></select></div>
+      <div><label>Bibliography lists</label><select id="suBib"><option value="cited">Only sources cited</option><option value="all">Every source in project</option><option value="none">No bibliography</option></select><label class="inline small" style="margin-top:4px"><input type="checkbox" id="suBibSplit"> Group by source type (primary, secondary…)</label></div>
     </div>
     <div class="grid3"><div><label>Word target</label><input id="suTarget" inputmode="numeric" placeholder="e.g. 2500"></div>
       <div><label>In a manuscript, this is</label><select id="suRole"><option value="front">Front matter</option><option value="body">A chapter</option><option value="back">Back matter</option></select></div>
@@ -2294,10 +2367,11 @@ body.focus .tip-card{display:none}
     <div class="ch-left">
       <label style="margin-top:0">Data</label><select id="chFromTable"></select>
       <textarea id="chData" rows="9" spellcheck="false" placeholder="Year, China, United States&#10;2015, 255, 271&#10;2020, 333, 296&#10;2025, 370, 290"></textarea>
-      <div class="small muted">First row names the series; first column labels the categories (years, countries…). Paste straight from a spreadsheet.</div>
-      <div class="grid2"><div><label>Chart type</label><select id="chType"><option value="bar">Columns</option><option value="hbar">Bars (horizontal)</option><option value="stack">Stacked columns</option><option value="line">Line</option><option value="area">Area</option><option value="multi">Small multiples (one per series)</option><option value="dot">Dot plot</option></select></div><div><label>Value axis label</label><input id="chYLabel" placeholder="e.g. Ships in service"></div></div>
+      <div class="small muted" id="chHint">First row names the series; first column labels the categories (years, countries…). Paste straight from a spreadsheet.</div>
+      <div class="grid2"><div><label>Chart type</label><select id="chType"><option value="bar">Columns</option><option value="hbar">Bars (horizontal)</option><option value="stack">Stacked columns</option><option value="line">Line</option><option value="area">Area</option><option value="multi">Small multiples (one per series)</option><option value="dot">Dot plot</option><option value="scatter">Scatter or bubble (two measures)</option><option value="hist">Histogram (how values spread)</option><option value="heat">Heatmap (a grid of values)</option><option value="choro">Shaded map (countries, states)</option></select></div><div><label id="chYLabelL" for="chYLabel">Value axis label</label><input id="chYLabel" placeholder="e.g. Ships in service"></div></div>
       <div class="grid2"><div><label>Numbers</label><select id="chFmt"><option value="n">1,234</option><option value="d1">1,234.5</option><option value="pct">12%</option><option value="usd">$1,234</option><option value="k">1.2K, 3.4M</option></select></div><div><label>Shape</label><select id="chAspect"><option value="wide">Wide (16:9)</option><option value="std">Standard (4:3)</option><option value="tall">Tall (4:5)</option></select></div></div>
-      <label>Events and periods <span class="muted small">(optional; columns, lines and areas)</span></label><textarea id="chEvents" rows="2" spellcheck="false" placeholder="2022 | Full-scale invasion&#10;2014–2015 | Minsk agreements"></textarea>
+      <div class="grid2"><div id="chBinsRow" class="hidden"><label for="chBins">Bins</label><input id="chBins" type="number" min="3" max="60" placeholder="Auto"></div><div id="chRegionRow" class="hidden" style="grid-column:1/-1"><label for="chRegion">Map</label><select id="chRegion"></select></div></div>
+      <div id="chEventsRow"><label>Events and periods <span class="muted small">(optional; columns, lines and areas)</span></label><textarea id="chEvents" rows="2" spellcheck="false" placeholder="2022 | Full-scale invasion&#10;2014–2015 | Minsk agreements"></textarea></div>
       <label>Caption</label><input id="chCaption" placeholder="What the chart shows">
       <label>Source</label><input id="chSource" placeholder="e.g. IISS, The Military Balance 2025">
       <div class="ch-err" id="chErr"></div>
@@ -2554,9 +2628,26 @@ body.focus .tip-card{display:none}
   <footer><button id="askCancel">Cancel</button><button id="askOk" class="primary">OK</button></footer>
 </div></dialog>
 
+<dialog id="tlDlg" class="xwide"><div class="dlg">
+  <h3 id="tlTitleH">Tile</h3>
+  <div class="body tl-dlg"><div class="tl-form" id="tlForm"></div><div class="tl-prevwrap"><div class="small muted" style="margin-bottom:6px">Preview</div><section class="db-tile prev" id="tlPrev"></section></div></div>
+  <footer><button id="tlCancel">Cancel</button><span class="spacer"></span><button id="tlOk" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="dsImpDlg"><div class="dlg">
+  <h3 id="dsImpTitle">Add a dataset</h3>
+  <div class="body">
+    <p class="small" style="margin-top:0">A CSV or TSV file, or a table pasted from a spreadsheet. The first row names the columns. Columns of latitude and longitude, dates, or place names unlock maps and timelines.</p>
+    <button id="dsImpFile">Choose a CSV file…</button>
+    <div id="dsImpTblRow"><label for="dsImpTbl">Or use a table from this document</label><select id="dsImpTbl"></select></div>
+    <label for="dsImpText">Or paste it</label><textarea id="dsImpText" rows="8" spellcheck="false" placeholder="Date, Place, Latitude, Longitude, Killed&#10;2024-02-10, Rafah, 31.29, 34.25, 67"></textarea>
+    <div id="dsImpNameRow"><label for="dsImpName">Name</label><input id="dsImpName" placeholder="e.g. Incidents, Feb–Mar 2024"></div>
+    <div class="ch-err" id="dsImpErr"></div>
+  </div>
+  <footer><button id="dsImpCancel">Cancel</button><span class="spacer"></span><button id="dsImpOk" class="primary">Add</button></footer>
+</div></dialog>
 <dialog id="wnDlg"><div class="dlg">
   <h3 id="wnTitle">What’s new</h3>
-  <div class="body wn-body" id="wnBody"></div>
+  <div class="body wn-body" id="wnBody" tabindex="0" aria-label="Changes"></div>
   <footer><a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="small">Full list of changes</a><span class="spacer"></span><button id="wnOk" class="primary">Got it</button></footer>
 </div></dialog>
 <dialog id="fbDlg"><div class="dlg">
@@ -2641,6 +2732,20 @@ body.focus .tip-card{display:none}
       <li><b>Maps</b> work offline: shade countries, search about 7,300 places (or save your own), place markers, and draw routes, arrows and hatched areas, with a legend you label. Borders come from Natural Earth, with Crimea shown as part of Ukraine; other disputed lines follow Natural Earth’s de facto view.</li>
       <li><b>Timeline:</b> notes with an event date line up on the board’s Timeline view (Group by: Timeline). Gaps in the record are marked, and <i>Insert as figure</i> turns them into a graphic. Dates can be years, “Aug 1680”, full dates, ranges like “1680–1692”, or BCE.</li>
       <li><b>Relationships</b> (Docs tab) maps the people, organizations and places in your Names list by how often they appear together, with the passages one click away. Shift-click two names to add your own labeled link.</li>
+      <li>More chart types: <b>scatter or bubble</b> (label, x, y, and an optional size column and group column), <b>histogram</b> (one column of values; choose the number of bins), <b>heatmap</b> (a grid of values) and <b>shaded map</b> (place names and a value). Shaded maps cover countries (world or a region), US states by name or postal code, and regions of about 25 countries; names that don’t match are listed so you can fix them. When values cross zero, colors run from red through gray to blue.</li>
+    </ul>
+    <h4>Data &amp; dashboards</h4>
+    <ul>
+      <li><b>Data</b> on the research desk keeps datasets: a CSV or TSV file, a table pasted from a spreadsheet, or a table from your document. Give each its source and a note; columns are recognized as numbers, dates, text, latitude or longitude. Download any dataset as CSV.</li>
+      <li>A <b>dashboard</b> lays out tiles from your datasets: a headline <b>number</b> (total, average, latest and so on, with the change from the previous value and a small trend line), any <b>chart</b>, a <b>map</b> of places from latitude and longitude, a <b>timeline</b> from a column of dates, a <b>table</b> readers can filter and sort, <b>text</b>, an <b>image</b> or a <b>video</b> link. Choose each tile’s width and height, drag tiles to reorder them, and use <b>Preview</b> to see it without the controls.</li>
+      <li>Every tile credits its dataset’s source (or its own). <b>Insert</b> puts a chart, map or timeline tile in the document as a figure. <b>Export page…</b> writes the dashboard as one web page, with the sources and the data as CSV downloads, ready to publish anywhere that hosts a web page.</li>
+      <li>Video plays from YouTube, Vimeo or the link only in the exported page; inside Anabasis it’s shown as a link, because Anabasis doesn’t load outside content by itself.</li>
+    </ul>
+    <h4>Beside the writing &amp; in other windows</h4>
+    <ul>
+      <li>Press <kbd>⌘/Ctrl \</kbd>, or the panel button above the page, to put <b>notes</b>, <b>sources</b>, the <b>research desk</b> or <b>another document</b> (read only) beside the writing. Switch between them with the tabs at the top of that panel; press <kbd>⌘/Ctrl \</kbd> again to close it.</li>
+      <li>Drag the edge to make it wider, <b>⇄</b> (or <kbd>⌘/Ctrl Shift \</kbd>) to swap sides, <b>⤢</b> to let it take the whole width for a while, and <kbd>F6</kbd> to move between it and the writing. On a phone it fills the screen, with a button to switch back and forth.</li>
+      <li><b>↗</b> opens it in a window of its own, for a second screen. Edits in either window show up in the other, including when both change at once. Anything that changes the draft (inserting a note or a citation, making a memo) is done in the main window, and the main window is the one that saves.</li>
     </ul>
     <h4>Research: threads, claims, review keys &amp; questions</h4>
     <ul>
@@ -2795,6 +2900,7 @@ body.focus .tip-card{display:none}
       <li>Enter details by hand, or quick-add by DOI (via doi.org / Crossref) or ISBN (via Open Library). Lookups need an internet connection. Everything else works offline.</li>
       <li>Type titles the way they should print. CSL styles can’t reliably convert title case to APA’s sentence case.</li>
       <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here. Sources export back out the same way.</li>
+      <li><b>Source type</b>: mark a source <b>primary</b> (made at the time or by those involved: documents, records, interviews, data), <b>secondary</b> (analysis of primary sources) or <b>tertiary</b> (summaries: encyclopedias, textbooks). Its notes take the same type unless you set their own. Filter notes and sources by type with the chips at the top of each list, and turn on <b>Group by source type</b> in Page setup to split the bibliography into primary, secondary and tertiary sources.</li>
     </ul>
     <h4>Saving &amp; exporting</h4>
     <ul>

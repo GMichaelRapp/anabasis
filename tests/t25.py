@@ -6,7 +6,7 @@ from env import URL, HTTP, OUT, FX, AXE
 URL = os.environ.get('ANABASIS_URL', URL)
 AXE = os.environ.get('AXE_PATH', AXE)
 VIEWS = [
-    ('editor', "ghBarHide(); $('#updBar').classList.add('hidden'); if (curDocId !== P.docs[0].id) openDoc(P.docs[0].id); switchTab('docs')"),
+    ('editor', "if (typeof splitClose === 'function' && SPLIT.on) splitClose(); ghBarHide(); $('#updBar').classList.add('hidden'); if (curDocId !== P.docs[0].id) openDoc(P.docs[0].id); switchTab('docs')"),
     ('notes tab', "switchTab('notes')"),
     ('sources tab', "switchTab('sources')"),
     ('outline tab', "switchTab('outline')"),
@@ -43,6 +43,14 @@ VIEWS = [
     ('newer-backup notice', "ghBarShow({ sha: 'x', at: new Date().toISOString() })"),
     ('what’s new', "ghBarHide(); showWhatsNew('1.4.0')"),
     ('send feedback', "$('#wnDlg').close(); openFeedback()"),
+    ('data: empty', "$('#updBar').classList.add('hidden'); openDesk('data')"),
+    ('data: dashboard', "const ex = $$('#deskBody button').find(b => /Try an example/.test(b.textContent)); if (ex) ex.click(); else { dataSel = P.dashboards[0].id; renderDesk(); }"),
+    ('data: dataset', "dataSel = P.datasets[0].id; renderDesk()"),
+    ('data: tile editor', "dataSel = P.dashboards[0].id; renderDesk(); editTile(P.dashboards[0], P.dashboards[0].tiles[2])"),
+    ('data: import dialog', "$('#tlCancel').click(); importDataset()"),
+    ('split: notes', "$('#dsImpCancel').click(); closeDesk(); splitOpen('notes')"),
+    ('split: research desk', "splitOpen('desk')"),
+    ('split: a document', "splitOpen('doc')"),
     ('newer-version notice', "$('#fbDlg').close(); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():

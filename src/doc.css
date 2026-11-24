@@ -20,6 +20,7 @@
 .docbody .notes p.note{text-indent:.5in;margin:0 0 .55em;line-height:1.35}
 .docbody .csl-bib .csl-entry{margin:0 0 .55em;line-height:1.35}
 .docbody .csl-bib.hanging .csl-entry{padding-left:.5in;text-indent:-.5in}
+.docbody .csl-bib .csl-entry.bib-sub{margin:1.2em 0 .5em;padding-left:0;text-indent:0;font-variant:small-caps;letter-spacing:.03em}.docbody .csl-bib .csl-entry.bib-sub:first-child{margin-top:0}
 .docbody.bib-ds .csl-bib .csl-entry,.docbody.bib-ds .notes p.note{line-height:inherit;margin-bottom:0}
 .docbody .refs-missing{color:#a33a2c}
 @media print{

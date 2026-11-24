@@ -27,6 +27,10 @@ Only when you ask it to, and only to these addresses:
 
 The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web.
 
+## Dashboards you export
+
+An exported dashboard page is self-contained, except for video tiles: when someone opens the page, a YouTube or Vimeo tile loads that video from YouTube (through its privacy-enhanced youtube-nocookie.com address) or Vimeo, and a video-file link loads from wherever it points. Inside Anabasis, video tiles are shown as links and load nothing.
+
 ## Feedback
 
 **Send feedback** (Help) opens a GitHub issue in your browser, or copies the report for you to paste elsewhere. It holds what you type plus the Anabasis version, browser, device type, window size and theme. Nothing from your project goes in it, and nothing is sent until you submit it yourself.

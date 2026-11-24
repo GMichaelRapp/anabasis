@@ -42,6 +42,10 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
 - Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
 - A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click. A weekly review shows what moved and what’s next, and method templates get the design started.
+- Data dashboards: bring in a CSV, lay out headline numbers, charts, maps, timelines, searchable tables, text, images and video, each crediting its source, and export the whole thing as one web page.
+- Charts for nonfiction: columns, bars, lines, areas, small multiples, dot plots, scatter and bubble, histograms, heatmaps, and shaded maps of countries, US states or regions.
+- Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
+- Sources marked primary, secondary or tertiary, with notes that inherit the type and a bibliography that can be grouped by it.
 - Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
 
 **Figures**
@@ -65,7 +69,8 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 | ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab's checks beside a draft](docs/screenshots/checks.png) |
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
 | ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar's ⋯ menu](docs/screenshots/phone.png) |
-| ![The research journal: hypotheses with their status, evidence for and against, and status history](docs/screenshots/journal.png) | |
+| ![The research journal: hypotheses with their status, evidence for and against, and status history](docs/screenshots/journal.png) | ![A data dashboard: headline numbers with trend lines, a line chart and a table, each crediting its source](docs/screenshots/dashboard.png) |
+| ![Notes beside the writing, in split view](docs/screenshots/split.png) | |
 
 ## Getting started
 

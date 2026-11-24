@@ -4,6 +4,15 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.7.0] — 2026-11-24
+
+### Added
+- **Beside the writing**: notes, sources, the research desk or another document (read only) in a panel next to the page. ⌘/Ctrl \ opens and closes it; drag to resize, swap sides (⌘/Ctrl Shift \), widen it for a while, and F6 moves between it and the writing. On phones it fills the screen with a switch back to the writing.
+- **Pop-out windows**: any of those panels in a window of its own, for a second screen. Edits in either window reach the other within a moment, including changes made in both at once; actions that change the draft are done by the main window, which is the one that saves.
+- **Data and dashboards** (research desk → Data): datasets from CSV or TSV files, pasted tables or document tables, each with a source; dashboards of number, chart, map, timeline, table, text, image and video tiles, with a tile editor and live preview, sizes, drag to reorder, preview mode, insert as figure, and export as one standalone web page with sources and CSV downloads.
+- **Charts**: scatter and bubble, histogram (with the median marked), heatmap, and shaded maps of countries (world or a region), US states (names or postal codes) and the regions of about 25 countries. Diverging colors when values cross zero.
+- **Source types**: primary, secondary or tertiary on each source, inherited by its notes (which can override it), with badges and filters, a bibliography grouped by type (Page setup), and a claims-register flag for claims cited only to tertiary sources.
+
 ## [1.6.0] — 2026-11-23
 
 ### Added
@@ -161,6 +170,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.7.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.0
 [1.6.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.6.0
 [1.5.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.5.0
 [1.4.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.4.0

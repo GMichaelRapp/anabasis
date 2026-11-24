@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.6.0';
+const APP_VERSION = '1.7.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -108,16 +108,17 @@ let noteTagFilter = null;
 let homeOn = false;      // project home dashboard showing
 
 function blankProject() {
-  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], threads: [], claims: [], reviewKeys: [], journal: { design: {}, hypotheses: [], log: [], searches: [] }, stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
+  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], threads: [], claims: [], reviewKeys: [], journal: { design: {}, hypotheses: [], log: [], searches: [] }, datasets: [], dashboards: [], stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
 }
 function newDoc(title = 'Untitled document', html = '<p><br></p>') {
   return { id: uid('d'), title, html, style: DEFAULT_STYLE, created: nowISO(), modified: nowISO(), partId: '', order: 0, target: 0,
     meta: { author: '', subtitle: '', date: '', showTitleBlock: false }, snapshots: [], comments: [], role: 'body', status: '', deadline: '',
     layout: { font: 'book', size: '12', spacing: '2', indent: true, paper: 'letter', bib: 'cited', pageNums: true, pdfNotes: 'foot' } };
 }
+const ST = [['primary', 'Primary'], ['secondary', 'Secondary'], ['tertiary', 'Tertiary']], ST_OK = new Set(ST.map(x => x[0])), ST_NAME = Object.fromEntries(ST);
 function newNote() {
   const order = P && P.notes && P.notes.length ? Math.max(...P.notes.map(n => +n.order || 0)) + 1 : 0;
-  return { id: uid('n'), title: '', body: '', date: '', kind: 'idea', tags: [], sourceId: '', locator: '', label: 'page', color: '', pinned: false, pile: '', order, x: null, y: null, created: nowISO(), modified: nowISO() };
+  return { id: uid('n'), title: '', body: '', date: '', kind: 'idea', tags: [], stype: '', sourceId: '', locator: '', label: 'page', color: '', pinned: false, pile: '', order, x: null, y: null, created: nowISO(), modified: nowISO() };
 }
 /* research marks (see "Research marks" below) */
 const TH_COLORS = ['#E0A526', '#2A9D8F', '#D1495B', '#3A7CC3', '#8A5CC2', '#5B9A3C', '#E07A2E', '#6C7A89'];
@@ -137,7 +138,8 @@ function normalize(p) {
   out.sources = Array.isArray(out.sources) ? out.sources : [];
   out.docs = out.docs.map(x => { const b = newDoc(); return Object.assign(b, x, { meta: Object.assign(b.meta, x.meta || {}), layout: Object.assign(b.layout, x.layout || {}) }); })
     .map(x => (STYLES[x.style] ? x : Object.assign(x, { style: DEFAULT_STYLE })));
-  out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [] }));
+  out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }));
+  out.sources = out.sources.filter(x => x && typeof x === 'object').map(x => (x.stype !== undefined && !ST_OK.has(x.stype) ? Object.assign(x, { stype: '' }) : x));
   out.piles = Array.isArray(out.piles) ? out.piles.filter(x => x && x.id).map(x => ({ id: x.id, name: x.name || 'Pile' })) : [];
   const pileIds = new Set(out.piles.map(x => x.id));
   [...out.notes].sort((a, b) => (a.created || '').localeCompare(b.created || '')).forEach((n, i) => { if (typeof n.order !== 'number' || !isFinite(n.order)) n.order = i; if (!pileIds.has(n.pile)) n.pile = ''; n.pinned = !!n.pinned; n.color = n.color || ''; });
@@ -176,7 +178,18 @@ function normalize(p) {
       searches: arr(J.searches).map(x => ({ id: String(x.id), date: dayOk(x.date) || todayISOof(x.created), where: rstr(x.where), terms: rstr(x.terms), filters: rstr(x.filters), results: num(x.results), kept: num(x.kept), notes: rstr(x.notes), created: rstr(x.created) || nowISO() })),
     };
   }
-  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}));
+  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}));
+  { // datasets and dashboards (1.7)
+    const arr = v => (Array.isArray(v) ? v : []), obj = v => v && typeof v === 'object' && !Array.isArray(v), strs = v => arr(v).map(rstr).filter(Boolean);
+    out.datasets = arr(out.datasets).filter(obj).map(d => ({ id: rstr(d.id) || uid('ds'), name: rstr(d.name) || 'Data', cols: arr(d.cols).map(rstr).slice(0, 500), rows: arr(d.rows).filter(Array.isArray).slice(0, 100000).map(r => r.slice(0, 500).map(rstr)), sourceId: rstr(d.sourceId), note: rstr(d.note), created: rstr(d.created) || nowISO(), modified: rstr(d.modified) || nowISO() }));
+    const TT = new Set(['stat', 'chart', 'map', 'timeline', 'table', 'text', 'image', 'video']), KS = new Set(['bar', 'hbar', 'stack', 'line', 'area', 'multi', 'dot', 'scatter', 'hist', 'heat', 'choro']), clamp = (v, a, b, d) => { v = Math.round(+v); return v >= a && v <= b ? v : d; };
+    out.dashboards = arr(out.dashboards).filter(obj).map(b => ({ id: rstr(b.id) || uid('db'), title: rstr(b.title) || 'Dashboard', subtitle: rstr(b.subtitle), created: rstr(b.created) || nowISO(), modified: rstr(b.modified) || nowISO(),
+      tiles: arr(b.tiles).filter(t => obj(t) && TT.has(t.type)).map(t => ({ id: rstr(t.id) || uid('tl'), type: t.type, w: clamp(t.w, 1, 4, 2), h: clamp(t.h, 1, 3, 2), title: rstr(t.title), note: rstr(t.note), ds: rstr(t.ds), sourceId: rstr(t.sourceId),
+        col: rstr(t.col), agg: AGG.some(a => a[0] === t.agg) ? t.agg : 'latest', fmt: ['n', 'd1', 'pct', 'usd', 'k'].includes(t.fmt) ? t.fmt : 'n', prefix: rstr(t.prefix), suffix: rstr(t.suffix),
+        kind: KS.has(t.kind) ? t.kind : 'bar', labelCol: rstr(t.labelCol), valueCols: strs(t.valueCols), groupCol: rstr(t.groupCol), region: rstr(t.region) || 'world', bins: clamp(t.bins, 0, 60, 0), ylabel: rstr(t.ylabel),
+        latCol: rstr(t.latCol), lonCol: rstr(t.lonCol), dateCol: rstr(t.dateCol), cols: strs(t.cols), sortCol: rstr(t.sortCol), sortDir: t.sortDir === 'desc' ? 'desc' : 'asc',
+        body: rstr(t.body), asset: rstr(t.asset), url: /^https:\/\//i.test(rstr(t.url)) ? rstr(t.url) : '' })) }));
+  }
   return out;
 }
 function sampleProject() {
@@ -226,15 +239,16 @@ const idb = (() => {
   };
 })();
 const PREFS_KEY = 'commonplace.prefs';
+const POPOUT = (() => { const m = /[#&]popout=(notes|sources|desk|doc)(?:&dv=([a-z]+))?(?:&doc=([\w-]+))?/.exec(location.hash); return m ? { view: m[1], dv: m[2] || '', doc: m[3] || '' } : null; })();
 let PREFS = { remindMins: 15, sessionGoal: 0, typewriter: true, dimOthers: true, uncitedMin: 40, spellcheck: true };
 try { Object.assign(PREFS, JSON.parse(lsGet(PREFS_KEY) || '{}')); } catch (e) {}
-const savePrefs = () => lsSet(PREFS_KEY, JSON.stringify(PREFS));
+const savePrefs = () => (POPOUT ? false : lsSet(PREFS_KEY, JSON.stringify(PREFS)));
 let autosaveOk = true, dirtySince = null, snoozeUntil = 0, lastFileName = '';
 function sessionRecord() {
   return JSON.stringify({ project: P, curDocId, dirtyFile, dirtySince, lastFileSave: lastFileSave ? lastFileSave.toISOString() : null, lastFileName, stamp: Date.now() });
 }
 async function persistLocal() {
-  if (!P) return;
+  if (!P || POPOUT) return;
   syncEditor();
   let rec = sessionRecord();
   if (LOCK) rec = await sealText(rec, { stamp: Date.now() });
@@ -251,7 +265,7 @@ async function loadLocal() {
   if (a && b) return (b.stamp || 0) > (a.stamp || 0) ? b : a;
   return a || b;
 }
-function markDirty() { if (typeof requestPersist === 'function') requestPersist(); if (!dirtyFile || !dirtySince) { dirtyFile = true; dirtySince = dirtySince || Date.now(); } P.modified = nowISO(); updateSaveState(); autosave(); }
+function markDirty() { if (POPOUT) { if (P) P.modified = nowISO(); popPush(); return; } if (typeof requestPersist === 'function') requestPersist(); if (!dirtyFile || !dirtySince) { dirtyFile = true; dirtySince = dirtySince || Date.now(); } P.modified = nowISO(); updateSaveState(); autosave(); popSync(); if (SPLIT.on && SPLIT.view === 'doc') splitDocRefresh(); }
 function updateSaveState() {
   const el = $('#saveState');
   if (dirtyFile) { el.textContent = autosaveOk ? 'Unsaved changes · kept in browser' : 'Unsaved changes'; el.classList.add('dirty'); }
@@ -429,7 +443,7 @@ function inlineMd(s) { return sanitize(marked.parseInline(String(s || ''))); }
    reused until its citations, its style or any source changes (moving between chapters, exporting). */
 const REFS_CACHE = new Map();
 function computeRefs(doc, markers) {
-  const key = [doc.id, doc.style, doc.layout.bib, srcVersion, P.sources.length,
+  const key = [doc.id, doc.style, doc.layout.bib, !!doc.layout.bibSplit, srcVersion, P.sources.length,
     markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   const hit = REFS_CACHE.get(key);
   if (hit) { REFS_CACHE.delete(key); REFS_CACHE.set(key, hit); return Object.assign({}, hit, { disp: hit.disp.map((d, i) => Object.assign({}, d, { m: markers[i] })) }); }
@@ -464,10 +478,17 @@ function computeRefsNow(doc, markers) {
     try {
       eng.updateUncitedItems(doc.layout.bib === 'all' ? P.sources.map(s => s.id) : []);
       const b = eng.makeBibliography();
-      if (b && b[1].length) bib = { entries: b[1], hanging: !!b[0].hangingindent };
+      if (b && b[1].length) bib = { entries: doc.layout.bibSplit ? splitBib(b) : b[1], hanging: !!b[0].hangingindent };
     } catch (e) { console.error('bibliography', e); }
   }
   return { isNote, disp, notes: notes.sort((a, b) => a.n - b.n), bib, heading: STYLES[style].bib };
+}
+/* Bibliography in groups by source type (Primary sources, Secondary sources…), when Page setup asks for it. */
+function splitBib(b) {
+  const ids = (b[0].entry_ids || []).map(x => Array.isArray(x) ? x[0] : x), byId = new Map(P.sources.map(s => [s.id, s.stype || '']));
+  const groups = [['primary', 'Primary sources'], ['secondary', 'Secondary sources'], ['tertiary', 'Tertiary sources'], ['', 'Other sources']].map(([k, h]) => ({ h, e: b[1].filter((_, i) => (byId.get(ids[i]) || '') === k) })).filter(g => g.e.length);
+  if (groups.length < 2 || ids.length !== b[1].length) return b[1];
+  return groups.flatMap(g => [`<div class="csl-entry bib-sub"><b>${g.h}</b></div>`, ...g.e]);
 }
 function applyMarkers(out) {
   out.disp.forEach(d => {
@@ -618,7 +639,7 @@ function syncEditor() {
 function renderRefs(force = false) {
   const doc = curDoc(); if (!doc) return;
   const markers = $$('.cite,.fn', editor);
-  const sig = [doc.style, srcVersion, doc.layout.bib, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
+  const sig = [doc.style, srcVersion, doc.layout.bib, !!doc.layout.bibSplit, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   if (!force && sig === lastSig) return;
   lastSig = sig;
   const out = computeRefs(doc, markers);
@@ -1137,7 +1158,7 @@ $('#btnNewPart').addEventListener('click', async () => {
 $('#btnPageSetup').addEventListener('click', () => {
   const d = curDoc(), m = d.meta, L = d.layout;
   $('#suTitleBlock').checked = m.showTitleBlock; $('#suAuthor').value = m.author; $('#suDate').value = m.date; $('#suSubtitle').value = m.subtitle;
-  $('#suFont').value = L.font; $('#suSize').value = L.size; $('#suSpacing').value = L.spacing; $('#suPaper').value = L.paper; $('#suBib').value = L.bib;
+  $('#suFont').value = L.font; $('#suSize').value = L.size; $('#suSpacing').value = L.spacing; $('#suPaper').value = L.paper; $('#suBib').value = L.bib; $('#suBibSplit').checked = !!L.bibSplit;
   $('#suIndent').checked = !!L.indent; $('#suPageNums').checked = !!L.pageNums; $('#suTarget').value = d.target || ''; $('#suRole').value = d.role || 'body'; $('#suPdfNotes').value = L.pdfNotes || 'foot'; $('#suIndex').checked = !!L.index; $('#suMargin').value = L.marginalia || 'word'; $('#suScript').checked = !!(L.script && L.script.on); $('#suWpm').value = (L.script && L.script.wpm) || 150;
   $('#setupDlg').showModal();
 });
@@ -1145,7 +1166,7 @@ $('#suCancel').addEventListener('click', () => $('#setupDlg').close());
 $('#suOk').addEventListener('click', () => {
   const d = curDoc();
   Object.assign(d.meta, { showTitleBlock: $('#suTitleBlock').checked, author: $('#suAuthor').value.trim(), date: $('#suDate').value.trim(), subtitle: $('#suSubtitle').value.trim() });
-  Object.assign(d.layout, { font: $('#suFont').value, size: $('#suSize').value, spacing: $('#suSpacing').value, paper: $('#suPaper').value, bib: $('#suBib').value, indent: $('#suIndent').checked, pageNums: $('#suPageNums').checked });
+  Object.assign(d.layout, { font: $('#suFont').value, size: $('#suSize').value, spacing: $('#suSpacing').value, paper: $('#suPaper').value, bib: $('#suBib').value, bibSplit: $('#suBibSplit').checked, indent: $('#suIndent').checked, pageNums: $('#suPageNums').checked });
   d.target = Math.max(0, parseInt($('#suTarget').value, 10) || 0); d.role = $('#suRole').value; d.layout.pdfNotes = $('#suPdfNotes').value; d.layout.index = $('#suIndex').checked; d.layout.marginalia = $('#suMargin').value; d.layout.script = { on: $('#suScript').checked, wpm: Math.max(60, Math.min(260, parseInt($('#suWpm').value, 10) || 150)) }; setTimeout(updateScript, 0);
   $('#setupDlg').close(); updateTargets(); renderDocList();
   $('#titleBlock').innerHTML = titleBlockHTML(d); applyLayout($('#page'), d); renderRefs(true); markDirty();
@@ -1223,11 +1244,14 @@ function sourceRowHTML(s, uses, nn) {
   const l = sourceLabel(s);
   return `<li data-id="${s.id}" class="${panelState?.kind === 'source' && panelState.id === s.id ? 'on' : ''}"><span class="act"><button data-a="cite" title="Cite at cursor">“ Cite</button></span>
       <div class="t">${esc(l.who || '—')}${l.yr ? ' · ' + esc(l.yr) : ''}</div><div class="s">${esc(l.title)}</div>
-      <div class="meta"><span>${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
+      <div class="meta">${stBadge(s.stype)}<span>${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
 }
 function renderSourceList() {
   const q = $('#qSources').value.toLowerCase().trim();
-  const list = sortedSources().filter(s => !q || JSON.stringify(s.csl).toLowerCase().includes(q));
+  const stc = {}; P.sources.forEach(s => { if (s.stype) stc[s.stype] = (stc[s.stype] || 0) + 1; });
+  if (srcSTFilter && !stc[srcSTFilter]) srcSTFilter = '';
+  $('#srcChips').innerHTML = stChips(srcSTFilter, stc);
+  const list = sortedSources().filter(s => (!srcSTFilter || s.stype === srcSTFilter) && (!q || JSON.stringify(s.csl).toLowerCase().includes(q)));
   const uses = citeCounts(), nn = noteCountsBySource();
   $('#sourceList').innerHTML = list.length ? list.map(s => sourceRowHTML(s, uses.get(s.id) || 0, nn.get(s.id) || 0)).join('')
     : `<div class="empty">${P.sources.length ? 'No sources match.' : 'No sources yet.<br>Add one with <b>+ New</b>, quick-add a DOI or ISBN, or import a Zotero CSL-JSON export.'}</div>`;
@@ -1250,6 +1274,8 @@ function citeCounts() {
 function citeCount(id) { return citeCounts().get(id) || 0; }
 function noteCountsBySource() { const m = new Map(); P.notes.forEach(n => { if (n.sourceId) m.set(n.sourceId, (m.get(n.sourceId) || 0) + 1); }); return m; }
 $('#qSources').addEventListener('input', debounce(renderSourceList, 120));
+$('#srcChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; srcSTFilter = srcSTFilter === c.dataset.st ? '' : c.dataset.st; renderSourceList(); });
+$('#srcChips').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('chip')) { e.preventDefault(); e.target.click(); } });
 $('#sourceList').addEventListener('click', e => {
   const li = e.target.closest('li[data-id]'); if (!li) return;
   if (e.target.closest('button')?.dataset.a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: li.dataset.id }])); toast('Citation inserted. Click it to add a page number.'); return; }
@@ -1404,7 +1430,8 @@ function renderSourcePanel(s) {
   }).join('');
   $('#panelBody').innerHTML = `
     <div class="lookup"><input id="srcLookup" placeholder="Fill from DOI or ISBN"><button id="srcLookupBtn">Fetch</button></div>
-    <label>Type</label><select data-f="type">${TYPES.map(([k, l]) => `<option value="${k}" ${k === type ? 'selected' : ''}>${l}</option>`).join('')}</select>
+    <div class="grid2" style="grid-template-columns:1fr 150px"><div><label>Type</label><select data-f="type">${TYPES.map(([k, l]) => `<option value="${k}" ${k === type ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div><label for="srcStype" title="Primary: made at the time or by those involved (documents, records, interviews, data). Secondary: analysis of primary sources. Tertiary: summaries of secondary ones (encyclopedias, textbooks).">Source type</label><select id="srcStype"><option value="">Not set</option>${ST.map(([k, l]) => `<option value="${k}" ${s.stype === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
     <label>People <span class="muted">(order matters)</span></label>
     <div class="people" id="people">${people.map(personRow).join('')}</div>
     <button class="ghost small" id="addPerson">+ Add person</button>
@@ -1470,6 +1497,7 @@ $('#panelBody').addEventListener('input', e => {
     if (e.target.id === 'rawCsl' || e.target.id === 'srcLookup') return;
     const s = P.sources.find(x => x.id === panelState.id); if (!s) return;
     if (e.target.id === 'srcAnnot') { s.annotation = e.target.value; s.modified = nowISO(); markDirty(); return; }
+    if (e.target.id === 'srcStype') { s.stype = e.target.value; s.modified = nowISO(); srcVersion++; refreshSourceRow(s); renderNoteList(); renderRefs(true); markDirty(); return; }
     if (e.target.dataset.f === 'type') { s.csl = readSourceForm(s); renderSourcePanel(s); }
     if (e.target.dataset.o === 'type') { s.osint = readOsintForm(); renderSourcePanel(s); }
     commitSource(s);
@@ -1756,26 +1784,34 @@ function exportOsintList() {
 
 /* ---------------- notes ---------------- */
 const KINDS = [['quote', 'Quote'], ['paraphrase', 'Paraphrase'], ['summary', 'Summary'], ['idea', 'Idea']];
+/* Source types: set on a source, inherited by its notes; a note can override. */
+const noteSType = n => { if (!n) return ''; if (n.stype === 'none') return ''; if (n.stype) return n.stype; const s = n.sourceId && P.sources.find(x => x.id === n.sourceId); return (s && s.stype) || ''; };
+const stBadge = (t, inh) => t ? `<span class="stype st-${t}" title="${ST_NAME[t]} source${inh ? ' (from its source)' : ''}">${ST_NAME[t]}</span>` : '';
+let noteSTFilter = '', srcSTFilter = '';
+function stChips(cur, counts) { return ST.filter(([k]) => counts[k]).map(([k, l]) => `<span class="chip stc st-${k} ${cur === k ? 'on' : ''}" data-st="${k}" role="button" tabindex="0" aria-pressed="${cur === k}">${l} <span class="muted">${counts[k]}</span></span>`).join(''); }
 function allTags() { const s = new Set(); P.notes.forEach(n => n.tags.forEach(t => s.add(t))); return [...s].sort((a, b) => a.localeCompare(b)); }
 function renderNoteList() {
   const q = $('#qNotes').value.toLowerCase().trim();
   const tags = allTags();
   if (noteTagFilter && !tags.includes(noteTagFilter)) noteTagFilter = null;
-  $('#tagChips').innerHTML = tags.map(t => `<span class="chip ${t === noteTagFilter ? 'on' : ''}" data-t="${esc(t)}">#${esc(t)}</span>`).join('');
+  const stc = {}; P.notes.forEach(n => { const t = noteSType(n); if (t) stc[t] = (stc[t] || 0) + 1; });
+  if (noteSTFilter && !stc[noteSTFilter]) noteSTFilter = '';
+  $('#tagChips').innerHTML = stChips(noteSTFilter, stc) + tags.map(t => `<span class="chip ${t === noteTagFilter ? 'on' : ''}" data-t="${esc(t)}">#${esc(t)}</span>`).join('');
   const list = [...P.notes].sort((a, b) => (b.pinned - a.pinned) || b.modified.localeCompare(a.modified))
-    .filter(n => (!noteTagFilter || n.tags.includes(noteTagFilter)) && (!q || (n.title + ' ' + n.body + ' ' + n.tags.join(' ')).toLowerCase().includes(q)));
+    .filter(n => (!noteTagFilter || n.tags.includes(noteTagFilter)) && (!noteSTFilter || noteSType(n) === noteSTFilter) && (!q || (n.title + ' ' + n.body + ' ' + n.tags.join(' ')).toLowerCase().includes(q)));
   $('#noteList').innerHTML = list.length ? list.map(n => {
     const s = n.sourceId && P.sources.find(x => x.id === n.sourceId), l = s ? sourceLabel(s) : null;
     return `<li data-id="${n.id}" draggable="true" class="note-li ${n.color ? 'c-' + n.color : ''} ${panelState?.kind === 'note' && panelState.id === n.id ? 'on' : ''}"><span class="act"><button data-a="ins" title="Insert into document at cursor">Insert</button></span>
       <div class="t">${n.pinned ? '<span class="pin-dot" title="Pinned">●</span>' : ''}<span class="kind">${esc(n.kind)}</span> ${esc(n.title || firstLine(n.body) || 'Untitled note')}</div>
       <div class="s">${esc(n.body.replace(/[#*_>`]/g, '').slice(0, 160))}</div>
-      <div class="meta">${n.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}${l ? `<span>↳ ${esc(l.who || l.title)}${n.locator ? ', ' + esc(n.locator) : ''}</span>` : ''}</div></li>`;
+      <div class="meta">${stBadge(noteSType(n), !n.stype)}${n.tags.map(t => `<span class="tag">#${esc(t)}</span>`).join('')}${l ? `<span>↳ ${esc(l.who || l.title)}${n.locator ? ', ' + esc(n.locator) : ''}</span>` : ''}</div></li>`;
   }).join('') : `<div class="empty">${P.notes.length ? 'No notes match.' : 'No notes yet.<br>Notes can be quotes, paraphrases or ideas, linked to a source and page, then inserted or compiled into a draft.'}</div>`;
   $('#cntNotes').textContent = P.notes.length;
 }
 const firstLine = s => String(s || '').split('\n').find(x => x.trim())?.replace(/^#+\s*/, '').slice(0, 80) || '';
 $('#qNotes').addEventListener('input', debounce(renderNoteList, 120));
-$('#tagChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; noteTagFilter = noteTagFilter === c.dataset.t ? null : c.dataset.t; renderNoteList(); });
+$('#tagChips').addEventListener('click', e => { const c = e.target.closest('.chip'); if (!c) return; if (c.dataset.st) { noteSTFilter = noteSTFilter === c.dataset.st ? '' : c.dataset.st; renderNoteList(); return; } noteTagFilter = noteTagFilter === c.dataset.t ? null : c.dataset.t; renderNoteList(); });
+$('#tagChips').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('chip')) { e.preventDefault(); e.target.click(); } });
 $('#noteList').addEventListener('click', e => {
   const li = e.target.closest('li[data-id]'); if (!li) return;
   if (e.target.closest('button')?.dataset.a === 'ins') { insertNote(P.notes.find(n => n.id === li.dataset.id)); return; }
@@ -1795,7 +1831,8 @@ function openNote(id, focus = false) {
     <label style="display:flex;justify-content:space-between;align-items:end">Note <span><button class="ghost small" data-a="mdtoggle" style="padding:1px 6px">Preview</button></span></label>
     <textarea class="note-body" data-n="body" placeholder="Markdown: **bold**, *italic*, - lists, > quotes">${esc(n.body)}</textarea>
     <div class="md-preview hidden" id="mdPreview"></div>
-    <label>Source</label><select data-n="sourceId"><option value="">— none —</option>${opts}</select>
+    <div class="grid2" style="grid-template-columns:1fr 150px"><div><label>Source</label><select data-n="sourceId"><option value="">— none —</option>${opts}</select></div>
+    <div><label for="nStype">Source type</label><select data-n="stype" id="nStype">${(() => { const s = n.sourceId && P.sources.find(x => x.id === n.sourceId), inh = s && s.stype ? ST_NAME[s.stype] : ''; return `<option value="">${inh ? 'From source: ' + inh : 'Not set'}</option>` + ST.map(([k, l]) => `<option value="${k}" ${n.stype === k ? 'selected' : ''}>${l}</option>`).join('') + (inh ? `<option value="none" ${n.stype === 'none' ? 'selected' : ''}>None</option>` : ''); })()}</select></div></div>
     <label>Event date <span class="muted">(puts the card on the timeline: 1914-08-04, Aug 1914, c. 1680)</span></label><input data-n="date" value="${esc(n.date || '')}" placeholder="When it happened, not when it was published">
     <div class="grid2" style="grid-template-columns:110px 1fr"><div><label>Locator</label><select data-n="label">${LOCATOR_LABELS.map(x => `<option ${x === n.label ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
     <div><label>&nbsp;</label><input data-n="locator" value="${esc(n.locator)}" placeholder="e.g. 112–13"></div></div>
@@ -1813,12 +1850,13 @@ const commitNote = debounce(() => {
   if (panelState?.kind !== 'note') return;
   const n = P.notes.find(x => x.id === panelState.id); if (!n) return;
   const g = k => $(`#panelBody [data-n="${k}"]`).value;
-  n.title = g('title').trim(); n.kind = g('kind'); n.body = g('body'); n.sourceId = g('sourceId'); n.label = g('label'); n.locator = g('locator').trim();
+  const srcWas = n.sourceId; n.title = g('title').trim(); n.kind = g('kind'); n.body = g('body'); n.sourceId = g('sourceId'); n.stype = g('stype'); n.label = g('label'); n.locator = g('locator').trim();
   n.tags = g('tags').split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean).filter((t, i, a) => a.indexOf(t) === i);
   n.pile = g('pile'); n.date = g('date').trim();
   n.modified = nowISO();
   if (notePreview) $('#mdPreview').innerHTML = mdNote(n.body);
   $('#noteLinks').innerHTML = noteLinksHTML(n);
+  if (srcWas !== n.sourceId) { const sel = $('#nStype'), s2 = n.sourceId && P.sources.find(x => x.id === n.sourceId), inh = s2 && s2.stype ? ST_NAME[s2.stype] : ''; if (sel) sel.options[0].textContent = inh ? 'From source: ' + inh : 'Not set'; }
   renderNoteList(); renderBoardSoon(); markDirty();
 }, 250);
 function noteBodyClick(e) {
@@ -2116,7 +2154,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
 
-function renderAll() { $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); }
+function renderAll() { $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
 
 /* ================================================================
    Drafting & research tools
@@ -2914,6 +2952,7 @@ const TAB_ID = uid('t');
 const bc = 'BroadcastChannel' in window ? new BroadcastChannel('commonplace-app') : null;
 let appReady = false, otherTabWarned = false;
 if (bc) bc.onmessage = e => {
+  if (POPOUT) return;
   const m = e.data || {};
   if (m.type === 'ping' && appReady) { bc.postMessage({ type: 'pong', to: m.from, from: TAB_ID }); if (!m.clipOnly) showTabWarning(); }
   if (m.type === 'clip' && m.to === TAB_ID && appReady) { handleClip(m.clip); bc.postMessage({ type: 'clip-ok', to: m.from }); try { window.focus(); } catch (x) {} }
@@ -5940,15 +5979,182 @@ function chartConfig(spec, data) {
   };
 }
 async function chartPNG(spec) {
+  if (SVG_KINDS.has(spec.kind)) { const { svg, w, h } = vizSVG(spec); return svgToPNG(svg, w, h, 2); }
   const data = parseTable(spec.data); if (!data || !data.series.length) throw new Error('No data to chart.');
   if (spec.kind === 'multi') return multiplesPNG(spec, data, 2);
-  const [w, h] = CH_SIZE[spec.aspect] || CH_SIZE.wide;
+  const [w, h] = spec.size || CH_SIZE[spec.aspect] || CH_SIZE.wide;
   const holder = document.createElement('div'); holder.style.cssText = `position:fixed;left:-10000px;top:0;width:${w}px;height:${h}px`;
   const c = document.createElement('canvas'); c.width = w; c.height = h; c.style.width = w + 'px'; c.style.height = h + 'px'; holder.append(c); document.body.append(holder);
   const cfg = chartConfig(spec, data); cfg.options.devicePixelRatio = 2;
   const ch = new Chart(c, cfg); ch.draw();
   const out = { data: c.toDataURL('image/png'), w: w * 2, h: h * 2 };
   ch.destroy(); holder.remove(); return out;
+}
+/* ================================================================
+   1.7 charts drawn as SVG: scatter and bubble, histogram, heatmap,
+   shaded map. Same SVG feeds figures (as PNG) and dashboards (inline).
+   ================================================================ */
+const SVG_KINDS = new Set(['scatter', 'hist', 'heat', 'choro']);
+const SEQ = ['#cde2fb', '#9ec5f4', '#6da7ec', '#3987e5', '#256abf', '#184f95', '#0d366b'];
+const DIV_NEG = ['#7f1d1d', '#b22d2c', '#e34948', '#f0a39e'], DIV_MID = '#f0efec', DIV_POS = ['#9ec5f4', '#3987e5', '#1c5cab', '#0d366b'];
+const hexRGB = h => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+function rampAt(stops, t) { t = Math.max(0, Math.min(1, t)); const p = t * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(p)), f = p - i, a = hexRGB(stops[i]), b = hexRGB(stops[i + 1]); return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * f)).join(',')})`; }
+const lumOf = c => { const m = /rgb\((\d+),(\d+),(\d+)\)/.exec(c); const [r, g, b] = m ? [+m[1], +m[2], +m[3]] : hexRGB(c); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
+function colorScale(min, max) { // sequential, or diverging around 0 when the data cross it
+  if (min < 0 && max > 0) { const m = Math.max(-min, max); return { div: true, f: v => v < 0 ? rampAt([DIV_MID, ...[...DIV_NEG].reverse()], -v / m) : rampAt([DIV_MID, ...DIV_POS], v / m), lo: -m, hi: m }; }
+  return { div: false, f: v => rampAt(SEQ, max === min ? 1 : (v - min) / (max - min)), lo: min, hi: max };
+}
+function parseGrid(text) {
+  const lines = String(text || '').replace(/\r/g, '').split('\n').filter(l => l.trim());
+  if (!lines.length) return null;
+  const delim = lines[0].includes('\t') ? '\t' : (lines[0].split(';').length > lines[0].split(',').length ? ';' : ',');
+  const split = l => { if (delim !== ',') return l.split(delim).map(x => x.trim()); const out = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === ',' && !q) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; };
+  const rows = lines.map(split);
+  return { head: rows[0], body: rows.slice(1) };
+}
+function numOf(v) { if (v == null) return null; let s = String(v).trim(); if (!s || s === '-' || s === '—') return null; const neg = /^\(.*\)$/.test(s) || /^[−-]/.test(s); s = s.replace(/[()$€£¥%\s−]/g, '').replace(/^-/, '').replace(/,(?=\d{3}\b)/g, ''); if (!/^\d*\.?\d+(e[+-]?\d+)?$/i.test(s)) return null; const n = parseFloat(s); return neg ? -n : n; }
+const isNumCol = (body, i) => { const v = body.map(r => r[i]).filter(x => x != null && String(x).trim() !== ''); return v.length > 0 && v.filter(x => numOf(x) != null).length / v.length >= 0.8; };
+function niceTicks(lo, hi, n = 5) { useLib('lib-geo'); if (lo === hi) { lo -= 1; hi += 1; } const d = d3.nice(lo, hi, n); return { lo: d[0], hi: d[1], ticks: d3.ticks(d[0], d[1], n) }; }
+const svgEsc = s => esc(String(s == null ? '' : s));
+const svgOpen = (w, h) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" font-family='${VIZ.font}'><rect width="${w}" height="${h}" fill="${VIZ.surface}"/>`;
+function axesSVG(x0, x1, y0, y1, xs, ys, fx, fy, xt, yt, fmt) { // gridlines, ticks, labels
+  let s = ys.ticks.map(t => { const y = fy(t); return `<line x1="${x0}" x2="${x1}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${VIZ.grid}"/><text x="${x0 - 8}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="12" fill="${VIZ.ink2}">${svgEsc(fmtNum(t, fmt))}</text>`; }).join('');
+  if (xs) s += xs.ticks.map(t => { const x = fx(t); return `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${y0}" y2="${y1}" stroke="${VIZ.grid}" stroke-dasharray="2 3"/><text x="${x.toFixed(1)}" y="${y1 + 18}" text-anchor="middle" font-size="12" fill="${VIZ.ink2}">${svgEsc(fmtNum(t, 'n'))}</text>`; }).join('');
+  s += `<line x1="${x0}" x2="${x1}" y1="${y1}" y2="${y1}" stroke="#c9c9c4"/>`;
+  if (xt) s += `<text x="${(x0 + x1) / 2}" y="${y1 + 40}" text-anchor="middle" font-size="12.5" font-weight="600" fill="${VIZ.ink}">${svgEsc(xt)}</text>`;
+  if (yt) s += `<text x="12" y="${y0 - 16}" font-size="12.5" font-weight="600" fill="${VIZ.ink}">${svgEsc(yt)}</text>`;
+  return s;
+}
+/* scatter and bubble: label, x, y[, size][, group] */
+function scatterData(text) {
+  const g = parseGrid(text); if (!g || !g.body.length) return { err: 'Paste a table: a label column, then two columns of numbers (x and y). A third number column sizes the bubbles; a text column colors them by group.' };
+  const cols = g.head.map((h, i) => ({ i, h: h || `Column ${i + 1}`, num: isNumCol(g.body, i) }));
+  const labelCol = cols[0].num ? null : cols[0], nums = cols.filter(c => c.num), grp = cols.slice(1).find(c => !c.num) || null;
+  if (nums.length < 2) return { err: 'Scatter needs two columns of numbers: the first is x, the second y.' };
+  const [cx, cy, cs] = nums;
+  const pts = g.body.map(r => ({ label: labelCol ? r[labelCol.i] : '', x: numOf(r[cx.i]), y: numOf(r[cy.i]), s: cs ? numOf(r[cs.i]) : null, g: grp ? (r[grp.i] || '') : '' })).filter(p => p.x != null && p.y != null);
+  if (!pts.length) return { err: 'No rows have numbers in both the x and y columns.' };
+  return { pts, xName: cx.h, yName: cy.h, sName: cs ? cs.h : '', groups: grp ? [...new Set(pts.map(p => p.g))] : [] };
+}
+function scatterSVG(spec, w, h) {
+  const d = scatterData(spec.data); if (d.err) throw new Error(d.err);
+  const groups = d.groups.slice(0, 8), legend = groups.length > 1;
+  const x0 = 64, x1 = w - 24, y0 = legend ? 64 : 40, y1 = h - 56;
+  const xs = niceTicks(Math.min(...d.pts.map(p => p.x)), Math.max(...d.pts.map(p => p.x)), 6), ys = niceTicks(Math.min(...d.pts.map(p => p.y)), Math.max(...d.pts.map(p => p.y)), 5);
+  if (d.pts.every(p => p.y >= 0) && ys.lo > 0 && ys.lo < (ys.hi - ys.lo)) { ys.lo = 0; ys.ticks = d3.ticks(0, ys.hi, 5); }
+  const fx = v => x0 + (v - xs.lo) / (xs.hi - xs.lo) * (x1 - x0), fy = v => y1 - (v - ys.lo) / (ys.hi - ys.lo) * (y1 - y0);
+  const smax = Math.max(0, ...d.pts.map(p => p.s || 0)), rOf = p => d.sName ? 3 + Math.sqrt(Math.max(0, p.s || 0) / (smax || 1)) * 24 : 5.5;
+  const col = p => groups.length ? (SERIES[groups.indexOf(p.g)] || '#8a8f98') : SERIES[0];
+  let s = svgOpen(w, h) + axesSVG(x0, x1, y0, y1, xs, ys, fx, fy, d.xName, spec.ylabel || d.yName, spec.fmt);
+  if (legend) s += `<g font-size="12.5" fill="${VIZ.ink}">${groups.map((g, i) => `<circle cx="${x0 + 6 + i * 130}" cy="22" r="5" fill="${SERIES[i]}"/><text x="${x0 + 16 + i * 130}" y="26.5">${svgEsc(g.slice(0, 16))}</text>`).join('')}</g>`;
+  const order = [...d.pts].sort((a, b) => rOf(b) - rOf(a)); // big bubbles behind small ones
+  s += order.map(p => `<circle cx="${fx(p.x).toFixed(1)}" cy="${fy(p.y).toFixed(1)}" r="${rOf(p).toFixed(1)}" fill="${col(p)}" fill-opacity="${d.sName ? .72 : .9}" stroke="#fff" stroke-width="1.5"><title>${svgEsc((p.label ? p.label + ': ' : '') + `${d.xName} ${fmtNum(p.x, 'n')}, ${d.yName} ${fmtNum(p.y, spec.fmt)}` + (d.sName ? `, ${d.sName} ${fmtNum(p.s, 'n')}` : '') + (p.g ? ` (${p.g})` : ''))}</title></circle>`).join('');
+  if (d.pts.length <= 30) { const boxes = []; d.pts.forEach(p => { if (!p.label) return; const tw = p.label.length * 6.4, right = fx(p.x) + rOf(p) + 4 + tw <= w - 4, tx = right ? fx(p.x) + rOf(p) + 4 : fx(p.x) - rOf(p) - 4 - tw, ty = fy(p.y) + 4; if (tx < 0 || boxes.some(b => tx < b[2] && tx + tw > b[0] && ty - 11 < b[3] && ty + 3 > b[1])) return; boxes.push([tx, ty - 11, tx + tw, ty + 3]); s += `<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" font-size="11.5" fill="${VIZ.ink2}" paint-order="stroke" stroke="#fff" stroke-width="3">${svgEsc(p.label)}</text>`; }); }
+  return s + '</svg>';
+}
+/* histogram: one column of values */
+function histData(text) {
+  const g = parseGrid(text); if (!g) return { err: 'Paste a column of numbers, one per row (a header row is optional).' };
+  const all = [g.head, ...g.body], c = [...Array(Math.max(...all.map(r => r.length))).keys()].find(i => isNumCol(g.body.length ? g.body : [g.head], i));
+  if (c == null) return { err: 'Paste a column of numbers, one per row (a header row is optional).' };
+  const headNum = numOf(g.head[c]) != null, vals = (headNum ? all : g.body).map(r => numOf(r[c])).filter(v => v != null);
+  if (vals.length < 3) return { err: 'A histogram needs at least three values.' };
+  return { vals, name: headNum ? 'Value' : (g.head[c] || 'Value') };
+}
+function histSVG(spec, w, h) {
+  const d = histData(spec.data); if (d.err) throw new Error(d.err);
+  useLib('lib-geo');
+  const n = Math.max(3, Math.min(60, +spec.bins || Math.ceil(Math.log2(d.vals.length) + 1)));
+  const bins = d3.bin().thresholds(n)(d.vals), lo = bins[0].x0, hi = bins[bins.length - 1].x1;
+  const x0 = 64, x1 = w - 24, y0 = 40, y1 = h - 56, ys = niceTicks(0, Math.max(...bins.map(b => b.length)), 5);
+  const fx = v => x0 + (v - lo) / ((hi - lo) || 1) * (x1 - x0), fy = v => y1 - v / (ys.hi || 1) * (y1 - y0);
+  let s = svgOpen(w, h) + axesSVG(x0, x1, y0, y1, null, ys, fx, fy, spec.xlabel || d.name, spec.ylabel || 'Count', 'n');
+  s += bins.map(b => { const bx = fx(b.x0) + 1, bw = Math.max(1, fx(b.x1) - fx(b.x0) - 2), by = fy(b.length); return `<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(0, y1 - by).toFixed(1)}" rx="2" fill="${SERIES[0]}"><title>${svgEsc(`${fmtNum(b.x0, spec.fmt)} to ${fmtNum(b.x1, spec.fmt)}: ${b.length}`)}</title></rect>`; }).join('');
+  const every = Math.ceil(bins.length / Math.floor((x1 - x0) / 56));
+  s += [...bins.map(b => b.x0), hi].map((v, i) => i % every ? '' : `<text x="${fx(v).toFixed(1)}" y="${y1 + 18}" text-anchor="middle" font-size="12" fill="${VIZ.ink2}">${svgEsc(fmtNum(v, spec.fmt))}</text>`).join('');
+  const sorted = [...d.vals].sort((a, b) => a - b), med = d3.quantileSorted(sorted, .5), mx = fx(med);
+  s += `<line x1="${mx.toFixed(1)}" x2="${mx.toFixed(1)}" y1="${y0 - 6}" y2="${y1}" stroke="${VIZ.ink}" stroke-width="1.5" stroke-dasharray="4 3"/><text x="${(mx + 5).toFixed(1)}" y="${y0 - 2}" font-size="12" fill="${VIZ.ink}" font-weight="600">Median ${svgEsc(fmtNum(med, spec.fmt))}</text>`;
+  return s + '</svg>';
+}
+/* heatmap: row labels down the side, column labels across the top */
+function heatData(text) {
+  const g = parseGrid(text); if (!g || !g.body.length || g.head.length < 2) return { err: 'Paste a grid: row labels in the first column, column labels in the first row, numbers in the cells.' };
+  const cols = g.head.slice(1), rows = g.body.map(r => ({ label: r[0], vals: cols.map((_, i) => numOf(r[i + 1])) }));
+  const all = rows.flatMap(r => r.vals).filter(v => v != null); if (!all.length) return { err: 'No numbers found in the grid.' };
+  return { cols, rows, min: Math.min(...all), max: Math.max(...all) };
+}
+function heatSVG(spec, w, h) {
+  const d = heatData(spec.data); if (d.err) throw new Error(d.err);
+  const cs = colorScale(d.min, d.max), lw = Math.min(180, 16 + Math.max(...d.rows.map(r => String(r.label).length)) * 7), longCol = Math.max(...d.cols.map(c => c.length)) * 6.6;
+  const rotate = longCol > (w - lw - 30) / d.cols.length - 6, top = rotate ? Math.min(120, 24 + longCol * .72) : 34;
+  const x0 = lw, x1 = w - 20, y0 = top + 8, y1 = h - 48, cw = (x1 - x0) / d.cols.length, ch = (y1 - y0) / d.rows.length, showV = cw >= 34 && ch >= 18;
+  let s = svgOpen(w, h);
+  s += d.cols.map((c, i) => { const cx = x0 + cw * (i + .5); return rotate ? `<text transform="translate(${cx.toFixed(1)} ${top}) rotate(-45)" font-size="12" fill="${VIZ.ink2}">${svgEsc(c)}</text>` : `<text x="${cx.toFixed(1)}" y="${top}" text-anchor="middle" font-size="12" fill="${VIZ.ink2}">${svgEsc(c)}</text>`; }).join('');
+  d.rows.forEach((r, j) => {
+    const cy = y0 + ch * j;
+    s += `<text x="${lw - 8}" y="${(cy + ch / 2 + 4).toFixed(1)}" text-anchor="end" font-size="12" fill="${VIZ.ink2}">${svgEsc(String(r.label).slice(0, 26))}</text>`;
+    r.vals.forEach((v, i) => {
+      const fill = v == null ? '#f4f4f2' : cs.f(v), x = x0 + cw * i;
+      s += `<rect x="${(x + 1).toFixed(1)}" y="${(cy + 1).toFixed(1)}" width="${Math.max(1, cw - 2).toFixed(1)}" height="${Math.max(1, ch - 2).toFixed(1)}" rx="2" fill="${fill}"><title>${svgEsc(`${r.label}, ${d.cols[i]}: ${v == null ? 'no data' : fmtNum(v, spec.fmt)}`)}</title></rect>`;
+      if (showV && v != null) s += `<text x="${(x + cw / 2).toFixed(1)}" y="${(cy + ch / 2 + 4).toFixed(1)}" text-anchor="middle" font-size="${Math.min(13, ch * .5).toFixed(1)}" fill="${lumOf(fill) < .55 ? '#fff' : VIZ.ink}" pointer-events="none">${svgEsc(fmtNum(v, spec.fmt))}</text>`;
+    });
+  });
+  return s + legendSVG(cs, x1 - 220, h - 30, 220, spec.fmt) + '</svg>';
+}
+function legendSVG(cs, x, y, lw, fmt) {
+  const stops = [...Array(11).keys()].map(i => `<stop offset="${i * 10}%" stop-color="${cs.f(cs.lo + (cs.hi - cs.lo) * i / 10)}"/>`).join(''), id = 'lg' + Math.random().toString(36).slice(2, 7);
+  return `<defs><linearGradient id="${id}">${stops}</linearGradient></defs><rect x="${x}" y="${y}" width="${lw}" height="10" rx="2" fill="url(#${id})"/><text x="${x}" y="${y + 24}" font-size="11.5" fill="${VIZ.ink2}">${svgEsc(fmtNum(cs.lo, fmt))}</text>${cs.div ? `<text x="${x + lw / 2}" y="${y + 24}" text-anchor="middle" font-size="11.5" fill="${VIZ.ink2}">0</text>` : ''}<text x="${x + lw}" y="${y + 24}" text-anchor="end" font-size="11.5" fill="${VIZ.ink2}">${svgEsc(fmtNum(cs.hi, fmt))}</text>`;
+}
+/* shaded map: place names and a value */
+const US_POSTAL = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'Washington, D.C.', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
+const PLACE_ALIAS = { 'united states': 'United States of America', usa: 'United States of America', us: 'United States of America', america: 'United States of America', uk: 'United Kingdom', britain: 'United Kingdom', 'great britain': 'United Kingdom', 'democratic republic of the congo': 'Dem. Rep. Congo', drc: 'Dem. Rep. Congo', 'dr congo': 'Dem. Rep. Congo', 'congo kinshasa': 'Dem. Rep. Congo', 'republic of the congo': 'Congo', 'congo brazzaville': 'Congo', 'czech republic': 'Czechia', 'ivory coast': "Côte d'Ivoire", 'cote divoire': "Côte d'Ivoire", 'north macedonia': 'Macedonia', burma: 'Myanmar', 'republic of korea': 'South Korea', 'korea south': 'South Korea', 'korea republic of': 'South Korea', korea: 'South Korea', 'korea north': 'North Korea', dprk: 'North Korea', 'democratic peoples republic of korea': 'North Korea', 'russian federation': 'Russia', 'iran islamic republic of': 'Iran', 'syrian arab republic': 'Syria', 'viet nam': 'Vietnam', 'lao pdr': 'Laos', 'lao peoples democratic republic': 'Laos', turkiye: 'Turkey', 'cape verde': 'Cabo Verde', 'east timor': 'Timor-Leste', swaziland: 'eSwatini', eswatini: 'eSwatini', 'the gambia': 'Gambia', 'the bahamas': 'Bahamas', 'state of palestine': 'Palestine', 'palestinian territories': 'Palestine', 'holy see': 'Vatican', 'vatican city': 'Vatican', 'prc': 'China', 'peoples republic of china': 'China', 'republic of china': 'Taiwan', 'chinese taipei': 'Taiwan', 'uae': 'United Arab Emirates', 'district of columbia': 'Washington, D.C.', dc: 'Washington, D.C.', 'washington dc': 'Washington, D.C.' };
+const ABBR = [[/\bis\./g, 'islands'], [/\brep\./g, 'republic'], [/\bdem\./g, 'democratic'], [/\bst\.?(?=\s)/g, 'saint'], [/\bn\.(?=\s)/g, 'north'], [/\bs\.(?=\s)/g, 'south'], [/\beq\./g, 'equatorial'], [/\bfr\./g, 'french'], [/\bbr\./g, 'british'], [/\bherz\./g, 'herzegovina'], [/\bbarb\./g, 'barbuda'], [/\bgren\./g, 'grenadines'], [/\bvin\./g, 'vincent'], [/\bcentral african rep\b/g, 'central african republic']];
+let _pal = null; const PLACE_AL = () => _pal || (_pal = Object.fromEntries(Object.entries(PLACE_ALIAS).map(([k, v]) => [placeKey(k), v])));
+function placeKey(s) { let k = String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); ABBR.forEach(([re, r]) => { k = k.replace(re, r); }); return k.replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\bthe\b/g, ' ').replace(/\s+/g, ' ').trim(); }
+const CHORO_REGIONS = () => [['world', 'World (countries)'], ...Object.entries(MAP_PRESETS).filter(([k]) => k !== 'world').map(([k, v]) => [k, v[0] + ' (countries)']), ['us', 'United States (states)'],
+  ...['Russia', 'Ukraine', 'China', 'India', 'Japan', 'Turkey', 'Iran', 'Iraq', 'Syria', 'Afghanistan', 'Pakistan', 'Poland', 'South Korea', 'North Korea', 'Taiwan', 'Saudi Arabia', 'Yemen', 'Israel', 'Georgia', 'Armenia', 'Azerbaijan', 'Belarus', 'Moldova', 'Jordan', 'Lebanon'].map(c => ['adm:' + c, c + ' (regions)'])];
+function choroShapes(region) {
+  if (region === 'us' || /^adm:/.test(region)) { const G = geo2(), c = region === 'us' ? 'United States of America' : region.slice(4); return { feats: G.prov.features.filter(f => f.properties.c === c), name: f => f.properties.n }; }
+  return { feats: geo().fc.features, name: f => f.properties.name };
+}
+function choroData(spec) {
+  const g = parseGrid(spec.data); if (!g || !g.body.length) return { err: 'Paste two columns: place names (countries, US states or regions) and a number for each.' };
+  const vc = [...g.head.keys()].slice(1).find(i => isNumCol(g.body, i)); if (vc == null) return { err: 'Add a column of numbers after the place names.' };
+  const { feats, name } = choroShapes(spec.region || 'world'), byKey = new Map(feats.map(f => [placeKey(name(f)), f]));
+  const vals = new Map(), missed = [];
+  g.body.forEach(r => { const raw = String(r[0] || '').trim(), v = numOf(r[vc]); if (!raw || v == null) return; const alias = PLACE_AL()[placeKey(raw)] || US_POSTAL[raw.toUpperCase()]; const f = byKey.get(placeKey(alias || raw)); if (f) vals.set(name(f), v); else missed.push(raw); });
+  if (!vals.size) return { err: 'None of the place names matched this map. Use country names (or US state names or postal codes).', missed };
+  return { vals, missed, vName: g.head[vc] || 'Value', feats, name };
+}
+function choroSVG(spec, w, h) {
+  const d = choroData(spec); if (d.err) throw new Error(d.err);
+  useLib('lib-geo');
+  const region = spec.region || 'world', list = [...d.vals.values()], cs = colorScale(Math.min(...list), Math.max(...list));
+  let proj, path;
+  if (region === 'us') proj = d3.geoAlbersUsa().fitExtent([[12, 12], [w - 12, h - 70]], { type: 'FeatureCollection', features: d.feats });
+  else if (/^adm:/.test(region)) proj = d3.geoMercator().fitExtent([[16, 16], [w - 16, h - 70]], { type: 'FeatureCollection', features: d.feats });
+  else { const p = MAP_PRESETS[region] || MAP_PRESETS.world; proj = mapProj({ w, h, view: { center: p[1], scale: p[2] * w / 960 } }); }
+  path = d3.geoPath(proj);
+  let s = svgOpen(w, h) + `<defs><clipPath id="cc"><rect width="${w}" height="${h}"/></clipPath></defs><g clip-path="url(#cc)">`;
+  if (region === 'world' || MAP_PRESETS[region]) s += `<path d="${path({ type: 'Sphere' }) || ''}" fill="#f6f8f9"/>`;
+  s += d.feats.map(f => { const n = d.name(f), v = d.vals.get(n), dd = path(f); if (!dd) return ''; return `<path d="${dd}" fill="${v == null ? '#e4e3dd' : cs.f(v)}" stroke="#fff" stroke-width=".6" stroke-linejoin="round"><title>${svgEsc(n + ': ' + (v == null ? 'no data' : fmtNum(v, spec.fmt)))}</title></path>`; }).join('');
+  s += '</g>' + legendSVG(cs, 16, h - 40, Math.min(260, w * .32), spec.fmt) + `<text x="16" y="${h - 48}" font-size="12" font-weight="600" fill="${VIZ.ink}">${svgEsc(spec.ylabel || d.vName)}</text>`;
+  s += `<rect x="${16 + Math.min(260, w * .32) + 18}" y="${h - 40}" width="14" height="10" rx="2" fill="#e4e3dd"/><text x="${16 + Math.min(260, w * .32) + 36}" y="${h - 31}" font-size="11.5" fill="${VIZ.ink2}">No data</text>`;
+  return s + '</svg>';
+}
+function vizSVG(spec) {
+  const [w, h] = spec.size || CH_SIZE[spec.aspect] || CH_SIZE.wide;
+  const svg = spec.kind === 'scatter' ? scatterSVG(spec, w, h) : spec.kind === 'hist' ? histSVG(spec, w, h) : spec.kind === 'heat' ? heatSVG(spec, w, h) : choroSVG(spec, w, h);
+  return { svg, w, h };
+}
+function vizCheck(spec) { // the dialog's error and note lines
+  try {
+    if (spec.kind === 'scatter') { const d = scatterData(spec.data); if (d.err) return { err: d.err }; return { note: d.groups.length > 8 ? 'Only the first 8 groups get their own color.' : '' }; }
+    if (spec.kind === 'hist') { const d = histData(spec.data); return d.err ? { err: d.err } : { note: `${d.vals.length} values.` }; }
+    if (spec.kind === 'heat') { const d = heatData(spec.data); return d.err ? { err: d.err } : { note: d.min < 0 && d.max > 0 ? 'Values cross zero, so the colors run from red (below) through gray to blue (above).' : '' }; }
+    const d = choroData(spec); if (d.err) return { err: d.err + (d.missed && d.missed.length ? ` Not found: ${d.missed.slice(0, 8).join(', ')}.` : '') };
+    return { note: d.missed.length ? `Not on this map: ${d.missed.slice(0, 10).join(', ')}${d.missed.length > 10 ? '…' : ''}. Check the spelling, or choose another map.` : `${d.vals.size} places shaded.` };
+  } catch (e) { return { err: e.message }; }
 }
 let chLive = null, chSpec = null;
 function tablesAsText() {
@@ -5959,14 +6165,35 @@ function openChart(spec) {
   const tbls = tablesAsText();
   $('#chFromTable').innerHTML = '<option value="">Paste or type data below</option>' + tbls.map((t, i) => `<option value="${i}">Use ${esc(t.label)}</option>`).join('');
   $('#chFromTable').disabled = !tbls.length; $('#chFromTable')._t = tbls;
-  $('#chData').value = chSpec.data; $('#chEvents').value = chSpec.events || ''; $('#chType').value = chSpec.kind; $('#chYLabel').value = chSpec.ylabel; $('#chFmt').value = chSpec.fmt; $('#chAspect').value = chSpec.aspect; $('#chCaption').value = chSpec.caption; $('#chSource').value = chSpec.source;
+  $('#chData').value = chSpec.data; $('#chEvents').value = chSpec.events || ''; $('#chType').value = chSpec.kind; $('#chBins').value = chSpec.bins || ''; $('#chRegion').innerHTML = CHORO_REGIONS().map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join(''); $('#chRegion').value = chSpec.region || 'world'; chKindUI(); $('#chYLabel').value = chSpec.ylabel; $('#chFmt').value = chSpec.fmt; $('#chAspect').value = chSpec.aspect; $('#chCaption').value = chSpec.caption; $('#chSource').value = chSpec.source;
   $('#chOk').textContent = specTarget ? 'Update chart' : 'Insert chart';
   $('#chDlg').showModal(); chartPreview();
 }
-function chartSpecFromForm() { return Object.assign({}, chSpec, { data: $('#chData').value, events: $('#chEvents').value, kind: $('#chType').value, ylabel: $('#chYLabel').value.trim(), fmt: $('#chFmt').value, aspect: $('#chAspect').value, caption: $('#chCaption').value.trim(), source: $('#chSource').value.trim() }); }
+function chartSpecFromForm() { return Object.assign({}, chSpec, { bins: +$('#chBins').value || 0, region: $('#chRegion').value || 'world', data: $('#chData').value, events: $('#chEvents').value, kind: $('#chType').value, ylabel: $('#chYLabel').value.trim(), fmt: $('#chFmt').value, aspect: $('#chAspect').value, caption: $('#chCaption').value.trim(), source: $('#chSource').value.trim() }); }
+const CH_HINTS = { scatter: ['Label, Military spending, Troops, Population&#10;France, 64, 203, 68&#10;Germany, 88, 181, 84&#10;Poland, 32, 164, 37', 'First column labels the points; then x, then y. A third number column sizes the bubbles, and a text column colors them by group.'],
+  hist: ['Casualties&#10;12&#10;40&#10;7&#10;23', 'One column of numbers; a header row is optional. Choose the number of bins, or leave it on Auto.'],
+  heat: ['Region, 2021, 2022, 2023, 2024&#10;North, 12, 30, 44, 51&#10;South, 8, 9, 17, 22', 'Row labels down the first column, column labels across the first row, numbers in the cells.'],
+  choro: ['Country, Defense spending (% GDP)&#10;Poland, 4.1&#10;Estonia, 3.4&#10;United States, 3.4&#10;Germany, 2.1', 'Place names in the first column (countries, US states or postal codes, or regions), a number in the next. Names that don’t match are listed below the preview.'] };
+const CH_DEF_HINT = ['Year, China, United States&#10;2015, 255, 271&#10;2020, 333, 296&#10;2025, 370, 290', 'First row names the series; first column labels the categories (years, countries…). Paste straight from a spreadsheet.'];
+function chKindUI() {
+  const k = $('#chType').value, svgk = SVG_KINDS.has(k), h = CH_HINTS[k] || CH_DEF_HINT;
+  $('#chData').placeholder = h[0].replace(/&#10;/g, '\n'); $('#chHint').textContent = h[1];
+  $('#chBinsRow').classList.toggle('hidden', k !== 'hist'); $('#chRegionRow').classList.toggle('hidden', k !== 'choro');
+  $('#chEventsRow').classList.toggle('hidden', svgk); $('#chYLabelL').textContent = k === 'choro' ? 'Legend title' : k === 'scatter' ? 'Y axis label' : k === 'hist' ? 'Count axis label' : k === 'heat' ? 'Value label' : 'Value axis label';
+}
 const chartPreview = debounce(() => {
-  const spec = chartSpecFromForm(), data = parseTable(spec.data);
+  const spec = chartSpecFromForm();
   if (chLive) { chLive.destroy(); chLive = null; }
+  if (SVG_KINDS.has(spec.kind)) {
+    const chk = spec.data.trim() ? vizCheck(spec) : { err: CH_HINTS[spec.kind][1] };
+    $('#chErr').textContent = chk.err || ''; $('#chNote').textContent = chk.note || '';
+    const [w, h] = CH_SIZE[spec.aspect] || CH_SIZE.wide, c = $('#chCanvas'), box = $('#chStage').clientWidth || 560, scale = Math.min(1, box / w);
+    c.width = w; c.height = h; c.style.width = (w * scale) + 'px'; c.style.height = (h * scale) + 'px';
+    const g = c.getContext('2d'); g.clearRect(0, 0, w, h); if (chk.err) return;
+    try { const r = vizSVG(spec); loadImage('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(r.svg)).then(im => { g.clearRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h); }); } catch (e) { $('#chErr').textContent = e.message; }
+    return;
+  }
+  const data = parseTable(spec.data);
   const err = !data ? 'Paste or type a table: the first row names the series, the first column labels the categories.' : !data.series.length ? 'Add at least one column of numbers after the label column.' : !data.series.some(s => s.values.some(v => v != null)) ? 'No numbers found in the data yet.' : '';
   $('#chErr').textContent = err;
   const note = data && data.series.length > 8 ? `Only the first 8 series are drawn. Past that, colors can’t be told apart reliably. Combine the rest into an “Other” column or make a second chart.` : data && spec.kind === 'stack' && data.series.some(s => s.values.some(v => v < 0)) ? 'Stacked columns don’t work with negative numbers; try columns or a line.' : '';
@@ -5980,12 +6207,13 @@ const chartPreview = debounce(() => {
   chLive = new Chart(c, cfg);
 }, 150);
 ['#chData', '#chEvents', '#chYLabel', '#chCaption', '#chSource'].forEach(s => $(s).addEventListener('input', chartPreview));
-['#chType', '#chFmt', '#chAspect'].forEach(s => $(s).addEventListener('change', chartPreview));
+['#chType', '#chFmt', '#chAspect', '#chRegion'].forEach(s => $(s).addEventListener('change', chartPreview)); $('#chBins').addEventListener('input', chartPreview); $('#chType').addEventListener('change', chKindUI);
 $('#chFromTable').addEventListener('change', e => { const t = (e.target._t || [])[+e.target.value]; if (t) { $('#chData').value = t.text; chartPreview(); } });
 $('#chCancel').addEventListener('click', () => { $('#chDlg').close(); specTarget = null; });
 $('#chOk').addEventListener('click', async () => {
-  const spec = chartSpecFromForm(), data = parseTable(spec.data);
-  if (!data || !data.series.some(s => s.values.some(v => v != null))) { $('#chErr').textContent = 'There’s nothing to chart yet.'; return; }
+  const spec = chartSpecFromForm();
+  if (SVG_KINDS.has(spec.kind)) { const chk = vizCheck(spec); if (chk.err) { $('#chErr').textContent = chk.err; return; } }
+  else { const data = parseTable(spec.data); if (!data || !data.series.some(s => s.values.some(v => v != null))) { $('#chErr').textContent = 'There’s nothing to chart yet.'; return; } }
   const old = chSpec; $('#chDlg').close();
   try { await placeSpecFigure(spec, old); } catch (e) { toast(e.message); }
 });
@@ -6942,7 +7170,7 @@ function eventsPlugin(spec, labels) {
 }
 async function multiplesPNG(spec, data, scale = 2) {
   useLib('lib-chart');
-  const [W, H] = CH_SIZE[spec.aspect] || CH_SIZE.wide, series = data.series.slice(0, 9), n = series.length, cols = Math.min(3, n), rows = Math.ceil(n / cols);
+  const [W, H] = spec.size || CH_SIZE[spec.aspect] || CH_SIZE.wide, series = data.series.slice(0, 9), n = series.length, cols = Math.min(3, n), rows = Math.ceil(n / cols);
   const cw = Math.floor(W / cols), chh = Math.floor(H / rows);
   const max = Math.max(...series.flatMap(s => s.values.filter(v => v != null))), min = Math.min(0, ...series.flatMap(s => s.values.filter(v => v != null)));
   const out = document.createElement('canvas'); out.width = W * scale; out.height = H * scale; const g = out.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, out.width, out.height);
@@ -7338,6 +7566,11 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '1.7.0': ['Notes, sources, the research desk or another document beside the writing: press Ctrl+\\ (⌘\\ on a Mac), or use the new button above the page. The ↗ button opens any of them in a window of its own, kept in step with this one.',
+    'Data and dashboards, on the research desk: bring in a CSV or a table, then lay out numbers, charts, maps, timelines, tables, text, images and video, each crediting its source. Export the dashboard as one web page.',
+    'New charts: scatter and bubble, histogram, heatmap, and shaded maps of countries, US states or regions.',
+    'Source types: mark sources primary, secondary or tertiary. Notes take their source’s type, you can filter by it, and the bibliography can be grouped by it (Page setup).',
+    'A claim cited only to tertiary sources is flagged in the claims register.'],
   '1.6.0': ['A lighter look: finer lines, a quieter sidebar and top bar, and roomier home and desk.',
     'Text size, typeface and line spacing for the writing page, in Settings. Screen only: PDF and Word still follow Page setup.',
     'Help → Send feedback starts a report with the version and browser filled in, and nothing from your project.',
@@ -7415,7 +7648,7 @@ function updMaybe() { if (!IS_HOSTED && PREFS.updCheck && Date.now() - (PREFS.up
 
 const TOUR = [
   { t: 'Welcome to Anabasis', x: 'A writing and research desk for nonfiction: drafts, notes, sources and your research record in one project. Your work stays on this device. There’s no account and no server; Anabasis goes online only when you look up a source or back up to GitHub. This tour takes about two minutes.' },
-  { sel: '.tabs', t: 'Docs, notes and sources', x: 'Docs holds your chapters and parts. Notes are quotes and ideas you can drag into a draft. Sources are your bibliography, each with a reliability rating. Outline runs checks on the draft.' },
+  { sel: '.tabs', t: 'Docs, notes and sources', x: 'Docs holds your chapters and parts. Notes are quotes and ideas you can drag into a draft. Sources are your bibliography, each with a type and a reliability rating. Press Ctrl+\\ (⌘\\ on a Mac) to put any of them beside the writing.' },
   { sel: '#btnCite', t: 'Cite as you write', x: 'Put the cursor where the citation goes and choose Cite. Add a source by DOI, ISBN or web address, and the notes and bibliography rebuild as you write.' },
   { sel: '#docStyle', t: '55 citation styles', x: 'Chicago, APA, MLA, Harvard, IEEE, Bluebook, journal and press styles, and the OSINT Style Guide. Switch at any time and every citation reformats.' },
   { sel: '#btnMark', t: 'Mark what matters', x: 'Select a passage and mark it as a claim to check, a thread to follow through the book, a question, or something to review by a date. Marks never print.' },
@@ -7593,6 +7826,7 @@ function claimIssues(p, c) {
   else if (!p.cites.length) out.push('No citation');
   if (c.status === 'disp') out.push('Contested');
   if (p.cites.length) { const rated = p.cites.map(srcRating); if (rated.every(r => r) && rated.every(RATE_LOW)) out.push('Only low-rated sources'); }
+  if (p.cites.length && p.cites.every(id => { const x = P.sources.find(y => y.id === id); return x && x.stype === 'tertiary'; })) out.push('Only tertiary sources');
   if (c.status === 'ok' && c.checkedText && rmNorm(p.text) !== c.checkedText) out.push('Changed since you marked it supported');
   if (p.cites.some(id => !P.sources.some(s => s.id === id))) out.push('Cites a deleted source');
   return out;
@@ -7889,17 +8123,369 @@ editor.addEventListener('input', renderResearchSoon);
    the evidence grid, review keys, questions, and "everything about X"
    ================================================================ */
 let deskOn = false, deskView = 'threads', deskSel = null, deskJ = [];
-const DK = { threads: 'Threads', claims: 'Claims', grid: 'Evidence grid', review: 'Review', questions: 'Questions', journal: 'Journal', about: 'Everything about…' };
+/* ================================================================
+   Data and dashboards (1.7). Datasets are tables kept in the project,
+   imported from CSV or a document table. A dashboard lays out tiles
+   (numbers, charts, maps, timelines, tables, text, images, video) from
+   them, credits its sources, and exports as one standalone web page.
+   ================================================================ */
+const TILE_TYPES = [['stat', 'Number'], ['chart', 'Chart'], ['map', 'Map of places'], ['timeline', 'Timeline'], ['table', 'Table'], ['text', 'Text'], ['image', 'Image'], ['video', 'Video']];
+const TILE_NAME = Object.fromEntries(TILE_TYPES);
+const AGG = [['latest', 'Latest value'], ['sum', 'Total'], ['avg', 'Average'], ['max', 'Highest'], ['min', 'Lowest'], ['count', 'Number of rows'], ['first', 'First value']];
+const dsById = id => (P.datasets || []).find(d => d.id === id);
+const dbById = id => (P.dashboards || []).find(d => d.id === id);
+const colIdx = (ds, name) => ds ? ds.cols.indexOf(name) : -1;
+const colVals = (ds, name) => { const i = colIdx(ds, name); return i < 0 ? [] : ds.rows.map(r => r[i]); };
+function colType(ds, i) {
+  const v = ds.rows.map(r => r[i]).filter(x => x != null && String(x).trim() !== '');
+  if (!v.length) return 'text';
+  const name = (ds.cols[i] || '').toLowerCase();
+  if (/^(lat|latitude)$/.test(name)) return 'lat'; if (/^(lon|lng|long|longitude)$/.test(name)) return 'lon';
+  if (v.filter(x => numOf(x) != null).length / v.length >= .8) return 'number';
+  if (v.filter(x => dateRangeKeys(String(x))).length / v.length >= .8) return 'date';
+  return 'text';
+}
+function pickFile(accept) {
+  return new Promise(res => { const i = document.createElement('input'); i.type = 'file'; i.accept = accept; i.hidden = true; i.addEventListener('change', () => { res(i.files[0] || null); i.remove(); }); document.body.append(i); i.click(); });
+}
+function gridFromText(text) {
+  const g = parseGrid(text); if (!g) return null;
+  const n = Math.max(g.head.length, ...g.body.map(r => r.length));
+  const head = [...Array(n).keys()].map(i => (g.head[i] || '').trim() || `Column ${i + 1}`);
+  const seen = {}; head.forEach((h, i) => { if (seen[h]) head[i] = `${h} (${++seen[h]})`; else seen[h] = 1; });
+  return { cols: head, rows: g.body.map(r => head.map((_, i) => r[i] == null ? '' : String(r[i]))) };
+}
+function newDataset(name, grid, extra) { const d = Object.assign({ id: uid('ds'), name: name || 'Data', cols: grid.cols, rows: grid.rows, sourceId: '', note: '', created: nowISO(), modified: nowISO() }, extra); (P.datasets = P.datasets || []).push(d); markDirty(); return d; }
+function datasetCSV(ds) { const q = v => /[",\n]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v); return [ds.cols, ...ds.rows].map(r => r.map(q).join(',')).join('\n'); }
+function importDataset(replace) {
+  return new Promise(res => {
+    const d = $('#dsImpDlg'), tbls = tablesAsText();
+    $('#dsImpTitle').textContent = replace ? `Replace the data in “${replace.name}”` : 'Add a dataset';
+    $('#dsImpText').value = ''; $('#dsImpErr').textContent = '';
+    $('#dsImpTbl').innerHTML = '<option value="">—</option>' + tbls.map((t, i) => `<option value="${i}">${esc(t.label)}</option>`).join(''); $('#dsImpTblRow').classList.toggle('hidden', !tbls.length);
+    const fin = v => { d.close(); $('#dsImpOk').onclick = $('#dsImpCancel').onclick = $('#dsImpFile').onclick = $('#dsImpTbl').onchange = d.oncancel = null; res(v); };
+    const take = (text, name) => {
+      const grid = gridFromText(text); if (!grid || !grid.rows.length) { $('#dsImpErr').textContent = 'That doesn’t look like a table: the first row should name the columns, with at least one row of data under it.'; return; }
+      if (grid.rows.length > 100000) { $('#dsImpErr').textContent = 'More than 100,000 rows. Trim it in a spreadsheet first.'; return; }
+      if (replace) { Object.assign(replace, grid, { modified: nowISO() }); tileCache.clear(); markDirty(); toast(`Replaced the data: ${grid.rows.length} rows, ${grid.cols.length} columns.`); fin(replace); return; }
+      const nd = newDataset(name || `Data ${(P.datasets || []).length + 1}`, grid); toast(`Added “${nd.name}”: ${grid.rows.length} rows, ${grid.cols.length} columns.`); fin(nd);
+    };
+    $('#dsImpFile').onclick = async () => { const f = await pickFile('.csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain'); if (f) take(await f.text(), f.name.replace(/\.(csv|tsv|txt)$/i, '')); };
+    $('#dsImpTbl').onchange = () => { const t = tbls[+$('#dsImpTbl').value]; if (t) { $('#dsImpText').value = t.text; $('#dsImpName').value = t.label.replace(/^Table \d+:?\s*/, '') || t.label; } };
+    $('#dsImpOk').onclick = () => { const v = $('#dsImpText').value; if (!v.trim()) { $('#dsImpErr').textContent = 'Paste a table, or choose a file.'; return; } take(v, $('#dsImpName').value.trim()); };
+    $('#dsImpCancel').onclick = () => fin(null); d.oncancel = () => fin(null);
+    $('#dsImpName').value = ''; $('#dsImpNameRow').classList.toggle('hidden', !!replace);
+    d.showModal(); setTimeout(() => $('#dsImpText').focus(), 30);
+  });
+}
+function datasetFromDocTable() {
+  const t = tablesAsText(); if (!t.length) { toast('This document has no tables. Insert one, or import a CSV instead.'); return null; }
+  const pick = t[t.length - 1]; const grid = gridFromText(pick.text); if (!grid) return null;
+  return newDataset(pick.label.replace(/^Table \d+:\s*/, '') || 'Table data', grid);
+}
+function newDashboard() { const b = { id: uid('db'), title: (P.dashboards || []).length ? 'New dashboard' : P.title, subtitle: '', tiles: [], created: nowISO(), modified: nowISO() }; (P.dashboards = P.dashboards || []).push(b); markDirty(); return b; }
+function newTile(type, ds) {
+  const d = ds || (P.datasets || [])[0], cols = d ? d.cols : [], types = d ? d.cols.map((_, i) => colType(d, i)) : [];
+  const firstNum = cols[types.indexOf('number')] || '', firstText = cols[types.findIndex(t => t === 'text' || t === 'date')] || cols[0] || '';
+  const t = { id: uid('tl'), type, w: { stat: 1, text: 2, table: 4, image: 2, video: 2 }[type] || 2, h: { stat: 1, table: 2, chart: 2, map: 2, timeline: 2 }[type] || 2, title: '', note: '', ds: d ? d.id : '', sourceId: '' };
+  if (type === 'stat') Object.assign(t, { col: firstNum, agg: 'latest', fmt: 'n', prefix: '', suffix: '' });
+  if (type === 'chart') Object.assign(t, { kind: 'bar', labelCol: firstText, valueCols: firstNum ? [firstNum] : [], fmt: 'n', region: 'world', bins: 0, ylabel: '' });
+  if (type === 'map') Object.assign(t, { latCol: cols[types.indexOf('lat')] || '', lonCol: cols[types.indexOf('lon')] || '', labelCol: firstText, groupCol: '' });
+  if (type === 'timeline') Object.assign(t, { dateCol: cols[types.indexOf('date')] || '', labelCol: firstText });
+  if (type === 'table') Object.assign(t, { cols: [], sortCol: '', sortDir: 'asc' });
+  if (type === 'text') Object.assign(t, { body: '', ds: '' });
+  if (type === 'image') Object.assign(t, { asset: '', url: '', ds: '' });
+  if (type === 'video') Object.assign(t, { url: '', ds: '' });
+  return t;
+}
+/* ---- what a tile shows ---- */
+function aggregate(vals, agg) {
+  const n = vals.map(numOf).filter(v => v != null);
+  if (agg === 'count') return vals.filter(v => String(v).trim() !== '').length;
+  if (!n.length) return null;
+  return { latest: n[n.length - 1], first: n[0], sum: n.reduce((a, b) => a + b, 0), avg: n.reduce((a, b) => a + b, 0) / n.length, max: Math.max(...n), min: Math.min(...n) }[agg] ?? n[n.length - 1];
+}
+function sparkSVG(nums, w = 160, h = 34) {
+  if (nums.length < 3) return '';
+  const lo = Math.min(...nums), hi = Math.max(...nums), X = i => 2 + i / (nums.length - 1) * (w - 4), Y = v => h - 3 - (hi === lo ? .5 : (v - lo) / (hi - lo)) * (h - 6);
+  const d = nums.map((v, i) => (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1)).join('');
+  return `<svg class="tl-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${SERIES[0]}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/><circle cx="${X(nums.length - 1).toFixed(1)}" cy="${Y(nums[nums.length - 1]).toFixed(1)}" r="3" fill="${SERIES[0]}"/></svg>`;
+}
+function tileChartSpec(t, px) {
+  const ds = dsById(t.ds); if (!ds) return null;
+  const pick = names => names.map(n => colIdx(ds, n)).filter(i => i >= 0);
+  const q = v => /[,"\n]/.test(v) ? '"' + String(v).replace(/"/g, '') + '"' : String(v);
+  let idx;
+  if (t.kind === 'hist') idx = pick(t.valueCols.slice(0, 1));
+  else if (t.kind === 'choro') idx = pick([t.labelCol, ...t.valueCols.slice(0, 1)]);
+  else if (t.kind === 'scatter') idx = pick([t.labelCol, ...t.valueCols.slice(0, 3), t.groupCol || '']);
+  else idx = pick([t.labelCol, ...t.valueCols]);
+  if (!idx.length) return null;
+  const data = [idx.map(i => q(ds.cols[i])).join(','), ...ds.rows.map(r => idx.map(i => q(r[i] ?? '')).join(','))].join('\n');
+  return { type: 'chart', kind: t.kind, data, ylabel: t.ylabel || '', fmt: t.fmt || 'n', aspect: 'wide', region: t.region || 'world', bins: t.bins || 0, caption: t.title || '', source: tileSourceText(t), size: px };
+}
+function tileMapSpec(t, px) {
+  const ds = dsById(t.ds); if (!ds) return null;
+  const la = colIdx(ds, t.latCol), lo = colIdx(ds, t.lonCol), lb = colIdx(ds, t.labelCol), gr = colIdx(ds, t.groupCol);
+  if (la < 0 || lo < 0) return null;
+  const groups = gr >= 0 ? [...new Set(ds.rows.map(r => r[gr]).filter(Boolean))].slice(0, 3) : [];
+  const spec = blankMap(); spec.w = px[0]; spec.h = px[1]; spec.countryLabels = px[0] >= 560;
+  spec.keys = MAP_KEYS(); spec.locator = false; groups.forEach((g, i) => { spec.keys[i].label = g; });
+  spec.markers = ds.rows.map((r, i) => ({ id: 'm' + i, lat: numOf(r[la]), lon: numOf(r[lo]), label: lb >= 0 && ds.rows.length <= 30 ? r[lb] : '', sym: 'circle', key: gr >= 0 ? (['a', 'b', 'c'][groups.indexOf(r[gr])] || 'n') : '' })).filter(m => m.lat != null && m.lon != null && Math.abs(m.lat) <= 90 && Math.abs(m.lon) <= 180);
+  if (!spec.markers.length) return null;
+  useLib('lib-geo');
+  const mp = { type: 'MultiPoint', coordinates: spec.markers.map(m => [m.lon, m.lat]) }, c = d3.geoCentroid(mp);
+  const fit = d3.geoAzimuthalEqualArea().rotate([-c[0], -c[1]]).fitExtent([[40, 40], [px[0] - 40, px[1] - 40]], mp);
+  spec.view = { center: [+c[0].toFixed(2), +c[1].toFixed(2)], scale: Math.max(340, Math.min(9000, fit.scale() * (spec.markers.length === 1 ? .15 : .8))) };
+  spec.source = tileSourceText(t); return spec;
+}
+function tileTimelineSpec(t, px) {
+  const ds = dsById(t.ds); if (!ds) return null;
+  const di = colIdx(ds, t.dateCol), li = colIdx(ds, t.labelCol); if (di < 0) return null;
+  const events = ds.rows.map((r, i) => ({ id: 'e' + i, date: String(r[di] || ''), label: li >= 0 ? String(r[li] || '') : '', on: true })).filter(e => e.date && dateRangeKeys(e.date));
+  return events.length ? { type: 'timeline', w: px[0], events, caption: t.title || '', source: tileSourceText(t) } : null;
+}
+function tileSourceText(t) {
+  const ds = dsById(t.ds), sid = t.sourceId || (ds && ds.sourceId); const s = sid && P.sources.find(x => x.id === sid);
+  if (!s) return ''; const l = sourceLabel(s); return [l.who, l.title].filter(Boolean).join(', ');
+}
+const TILE_PX = (t, width) => [Math.max(280, Math.round(width || t.w * 292 - 36)), { 1: 200, 2: 320, 3: 500 }[t.h] || 320];
+const tileCache = new Map();
+function uniqIds(svg) { const tag = Math.random().toString(36).slice(2, 7), ids = [...svg.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]); ids.forEach(id => { svg = svg.split(`id="${id}"`).join(`id="${id}-${tag}"`).split(`#${id})`).join(`#${id}-${tag})`).split(`href="#${id}"`).join(`href="#${id}-${tag}"`); }); return svg; }
+async function tileBody(t, forExport, width) {
+  const ds = dsById(t.ds), px = TILE_PX(t, forExport ? 0 : width);
+  const none = msg => `<div class="tl-empty">${msg}</div>`;
+  if (['stat', 'chart', 'map', 'timeline', 'table'].includes(t.type) && !ds) return none((P.datasets || []).length ? 'Choose a dataset for this tile.' : 'Add a dataset first: import a CSV or use a table from a document.');
+  if (t.type === 'stat') {
+    const vals = colVals(ds, t.col), v = aggregate(vals, t.agg); if (v == null) return none('Choose a column of numbers.');
+    const nums = vals.map(numOf).filter(x => x != null), prev = nums.length > 1 ? nums[nums.length - 2] : null;
+    const delta = t.agg === 'latest' && prev != null && prev !== 0 ? (nums[nums.length - 1] - prev) / Math.abs(prev) * 100 : null;
+    return `<div class="tl-stat"><b>${esc(t.prefix || '')}${esc(fmtNum(v, t.agg === 'count' ? 'n' : t.fmt))}${esc(t.suffix || '')}</b>${delta != null ? `<span class="tl-delta ${delta >= 0 ? 'up' : 'down'}">${delta >= 0 ? '▲' : '▼'} ${Math.abs(delta).toFixed(1)}% <span class="muted">vs previous</span></span>` : ''}${['latest', 'first'].includes(t.agg) || nums.length > 2 ? sparkSVG(nums.slice(-40)) : ''}</div>`;
+  }
+  if (t.type === 'chart' || t.type === 'map' || t.type === 'timeline') {
+    const spec = t.type === 'chart' ? tileChartSpec(t, px) : t.type === 'map' ? tileMapSpec(t, px) : tileTimelineSpec(t, px);
+    if (!spec) return none(t.type === 'map' ? 'Choose the latitude and longitude columns.' : t.type === 'timeline' ? 'Choose a column of dates.' : 'Choose the columns to chart.');
+    const key = JSON.stringify(spec); if (tileCache.has(key)) return uniqIds(tileCache.get(key));
+    let html;
+    try {
+      if (t.type === 'chart' && SVG_KINDS.has(spec.kind)) { const chk = vizCheck(spec); if (chk.err) return none(esc(chk.err)); html = vizSVG(spec).svg.replace('<svg ', '<svg class="tl-svg" role="img" aria-label="' + esc(t.title || 'Chart') + '" '); }
+      else if (t.type === 'chart') { const r = await chartPNG(spec); html = `<img class="tl-img" src="${r.data}" alt="${esc(t.title || 'Chart')}">`; }
+      else { const r = t.type === 'map' ? mapSVG(spec) : timelineSVG(spec); html = r.svg.replace('<svg ', '<svg class="tl-svg" role="img" aria-label="' + esc(t.title || TILE_NAME[t.type]) + '" '); }
+    } catch (e) { return none(esc(e.message)); }
+    tileCache.set(key, html); if (tileCache.size > 80) tileCache.delete(tileCache.keys().next().value);
+    return uniqIds(html);
+  }
+  if (t.type === 'table') {
+    const cols = (t.cols && t.cols.length ? t.cols : ds.cols).filter(c => ds.cols.includes(c)), ix = cols.map(c => colIdx(ds, c));
+    let rows = ds.rows; const sc = colIdx(ds, t.sortCol);
+    if (sc >= 0) { const num = colType(ds, sc) === 'number'; rows = [...rows].sort((a, b) => { const x = num ? (numOf(a[sc]) ?? -Infinity) - (numOf(b[sc]) ?? -Infinity) : String(a[sc]).localeCompare(String(b[sc])); return t.sortDir === 'desc' ? -x : x; }); }
+    const numc = ix.map(i => colType(ds, i) === 'number');
+    return `${rows.length > 8 ? `<input class="tl-q" type="search" placeholder="Filter ${rows.length} rows" aria-label="Filter rows">` : ''}<div class="tl-tbl"><table><thead><tr>${cols.map((c, k) => `<th${numc[k] ? ' class="n"' : ''}><button class="tl-sort" data-k="${k}">${esc(c)}</button></th>`).join('')}</tr></thead><tbody>${rows.slice(0, forExport ? 5000 : 500).map(r => `<tr>${ix.map((i, k) => `<td${numc[k] ? ' class="n"' : ''}>${esc(r[i] ?? '')}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  }
+  if (t.type === 'text') return `<div class="tl-text">${t.body ? mdNote(t.body) : '<p class="muted">Write a short explanation, key finding or method note.</p>'}</div>`;
+  if (t.type === 'image') { const a = t.asset && P.assets[t.asset]; return a ? `<img class="tl-img" src="${a.data}" alt="${esc(t.title || t.note || 'Image')}">` : none('Choose an image.'); }
+  if (t.type === 'video') {
+    const v = videoEmbed(t.url); if (!v) return none('Paste a YouTube, Vimeo or video-file link.');
+    if (forExport) return v.kind === 'file' ? `<video controls preload="metadata" src="${esc(v.src)}"></video>` : `<div class="tl-vid"><iframe src="${esc(v.src)}" title="${esc(t.title || 'Video')}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
+    return `<a class="tl-vidph" href="${esc(t.url)}" target="_blank" rel="noopener"><span>▶</span><b>${esc(t.title || 'Video')}</b><small>${esc(v.host)} · plays in the exported page; opens in your browser here</small></a>`;
+  }
+  return '';
+}
+function videoEmbed(url) {
+  url = String(url || '').trim(); if (!/^https:\/\//i.test(url)) return null;
+  let m = /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([\w-]{11})/.exec(url); if (m) return { kind: 'yt', host: 'YouTube', src: `https://www.youtube-nocookie.com/embed/${m[1]}` };
+  m = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url); if (m) return { kind: 'vimeo', host: 'Vimeo', src: `https://player.vimeo.com/video/${m[1]}` };
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(url)) return { kind: 'file', host: new URL(url).hostname, src: url };
+  return null;
+}
+/* ---- the Data view on the research desk ---- */
+let dataSel = null, dbEdit = true;
+function deskData() {
+  const ds = P.datasets || [], dbs = P.dashboards || [];
+  if (!dataSel || !(dsById(dataSel) || dbById(dataSel))) dataSel = (dbs[0] || ds[0] || {}).id || null;
+  const li = (x, kind) => `<li class="${x.id === dataSel ? 'on' : ''}" data-j="${DJ(() => { dataSel = x.id; renderDesk(); })}"><span class="t">${esc((kind === 'db' ? x.title : x.name) || 'Untitled')}</span><em>${kind === 'db' ? x.tiles.length : x.rows.length}</em></li>`;
+  const side = `<aside class="desk-side j-side d-side"><h6>Dashboards <button class="ghost small hl" data-j="${DJ(() => { const b = newDashboard(); dataSel = b.id; dbEdit = true; renderDesk(); })}" aria-label="New dashboard">＋</button></h6><ul class="desk-list" aria-label="Dashboards">${dbs.map(x => li(x, 'db')).join('') || '<li class="muted small">None yet</li>'}</ul>
+    <h6>Datasets <button class="ghost small hl" data-j="${DJ(async () => { const d = await importDataset(); if (d) { dataSel = d.id; renderDesk(); } })}" aria-label="Add a dataset">＋</button></h6><ul class="desk-list" aria-label="Datasets">${ds.map(x => li(x, 'ds')).join('') || '<li class="muted small">None yet</li>'}</ul></aside>`;
+  const cur = dbById(dataSel), curDs = dsById(dataSel);
+  let main = '';
+  if (!cur && !curDs) main = `<div class="desk-empty"><p><b>Show your data, with its sources.</b></p><p>Add a dataset (a CSV or a table from one of your documents), then lay out a dashboard: headline numbers, charts, maps of places, timelines, searchable tables, text, images and video. Every tile credits its source, and the whole dashboard exports as one web page you can publish.</p><p><button class="primary" data-j="${DJ(async () => { const d = await importDataset(); if (d) { dataSel = d.id; renderDesk(); } })}">Import a CSV…</button> <button data-j="${DJ(() => { const d = datasetFromDocTable(); if (d) { dataSel = d.id; renderDesk(); } })}">Use a table from this document</button> <button data-j="${DJ(() => { const d = newDataset('Example: defense spending', gridFromText(DEMO_CSV)); d.note = 'Illustrative figures for trying out the dashboard.'; const b = newDashboard(); b.title = 'Defense spending at a glance'; b.tiles = [Object.assign(newTile('stat', d), { title: 'Poland, 2024', col: 'Poland', agg: 'latest', suffix: '% of GDP', fmt: 'd1' }), Object.assign(newTile('stat', d), { title: 'Estonia, 2024', col: 'Estonia', agg: 'latest', suffix: '% of GDP', fmt: 'd1' }), Object.assign(newTile('chart', d), { title: 'Share of GDP spent on defense', kind: 'line', labelCol: 'Year', valueCols: ['Poland', 'Estonia', 'Germany'], fmt: 'd1', ylabel: '% of GDP', w: 2, h: 2 }), Object.assign(newTile('table', d), { title: 'All figures', w: 4, h: 2 })]; b.tiles[0].w = b.tiles[1].w = 1; dataSel = b.id; renderDesk(); })}">Try an example</button></p></div>`;
+  else if (curDs) main = dataSetView(curDs);
+  else main = dashView(cur);
+  $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main j-main d-main">${main}</div></div>`;
+  if (cur) dashRender(cur);
+  if (curDs) dataWire(curDs);
+}
+const DEMO_CSV = 'Year,Poland,Estonia,Germany\n2019,2.0,2.0,1.3\n2020,2.2,2.3,1.4\n2021,2.2,2.0,1.3\n2022,2.4,2.1,1.4\n2023,3.8,2.7,1.6\n2024,4.1,3.4,2.1';
+function dataSetView(d) {
+  const types = d.cols.map((_, i) => colType(d, i)), srcOpts = sortedSources().map(s => { const l = sourceLabel(s); return `<option value="${s.id}" ${s.id === d.sourceId ? 'selected' : ''}>${esc(((l.who ? l.who + ', ' : '') + l.title).slice(0, 70))}</option>`; }).join('');
+  $('#deskTools').innerHTML = `<button data-j="${DJ(async () => { if (await importDataset(d)) renderDesk(); })}">Replace data…</button><button data-j="${DJ(() => download(fileSafe(d.name) + '.csv', datasetCSV(d), 'text/csv'))}">Download CSV</button><button class="danger" data-j="${DJ(async () => { const used = (P.dashboards || []).reduce((n, b) => n + b.tiles.filter(t => t.ds === d.id).length, 0); if (!(await ask('Delete this dataset?', `“${d.name}” ${used ? `is used by ${used} tile${used === 1 ? '' : 's'}, which will be left empty` : 'isn’t used by any dashboard'}.`, 'Delete'))) return; P.datasets = P.datasets.filter(x => x !== d); dataSel = null; markDirty(); renderDesk(); })}">Delete</button>`;
+  return `<div class="j-head"><input class="d-title" id="dsName" value="${esc(d.name)}" aria-label="Dataset name"></div>
+    <div class="grid2"><div><label for="dsSrc">Source</label><select id="dsSrc"><option value="">— none —</option>${srcOpts}</select></div><div><label for="dsNote">Note</label><input id="dsNote" value="${esc(d.note)}" placeholder="How it was collected, what’s missing"></div></div>
+    <p class="small muted">${d.rows.length} row${d.rows.length === 1 ? '' : 's'}, ${d.cols.length} columns: ${d.cols.map((c, i) => `<span class="d-col t-${types[i]}">${esc(c)} <i>${{ number: '123', date: 'date', text: 'text', lat: 'lat', lon: 'lon' }[types[i]]}</i></span>`).join(' ')}</p>
+    <div class="tl-tbl d-tbl"><table><thead><tr>${d.cols.map(c => `<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${d.rows.slice(0, 200).map(r => `<tr>${r.map((v, i) => `<td${types[i] === 'number' ? ' class="n"' : ''}>${esc(v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${d.rows.length > 200 ? `<p class="small muted">Showing the first 200 rows.</p>` : ''}`;
+}
+function dataWire(d) {
+  $('#dsName').addEventListener('change', e => { d.name = e.target.value.trim() || 'Data'; d.modified = nowISO(); markDirty(); renderDesk(); });
+  $('#dsSrc').addEventListener('change', e => { d.sourceId = e.target.value; d.modified = nowISO(); tileCache.clear(); markDirty(); });
+  $('#dsNote').addEventListener('change', e => { d.note = e.target.value; d.modified = nowISO(); markDirty(); });
+}
+function dashView(b) {
+  $('#deskTools').innerHTML = `<button class="${dbEdit ? '' : 'on'}" aria-pressed="${!dbEdit}" data-j="${DJ(() => { dbEdit = !dbEdit; renderDesk(); })}">${dbEdit ? 'Preview' : 'Edit'}</button><button data-j="${DJ(() => exportDashboard(b))}" title="One web page with every tile, its sources and the data">Export page…</button><button class="danger" data-j="${DJ(async () => { if (!(await ask('Delete this dashboard?', `“${b.title}” and its ${b.tiles.length} tiles. The datasets stay.`, 'Delete'))) return; P.dashboards = P.dashboards.filter(x => x !== b); dataSel = null; markDirty(); renderDesk(); })}">Delete</button>`;
+  return `<div class="db-head">${dbEdit ? `<input class="d-title" id="dbTitle" value="${esc(b.title)}" aria-label="Dashboard title" placeholder="Dashboard title"><input class="d-sub" id="dbSub" value="${esc(b.subtitle)}" aria-label="Subtitle" placeholder="A line on what this shows, and as of when">` : `<h2 class="db-title">${esc(b.title)}</h2>${b.subtitle ? `<p class="db-sub">${esc(b.subtitle)}</p>` : ''}`}</div>
+    ${dbEdit ? `<div class="db-add" role="group" aria-label="Add a tile"><span class="small muted">Add:</span>${TILE_TYPES.map(([k, l]) => `<button class="small" data-j="${DJ(() => { const t = newTile(k); b.tiles.push(t); b.modified = nowISO(); markDirty(); renderDesk(); editTile(b, t); })}">${l}</button>`).join('')}</div>` : ''}
+    <div class="db-grid ${dbEdit ? 'edit' : ''}" id="dbGrid">${b.tiles.map(t => `<section class="db-tile w${t.w} h${t.h} tt-${t.type}" data-tile="${t.id}" ${dbEdit ? 'draggable="true"' : ''} aria-label="${esc(t.title || TILE_NAME[t.type])}">
+      ${dbEdit ? `<div class="db-tbar"><span class="db-grip" aria-hidden="true">⠿</span><span class="small muted">${TILE_NAME[t.type]}</span><span class="spacer"></span><button class="ghost small" data-tact="w" title="Width" aria-label="Change width">↔ ${['', '¼', '½', '¾', 'Full'][t.w]}</button><button class="ghost small" data-tact="h" title="Height" aria-label="Change height">↕ ${t.h}</button><button class="ghost small" data-tact="edit">Edit</button>${['chart', 'map', 'timeline'].includes(t.type) ? '<button class="ghost small" data-tact="ins" title="Insert this as a figure in the document">Insert</button>' : ''}<button class="ghost small" data-tact="up" aria-label="Move earlier">←</button><button class="ghost small" data-tact="down" aria-label="Move later">→</button><button class="ghost small" data-tact="rm" aria-label="Delete tile">✕</button></div>` : ''}
+      ${t.title && t.type !== 'stat' ? `<h4 class="tl-title">${esc(t.title)}</h4>` : ''}${t.type === 'stat' ? `<div class="tl-label">${esc(t.title || t.col || 'Number')}</div>` : ''}
+      <div class="tl-body" data-body="${t.id}"><div class="tl-empty">…</div></div>
+      ${t.note ? `<p class="tl-note">${esc(t.note)}</p>` : ''}${tileSourceText(t) ? `<p class="tl-src">Source: ${esc(tileSourceText(t))}</p>` : ''}</section>`).join('') || (dbEdit ? '<div class="desk-empty"><p>Add a tile above: a headline number, a chart, a map, a timeline, a table, text, an image or a video.</p></div>' : '')}</div>`;
+}
+async function dashRender(b) {
+  const grid = $('#dbGrid'); if (!grid) return;
+  if (dbEdit) {
+    $('#dbTitle')?.addEventListener('change', e => { b.title = e.target.value.trim() || 'Dashboard'; b.modified = nowISO(); markDirty(); });
+    $('#dbSub')?.addEventListener('change', e => { b.subtitle = e.target.value; b.modified = nowISO(); markDirty(); });
+    grid.addEventListener('click', e => { const a = e.target.closest('[data-tact]'); if (!a) return; const id = a.closest('[data-tile]').dataset.tile, t = b.tiles.find(x => x.id === id), i = b.tiles.indexOf(t); if (!t) return;
+      const act = a.dataset.tact;
+      if (act === 'edit') { editTile(b, t); return; }
+      if (act === 'ins') { insertTileFigure(t); return; }
+      if (act === 'rm') { b.tiles.splice(i, 1); toast('Tile removed.', { label: 'Undo', fn: () => { b.tiles.splice(i, 0, t); markDirty(); renderDesk(); } }); }
+      if (act === 'w') t.w = t.w % 4 + 1; if (act === 'h') t.h = t.h % 3 + 1;
+      if (act === 'up' && i > 0) b.tiles.splice(i - 1, 0, b.tiles.splice(i, 1)[0]); if (act === 'down' && i < b.tiles.length - 1) b.tiles.splice(i + 1, 0, b.tiles.splice(i, 1)[0]);
+      b.modified = nowISO(); markDirty(); renderDesk(); });
+    let drag = null;
+    grid.addEventListener('dragstart', e => { const s = e.target.closest('[data-tile]'); if (!s) return; drag = s.dataset.tile; e.dataTransfer.effectAllowed = 'move'; s.classList.add('dragging'); });
+    grid.addEventListener('dragover', e => { if (drag) { e.preventDefault(); } });
+    grid.addEventListener('drop', e => { const s = e.target.closest('[data-tile]'); if (!drag || !s || s.dataset.tile === drag) return; e.preventDefault(); const from = b.tiles.findIndex(x => x.id === drag), to = b.tiles.findIndex(x => x.id === s.dataset.tile); b.tiles.splice(to, 0, b.tiles.splice(from, 1)[0]); drag = null; b.modified = nowISO(); markDirty(); renderDesk(); });
+    grid.addEventListener('dragend', () => { drag = null; });
+  }
+  tableWire(grid);
+  for (const t of b.tiles) { const el = grid.querySelector(`[data-body="${t.id}"]`); if (!el) continue; el.innerHTML = await tileBody(t, false, el.clientWidth); }
+  tableWire(grid);
+}
+function tableWire(root) {
+  $$('.db-tile', root).forEach(tile => {
+    const q = tile.querySelector('.tl-q'), tb = tile.querySelector('tbody'); if (!tb || tile._wired) return; tile._wired = true;
+    if (q) q.addEventListener('input', () => { const v = q.value.toLowerCase(); [...tb.rows].forEach(r => { r.hidden = v && !r.textContent.toLowerCase().includes(v); }); });
+    tile.querySelectorAll('.tl-sort').forEach(btn => btn.addEventListener('click', () => { const k = +btn.dataset.k, dir = btn.dataset.dir === 'asc' ? 'desc' : 'asc'; tile.querySelectorAll('.tl-sort').forEach(x => { delete x.dataset.dir; x.removeAttribute('aria-sort'); }); btn.dataset.dir = dir; btn.closest('th').setAttribute('aria-sort', dir === 'asc' ? 'ascending' : 'descending'); const n = btn.closest('th').classList.contains('n'), val = r => r.cells[k].textContent, num = s => parseFloat(s.replace(/[^\d.\-−]/g, '').replace('−', '-')); [...tb.rows].sort((a, c) => { const x = n ? (num(val(a)) || 0) - (num(val(c)) || 0) : val(a).localeCompare(val(c)); return dir === 'asc' ? x : -x; }).forEach(r => tb.append(r)); }));
+  });
+}
+async function insertTileFigure(t) {
+  const px = [960, 560], spec = t.type === 'chart' ? tileChartSpec(t, px) : t.type === 'map' ? tileMapSpec(t, px) : tileTimelineSpec(t, px);
+  if (!spec) { toast('Finish setting up this tile first.'); return; }
+  delete spec.size; if (spec.type === 'map') { spec.w = 960; spec.h = 600; }
+  closeDesk(); openDoc(curDocId);
+  try { await placeSpecFigure(spec); toast('Inserted as a figure. Edit it like any other figure; it no longer follows the dataset.'); } catch (e) { toast(e.message); }
+}
+/* ---- the tile editor ---- */
+let tlEditing = null;
+function editTile(b, t) {
+  tlEditing = { b, t, orig: JSON.parse(JSON.stringify(t)) };
+  $('#tlTitleH').textContent = `${TILE_NAME[t.type]} tile`;
+  tlForm(); $('#tlDlg').showModal(); tlPreview();
+}
+function tlForm() {
+  const { t } = tlEditing, ds = dsById(t.ds), cols = ds ? ds.cols : [], types = ds ? ds.cols.map((_, i) => colType(ds, i)) : [];
+  const colSel = (id, val, filter, blank) => `<select id="${id}">${blank ? `<option value="">${blank}</option>` : ''}${cols.map((c, i) => filter && !filter.includes(types[i]) ? '' : `<option ${c === val ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>`;
+  const dsSel = ['stat', 'chart', 'map', 'timeline', 'table'].includes(t.type) ? `<label for="tlDs">Dataset</label><select id="tlDs">${(P.datasets || []).map(d => `<option value="${d.id}" ${d.id === t.ds ? 'selected' : ''}>${esc(d.name)}</option>`).join('') || '<option value="">No datasets yet</option>'}</select>` : '';
+  const srcOpts = sortedSources().map(s => { const l = sourceLabel(s); return `<option value="${s.id}" ${s.id === t.sourceId ? 'selected' : ''}>${esc(((l.who ? l.who + ', ' : '') + l.title).slice(0, 60))}</option>`; }).join('');
+  let f = `<label for="tlTitle">${t.type === 'stat' ? 'Label' : 'Title'}</label><input id="tlTitle" value="${esc(t.title)}" placeholder="${t.type === 'stat' ? 'e.g. Poland, 2024' : 'What this shows'}">` + dsSel;
+  if (t.type === 'stat') f += `<div class="grid2"><div><label for="tlCol">Column</label>${colSel('tlCol', t.col, null)}</div><div><label for="tlAgg">Show</label><select id="tlAgg">${AGG.map(([k, l]) => `<option value="${k}" ${k === t.agg ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="grid3"><div><label for="tlFmt">Numbers</label>${fmtSel(t.fmt)}</div><div><label for="tlPre">Before</label><input id="tlPre" value="${esc(t.prefix)}" placeholder="$"></div><div><label for="tlSuf">After</label><input id="tlSuf" value="${esc(t.suffix)}" placeholder="% of GDP"></div></div>`;
+  if (t.type === 'chart') {
+    const k = t.kind, many = !['hist', 'choro'].includes(k);
+    f += `<div class="grid2"><div><label for="tlKind">Chart type</label><select id="tlKind">${$('#chType').innerHTML}</select></div><div><label for="tlFmt">Numbers</label>${fmtSel(t.fmt)}</div></div>`;
+    if (k !== 'hist') f += `<label for="tlLabel">${k === 'choro' ? 'Place names' : k === 'scatter' ? 'Point labels' : k === 'heat' ? 'Row labels' : 'Categories (x axis)'}</label>${colSel('tlLabel', t.labelCol, null)}`;
+    f += `<label>${k === 'scatter' ? 'x, then y, then size (optional)' : k === 'hist' || k === 'choro' ? 'Values' : k === 'heat' ? 'Columns of the grid' : 'Series'}</label><div class="tl-cols" id="tlVals">${cols.map((c, i) => types[i] !== 'number' ? '' : `<label class="inline"><input type="${many ? 'checkbox' : 'radio'}" name="tlv" value="${esc(c)}" ${t.valueCols.includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('') || '<span class="muted small">No columns of numbers in this dataset.</span>'}</div>`;
+    if (k === 'scatter') f += `<label for="tlGroup">Color by</label>${colSel('tlGroup', t.groupCol, ['text', 'date'], 'One color')}`;
+    if (k === 'choro') f += `<label for="tlRegion">Map</label><select id="tlRegion">${CHORO_REGIONS().map(([kk, l]) => `<option value="${kk}" ${kk === t.region ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    if (k === 'hist') f += `<label for="tlBins">Bins</label><input id="tlBins" type="number" min="3" max="60" value="${t.bins || ''}" placeholder="Auto">`;
+    f += `<label for="tlY">${k === 'choro' ? 'Legend title' : 'Value axis label'}</label><input id="tlY" value="${esc(t.ylabel || '')}">`;
+  }
+  if (t.type === 'map') f += `<div class="grid2"><div><label for="tlLat">Latitude</label>${colSel('tlLat', t.latCol, ['number', 'lat'], 'Choose…')}</div><div><label for="tlLon">Longitude</label>${colSel('tlLon', t.lonCol, ['number', 'lon'], 'Choose…')}</div></div><div class="grid2"><div><label for="tlLabel">Labels</label>${colSel('tlLabel', t.labelCol, null, 'None')}</div><div><label for="tlGroup">Color by <span class="muted small">(up to 3)</span></label>${colSel('tlGroup', t.groupCol, ['text', 'date'], 'One color')}</div></div>`;
+  if (t.type === 'timeline') f += `<div class="grid2"><div><label for="tlDate">Dates</label>${colSel('tlDate', t.dateCol, null, 'Choose…')}</div><div><label for="tlLabel">Labels</label>${colSel('tlLabel', t.labelCol, null, 'None')}</div></div>`;
+  if (t.type === 'table') f += `<label>Columns</label><div class="tl-cols" id="tlCols">${cols.map(c => `<label class="inline"><input type="checkbox" value="${esc(c)}" ${!t.cols.length || t.cols.includes(c) ? 'checked' : ''}> ${esc(c)}</label>`).join('')}</div><div class="grid2"><div><label for="tlSort">Sort by</label>${colSel('tlSort', t.sortCol, null, 'As in the data')}</div><div><label for="tlDir">Order</label><select id="tlDir"><option value="asc" ${t.sortDir !== 'desc' ? 'selected' : ''}>Ascending</option><option value="desc" ${t.sortDir === 'desc' ? 'selected' : ''}>Descending</option></select></div></div>`;
+  if (t.type === 'text') f += `<label for="tlBody">Text <span class="muted small">(Markdown)</span></label><textarea id="tlBody" rows="8">${esc(t.body)}</textarea>`;
+  if (t.type === 'image') f += `<label>Image</label><div class="row"><button id="tlPick">${t.asset ? 'Choose another image…' : 'Choose an image…'}</button></div>`;
+  if (t.type === 'video') f += `<label for="tlUrl">Link</label><input id="tlUrl" value="${esc(t.url)}" placeholder="https://www.youtube.com/watch?v=…, Vimeo, or a link to an .mp4"><p class="small muted">The exported page plays it from YouTube, Vimeo or the link. Inside Anabasis it shows as a link, since Anabasis doesn’t load outside content on its own.</p>`;
+  f += `<label for="tlNote">Note under the tile</label><input id="tlNote" value="${esc(t.note)}" placeholder="Caveats, definitions, as-of date">`;
+  f += `<label for="tlSrc">Source${['text', 'image', 'video'].includes(t.type) ? '' : ' <span class="muted small">(if different from the dataset’s)</span>'}</label><select id="tlSrc"><option value="">${['text', 'image', 'video'].includes(t.type) ? '— none —' : 'The dataset’s source'}</option>${srcOpts}</select>`;
+  $('#tlForm').innerHTML = f;
+  if ($('#tlKind')) $('#tlKind').value = t.kind;
+}
+const fmtSel = v => `<select id="tlFmt">${[['n', '1,234'], ['d1', '1,234.5'], ['pct', '12%'], ['usd', '$1,234'], ['k', '1.2K, 3.4M']].map(([k, l]) => `<option value="${k}" ${k === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+function tlRead() {
+  const { t } = tlEditing, g = id => $('#' + id), v = id => g(id) ? g(id).value : undefined;
+  t.title = v('tlTitle') ?? t.title; t.note = v('tlNote') ?? ''; t.sourceId = v('tlSrc') ?? '';
+  if (g('tlDs') && g('tlDs').value !== t.ds) { const nt = newTile(t.type, dsById(g('tlDs').value)); Object.assign(t, nt, { id: t.id, title: t.title, note: t.note, w: t.w, h: t.h, sourceId: t.sourceId }); return true; }
+  if (t.type === 'stat') Object.assign(t, { col: v('tlCol') || '', agg: v('tlAgg'), fmt: v('tlFmt'), prefix: v('tlPre'), suffix: v('tlSuf') });
+  if (t.type === 'chart') {
+    const kind = v('tlKind'); const changed = kind !== t.kind;
+    Object.assign(t, { kind, fmt: v('tlFmt'), labelCol: v('tlLabel') ?? t.labelCol, valueCols: $$('#tlVals input:checked').map(x => x.value), groupCol: v('tlGroup') ?? '', region: v('tlRegion') ?? t.region, bins: +v('tlBins') || 0, ylabel: v('tlY') ?? '' });
+    if (changed && ['hist', 'choro'].includes(kind)) t.valueCols = t.valueCols.slice(0, 1);
+    return changed;
+  }
+  if (t.type === 'map') Object.assign(t, { latCol: v('tlLat'), lonCol: v('tlLon'), labelCol: v('tlLabel'), groupCol: v('tlGroup') });
+  if (t.type === 'timeline') Object.assign(t, { dateCol: v('tlDate'), labelCol: v('tlLabel') });
+  if (t.type === 'table') { const all = $$('#tlCols input'), on = all.filter(x => x.checked).map(x => x.value); Object.assign(t, { cols: on.length === all.length ? [] : on, sortCol: v('tlSort'), sortDir: v('tlDir') }); }
+  if (t.type === 'text') t.body = v('tlBody');
+  if (t.type === 'video') t.url = (v('tlUrl') || '').trim();
+  return false;
+}
+const tlPreview = debounce(async () => {
+  if (!tlEditing) return; const { t } = tlEditing;
+  const box = $('#tlPrev'); box.className = `db-tile prev w${Math.min(t.w, 2)} tt-${t.type}`;
+  box.innerHTML = `${t.type === 'stat' ? `<div class="tl-label">${esc(t.title || t.col || 'Number')}</div>` : t.title ? `<h4 class="tl-title">${esc(t.title)}</h4>` : ''}<div class="tl-body">${await tileBody(t, false, Math.min(box.clientWidth - 34, 720))}</div>${t.note ? `<p class="tl-note">${esc(t.note)}</p>` : ''}${tileSourceText(t) ? `<p class="tl-src">Source: ${esc(tileSourceText(t))}</p>` : ''}`;
+  box._wired = false; tableWire(box.parentElement);
+}, 200);
+$('#tlForm').addEventListener('change', e => { if (tlRead()) tlForm(); tlPreview(); });
+$('#tlForm').addEventListener('input', e => { if (e.target.matches('input[type=text],input:not([type]),textarea,input[type=number]')) { tlRead(); tlPreview(); } });
+$('#tlForm').addEventListener('click', async e => {
+  if (e.target.id !== 'tlPick') return;
+  const f = await pickFile('image/png,image/jpeg,image/gif,image/webp'); if (!f) return;
+  try { const r = await normalizeImage(await fileToDataURL(f), f.type, f.size); tlEditing.t.asset = addAsset(r.data, f.name, r.w, r.h); tlForm(); tlPreview(); } catch (err) { toast(err.message); }
+});
+$('#tlOk').addEventListener('click', () => { tlRead(); const { b } = tlEditing; b.modified = nowISO(); tlEditing = null; $('#tlDlg').close(); markDirty(); renderDesk(); });
+$('#tlCancel').addEventListener('click', () => { const { t, orig } = tlEditing; Object.keys(t).forEach(k => delete t[k]); Object.assign(t, orig); tlEditing = null; $('#tlDlg').close(); renderDesk(); });
+/* ---- the standalone page ---- */
+async function exportDashboard(b) {
+  syncEditor();
+  const tiles = [];
+  for (const t of b.tiles) tiles.push(`<section class="tile w${t.w} h${t.h} tt-${t.type}">${t.type === 'stat' ? `<div class="label">${esc(t.title || t.col || '')}</div>` : t.title ? `<h2>${esc(t.title)}</h2>` : ''}<div class="body">${await tileBody(t, true)}</div>${t.note ? `<p class="note">${esc(t.note)}</p>` : ''}${tileSourceText(t) ? `<p class="src">Source: ${esc(tileSourceText(t))}</p>` : ''}</section>`);
+  const used = [...new Set(b.tiles.flatMap(t => { const ds = dsById(t.ds); return [t.sourceId, ds && ds.sourceId].filter(Boolean); }))].filter(id => P.sources.some(s => s.id === id));
+  const dss = [...new Set(b.tiles.map(t => t.ds).filter(Boolean))].map(dsById).filter(Boolean);
+  const when = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const css = `*{box-sizing:border-box}body{margin:0;background:#f4f5f2;color:#1d2733;font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}main{max-width:1240px;margin:0 auto;padding:36px 24px 56px}
+header h1{font:700 32px/1.15 Georgia,"Times New Roman",serif;margin:0 0 6px}header p{margin:0;color:#52514e;font-size:16px}header .when{font-size:13px;margin-top:6px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:26px;grid-auto-flow:dense}.tile{background:#fff;border:1px solid rgba(29,39,51,.1);border-radius:10px;padding:16px 18px;min-width:0;display:flex;flex-direction:column}
+.tile.h1{align-self:start}.w1{grid-column:span 1}.w2{grid-column:span 2}.w3{grid-column:span 3}.w4{grid-column:span 4}.h2 .body,.h3 .body{flex:1}
+.tile h2{font:600 15px/1.3 system-ui,sans-serif;margin:0 0 10px}.label{font-size:13px;color:#52514e;font-weight:600}.body svg,.body img,.body video{display:block;width:100%;height:auto;border-radius:4px}
+.tl-stat b{display:block;font:700 34px/1.1 Georgia,serif;margin:6px 0 4px;font-variant-numeric:tabular-nums}.tl-delta{font-size:13px;font-weight:600}.tl-delta.up{color:#0b6e4f}.tl-delta.down{color:#a3271b}.tl-delta .muted{color:#6b6a60;font-weight:400}.tl-spark{display:block;margin-top:8px;width:100%;max-width:220px;height:auto}
+.note{font-size:13px;color:#52514e;margin:10px 0 0}.src{font-size:12px;color:#6b6a60;margin:6px 0 0}.tl-text p:first-child{margin-top:0}.tl-text{font-size:15px}
+.tl-q{width:100%;padding:7px 10px;border:1px solid #cfd2cc;border-radius:6px;font:inherit;margin-bottom:8px}.tl-tbl{overflow:auto;max-height:480px;border:1px solid #e4e6e3;border-radius:6px}table{border-collapse:collapse;width:100%;font-size:13.5px}th{position:sticky;top:0;background:#f4f5f2;text-align:left;padding:0;border-bottom:1px solid #d9dbd6}th.n{text-align:right}th button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:7px 10px;font-weight:600}th button:focus-visible{outline:2px solid #2a78d6}th[aria-sort=ascending] button::after{content:" ▲"}th[aria-sort=descending] button::after{content:" ▼"}td{padding:6px 10px;border-bottom:1px solid #eeefec}td.n,th.n button{text-align:right;font-variant-numeric:tabular-nums}
+.tl-vid{position:relative;padding-top:56.25%}.tl-vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:6px}.tl-empty{color:#8a8f98;font-size:13px}
+footer{margin-top:34px;font-size:13px;color:#52514e}footer h2{font:600 16px/1.3 Georgia,serif;color:#1d2733}footer ol{padding-left:20px}footer a{color:#1f4f7a}
+@media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}.w3,.w4{grid-column:span 2}}@media (max-width:560px){.grid{grid-template-columns:1fr}.w1,.w2,.w3,.w4{grid-column:span 1}main{padding:24px 14px}}
+@media print{body{background:#fff}.tile{break-inside:avoid}.tl-q{display:none}.tl-tbl{max-height:none}}`;
+  const js = `document.querySelectorAll('.tile').forEach(function(tile){var q=tile.querySelector('.tl-q'),tb=tile.querySelector('tbody');if(!tb)return;if(q)q.addEventListener('input',function(){var v=q.value.toLowerCase();Array.prototype.forEach.call(tb.rows,function(r){r.hidden=v&&r.textContent.toLowerCase().indexOf(v)<0;});});tile.querySelectorAll('.tl-sort').forEach(function(btn){btn.addEventListener('click',function(){var th=btn.parentNode,k=+btn.getAttribute('data-k'),dir=th.getAttribute('aria-sort')==='ascending'?'descending':'ascending',n=th.className.indexOf('n')>-1;tile.querySelectorAll('th').forEach(function(x){x.removeAttribute('aria-sort');});th.setAttribute('aria-sort',dir);var num=function(s){return parseFloat(s.replace(/[^0-9.\\-]/g,''))||0};Array.prototype.slice.call(tb.rows).sort(function(a,c){var x=a.cells[k].textContent,y=c.cells[k].textContent,d=n?num(x)-num(y):x.localeCompare(y);return dir==='ascending'?d:-d;}).forEach(function(r){tb.appendChild(r);});});});});`;
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(b.title)}</title><meta name="generator" content="Anabasis ${APP_VERSION}"><style>${css}</style></head><body><main>
+<header><h1>${esc(b.title)}</h1>${b.subtitle ? `<p>${esc(b.subtitle)}</p>` : ''}<p class="when">Updated ${esc(when)}</p></header>
+<div class="grid">${tiles.join('\n')}</div>
+<footer>${used.length ? `<h2>Sources</h2><ol>${used.map(id => `<li>${esc(citeFull(id))}</li>`).join('')}</ol>` : ''}${dss.length ? `<h2>Data</h2><ul>${dss.map(d => `<li><a download="${esc(fileSafe(d.name))}.csv" href="data:text/csv;charset=utf-8,${encodeURIComponent(datasetCSV(d))}">${esc(d.name)}</a> (CSV, ${d.rows.length} rows)${d.note ? ': ' + esc(d.note) : ''}</li>`).join('')}</ul>` : ''}<p>Made with Anabasis.</p></footer>
+</main><script>${js}<\/script></body></html>`;
+  download(fileSafe(b.title) + '.html', html, 'text/html');
+  toast('Exported the dashboard as one web page. Open it in a browser, or upload it anywhere that hosts web pages.');
+}
+const DK = { threads: 'Threads', claims: 'Claims', grid: 'Evidence grid', review: 'Review', questions: 'Questions', journal: 'Journal', data: 'Data', about: 'Everything about…' };
 function openDesk(view, sel) {
   if (!P) return;
   syncEditor(); closeRmPop(); if (boardOn) closeBoard(); if (planOn) closePlan(); if (homeOn) closeHome(); if (draftsOn) closeDrafts(); if (relOn) closeRel();
   if (view) deskView = view; else deskView = PREFS.deskView || 'threads';
   deskSel = sel || (view === 'about' ? deskSel : null);
-  deskOn = true; document.body.classList.add('desk-on'); $('#desk').classList.remove('hidden'); document.body.classList.remove('side-open');
+  deskOn = true; if (!deskInSplit) document.body.classList.add('desk-on'); $('#desk').classList.remove('hidden'); document.body.classList.remove('side-open');
   renderDesk();
   if (deskView === 'about') setTimeout(() => { const q = $('#abQ'); if (q) { q.focus(); q.select(); } }, 30);
 }
-function closeDesk() { deskOn = false; document.body.classList.remove('desk-on'); $('#desk').classList.add('hidden'); }
+function closeDesk() { if (deskInSplit) return; deskOn = false; document.body.classList.remove('desk-on'); $('#desk').classList.add('hidden'); }
 $('#deskBack').addEventListener('click', () => { closeDesk(); openDoc(curDocId); });
 $('#deskTabs').addEventListener('click', e => { const b = e.target.closest('[data-dv]'); if (!b) return; deskView = b.dataset.dv; PREFS.deskView = deskView; savePrefs(); deskSel = null; renderDesk(); if (deskView === 'about') setTimeout(() => $('#abQ')?.focus(), 30); });
 const DJ = fn => { deskJ.push(fn); return deskJ.length - 1; };
@@ -7909,7 +8495,7 @@ function renderDesk() {
   deskJ = [];
   $$('#deskTabs [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === deskView); b.setAttribute('aria-selected', b.dataset.dv === deskView); });
   $('#deskTools').innerHTML = '';
-  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, review: deskReview, questions: deskQuestions, journal: deskJournal, about: deskAbout }[deskView] || deskThreads;
+  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
   fn();
 }
 $('#deskBody').addEventListener('click', e => {
@@ -8421,7 +9007,7 @@ function researchLoose() {
 }
 
 COMMANDS.push(
-  ['Journal: today’s entry', () => openJournal('log', true)], ['Journal: this week (weekly review)', () => openJournal('week')], ['Journal: make a summary of this week', () => weekDoc(0)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
+  ['Journal: today’s entry', () => openJournal('log', true)], ['Beside the writing: notes', () => splitOpen('notes')], ['Beside the writing: sources', () => splitOpen('sources')], ['Beside the writing: research desk', () => splitOpen('desk')], ['Beside the writing: another document', () => splitOpen('doc')], ['New window: notes', () => popOut('notes')], ['New window: sources', () => popOut('sources')], ['New window: research desk', () => popOut('desk', { dv: deskView })], ['Data and dashboards', () => openDesk('data')], ['Journal: this week (weekly review)', () => openJournal('week')], ['Journal: make a summary of this week', () => weekDoc(0)], ['Journal: research design', () => openJournal('design')], ['Journal: hypotheses', () => openJournal('hyp')], ['Journal: log a search', () => openJournal('search')],
   ['Journal: make a research memo', () => journalDoc('memo')], ['Journal: make a methods appendix', () => journalDoc('appendix')],
   ['Open an example project: thesis chapter', () => openStarter('thesis')], ['Open an example project: long-form article', () => openStarter('article')], ['Open an example project: white paper', () => openStarter('whitepaper')],
   ['Open an example project: book proposal', () => openStarter('proposal')], ['Open an example project: investigative piece', () => openStarter('investigation')],
@@ -8727,10 +9313,10 @@ const STARTERS = {
     label: 'Thesis chapter', blurb: 'A history chapter with a working argument, archival-style notes and open questions.', style: 'chicago-notes-bibliography', goal: 'book', target: 9000, days: 60,
     title: 'Supply and Survival: The March of the Ten Thousand',
     sources: {
-      xen: { type: 'book', title: 'The Persian Expedition', author: [{ family: 'Xenophon' }], translator: [{ family: 'Warner', given: 'Rex' }], publisher: 'Penguin', 'publisher-place': 'Harmondsworth', issued: { 'date-parts': [[1972]] }, _rating: 'B2' },
-      lee: { type: 'book', title: 'A Greek Army on the March: Soldiers and Survival in Xenophon’s Anabasis', author: [{ family: 'Lee', given: 'John W. I.' }], publisher: 'Cambridge University Press', 'publisher-place': 'Cambridge', issued: { 'date-parts': [[2007]] }, _rating: 'A2' },
-      wat: { type: 'book', title: 'Xenophon’s Retreat: Greece, Persia, and the End of the Golden Age', author: [{ family: 'Waterfield', given: 'Robin' }], publisher: 'Belknap Press of Harvard University Press', 'publisher-place': 'Cambridge, MA', issued: { 'date-parts': [[2006]] }, _rating: 'B2' },
-      eng: { type: 'book', title: 'Alexander the Great and the Logistics of the Macedonian Army', author: [{ family: 'Engels', given: 'Donald W.' }], publisher: 'University of California Press', 'publisher-place': 'Berkeley', issued: { 'date-parts': [[1978]] }, _rating: 'A2' },
+      xen: { _stype: 'primary', type: 'book', title: 'The Persian Expedition', author: [{ family: 'Xenophon' }], translator: [{ family: 'Warner', given: 'Rex' }], publisher: 'Penguin', 'publisher-place': 'Harmondsworth', issued: { 'date-parts': [[1972]] }, _rating: 'B2' },
+      lee: { _stype: 'secondary', type: 'book', title: 'A Greek Army on the March: Soldiers and Survival in Xenophon’s Anabasis', author: [{ family: 'Lee', given: 'John W. I.' }], publisher: 'Cambridge University Press', 'publisher-place': 'Cambridge', issued: { 'date-parts': [[2007]] }, _rating: 'A2' },
+      wat: { _stype: 'secondary', type: 'book', title: 'Xenophon’s Retreat: Greece, Persia, and the End of the Golden Age', author: [{ family: 'Waterfield', given: 'Robin' }], publisher: 'Belknap Press of Harvard University Press', 'publisher-place': 'Cambridge, MA', issued: { 'date-parts': [[2006]] }, _rating: 'B2' },
+      eng: { _stype: 'secondary', type: 'book', title: 'Alexander the Great and the Logistics of the Macedonian Army', author: [{ family: 'Engels', given: 'Donald W.' }], publisher: 'University of California Press', 'publisher-place': 'Berkeley', issued: { 'date-parts': [[1978]] }, _rating: 'A2' },
     },
     threads: [['Logistics', '#2A9D8F', 'Food, water, pack animals: what the army needed and how it got it'], ['Command', '#D1495B', 'How decisions were made once the generals were gone']],
     questions: { grain: 'How much grain did the army need each day, and where did it come from?', numbers: 'How many people were actually with the army, counting servants and camp followers?' },
@@ -8936,7 +9522,7 @@ function buildStarter(key) {
   P.goal = { kind: K.goal, target: K.target, deadline: todayKey(new Date(Date.now() + K.days * DAY)), started: todayKey() };
   if (TIPS[key]) PREFS.tipsFor = Object.assign({}, PREFS.tipsFor, { [P.id]: key });
   const ctx = { src: {}, th: {}, q: {} };
-  Object.entries(K.sources).forEach(([k, c]) => { const csl = Object.assign({}, c); const rating = csl._rating; delete csl._rating; const s = { id: uid('s'), csl, created: nowISO(), modified: nowISO() }; if (rating) s.osint = { rating }; P.sources.push(s); ctx.src[k] = s.id; });
+  Object.entries(K.sources).forEach(([k, c]) => { const csl = Object.assign({}, c); const rating = csl._rating, stype = csl._stype; delete csl._rating; delete csl._stype; const s = { id: uid('s'), csl, stype: stype || '', created: nowISO(), modified: nowISO() }; if (rating) s.osint = { rating }; P.sources.push(s); ctx.src[k] = s.id; });
   K.threads.forEach(([name, color, note]) => { const t = { id: uid('th'), name, color, note, hidden: false, created: nowISO() }; P.threads.push(t); ctx.th[name] = t.id; });
   Object.entries(K.questions).forEach(([k, title]) => { const it = plNewItem('', null, { type: 'question', title, status: 'open' }); ctx.q[k] = it.id; });
   const docs = K.docs.map((d, i) => { const doc = newDoc(d.title, starterBlocks(d.blocks, ctx)); doc.style = K.style; doc.order = i; P.docs.push(doc); return doc; });
@@ -9419,10 +10005,251 @@ $('#tbcMin').addEventListener('click', () => { const keep = new Set(['bold', 'it
 $('#tbcCancel').addEventListener('click', () => $('#tbcDlg').close());
 
 /* ---------- Keyboard shortcuts (press ?) ---------- */
+/* ================================================================
+   Split view and pop-out windows (1.7). Notes, sources, the research
+   desk or another document beside the writing; any of them in a
+   window of its own, kept in step with this one.
+   ================================================================ */
+const SPLIT = { on: false, view: '', moved: null, stub: null, home: null, docId: '' };
+const SV = [['notes', 'Notes'], ['sources', 'Sources'], ['desk', 'Research desk'], ['doc', 'A document']];
+let deskInSplit = false;
+function splitOpen(view, opt = {}) {
+  view = SV.some(v => v[0] === view) ? view : (PREFS.splitView || 'notes');
+  if (SPLIT.on && SPLIT.view === view && !opt.docId && !opt.dv) { splitFocus(); return; }
+  splitUnmount();
+  if (deskOn && !deskInSplit && view === 'desk') closeDesk();
+  SPLIT.on = true; SPLIT.view = view; PREFS.splitView = view; if (!POPOUT) savePrefs();
+  document.body.classList.add('split-on'); document.body.classList.remove('split-hide');
+  $('#split').classList.remove('hidden');
+  if (!POPOUT) $('#split').style.width = PREFS.splitW ? Math.min(PREFS.splitW, innerWidth * .72) + 'px' : '';
+  document.body.classList.toggle('split-left', PREFS.splitSide === 'left');
+  $$('#spTabs [data-sv]').forEach(b => { const on = b.dataset.sv === view; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
+  const body = $('#spBody');
+  if (view === 'notes' || view === 'sources') {
+    const el = $(`#sidebar .pane[data-pane="${view}"]`) || $(`#spBody .pane[data-pane="${view}"]`);
+    SPLIT.home = document.createComment('pane home'); el.before(SPLIT.home);
+    SPLIT.stub = document.createElement('section'); SPLIT.stub.className = 'pane sp-stub' + (el.classList.contains('on') ? ' on' : ''); SPLIT.stub.dataset.pane = view;
+    SPLIT.stub.innerHTML = `<div class="desk-empty"><p>${view === 'notes' ? 'Notes are' : 'Sources are'} open beside the writing.</p><p><button data-sp="back">Bring ${view === 'notes' ? 'them' : 'them'} back here</button></p></div>`;
+    SPLIT.home.after(SPLIT.stub);
+    body.append(el); SPLIT.moved = el;
+    if (view === 'notes') renderNoteList(); else renderSourceList();
+  } else if (view === 'desk') {
+    const d = $('#desk'); SPLIT.home = document.createComment('desk home'); d.before(SPLIT.home); body.append(d); SPLIT.moved = d;
+    deskInSplit = true; document.body.classList.remove('desk-on'); openDesk(opt.dv || PREFS.deskView || 'claims');
+  } else if (view === 'doc') {
+    SPLIT.docId = opt.docId || SPLIT.docId || (binderOrder().find(d => d.id !== curDocId) || binderOrder()[0] || {}).id || '';
+    splitDocRender();
+  }
+  $('#spPop').classList.toggle('hidden', POPOUT);
+  if (!POPOUT) { pbLayoutAll(); spAria(); }
+  if (opt.focus !== false) splitFocus();
+}
+function spAria() { const sp = $('#split'); if (sp.offsetWidth) $('#spResize').setAttribute('aria-valuenow', Math.round(sp.offsetWidth / innerWidth * 100)); }
+function splitDocRender() {
+  const body = $('#spBody'), d = P.docs.find(x => x.id === SPLIT.docId);
+  if (SPLIT.docId === curDocId && !POPOUT) syncEditor();
+  body.innerHTML = `<div class="sp-docbar"><label class="sr-only" for="spDocSel">Document</label><select id="spDocSel">${binderOrder().map(x => `<option value="${x.id}" ${x.id === SPLIT.docId ? 'selected' : ''}>${esc(x.title || 'Untitled')}</option>`).join('')}</select><button class="small" id="spDocEdit" title="Make this the document you’re editing">Edit this one</button></div>
+    <div class="sp-docscroll" tabindex="0" aria-label="Document, read only"><article class="page docbody sp-page">${d ? `<h1 class="sp-doct">${esc(d.title || 'Untitled')}</h1>${DOMPurify.sanitize(d.html || '', { ADD_ATTR: ['data-items', 'data-text'] })}` : '<p class="muted">No document.</p>'}</article></div>`;
+  const pg = $('.sp-page', body); if (d && pg) { applyLayout(pg, d); pg.querySelectorAll('[contenteditable]').forEach(x => x.removeAttribute('contenteditable')); }
+}
+function splitUnmount() {
+  if (SPLIT.moved) {
+    if (SPLIT.moved.id === 'desk') { deskInSplit = false; deskOn = false; SPLIT.moved.classList.add('hidden'); }
+    SPLIT.home.replaceWith(SPLIT.moved); if (SPLIT.stub) { SPLIT.moved.classList.toggle('on', SPLIT.stub.classList.contains('on')); SPLIT.stub.remove(); }
+    if (SPLIT.moved.dataset.pane === 'notes') renderNoteList(); if (SPLIT.moved.dataset.pane === 'sources') renderSourceList();
+  }
+  SPLIT.moved = SPLIT.stub = SPLIT.home = null; $('#spBody').innerHTML = '';
+}
+function splitClose() {
+  if (POPOUT) { window.close(); return; }
+  splitUnmount(); SPLIT.on = false; SPLIT.view = '';
+  document.body.classList.remove('split-on', 'split-max', 'split-hide', 'split-left'); $('#split').classList.add('hidden');
+  pbLayoutAll(); editor.focus();
+}
+function splitToggle() {
+  if (!SPLIT.on) { splitOpen(PREFS.splitView || 'notes'); return; }
+  if (matchMedia('(max-width: 860px)').matches) { document.body.classList.toggle('split-hide'); if (document.body.classList.contains('split-hide')) editor.focus(); else splitFocus(); return; }
+  splitClose();
+}
+function splitFocus() { setTimeout(() => { const t = $('#spBody input[type=search], #spBody .sp-docscroll, #spBody [tabindex], #spBody button'); if (t) t.focus(); }, 30); }
+function splitSwap() { PREFS.splitSide = PREFS.splitSide === 'left' ? 'right' : 'left'; savePrefs(); document.body.classList.toggle('split-left', PREFS.splitSide === 'left'); }
+$('#spTabs').addEventListener('click', e => { const b = e.target.closest('[data-sv]'); if (b) splitOpen(b.dataset.sv); });
+$('#spSwap').addEventListener('click', splitSwap);
+$('#spMax').addEventListener('click', () => { const on = document.body.classList.toggle('split-max'); $('#spMax').setAttribute('aria-pressed', on); $('#spMax').title = on ? 'Back to side by side' : 'Wide: hide the writing for now'; if (!on) pbLayoutAll(); });
+$('#spClose').addEventListener('click', splitClose);
+$('#spPop').addEventListener('click', () => { const v = SPLIT.view, o = { docId: SPLIT.docId, dv: deskView }; splitClose(); popOut(v, o); });
+$('#spBody').addEventListener('change', e => { if (e.target.id === 'spDocSel') { SPLIT.docId = e.target.value; splitDocRender(); } });
+$('#spBody').addEventListener('click', e => { if (e.target.id === 'spDocEdit') { const id = SPLIT.docId; if (POPOUT) popCmd('openDoc', { id }); else { openDoc(id); splitClose(); } } });
+document.addEventListener('click', e => { if (e.target.closest('[data-sp="back"]')) splitClose(); });
+$('#btnSplit').addEventListener('click', () => splitToggle());
+$('#spToggle').addEventListener('click', () => splitToggle());
+$('#spResize').addEventListener('pointerdown', e => {
+  e.preventDefault(); const sp = $('#split'), startX = e.clientX, startW = sp.offsetWidth, left = document.body.classList.contains('split-left');
+  const mv = ev => { const w = Math.max(300, Math.min(innerWidth * .72, startW + (left ? ev.clientX - startX : startX - ev.clientX))); sp.style.width = w + 'px'; };
+  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); PREFS.splitW = sp.offsetWidth; savePrefs(); pbLayoutAll(); spAria(); };
+  document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
+});
+$('#spResize').addEventListener('keydown', e => { if (!/^Arrow(Left|Right)$/.test(e.key)) return; e.preventDefault(); const sp = $('#split'), left = document.body.classList.contains('split-left'), d = (e.key === 'ArrowLeft') !== left ? 40 : -40; sp.style.width = Math.max(300, Math.min(innerWidth * .72, sp.offsetWidth + d)) + 'px'; PREFS.splitW = sp.offsetWidth; savePrefs(); spAria(); });
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey; if (document.querySelector('dialog[open]')) return;
+  if (mod && (e.key === '\\' || e.code === 'Backslash')) { e.preventDefault(); if (e.shiftKey) { if (SPLIT.on) splitSwap(); } else splitToggle(); }
+  if (e.key === 'F6' && SPLIT.on && !POPOUT) { e.preventDefault(); if ($('#split').contains(document.activeElement)) editor.focus(); else splitFocus(); }
+});
+// keep a document shown beside the writing up to date when it's the one being edited
+const splitDocRefresh = debounce(() => { if (SPLIT.on && SPLIT.view === 'doc' && SPLIT.docId === curDocId) { const sc = $('.sp-docscroll'), top = sc ? sc.scrollTop : 0; splitDocRender(); const s2 = $('.sp-docscroll'); if (s2) s2.scrollTop = top; } }, 900);
+
+/* ---------- pop-out windows ---------- */
+const POPS = new Map(); // window -> { shared: {key: json} }
+const SYNC_KEYS = ['notes', 'sources', 'threads', 'claims', 'reviewKeys', 'journal', 'datasets', 'dashboards', 'piles', 'entities', 'plan', 'indexTerms', 'assets', 'title'];
+function popOut(view, o = {}) {
+  syncEditor();
+  const url = location.href.split('#')[0] + `#popout=${view}` + (o.dv ? `&dv=${o.dv}` : '') + (o.docId ? `&doc=${o.docId}` : '');
+  const w = window.open(url, 'anabasis-' + view + '-' + Date.now().toString(36), `popup=yes,width=${Math.min(900, screen.availWidth / 2 | 0)},height=${Math.min(1000, screen.availHeight - 60)}`);
+  if (!w) { toast('The browser blocked the new window. Allow pop-ups for Anabasis, then try again.'); return null; }
+  POPS.set(w, { shared: {}, pid: '' }); toast(`${(SV.find(v => v[0] === view) || [])[1] || 'Panel'} opened in a new window. Changes in either window show up in the other.`);
+  return w;
+}
+// three-way merge: what the other window sent, what we have, and what we both last agreed on
+function merge3(local, incoming, prev) {
+  const J = JSON.stringify;
+  if (J(incoming) === J(local)) return local;
+  if (prev !== undefined && J(incoming) === J(prev)) return local; // they didn't change it
+  if (prev !== undefined && J(local) === J(prev)) return incoming; // we didn't change it
+  const isIdArr = v => Array.isArray(v) && v.every(x => x && typeof x === 'object' && typeof x.id === 'string');
+  if (isIdArr(local) && isIdArr(incoming)) {
+    const pm = new Map((isIdArr(prev) ? prev : []).map(x => [x.id, x])), lm = new Map(local.map(x => [x.id, x])), im = new Map(incoming.map(x => [x.id, x])), out = [];
+    incoming.forEach(x => { const l = lm.get(x.id); if (l) out.push(merge3(l, x, pm.get(x.id))); else if (!pm.has(x.id)) out.push(x); });
+    local.forEach(x => { if (!im.has(x.id) && !pm.has(x.id)) out.push(x); });
+    return out;
+  }
+  const obj = v => v && typeof v === 'object' && !Array.isArray(v);
+  if (obj(local) && obj(incoming)) {
+    const out = {}, p = obj(prev) ? prev : {};
+    new Set([...Object.keys(local), ...Object.keys(incoming)]).forEach(k => {
+      if (!(k in incoming)) { if (!(k in p)) out[k] = local[k]; return; }
+      if (!(k in local)) { if (!(k in p)) out[k] = incoming[k]; return; }
+      out[k] = merge3(local[k], incoming[k], p[k]);
+    });
+    return out;
+  }
+  return (incoming && local && incoming.modified && local.modified && local.modified > incoming.modified) ? local : incoming;
+}
+function applyPatch(colls, peer) {
+  const changed = [];
+  Object.entries(colls).forEach(([k, v]) => {
+    if (!SYNC_KEYS.includes(k) && !(POPOUT && (k === 'docs' || k === 'curDocId'))) return;
+    const prev = peer.shared[k] !== undefined ? JSON.parse(peer.shared[k]) : undefined;
+    const merged = k === 'docs' || k === 'curDocId' ? v : merge3(P[k], v, prev);
+    peer.shared[k] = JSON.stringify(v);
+    if (JSON.stringify(P[k]) !== JSON.stringify(merged)) { P[k] = merged; changed.push(k); }
+  });
+  if (!changed.length) return changed;
+  if (changed.includes('sources')) srcVersion++;
+  if (changed.includes('title') && !POPOUT) $('#projTitle').value = P.title;
+  return changed;
+}
+function popDiff(peer, keys) {
+  const out = {}; let any = false;
+  keys.forEach(k => { const j = JSON.stringify(P[k]); if (peer.shared[k] !== j) { out[k] = P[k]; peer.shared[k] = j; any = true; } });
+  return any ? out : null;
+}
+// main window side
+const popSync = debounce(() => {
+  if (POPOUT || !POPS.size) return;
+  syncEditor();
+  for (const [w, peer] of POPS) {
+    if (w.closed) { POPS.delete(w); continue; }
+    if (!peer.ready) continue;
+    if (peer.pid !== P.id) { popState(w, peer); continue; }
+    const d = popDiff(peer, [...SYNC_KEYS, 'docs']); if (curDocId !== peer.cur) { (d || (d === null && false)); }
+    const msg = d || {}; if (curDocId !== peer.cur) { msg.curDocId = curDocId; peer.cur = curDocId; }
+    if (Object.keys(msg).length) w.postMessage({ app: 'anabasis', t: 'patch', colls: msg }, '*');
+  }
+}, 500);
+function popState(w, peer) {
+  syncEditor(); peer.pid = P.id; peer.cur = curDocId; peer.shared = {}; [...SYNC_KEYS, 'docs'].forEach(k => { peer.shared[k] = JSON.stringify(P[k]); });
+  w.postMessage({ app: 'anabasis', t: 'state', project: P, curDocId, theme: document.documentElement.dataset.theme }, '*');
+}
+window.addEventListener('message', e => {
+  const m = e.data; if (!m || m.app !== 'anabasis') return;
+  if (POPOUT) { if (e.source === window.opener) popoutMsg(m); return; }
+  const w = e.source, peer = POPS.get(w); if (!peer) return;
+  if (m.t === 'hello') { peer.ready = true; popState(w, peer); return; }
+  if (m.t === 'bye') { POPS.delete(w); return; }
+  if (m.t === 'patch') {
+    const ch = applyPatch(m.colls, peer); if (!ch.length) return;
+    if (ch.includes('notes') || ch.includes('sources')) { renderNoteList(); renderSourceList(); }
+    if (ch.includes('sources')) renderRefs(true);
+    renderResearch(); if (deskOn) renderDesk(); if (boardOn) renderBoard();
+    markDirty();
+    return;
+  }
+  if (m.t === 'cmd') popRun(m.c, m.a || {});
+});
+function popRun(c, a) {
+  try { window.focus(); } catch (x) {}
+  if (deskOn && !deskInSplit && c !== 'addDoc') closeDesk();
+  if (c === 'insertNote') { const n = P.notes.find(x => x.id === a.id); if (n) insertNote(n); }
+  else if (c === 'insertHTML') { insertHTMLAtCursor(DOMPurify.sanitize(String(a.html || ''), { ADD_ATTR: ['data-items', 'data-text', 'data-cnote', 'contenteditable'] })); toast('Inserted from the other window.'); }
+  else if (c === 'openDoc') { if (P.docs.some(d => d.id === a.id)) openDoc(a.id); }
+  else if (c === 'go') { const p = rmAll().find(x => x.pid === a.pid); if (p) rmGo(p); else if (P.docs.some(d => d.id === a.docId)) openDoc(a.docId); }
+  else if (c === 'addDoc' && a.doc && typeof a.doc === 'object') { const d = Object.assign(newDoc(), a.doc, { id: uid('d') }); d.html = DOMPurify.sanitize(String(d.html || '')); closeDesk(); addDoc(d); }
+  else if (c === 'placeSpec' && a.spec) { closeDesk(); openDoc(curDocId); placeSpecFigure(a.spec).catch(err => toast(err.message)); }
+}
+// pop-out window side
+let popPeer = { shared: {} }, popPending = false, popReady = false;
+function popCmd(c, a) { if (window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'cmd', c, a }, '*'); }
+const popPush = debounce(() => {
+  if (!POPOUT || !popReady || !window.opener || window.opener.closed) return;
+  const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*');
+}, 300);
+function popoutMsg(m) {
+  if (m.t === 'state') {
+    P = normalize(m.project); curDocId = m.curDocId; srcVersion++;
+    popPeer = { shared: {} }; [...SYNC_KEYS, 'docs'].forEach(k => { popPeer.shared[k] = JSON.stringify(P[k]); });
+    if (m.theme) document.documentElement.dataset.theme = m.theme;
+    document.title = `${(SV.find(v => v[0] === POPOUT.view) || [])[1] || 'Anabasis'} · ${P.title}`;
+    $('#spPTitle').textContent = document.title;
+    renderAll(); popReady = true;
+    splitOpen(POPOUT.view, { dv: POPOUT.dv, docId: POPOUT.doc, focus: false });
+    $('#popWait').classList.add('hidden');
+    return;
+  }
+  if (m.t === 'patch') {
+    const ch = applyPatch(m.colls, popPeer); if (!ch.length) return;
+    popPending = true; popRefresh();
+  }
+}
+function popRefresh() {
+  const a = document.activeElement, typing = a && (a.matches('input:not([type=checkbox]):not([type=radio]),textarea,select,[contenteditable="true"]')) && (a.closest('#split') || a.closest('#panel'));
+  if (typing) return; // after they leave the field
+  if (!popPending) return; popPending = false;
+  renderNoteList(); renderSourceList();
+  if (SPLIT.view === 'desk') renderDesk(); if (SPLIT.view === 'doc') splitDocRender();
+}
+async function popoutBoot() {
+  document.body.classList.add('popout', 'split-on'); $('#split').classList.remove('hidden');
+  const th = lsGet(THEME_KEY); if (th) document.documentElement.dataset.theme = th;
+  $('#popWait').classList.remove('hidden');
+  if (!window.opener) { $('#popWait').innerHTML = '<div><b>Open this from Anabasis.</b><p>Use the ↗ button beside the writing to open notes, sources or the research desk in a window of their own.</p></div>'; return; }
+  // in this window, anything that would change the draft is done by the main window
+  insertNote = n => { if (n) { popCmd('insertNote', { id: n.id }); toast('Inserted in the main window.'); } };
+  insertHTMLAtCursor = html => { popCmd('insertHTML', { html }); };
+  openDoc = id => popCmd('openDoc', { id });
+  rmGo = p => popCmd('go', { pid: p.pid, docId: p.docId });
+  addDoc = d => { popCmd('addDoc', { doc: d }); toast('Made in the main window.'); };
+  placeSpecFigure = async spec => { popCmd('placeSpec', { spec }); };
+  document.addEventListener('focusout', () => setTimeout(popRefresh, 50));
+  window.addEventListener('beforeunload', () => { popPush.flush ? popPush.flush() : null; const d = popDiff(popPeer, SYNC_KEYS); if (d && window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*'); window.opener && !window.opener.closed && window.opener.postMessage({ app: 'anabasis', t: 'bye' }, '*'); });
+  window.opener.postMessage({ app: 'anabasis', t: 'hello', view: POPOUT.view }, '*');
+  setTimeout(() => { if (!popReady) $('#popWait').innerHTML = '<div><b>The main Anabasis window didn’t answer.</b><p>Close this window and open it again from Anabasis.</p></div>'; }, 4000);
+  const watch = setInterval(() => { if (!window.opener || window.opener.closed) { clearInterval(watch); $('#popWait').classList.remove('hidden'); $('#popWait').innerHTML = '<div><b>The main window was closed.</b><p>Changes made here from now on can’t be kept. Close this window.</p></div>'; } }, 2000);
+}
+
 const KEYS = [
   ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
   ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
-  ['Moving around', [['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
+  ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
 ];
 function openKeys() {
@@ -9521,6 +10348,7 @@ function sendClip(to, clip) {
   });
 }
 (async function boot() {
+  if (POPOUT) { popoutBoot(); return; }
   const clip = readClipFromHash();
   if (clip) {
     const other = await findOtherTab(true);
