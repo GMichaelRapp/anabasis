@@ -47,3 +47,7 @@ If something goes wrong, delete the tag (`git push --delete origin v1.0.0` and `
 - Try a real project for a week in Chrome, Firefox and Safari.
 - Check that an old project file still opens and saves. Keep a few real files from earlier versions for this.
 - Read through Help in the app for anything out of date.
+
+## The product site
+
+anabasis.zerohistory.net is built by Netlify from `netlify.toml`: it downloads the latest release's `anabasis.html`, then `tools/site/build_web.py` puts the front page (`web/index.html`) at `/`, the installable app at `/app/` and the download at `/anabasis.html`. The front page follows `main`; the app follows releases, so a new release reaches the site at its next deploy (trigger one from Netlify, or push to `main`).

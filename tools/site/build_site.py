@@ -20,11 +20,12 @@ SITE = ROOT / 'site'
 ICONS = Path(__file__).resolve().parent / 'icons'
 
 
-def main(out=SITE):
-    app = ROOT / 'dist' / 'anabasis.html'
+def main(out=SITE, app=None, version=None):
+    app = app or ROOT / 'dist' / 'anabasis.html'
     if not app.exists(): sys.exit('Build first: python build.py')
-    m = re.search(r"const APP_VERSION = '([^']+)'", (ROOT / 'src' / 'app.js').read_text(encoding='utf-8'))
-    version = m.group(1) if m else 'dev'
+    if not version:
+        m = re.search(r"const APP_VERSION = '([^']+)'", (ROOT / 'src' / 'app.js').read_text(encoding='utf-8'))
+        version = m.group(1) if m else 'dev'
     if out.exists(): shutil.rmtree(out)
     out.mkdir(parents=True)
     html = app.read_text(encoding='utf-8')

@@ -22,7 +22,7 @@
 
 Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
 
-The whole app is a single HTML file of about 10 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+The whole app is a single HTML file of about 13 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
 
 ## What it does
 
