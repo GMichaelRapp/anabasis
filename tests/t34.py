@@ -48,7 +48,8 @@ async def main():
         for _ in range(14):
             if await pg.evaluate("() => $('#tour').classList.contains('hidden')"): break
             steps.append(await pg.inner_text('#tourTitle')); await pg.click('#tourNext'); await pg.wait_for_timeout(260)
-        check('the tour covers the research desk, marks and editors, and finishes', len(steps) == 10 and 'The research desk' in steps and 'Mark what matters' in steps and 'Work with editors' in steps and '55 citation styles' in steps, steps)
+        # a step whose button has moved into the ⋯ menu (narrower fonts or window) is skipped, so allow for one
+        check('the tour covers the research desk, marks and citation styles, and finishes', 9 <= len(steps) <= 10 and steps[0] == 'Welcome to Anabasis' and steps[-1] == 'Save the project file' and 'The research desk' in steps and 'Mark what matters' in steps and '55 citation styles' in steps, steps)
         await ctx.close()
 
         ctx, pg = await page({'startHome': False, 'toured': True, 'seenVersion': '1.6.0'})
