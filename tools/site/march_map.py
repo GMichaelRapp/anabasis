@@ -130,14 +130,19 @@ def main():
         x, y = xy(lon, lat); o.append(f'<text x="{x:.0f}" y="{y:.0f}" class="p-region">{name}</text>')
     for name, v in RIVERS.items():
         if v: x, y = xy(v[0], v[1]); o.append(f'<text x="{x:.0f}" y="{y:.0f}" class="p-rivername" transform="rotate({v[2]} {x:.0f} {y:.0f})">{name}</text>')
-    pts = ' '.join(f'{x:.1f},{y:.1f}' for x, y in (xy(*p) for p in ROUTE))
-    o.append(f'<polyline points="{pts}" class="p-route-halo"/><polyline points="{pts}" class="p-route"/>')
+    rd = 'M' + 'L'.join(f'{x:.1f} {y:.1f}' for x, y in (xy(*p) for p in ROUTE))
+    o.append(f'<path d="{rd}" class="p-route-halo"/><path id="march-path" d="{rd}" class="p-route"/>')
     for name, lon, lat, dx, dy, anc in STOPS:
         x, y = xy(lon, lat)
         o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="3.6" class="p-stop"/><text x="{x + dx:.0f}" y="{y + dy:.0f}" text-anchor="{anc}" class="p-place">{name}</text>')
     for n, lon, lat, k, dx, dy in WAY:
         x, y = xy(lon, lat); mx, my = x + dx, y + dy
-        o.append(f'<g class="p-way" style="--k:var(--{k})"><path d="M{x:.1f} {y:.1f}L{mx:.1f} {my:.1f}"/><circle cx="{mx:.1f}" cy="{my:.1f}" r="15"/><text x="{mx:.1f}" y="{my + 5:.1f}">{n}</text></g>')
+        i = ['I', 'II', 'III', 'IV', 'V'].index(n) + 1
+        o.append(f'<g class="p-way" style="--k:var(--{k})"><path d="M{x:.1f} {y:.1f}L{mx:.1f} {my:.1f}"/><use href="#coin-{i}" x="{mx - 19:.1f}" y="{my - 19:.1f}" width="38" height="38"/></g>')
+    # a hoplite marches from Sardis to the sea, rests a moment there, and sets out again
+    o.append('<g class="p-hoplite"><use href="#hoplite" x="-16" y="-44" width="32" height="40">'
+             '<animateTransform attributeName="transform" type="translate" values="0 0;0 -1.4;0 0" dur="0.7s" repeatCount="indefinite"/></use>'
+             '<animateMotion dur="46s" repeatCount="indefinite" rotate="0" calcMode="linear" keyPoints="0;1;1" keyTimes="0;0.92;1"><mpath href="#march-path"/></animateMotion></g>')
     o.append('</g>')
     # neatline ticks and degree labels
     for lon in range(30, 55, 5):
