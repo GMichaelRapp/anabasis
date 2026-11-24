@@ -68,7 +68,7 @@ textarea{resize:vertical}
 label{display:block;font-size:12px;color:var(--muted);margin:10px 0 3px}
 .muted{color:var(--muted)} .small{font-size:12px}
 .hidden{display:none!important}
-svg{width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg:not(mjx-container svg){width:16px;height:16px;vertical-align:-3px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round} /* icons; equations keep MathJax's sizes */
 
 /* ---------- top bar ---------- */
 .topbar{height:48px;display:flex;align-items:center;gap:6px;padding:0 10px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -469,6 +469,14 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 #editor figure.fig{cursor:default}
 #editor figure.fig img{cursor:pointer}
 #editor figcaption{outline:none;min-height:1.2em}
+#editor span.math:not([data-cp-r]){font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
+#editor p.eq:not([data-cp-r]){text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
+#editor span.math,#editor p.eq{cursor:pointer}
+.eq-snips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 8px}
+#eqTex{width:100%;font:14px/1.45 ui-monospace,Menlo,Consolas,monospace}
+.eq-prev{min-height:64px;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);overflow-x:auto;display:flex;align-items:center;justify-content:center;font-size:18px}
+.eq-prev mjx-container[display="true"]{margin:0!important}
+#eqMsg.warn{color:var(--danger,#b3261e)}
 #editor .dnum{border-bottom:1.5px dotted color-mix(in srgb,var(--accent) 70%,transparent);cursor:pointer}
 #editor figure[data-dl]{position:relative}
 #editor figure[data-dl]::after{content:'Linked to data';position:absolute;top:4px;right:4px;padding:0 6px;border-radius:999px;background:color-mix(in srgb,var(--panel) 88%,transparent);font:11px/1.7 system-ui,sans-serif;font-style:normal;color:var(--muted);pointer-events:none}
@@ -1838,6 +1846,7 @@ body.focus .tip-card{display:none}
       <span class="sep"></span>
       <button id="btnFigure" data-tb="figure" data-pri="5" data-label="Figure: image, chart, map, timeline" aria-label="Figure: image, chart, map, timeline" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
       <button id="btnTable" data-tb="table" data-pri="6" data-label="Table" aria-label="Table" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
+      <button id="btnEq" data-tb="equation" data-pri="6" data-label="Equation" aria-label="Equation" title="Insert an equation, written in TeX (Ctrl+Alt+E, or Alt+= as in Word)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5H7l5 7-5 7h10"/></svg></button>
       <button id="btnLink" data-tb="link" data-pri="5" data-label="Link" aria-label="Link" title="Link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
       <button data-cmd="removeFormat" data-tb="clear" data-pri="7" data-label="Clear formatting" aria-label="Clear formatting" title="Clear formatting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
       <span class="sep"></span>
@@ -2328,6 +2337,19 @@ body.focus .tip-card{display:none}
   </div>
   <footer><button id="tbCancel">Cancel</button><button id="tbOk" class="primary">Insert table</button></footer>
 </div></dialog>
+<dialog id="eqDlg" aria-labelledby="eqTitle"><div class="dlg wide">
+  <h3 id="eqTitle">Insert an equation</h3>
+  <div class="body">
+    <label for="eqTex">Equation, in TeX</label>
+    <textarea id="eqTex" rows="3" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}"></textarea>
+    <div id="eqSnips" class="eq-snips" role="group" aria-label="Add a common piece"></div>
+    <div class="radio-row"><label><input type="radio" name="eqKind" id="eqInline" value="inline"> In the sentence</label><label><input type="radio" name="eqKind" id="eqBlock" value="block"> On its own line</label><label id="eqNumL"><input type="checkbox" id="eqNum" checked> Numbered</label></div>
+    <div id="eqPrev" class="eq-prev" aria-live="polite"></div>
+    <p id="eqMsg" class="small" role="status"></p>
+    <div class="tip">Write it as you would in LaTeX: <code>x^2</code>, <code>\frac{a}{b}</code>, <code>\sqrt{x}</code>, <code>\alpha</code>. It goes into Word as a Word equation you can edit there, and stays TeX in LaTeX, Markdown and Pandoc exports. Ctrl+Enter inserts it.</div>
+  </div>
+  <footer><button id="eqDel" class="danger hidden" style="margin-right:auto">Remove</button><button id="eqCancel">Cancel</button><button id="eqOk" class="primary">Insert</button></footer>
+</div></dialog>
 <!-- substack -->
 <dialog id="ssDlg"><div class="dlg">
   <h3>Prepare for Substack</h3>
@@ -2729,6 +2751,15 @@ body.focus .tip-card{display:none}
       <li><b>Transcripts.</b> On a source, click Transcript…, paste a transcript, select lines, and make quote or paraphrase notes with the timestamp as the locator.</li>
       <li><b>Versions.</b> Save a named version, see what changed since (word-level), or restore it. Restoring saves your current text as a version first.</li>
       <li><b>Import Word</b> brings in .docx drafts with footnotes as text footnotes. <b>Import references</b> reads BibTeX and RIS as well as Zotero and OSINT lists. <b>Export → ePub</b> makes an e-book with tappable notes.</li>
+    </ul>
+    <h4>Equations</h4>
+    <ul>
+      <li>Click <b>Σ</b> in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>, or <kbd>Alt</kbd>+<kbd>=</kbd> as in Word) and type the equation in TeX, the way LaTeX writes it: <code>x^2</code>, <code>\frac{a}{b}</code>, <code>\sqrt{x}</code>, <code>\sum_{i=1}^n</code>, <code>\alpha</code>. The buttons under the box add common pieces, and the preview shows it as you type, with a note if something isn’t right (a missing brace, a command it doesn’t know).</li>
+      <li><b>In the sentence</b> puts it in the line of text. <b>On its own line</b> sets it apart, centred; numbered ones get (1), (2)… at the right margin, renumbered as you add or remove them. In an empty paragraph the box starts with “on its own line”; in a sentence, “in the sentence”.</li>
+      <li>Click an equation to change it, switch it between the two, or remove it. Select TeX you’ve typed or pasted (with or without its <code>$…$</code>) and open the box to turn it into an equation; <b>Turn TeX in $…$ and $$…$$ into equations</b> in the command palette does a whole document at once. Amounts of money like “$5 and $10” are left alone.</li>
+      <li><b>Word:</b> equations go into the .docx as Word equations, which you (or an editor) can change in Word’s equation editor; numbered ones keep their numbers. <b>Import Word</b> brings Word equations back in as TeX, so a document can go to Word and back. LibreOffice opens them too, though it draws a few things (boxes, fancy letters like ℝ) more plainly than Word.</li>
+      <li><b>PDF, web page and EPUB</b> draw them sharply at any size, with the TeX as a description for screen readers. <b>LaTeX</b> gets <code>\( … \)</code>, <code>equation</code> for numbered ones and <code>\[ … \]</code> for the rest; <b>Markdown</b> and <b>Pandoc</b> get <code>$…$</code> and <code>$$…$$</code>. Copy for <b>Substack</b> gives the TeX in dollars, to paste into Substack’s own equation block.</li>
+      <li>Drawing is done by MathJax, inside Anabasis, offline. Links in TeX (<code>\href</code>) and commands that load files are turned off.</li>
     </ul>
     <h4>Charts, maps, timelines &amp; relationships</h4>
     <ul>

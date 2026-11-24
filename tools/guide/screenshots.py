@@ -51,6 +51,9 @@ async def main():
                 await pg.evaluate("() => { closeDesk(); openDoc(P.docs[0].id); splitOpen('notes'); }"); await pg.wait_for_timeout(900)
                 await pg.screenshot(path=str(OUT / 'split.png'))
                 await pg.evaluate("() => splitClose()")
+                await pg.evaluate(r"""async () => { const d = newDoc('Measuring deterrence', '<h1>A simple model</h1><p>Let ' + eqHTML('p', false) + ' be the chance an attack succeeds and ' + eqHTML('C', false) + ' its cost. An attacker expects</p>' + eqHTML('E[U] = p\\,B - (1 - p)\\,C', true, true) + '<p>so deterrence holds when</p>' + eqHTML('p < \\frac{C}{B + C}', true, true) + '<p>Summed over ' + eqHTML('n', false) + ' independent attempts, the chance of at least one success is</p>' + eqHTML('1 - \\prod_{i=1}^{n} (1 - p_i)', true, true) + '<p><br></p>'); addDoc(d); switchTab('docs'); await mathLoad(); hydrateImages(); renumberFigures(); }"""); await pg.wait_for_timeout(1200)
+                await pg.evaluate("() => $('#toast').classList.remove('show')"); await pg.wait_for_timeout(300)
+                await pg.screenshot(path=str(OUT / 'equations.png'))
             await ctx.close()
         # a phone: the draft, and the toolbar's ⋯ menu
         ctx = await b.new_context(viewport={'width': 390, 'height': 760}, device_scale_factor=2, is_mobile=True, has_touch=True)
@@ -67,9 +70,9 @@ async def main():
     sheet.paste(a, (gap, gap)); sheet.paste(c, (a.width + gap * 2, gap))
     sheet = sheet.resize((W // 2, (a.height + gap * 2) // 2), Image.LANCZOS)
     sheet.save(OUT / 'phone.png', optimize=True)
-    for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png', 'dashboard.png', 'split.png'):
+    for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png', 'dashboard.png', 'split.png', 'equations.png'):
         p = OUT / f; Image.open(p).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)
-    print('wrote editor-light.png, editor-dark.png, research.png, journal.png, dashboard.png, split.png, phone.png to', OUT.relative_to(ROOT))
+    print('wrote editor-light.png, editor-dark.png, research.png, journal.png, dashboard.png, split.png, equations.png, phone.png to', OUT.relative_to(ROOT))
 
 
 if __name__ == '__main__':

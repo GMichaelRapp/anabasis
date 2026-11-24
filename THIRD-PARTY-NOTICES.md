@@ -16,6 +16,7 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 | [jsdiff](https://github.com/kpdecker/jsdiff) | 9.0.0 | © 2009–2015 Kevin Decker | BSD-3-Clause | comparing drafts |
 | [Paged.js](https://pagedjs.org) | 0.4.3 | © 2018 Adam Hyde, Fred Chasen, Julien Taquet and contributors | MIT | paginated PDF with footnotes |
 | [PDF.js](https://github.com/mozilla/pdf.js) | 6.5.438 | © Mozilla Foundation and contributors | Apache-2.0 | PDF reader |
+| [MathJax](https://www.mathjax.org) | 3.2.2 | © 2009–2023 The MathJax Consortium | Apache-2.0 | equations |
 | [Chart.js](https://www.chartjs.org) | 4.6.1 | © 2014–2024 Chart.js contributors | MIT | charts |
 | [d3-array](https://github.com/d3/d3-array), [d3-geo](https://github.com/d3/d3-geo) | 3.2.5, 3.1.2 | © Mike Bostock | ISC | map projections |
 | [topojson-client](https://github.com/topojson/topojson-client) | 3.1.0 | © Mike Bostock | ISC | map data decoding |

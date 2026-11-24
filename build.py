@@ -70,6 +70,7 @@ def build():
     lazy += '<script type="text/plain" id="data-places">' + read(DATA / 'places.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="application/json" id="data-admin1">' + safe(read(DATA / 'admin1.json')) + '</script>\n'
     lazy += '<script type="application/json" id="data-rivers">' + safe(read(DATA / 'rivers.json')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-math">/*! MathJax 3.2.2 | Apache-2.0 | (c) The MathJax Consortium | mathjax.org */' + safe(read(VJ / 'mathjax-tex-svg-full.js')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-paged">/*! Paged.js 0.4.3 | MIT | pagedjs.org */' + read(VJ / 'paged.min.js') + '</script>\n'
     lazy += f'<script type="text/plain" id="csl-locale">{read(CSL / "locales-en-US.xml")}</script>\n'
     vendor = '\n'.join(read(VJ / f) for f in EAGER)

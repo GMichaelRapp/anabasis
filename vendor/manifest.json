@@ -710,5 +710,13 @@
     "license": "CC-BY-SA-3.0",
     "source": "https://github.com/citation-style-language/styles",
     "sha256": "27635fde30896a748dcaaeaf29251b03c50acad0819f85257fa3d5988589bbf0"
+  },
+  {
+    "file": "vendor/js/mathjax-tex-svg-full.js",
+    "name": "MathJax",
+    "version": "3.2.2",
+    "license": "Apache-2.0",
+    "source": "npm:mathjax@3.2.2 es5/tex-svg-full.js",
+    "sha256": "a4354ff94fd868aea0cc6eaaa79a57fda0588646fc46ee3700a349ee0a11cbe6"
   }
 ]

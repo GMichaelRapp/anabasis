@@ -4,6 +4,17 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.8.0] — 2026-11-24
+
+### Added
+- **Equations.** Σ in the toolbar (also Ctrl+Alt+E, or Alt+= as in Word) opens an equation box: type TeX, add common pieces with a click, and see a live preview that points out a missing brace or an unknown command. An equation goes in the sentence or on its own line, centred, and numbered (1), (2)… at the right margin if you like; numbers follow the order as you edit. Click an equation to change it, switch it between the two, or remove it. Selected TeX, with or without its dollars, fills the box, and **Turn TeX in $…$ and $$…$$ into equations** converts a whole document (amounts like “$5 and $10” are left alone).
+- **Word equations, both ways.** Word export writes real Office Math (fractions, roots, sums and integrals with limits, brackets, matrices, aligned rows, accents, functions and limits), editable in Word’s equation editor, with numbered equations numbered at the right margin. Word import turns Word equations back into TeX, so a document can make the round trip; a paragraph holding just an equation (and its number) comes back as a display equation.
+- **Every other export.** PDF, web page and EPUB draw equations as SVG, labelled for screen readers; LaTeX gets `\( \)`, `equation` and `\[ \]` with amsmath; Markdown and Pandoc get `$…$` and `$$…$$`; Substack gets the TeX in dollars for its own equation block.
+- MathJax 3.2.2 (Apache-2.0) is built in and loads only when a document has an equation; nothing is fetched. Its link and file-loading commands are turned off.
+
+### Changed
+- Display equations don’t count toward the word count, and Listen says “equation” rather than reading TeX aloud.
+
 ## [1.7.1] — 2026-11-24
 
 ### Added
@@ -179,6 +190,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.8.0
 [1.7.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.1
 [1.7.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.0
 [1.6.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.6.0

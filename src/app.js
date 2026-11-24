@@ -5,6 +5,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MATH = { ready: null, css: '', cache: new Map() }, EQ_SEL = 'span.math[data-tex], p.eq[data-tex]'; // equations (see the Equations section)
 const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const nowISO = () => new Date().toISOString();
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -12,7 +13,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.7.1';
+const APP_VERSION = '1.8.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -371,7 +372,7 @@ async function loadProjectText(text, handle = null, name = '') {
   if (!P.docs.length) P.docs.push(newDoc());
   closePanel();
   openDoc((useLocal && P.docs.some(d => d.id === local.curDocId)) ? local.curDocId : P.docs[0].id, true);
-  renderAll();
+  renderAll(); if (P.docs.some(d => hasMath(d.html))) mathLoad();
   persistLocal();
   updateSaveState();
   toast((useLocal ? 'Continuing from the newer browser copy of “' : 'Opened “') + P.title + '”');
@@ -701,7 +702,7 @@ function openDoc(id, skipSync = false) {
 }
 function updateWordCount() {
   const clone = editor.cloneNode(true);
-  $$('.cite,.fn,.flag,del.sg', clone).forEach(m => m.remove());
+  $$('.cite,.fn,.flag,del.sg,p.eq', clone).forEach(m => m.remove()); $$('span.math', clone).forEach(m => { m.textContent = 'x'; });
   const words = (clone.innerText || '').trim().split(/\s+/).filter(Boolean).length;
   const cites = $$('.cite', editor).length;
   $('#wordCount').textContent = `${words.toLocaleString()} words · ${cites} citation${cites === 1 ? '' : 's'}`;
@@ -734,7 +735,7 @@ function snapRange(r) {
 }
 function rescueStrayInline() {
   [...editor.childNodes].forEach(n => {
-    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag,.dnum')) {
+    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag,.dnum,.math')) {
       const prev = n.previousElementSibling;
       if (prev && /^(P|H[1-6]|BLOCKQUOTE)$/.test(prev.nodeName)) { const nx = n.nextSibling; prev.append(n); if (nx && nx.nodeType === 3 && nx.parentNode === editor && nx.data.trim() === '') { prev.append('\u00a0'); nx.remove(); } else if (nx && nx.nodeType === 3 && nx.parentNode === editor) prev.append(nx); }
       else { const pp = document.createElement('p'); n.replaceWith(pp); pp.append(n); }
@@ -747,17 +748,18 @@ function insertHTMLAtCursor(html) {
   restoreSelection();
   const sel = getSelection(); if (sel.rangeCount && !sel.isCollapsed) sel.collapseToEnd();
   if (sel.rangeCount) { const r = snapRange(sel.getRangeAt(0)); sel.removeAllRanges(); sel.addRange(r); }
-  const before = $$('.cite,.fn,.dnum', editor).length;
+  const before = $$('.cite,.fn,.dnum,.math', editor).length;
   const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
   document.execCommand('insertHTML', false, html);
   // Chrome can silently refuse insertHTML right beside a non-editable marker; fall back to a plain DOM insert
-  if ($$('.cite,.fn,.dnum', editor).length === before && /class="(cite|fn|dnum)"/.test(html) && range) {
+  if ($$('.cite,.fn,.dnum,.math', editor).length === before && /class="(cite|fn|dnum|math)"/.test(html) && range) {
     const frag = range.createContextualFragment(html), last = frag.lastChild;
     range.insertNode(frag);
     const r = document.createRange(); r.setStartAfter(last); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange();
   }
   // Chrome sometimes drops contenteditable=false from inserted markers; restore it
-  $$('.cite,.fn,.flag,.dnum', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
+  $$('.cite,.fn,.flag,.dnum,.math', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
+  hydrateMath();
   rescueStrayInline();
   syncEditor(); renderRefs(true); updateWordCount(); markDirty();
 }
@@ -835,6 +837,12 @@ function sanitize(html) {
       if (/^(SCRIPT|STYLE|META|LINK|TITLE|HEAD|IFRAME|OBJECT|EMBED|SVG|MATH)$/.test(tag)) { ch.remove(); return; }
       if (/^H[4-6]$/.test(tag)) { const h = doc.createElement('h3'); h.append(...ch.childNodes); ch.replaceWith(h); walk(h); return; }
       if (!ALLOWED[tag]) { walk(ch); ch.replaceWith(...ch.childNodes); return; }
+      if ((tag === 'SPAN' && ch.classList.contains('math')) || (tag === 'P' && ch.classList.contains('eq'))) { // an equation: its TeX and nothing else
+        const tex = ch.getAttribute('data-tex'); if (!tex) { ch.removeAttribute('class'); } else {
+          const num = tag === 'P' && ch.classList.contains('num'); [...ch.attributes].forEach(a => ch.removeAttribute(a.name));
+          ch.className = tag === 'P' ? (num ? 'eq num' : 'eq') : 'math'; ch.setAttribute('data-tex', tex); ch.textContent = tex; return; // made non-editable once in place: Chrome's paste drops non-editable pieces
+        }
+      }
       const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum'));
       if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
         const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
@@ -1055,7 +1063,7 @@ function relTime(iso) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
 }
 /* ---------- binder: documents grouped into parts, in manual order ---------- */
-const docWords = d => { const t = htmlToText((d.id === curDocId ? editor.innerHTML : d.html).replace(/<span class="(cite|fn|flag)[^"]*"[^>]*>.*?<\/span>/g, ' ')); return t.trim().split(/\s+/).filter(Boolean).length; };
+const docWords = d => { const t = htmlToText((d.id === curDocId ? editor.innerHTML : d.html).replace(/<span class="(cite|fn|flag)[^"]*"[^>]*>.*?<\/span>/g, ' ').replace(/<span class="math"[^>]*>.*?<\/span>/g, ' x ').replace(/<p class="eq[^"]*"[^>]*>.*?<\/p>/g, '')); return t.trim().split(/\s+/).filter(Boolean).length; };
 function docsInPart(pid) { return P.docs.filter(d => (d.partId || '') === pid).sort((a, b) => a.order - b.order); }
 function binderOrder() { return ['', ...P.parts.map(x => x.id)].flatMap(docsInPart); }
 function renumber(pid) { docsInPart(pid).forEach((d, i) => d.order = i); }
@@ -1981,13 +1989,13 @@ function docClassAndStyle(doc) {
   return { cls: tmp.className, style: tmp.getAttribute('style') || '' };
 }
 /* mode: 'html' | 'md' */
-function buildExport(doc, mode = 'html') {
+function buildExport(doc, mode = 'html', opt = {}) {
   if (doc.id === curDocId) syncEditor();
   const tmp = document.createElement('div'); tmp.innerHTML = stripCp(doc.html);
   $$('.flag', tmp).forEach(f => { const m = document.createElement('mark'); m.textContent = `[${(FLAG_KINDS[f.dataset.kind] || FLAG_KINDS.tk).label}${f.dataset.note ? ': ' + f.dataset.note : ''}]`; f.replaceWith(m); });
   $$('.qlink', tmp).forEach(q => q.replaceWith(...q.childNodes));
   $$('[data-qn]', tmp).forEach(q => q.removeAttribute('data-qn'));
-  const figs = prepExportFigures(tmp); fillAbbreviations(tmp);
+  const figs = prepExportFigures(tmp); prepExportMath(tmp, opt.texMath ? 'substack' : mode); fillAbbreviations(tmp);
   const mgWant = doc.layout.marginalia || 'word';
   const mg = mgWant === 'page' && mode !== 'substack' ? collectMarginalia(tmp, mode) : [];
   if (mode !== 'docx' || mgWant !== 'word') $$('.cmt', tmp).forEach(c => c.replaceWith(...c.childNodes));
@@ -2034,6 +2042,7 @@ function exportStandaloneHTML(doc) {
 }
 function exportPDF(doc = curDoc()) {
   if (!doc) return;
+  if (mathPending(doc)) { mathLoad().then(() => exportPDF(doc)); return; }
   if (doc.layout.pdfNotes !== 'end') { exportPagedPDF(doc); return; }
   const x = buildExport(doc, 'html'), cs = docClassAndStyle(doc);
   $('#printRoot').innerHTML = `<article class="${cs.cls}" style="${cs.style}">${x.title ? `<header class="title-block">${x.title}</header>` : ''}${x.body}${refsHTML(x.out, true)}${(x.index || '').replace(/<span class="ix-refs">[\s\S]*?<\/span>/g, '')}${x.marginalia || ''}</article>`;
@@ -2045,7 +2054,7 @@ function exportPDF(doc = curDoc()) {
 }
 function exportMarkdown(doc) {
   const x = buildExport(doc, 'md');
-  const td = addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' }));
+  const td = addMathRules(addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' })));
   let md = `# ${doc.title}\n\n` + [doc.meta.subtitle, doc.meta.author, doc.meta.date].filter(Boolean).map(s => `*${s}*`).join('  \n') + '\n\n';
   md += td.turndown(x.body).replace(/@@FN(\d+)@@/g, '[^$1]');
   if (x.out.notes.length) md += '\n\n' + x.out.notes.map(n => `[^${n.n}]: ${td.turndown(n.html).replace(/\n+/g, ' ')}`).join('\n');
@@ -2054,6 +2063,7 @@ function exportMarkdown(doc) {
   return md.replace(/\n{3,}/g, '\n\n') + '\n';
 }
 async function copyFormatted(doc) {
+  if (mathPending(doc)) await mathLoad();
   const x = buildExport(doc, 'html');
   const html = `${x.title}${x.body}${refsHTML(x.out, true)}`;
   const text = htmlToText(html);
@@ -2080,7 +2090,7 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'pdf') exportPDF();
   if (x === 'docx') exportDocx(doc);
   if (x === 'ms') openManuscript();
-  if (x === 'html') download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html');
+  if (x === 'html') { const go = () => download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html'); if (mathPending(doc)) mathLoad().then(go); else go(); }
   if (x === 'md') download(fileSafe(doc.title) + '.md', exportMarkdown(doc), 'text/markdown');
   if (x === 'copy') copyFormatted(doc);
   if (x === 'substack') openSubstack();
@@ -2156,6 +2166,7 @@ document.addEventListener('keydown', e => {
   if (mod && e.altKey && e.code === 'KeyA') { e.preventDefault(); if (!dlgOpen) addComment(); }
   if (mod && e.altKey && e.code === 'KeyX') { e.preventDefault(); if (!dlgOpen) openIndexMark(); }
   if (mod && e.altKey && e.code === 'KeyD') { e.preventDefault(); if (!dlgOpen) openSaveDraft(); }
+  if ((mod && e.altKey && e.code === 'KeyE') || (e.altKey && !mod && e.code === 'Equal' && document.activeElement === editor)) { e.preventDefault(); if (!dlgOpen) openEq(); }
   if (e.key === 'Escape') { closePop(); if (!dlgOpen && !$('#findBar').classList.contains('hidden')) closeFind(); else if (!dlgOpen && document.body.classList.contains('focus')) toggleFocus(false); }
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
@@ -2203,7 +2214,7 @@ editor.addEventListener('click', e => { const f = e.target.closest('.flag'); if 
 
 /* ---------- outline & drafting checklist ---------- */
 function blockSnippet(el, n = 70) { const t = (el.textContent || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n) + '…' : t; }
-function wordsIn(el) { const c = el.cloneNode(true); $$('.cite,.fn,.flag', c).forEach(m => m.remove()); return (c.textContent || '').trim().split(/\s+/).filter(Boolean).length; }
+function wordsIn(el) { const c = el.cloneNode(true); $$('.cite,.fn,.flag,p.eq', c).forEach(m => m.remove()); $$('span.math', c).forEach(m => { m.textContent = 'x'; }); return (c.textContent || '').trim().split(/\s+/).filter(Boolean).length; }
 function uncitedBlocks() {
   return $$(':scope > p, :scope > blockquote, :scope > ul > li, :scope > ol > li', editor)
     .filter(el => !el.querySelector('.cite') && wordsIn(el) >= (PREFS.uncitedMin || 40));
@@ -2333,7 +2344,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert or edit an equation (TeX)', () => openEq()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -2521,7 +2532,7 @@ $('#msOk').addEventListener('click', async () => {
   if (fmt === 'docx') await exportDocx(ms);
   if (fmt === 'pdf') exportPDF(ms);
   if (fmt === 'md') download(fileSafe(ms.title) + '.md', exportMarkdown(ms), 'text/markdown');
-  if (fmt === 'html') download(fileSafe(ms.title) + '.html', exportStandaloneHTML(ms), 'text/html');
+  if (fmt === 'html') { const go = () => download(fileSafe(ms.title) + '.html', exportStandaloneHTML(ms), 'text/html'); if (mathPending(ms)) mathLoad().then(go); else go(); }
   if (fmt === 'epub') await exportEpub(ms);
   if (fmt === 'doc') { const d = newDoc(ms.title, ms.html); d.style = ms.style; addDoc(d); toast('Manuscript compiled into a new document.'); }
 });
@@ -2530,13 +2541,14 @@ $('#btnManuscript').addEventListener('click', () => openManuscript());
 /* ---------- Word (.docx) export with real footnotes ---------- */
 async function exportDocx(doc) {
   if (!doc) return;
+  if (doc.id === curDocId) syncEditor(); if (hasMath(doc.html)) await mathLoad();
   const D = docx, x = buildExport(doc, 'docx'), L = doc.layout;
   const font = { book: 'Palatino Linotype', times: 'Times New Roman', sans: 'Arial' }[L.font] || 'Times New Roman';
   const size = Math.round(parseFloat(L.size) * 2), line = Math.round(parseFloat(L.spacing) * 240);
   const isNote = x.out.isNote;
   const cmtIds = {}, cmtList = [];
   ((L.marginalia || 'word') === 'word' ? (x.body.match(/data-cmt="([^"]+)"/g) || []) : []).forEach(m => { const id = m.slice(10, -1); if (id in cmtIds) return; const c = findComment(id); if (!c) return; cmtIds[id] = cmtList.length; cmtList.push({ id: cmtList.length, author: c.author || doc.meta.author || 'Author', initials: (c.author || doc.meta.author || 'A').split(/\s+/).map(w => w[0]).join('').slice(0, 3), date: new Date(c.date || Date.now()), children: [new D.Paragraph({ children: [new D.TextRun(c.text)] })] }); });
-  const ctxBody = { font, size, line, footnotes: {}, comments: cmtIds }, ctxNote = { font, size: Math.max(16, size - 4), line: 240, footnotes: {} };
+  const ctxBody = { font, size, line, footnotes: {}, comments: cmtIds, textW: (doc.layout.paper === 'A4' ? 11906 : 12240) - 2880 }, ctxNote = { font, size: Math.max(16, size - 4), line: 240, footnotes: {} };
   const notes = {};
   x.out.notes.forEach(n => { notes[n.n] = n.html; ctxBody.footnotes[n.n] = true; });
   const footnotes = {};
@@ -2596,6 +2608,14 @@ async function exportDocx(doc) {
     toast(fl ? `Word file saved. Note: ${fl} unresolved flag${fl > 1 ? 's' : ''} printed as [TK].` : (isNote ? 'Word file saved with real footnotes.' : 'Word file saved.'));
   } catch (e) { console.error(e); toast('Couldn’t build the Word file: ' + e.message); }
 }
+/* A display equation as a Word paragraph: a Word equation, centred; a numbered one has its number at the right margin */
+function eqToDocx(el, ctx) {
+  const D = docx, tex = el.getAttribute('data-tex'), n = el.dataset.n, om = mathOMML(tex, true), W = ctx.textW || 9360, sp = { before: 120, after: 120 };
+  if (!om) return new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: sp, children: [new D.TextRun({ text: tex + (n ? `    (${n})` : ''), font: 'Cambria Math', size: ctx.size })] });
+  if (!n) return new D.Paragraph({ spacing: sp, children: [D.ImportedXmlComponent.fromXmlString(`<m:oMathPara><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr>${om}</m:oMathPara>`)] });
+  return new D.Paragraph({ spacing: sp, tabStops: [{ type: D.TabStopType.CENTER, position: Math.round(W / 2) }, { type: D.TabStopType.RIGHT, position: W }],
+    children: [new D.TextRun({ text: '\t', font: ctx.font, size: ctx.size }), D.ImportedXmlComponent.fromXmlString(om), new D.TextRun({ text: `\t(${n})`, font: ctx.font, size: ctx.size })] });
+}
 /* Convert sanitized document HTML into docx Paragraphs. */
 function htmlToDocx(html, ctx, opt = {}) {
   const D = docx, root = document.createElement('div'); root.innerHTML = html;
@@ -2614,6 +2634,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (ch.nodeType !== 1) return;
       const tag = ch.nodeName;
       if (tag === 'BR') { r.push(new D.TextRun({ break: 1 })); return; }
+      if (tag === 'SPAN' && ch.classList.contains('math') && ch.hasAttribute('data-tex')) { const tex = ch.getAttribute('data-tex'), om = mathOMML(tex, false); r.push(om ? D.ImportedXmlComponent.fromXmlString(om) : new D.TextRun({ text: tex, font: 'Cambria Math', size: sz })); return; }
       if ((tag === 'INS' || tag === 'DEL') && ch.classList.contains('sg')) { r.push(...runs(ch, Object.assign({}, f, { track: tag, ta: sgAttrs(ch) }), sz)); return; }
       if (tag === 'SPAN' && ch.classList.contains('cmt') && ctx.comments && ch.dataset.cmt in ctx.comments) { const id = ctx.comments[ch.dataset.cmt]; r.push(new D.CommentRangeStart(id), ...runs(ch, f, sz), new D.CommentRangeEnd(id), new D.TextRun({ children: [new D.CommentReference(id)] })); return; }
       if (tag === 'A' && ch.classList.contains('ix-a')) { r.push(new D.SimpleField('XE "' + (ch.dataset.ix || '').replace(/"/g, '') + '"', '')); return; }
@@ -2660,6 +2681,7 @@ function htmlToDocx(html, ctx, opt = {}) {
     if (tag === 'DIV' && el.classList.contains('ch-break') && !el.textContent.trim()) { out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); prevHeading = true; return; }
     if (tag === 'UL' || tag === 'OL') { list(el, 0); prevHeading = false; return; }
     if (tag === 'FIGURE') { out.push(...figureToDocx(el, ctx, runs, trimRuns)); prevHeading = true; return; }
+    if (tag === 'P' && el.classList.contains('eq') && el.hasAttribute('data-tex')) { out.push(eqToDocx(el, ctx)); prevHeading = true; return; }
     if (tag === 'TABLE') { out.push(tableToDocx(el, ctx, runs, trimRuns)); prevHeading = true; return; }
     if (tag === 'NAV') { if (el.classList.contains('lof') || el.classList.contains('toc')) out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); [...el.childNodes].forEach(block); return; }
     if (tag === 'BLOCKQUOTE') {
@@ -3099,6 +3121,7 @@ html,body{margin:0;background:#fff;color:#000}
 .docbody .mg-ref{color:inherit;text-decoration:none}`;
 }
 function exportPagedPDF(doc) {
+  if (mathPending(doc)) { mathLoad().then(() => exportPagedPDF(doc)); return; }
   const x = buildExport(doc, 'paged'), cs = docClassAndStyle(doc);
   const lib = document.getElementById('lib-paged').textContent;
   const bib = refsHTML(Object.assign({}, x.out, { notes: [] }), true);
@@ -3146,6 +3169,7 @@ async function importDocx(file) {
   $$('ol', tmp).forEach(ol => { if (ol.querySelector('li[id^="footnote-"],li[id^="endnote-"]') || (!ol.textContent.trim())) ol.remove(); });
   $$('img', tmp).forEach(img => { const p = img.closest('p'); if (p && !p.textContent.trim() && p.parentNode === tmp) p.replaceWith(img); });
   const clean = document.createElement('div'); clean.innerHTML = sanitize(tmp.innerHTML);
+  const nEq = docxEquations(clean, mk.eqs || []);
   wrapBareTables(clean);
   // a paragraph like “Figure 3. Caption” or “Table 2: Caption” next to a figure/table becomes its caption
   $$('table', clean).forEach(t => { const f = t.closest('figure'), prev = f && f.previousElementSibling; if (prev && prev.nodeName === 'P' && /^\s*Table\s+\d+[.:]/i.test(prev.textContent)) { f.querySelector('figcaption').innerHTML = stripCapLabel(prev.innerHTML, 'Table'); prev.remove(); } });
@@ -3159,7 +3183,7 @@ async function importDocx(file) {
   d.html = stripCp(clean.innerHTML) || '<p><br></p>';
   addDoc(d); switchTab('docs');
   if (marks.nSg) { sgRefresh(); }
-  const bits = [marks.nSg && `${marks.nSg} tracked change${marks.nSg > 1 ? 's' : ''} to review`, marks.nCm && `${marks.nCm} comment${marks.nCm > 1 ? 's' : ''} as margin notes`, fnCount && `${fnCount} footnote${fnCount > 1 ? 's' : ''}`, imgs && `${imgs} image${imgs > 1 ? 's' : ''}`, tables && `${tables} table${tables > 1 ? 's' : ''}`].filter(Boolean);
+  const bits = [marks.nSg && `${marks.nSg} tracked change${marks.nSg > 1 ? 's' : ''} to review`, marks.nCm && `${marks.nCm} comment${marks.nCm > 1 ? 's' : ''} as margin notes`, fnCount && `${fnCount} footnote${fnCount > 1 ? 's' : ''}`, imgs && `${imgs} image${imgs > 1 ? 's' : ''}`, tables && `${tables} table${tables > 1 ? 's' : ''}`, nEq && `${nEq} equation${nEq > 1 ? 's' : ''}`].filter(Boolean);
   toast(`Imported “${title}”${bits.length ? ' with ' + bits.join(', ').replace(/, ([^,]*)$/, ' and $1') : ''}.`);
 }
 $('#btnImportDocx').addEventListener('click', () => $('#fileDocx').click());
@@ -3494,6 +3518,7 @@ function toXhtml(html) {
 const xpage = (title, body, cls = '') => `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE html>\n<html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops" lang="en" xml:lang="en"><head><meta charset="UTF-8"/><title>${esc(title)}</title><link rel="stylesheet" type="text/css" href="style.css"/></head><body class="${cls}">${body}</body></html>`;
 async function exportEpub(doc) {
   if (!doc) return;
+  if (doc.id === curDocId) syncEditor(); if (hasMath(doc.html)) await mathLoad();
   const x = buildExport(doc, 'epub');
   // split into chapters at top-level h1s that start chapters/parts (or keep one file)
   const box = document.createElement('div'); box.innerHTML = x.body;
@@ -3526,11 +3551,11 @@ async function exportEpub(doc) {
   if (bibPage) all.push({ id: 'bib', file: 'bib.xhtml', title: x.out.heading, html: bibPage, raw: true });
   if (ixPage) all.push({ id: 'index', file: 'index.xhtml', title: 'Index', html: ixPage, raw: true });
   if (x.marginalia) all.push({ id: 'marginalia', file: 'marginalia.xhtml', title: 'Marginalia', html: x.marginalia.replace(/<h2 class="end-h">/, '<h1>').replace(/<\/h2>/, '</h1>'), raw: true });
-  const css = `body{font-family:Georgia,serif;line-height:1.5;margin:0 5%}h1,h2,h3{line-height:1.25;page-break-after:avoid}h1.part-title{text-align:center;margin-top:30%}p{margin:0 0 .6em;text-indent:0}blockquote{margin:0 0 .8em 1.5em}sup{font-size:.7em;line-height:0}a.noteref{text-decoration:none}aside{margin:0 0 .6em}.csl-entry{margin:0 0 .5em}.hanging .csl-entry{padding-left:1.5em;text-indent:-1.5em}.titlepage{text-align:center;margin-top:30%}.titlepage .author{margin-top:2em}mark{background:#fde68a}`;
+  const css = `.eq{text-align:center;margin:.8em 0}.eq svg{max-width:100%}.eq-n{float:right}body{font-family:Georgia,serif;line-height:1.5;margin:0 5%}h1,h2,h3{line-height:1.25;page-break-after:avoid}h1.part-title{text-align:center;margin-top:30%}p{margin:0 0 .6em;text-indent:0}blockquote{margin:0 0 .8em 1.5em}sup{font-size:.7em;line-height:0}a.noteref{text-decoration:none}aside{margin:0 0 .6em}.csl-entry{margin:0 0 .5em}.hanging .csl-entry{padding-left:1.5em;text-indent:-1.5em}.titlepage{text-align:center;margin-top:30%}.titlepage .author{margin-top:2em}mark{background:#fde68a}`;
   const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bookid" xml:lang="en">
 <metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">${uuid}</dc:identifier><dc:title>${esc(doc.title)}</dc:title>${m.author ? `<dc:creator>${esc(m.author)}</dc:creator>` : ''}<dc:language>en</dc:language><meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</meta></metadata>
-<manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="css" href="style.css" media-type="text/css"/>${all.map(f => `<item id="${f.id}" href="${f.file}" media-type="application/xhtml+xml"/>`).join('')}${imgs.files.map(f => `<item id="${f.id}" href="${f.name}" media-type="${f.mime}"/>`).join('')}</manifest>
+<manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="css" href="style.css" media-type="text/css"/>${all.map(f => `<item id="${f.id}" href="${f.file}" media-type="application/xhtml+xml"${/<svg[\s>]/.test(f.html) ? ' properties="svg"' : ''}/>`).join('')}${imgs.files.map(f => `<item id="${f.id}" href="${f.name}" media-type="${f.mime}"/>`).join('')}</manifest>
 <spine toc="ncx">${all.map(f => `<itemref idref="${f.id}"/>`).join('')}</spine></package>`;
   const nav = xpage('Contents', `<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>${all.map(f => `<li><a href="${f.file}">${esc(f.title)}</a></li>`).join('')}</ol></nav>`);
   const ncx = `<?xml version="1.0" encoding="UTF-8"?><ncx xmlns="http://www.daisy.org/z3986/2005/ncx/" version="2005-1"><head><meta name="dtb:uid" content="${uuid}"/></head><docTitle><text>${esc(doc.title)}</text></docTitle><navMap>${all.map((f, i) => `<navPoint id="p${i + 1}" playOrder="${i + 1}"><navLabel><text>${esc(f.title)}</text></navLabel><content src="${f.file}"/></navPoint>`).join('')}</navMap></ncx>`;
@@ -5171,6 +5196,7 @@ function assetURL(id) {
 }
 function hydrateImages(root = editor) {
   $$('img[data-asset]', root).forEach(img => { const u = assetURL(img.dataset.asset); if (u && img.getAttribute('src') !== u) img.setAttribute('src', u); if (!u) img.setAttribute('alt', '[missing image]'); });
+  hydrateMath(root);
 }
 function addAsset(data, name = '', w = 0, h = 0) {
   const id = uid('i'), mime = (/^data:([^;,]+)/.exec(data) || [])[1] || 'image/png';
@@ -5208,6 +5234,7 @@ function renumberFigures(root = editor) {
     const lab = fig.classList.contains('tbl') ? 'Table ' + (++t) + '.' : 'Figure ' + (++f) + '.';
     if (cap.getAttribute('data-cp-n') !== lab) cap.setAttribute('data-cp-n', lab);
   });
+  numberEquations(root);
 }
 function prepFigureDom(root) { // contenteditable plumbing after paste/import/open
   $$('figure.fig', root).forEach(f => { f.setAttribute('contenteditable', 'false'); const c = f.querySelector(':scope > figcaption'); if (c) c.setAttribute('contenteditable', 'true'); });
@@ -5239,7 +5266,7 @@ $('#fileFigure').addEventListener('change', async e => {
   insertFigureFiles(fs);
 });
 function saveSelectionNow() { const s = getSelection(); if (s.rangeCount && editor.contains(s.anchorNode)) savedRange = s.getRangeAt(0).cloneRange(); }
-$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnFigure,#btnTable')) { saveSelectionNow(); e.preventDefault(); } });
+$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnFigure,#btnTable,#btnEq')) { saveSelectionNow(); e.preventDefault(); } });
 
 /* tables */
 function insertTable(rows, cols, header) {
@@ -5391,7 +5418,370 @@ function prepExportFigures(tmp) {
   });
   return list;
 }
+/* equations in an export: numbered in order; drawn as SVG for the web, PDF and EPUB; left as TeX
+   (with data-n for numbered ones) for Word, Markdown, Pandoc and LaTeX, which each write their own */
+function prepExportMath(tmp, mode) {
+  let q = 0;
+  $$('span.math[data-tex], p.eq[data-tex]', tmp).forEach(el => {
+    const tex = el.getAttribute('data-tex'), disp = el.nodeName === 'P', n = disp && el.classList.contains('num') ? ++q : 0;
+    el.removeAttribute('contenteditable'); if (n) el.setAttribute('data-n', n);
+    if (!/^(html|paged|epub|substack)$/.test(mode)) return;
+    let inner = MATH.css && mode !== 'substack' ? mathMarkup(tex, disp) : '';
+    if (inner && mode === 'epub') { const m = /<svg[\s\S]*<\/svg>/.exec(inner); inner = m ? m[0].replace(/\saria-hidden="true"/, '').replace(/\srole="img"/, '').replace('<svg', `<svg role="img" aria-label="${esc(tex)}"`) : ''; }
+    if (!inner) inner = esc(mode === 'substack' ? (disp ? `$$${tex}$$` : `$${tex}$`) : (disp ? `\\[${tex}\\]` : `\\(${tex}\\)`));
+    const w = document.createElement(disp ? 'div' : 'span'); w.className = disp ? 'eq' : 'math';
+    w.innerHTML = inner + (n ? `<span class="eq-n">(${n})</span>` : ''); el.replaceWith(w);
+  });
+  return q;
+}
+function addMathRules(td) { // Markdown and Pandoc: TeX between dollars
+  td.addRule('mathInline', { filter: n => n.nodeName === 'SPAN' && n.classList.contains('math') && n.hasAttribute('data-tex'), replacement: (c, n) => `$${n.getAttribute('data-tex').replace(/\s*\n\s*/g, ' ')}$` });
+  td.addRule('mathBlock', { filter: n => n.nodeName === 'P' && n.classList.contains('eq') && n.hasAttribute('data-tex'), replacement: (c, n) => `\n\n$$\n${n.getAttribute('data-tex')}\n$$\n\n` });
+  return td;
+}
 function lofPlaceholder() { return '<nav class="lof" contenteditable="false"><p>List of figures and tables — filled in when you export.</p></nav>'; }
+/* ================================================================
+   Equations (1.8.0)
+   Inline:  <span class="math" contenteditable="false" data-tex="…">…the TeX…</span>
+   Display: <p class="eq num" contenteditable="false" data-tex="…">…the TeX…</p>  ("num": numbered)
+   The TeX is the saved text, so a project file stays readable anywhere; MathJax draws it in a
+   shadow root that is never saved. Word gets real Word equations (OMML), converted from
+   MathJax's MathML; Word equations coming in are turned back into TeX.
+   ================================================================ */
+function mathLoad() {
+  if (MATH.ready) return MATH.ready;
+  window.MathJax = { loader: { load: [] }, startup: { typeset: false }, options: { enableMenu: false }, svg: { fontCache: 'none' },
+    tex: { packages: { '[-]': ['require', 'autoload', 'html'] } } }; // nothing that loads files or makes links
+  MATH.ready = (async () => {
+    useLib('lib-math'); await MathJax.startup.promise;
+    MATH.css = MathJax.svgStylesheet().textContent;
+    const st = document.createElement('style'); st.id = 'mjxCss'; st.textContent = MATH.css; document.head.append(st);
+    return true;
+  })().catch(e => { console.warn('MathJax', e); MATH.failed = true; return false; });
+  return MATH.ready;
+}
+function hasMath(html) { return /class="(math|eq)\b/.test(html || ''); }
+const mathPending = doc => !!doc && !MATH.css && !MATH.failed && hasMath(doc.id === curDocId ? editor.innerHTML : doc.html); // exports wait for MathJax once
+function mathMarkup(tex, display) { // MathJax's SVG for one equation, as markup (kept for reuse)
+  const k = (display ? 'D' : 'I') + tex; let v = MATH.cache.get(k);
+  if (v == null) {
+    try { v = MathJax.tex2svg(tex, { display }).outerHTML; } catch (e) { v = ''; }
+    if (MATH.cache.size > 500) MATH.cache.clear(); MATH.cache.set(k, v);
+  }
+  return v;
+}
+function mathProblem(tex) { // a sentence about what's wrong, or ''
+  if (!tex.trim()) return 'Type the equation in TeX, for example x^2 + y^2 = r^2.';
+  let m; try { m = MathJax.tex2mml(tex, { display: true }); } catch (e) { return e.message; }
+  const er = /data-mjx-error="([^"]*)"/.exec(m); if (er) return er[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x([0-9A-F]+);/gi, (x, h) => String.fromCodePoint(parseInt(h, 16))) + '.';
+  const un = /<mtext mathcolor="red">(\\[^<]*)<\/mtext>/.exec(m); if (un) return `${un[1]} isn’t a command MathJax knows.`;
+  return '';
+}
+const MATH_HOST_CSS = `:host{cursor:pointer;border-radius:3px}:host(:hover){background:color-mix(in srgb,currentColor 8%,transparent)}
+:host(p){display:block;position:relative;text-align:center;margin:.7em 0;padding:.1em 3.2em}
+mjx-container[display="true"]{margin:0!important}.n{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+code{font:.85em ui-monospace,Menlo,Consolas,monospace;color:#b3261e;white-space:pre-wrap}`;
+function hydrateMath(root = editor) {
+  const els = root.querySelectorAll(EQ_SEL); if (!els.length) return;
+  if (!MATH.css) { mathLoad().then(ok => { if (ok) hydrateMath(root); }); return; }
+  els.forEach(el => {
+    if (el.getAttribute('contenteditable') !== 'false') el.setAttribute('contenteditable', 'false');
+    if (el.hasAttribute('style')) el.removeAttribute('style');
+    const tex = el.getAttribute('data-tex') || '', disp = el.nodeName === 'P', key = (disp ? 'D' : 'I') + tex;
+    if (el.textContent !== tex) el.textContent = tex;
+    let sr = el.shadowRoot; if (!sr) { try { sr = el.attachShadow({ mode: 'open' }); } catch (e) { return; } }
+    if (el._mk !== key) {
+      el._mk = key; const svg = mathMarkup(tex, disp);
+      sr.innerHTML = `<style>${MATH.css}${MATH_HOST_CSS}</style>${svg || `<code>${esc(tex)}</code>`}${disp ? '<span class="n"></span>' : ''}`;
+    }
+    if (disp) { const n = sr.querySelector('.n'), want = el.getAttribute('data-cp-n') || ''; if (n && n.textContent !== want) n.textContent = want; }
+    el.setAttribute('data-cp-r', '1');
+  });
+}
+function numberEquations(root = editor) {
+  let q = 0;
+  $$('p.eq', root).forEach(p => {
+    const lab = p.classList.contains('num') ? `(${++q})` : '';
+    if ((p.getAttribute('data-cp-n') || '') === lab) return;
+    if (lab) p.setAttribute('data-cp-n', lab); else p.removeAttribute('data-cp-n');
+    const n = p.shadowRoot && p.shadowRoot.querySelector('.n'); if (n) n.textContent = lab;
+  });
+}
+const eqHTML = (tex, block, num) => block ? `<p class="eq${num ? ' num' : ''}" contenteditable="false" data-tex="${esc(tex)}">${esc(tex)}</p>` : `<span class="math" contenteditable="false" data-tex="${esc(tex)}">${esc(tex)}</span>`;
+function unwrapTex(t) { // "$x$", "\(x\)", "$$x$$", "\[x\]" → { tex, block }
+  t = t.trim(); let m;
+  if ((m = /^\$\$([\s\S]+)\$\$$/.exec(t)) || (m = /^\\\[([\s\S]+)\\\]$/.exec(t))) return { tex: m[1].trim(), block: true };
+  if ((m = /^\$([\s\S]+)\$$/.exec(t)) || (m = /^\\\(([\s\S]+)\\\)$/.exec(t))) return { tex: m[1].trim(), block: false };
+  if ((m = /^\\begin\{(equation|align|gather|multline)\*?\}([\s\S]+)\\end\{\1\*?\}$/.exec(t))) return { tex: m[1] === 'equation' ? m[2].trim() : `\\begin{${m[1] === 'align' ? 'aligned' : m[1] === 'gather' ? 'gathered' : 'multline'}}${m[2]}\\end{${m[1] === 'align' ? 'aligned' : m[1] === 'gather' ? 'gathered' : 'multline'}}`, block: true };
+  return { tex: t, block: null };
+}
+
+/* ---- the equation box ---- */
+let eqTarget = null, eqFromSel = false;
+const EQ_SNIPS = [['Fraction', '\\frac{a}{b}'], ['Root', '\\sqrt{x}'], ['Power', 'x^{2}'], ['Subscript', 'x_{i}'], ['Sum', '\\sum_{i=1}^{n} '], ['Integral', '\\int_{a}^{b} f(x)\\,dx'], ['Limit', '\\lim_{x \\to \\infty} '],
+  ['Greek', '\\alpha \\beta \\gamma \\theta \\lambda \\mu \\pi \\sigma'], ['Brackets', '\\left( \\right)'], ['Matrix', '\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}'], ['Aligned', '\\begin{aligned} a &= b + c \\\\ &= d \\end{aligned}'], ['Cases', 'f(x) = \\begin{cases} 1 & x > 0 \\\\ 0 & \\text{otherwise} \\end{cases}'], ['Text', '\\text{ if }']];
+async function openEq(el) {
+  if (deskOn || boardOn || planOn || homeOn || draftsOn) return;
+  eqTarget = el && el.isConnected && editor.contains(el) ? el : null; eqFromSel = false;
+  let tex = '', block = false, num = true;
+  if (eqTarget) { tex = eqTarget.getAttribute('data-tex') || ''; block = eqTarget.nodeName === 'P'; num = !block || eqTarget.classList.contains('num'); }
+  else {
+    const s = getSelection(), inEd = s.rangeCount && editor.contains(s.anchorNode);
+    if (inEd) saveSelectionNow();
+    const t = inEd ? s.toString() : '';
+    if (t.trim() && t.length < 4000 && !t.includes('\n\n')) { eqFromSel = true; const u = unwrapTex(t); tex = u.tex; block = u.block ?? false; }
+    else { let b = inEd ? s.anchorNode : null; while (b && b.parentNode !== editor) b = b.parentNode; block = !b || !b.textContent.trim(); }
+  }
+  $('#eqTitle').textContent = eqTarget ? 'Edit equation' : 'Insert an equation';
+  $('#eqTex').value = tex; $(block ? '#eqBlock' : '#eqInline').checked = true; $('#eqNum').checked = num;
+  $('#eqOk').textContent = eqTarget ? 'Update' : 'Insert'; $('#eqDel').classList.toggle('hidden', !eqTarget);
+  eqKindUI(); $('#eqPrev').innerHTML = ''; $('#eqMsg').textContent = MATH.css ? '' : 'Getting the equation tools ready…';
+  $('#eqDlg').showModal(); $('#eqTex').focus(); $('#eqTex').setSelectionRange(tex.length, tex.length);
+  await mathLoad(); eqPreview();
+}
+function eqKindUI() { $('#eqNum').disabled = !$('#eqBlock').checked; $('#eqNumL').classList.toggle('muted', !$('#eqBlock').checked); }
+function eqPreview() {
+  if (!MATH.css) return;
+  const tex = $('#eqTex').value, block = $('#eqBlock').checked, bad = tex.trim() ? mathProblem(tex) : '';
+  $('#eqPrev').innerHTML = tex.trim() ? mathMarkup(tex, block) : '<span class="muted">The equation shows here as you type.</span>';
+  $('#eqMsg').textContent = bad; $('#eqMsg').classList.toggle('warn', !!bad);
+}
+const eqPreviewSoon = debounce(eqPreview, 120);
+function eqApply() {
+  const tex = $('#eqTex').value.trim();
+  if (!tex) { $('#eqMsg').textContent = 'Type the equation first.'; $('#eqTex').focus(); return; }
+  const block = $('#eqBlock').checked, num = $('#eqNum').checked, html = eqHTML(tex, block, num);
+  $('#eqDlg').close();
+  const t = eqTarget; eqTarget = null;
+  if (t && t.isConnected) {
+    const was = t.nodeName === 'P';
+    if (was === block) { t.setAttribute('data-tex', tex); t.textContent = tex; if (block) t.classList.toggle('num', num); t._mk = ''; }
+    else if (block) { let b = t; while (b.parentNode && b.parentNode !== editor) b = b.parentNode; const tpl = document.createElement('template'); tpl.innerHTML = html; (b.parentNode === editor ? b : t).after(tpl.content); eqUnplace(t); if (b.parentNode === editor && !b.textContent.trim()) b.remove(); }
+    else { const p = document.createElement('p'); p.innerHTML = html; t.replaceWith(p); }
+  } else if (block) {
+    restoreSelection(); if (eqFromSel) document.execCommand('delete');
+    insertBlocksAtCursor(html + '<p><br></p>');
+  } else {
+    restoreSelection(); if (eqFromSel) document.execCommand('delete');
+    const before = new Set($$('span.math', editor)); insertHTMLAtCursor(html);
+    const el = $$('span.math', editor).find(x => !before.has(x));
+    if (el) { // word spaces either side, which the browser can drop next to a non-editable piece
+      const p = el.previousSibling, n = el.nextSibling;
+      if (p && p.nodeType === 3) { if (/[^\s(\[{“‘"'\/-]$/.test(p.data)) p.data += ' '; else p.data = p.data.replace(/[\u00a0 ]+$/, ' '); }
+      if (n && n.nodeType === 3) { if (/^[\p{L}\p{N}]/u.test(n.data)) n.data = ' ' + n.data; else n.data = n.data.replace(/^[\u00a0 ]+/, ' '); }
+      else if (!n || (n.nodeType === 3 && !n.data)) el.after(document.createTextNode('\u00a0'));
+    }
+  }
+  hydrateMath(); renumberFigures(); onEdit(); markDirty();
+}
+function eqUnplace(t) { // take an inline equation out of its sentence without leaving two spaces
+  const p = t.previousSibling, n = t.nextSibling; t.remove();
+  if (p && n && p.nodeType === 3 && n.nodeType === 3 && /[\s\u00a0]$/.test(p.data) && /^[\s\u00a0]/.test(n.data)) { p.data = p.data.replace(/[\s\u00a0]+$/, ''); n.data = n.data.replace(/^[\s\u00a0]+/, ' '); }
+}
+function eqRemove() { const t = eqTarget; eqTarget = null; $('#eqDlg').close(); if (t && t.isConnected) { if (t.nodeName === 'SPAN') eqUnplace(t); else t.remove(); renumberFigures(); onEdit(); markDirty(); toast('Equation removed.'); } }
+$('#eqTex').addEventListener('input', eqPreviewSoon);
+$('#eqTex').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); eqApply(); } });
+$$('#eqDlg input[name=eqKind]').forEach(r => r.addEventListener('change', () => { eqKindUI(); eqPreview(); }));
+$('#eqOk').addEventListener('click', eqApply);
+$('#eqCancel').addEventListener('click', () => { eqTarget = null; $('#eqDlg').close(); });
+$('#eqDel').addEventListener('click', eqRemove);
+$('#eqSnips').innerHTML = EQ_SNIPS.map(([l, s], i) => `<button type="button" class="ghost small" data-i="${i}" title="${esc(s)}">${esc(l)}</button>`).join('');
+$('#eqSnips').addEventListener('click', e => {
+  const b = e.target.closest('button[data-i]'); if (!b) return;
+  const ta = $('#eqTex'), s = EQ_SNIPS[+b.dataset.i][1], a = ta.selectionStart, z = ta.selectionEnd;
+  ta.setRangeText(s, a, z, 'end'); ta.focus(); eqPreviewSoon();
+});
+$('#btnEq').addEventListener('click', () => openEq());
+editor.addEventListener('click', e => { const el = e.target.closest && e.target.closest('span.math,p.eq'); if (el && editor.contains(el)) { e.preventDefault(); openEq(el); } });
+
+/* Turn TeX typed or pasted as text ($…$, $$…$$, \(…\), \[…\]) into equations, across the open document */
+function texTextToMath() {
+  syncEditor(); let n = 0;
+  // a paragraph that is only $$…$$ or \[…\] becomes a display equation
+  $$(':scope > p', editor).forEach(p => {
+    if (p.classList.contains('eq') || p.querySelector('.cite,.fn,.math')) return;
+    const m = /^\s*(?:\$\$([\s\S]+?)\$\$|\\\[([\s\S]+?)\\\])\s*(?:\((\d+)\))?\s*$/.exec(p.textContent); if (!m) return;
+    const tpl = document.createElement('template'); tpl.innerHTML = eqHTML((m[1] || m[2]).trim(), true, true); p.replaceWith(tpl.content); n++;
+  });
+  // inline: \(…\) always; $…$ only as Pandoc reads it (no space inside the dollars, no digit straight after), so "$5 and $10" stays money
+  const re = /\\\(([\s\S]+?)\\\)|\$\$([^$]+?)\$\$|(?<![\\$\w])\$(?![\s$])((?:\\\$|[^$\n])+?)(?<![\s\\])\$(?![\d$])/g;
+  const w = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, { acceptNode: t => t.parentElement.closest('.math,.eq,.cite,.fn,.flag,code,pre,a,figcaption') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  const texts = []; let t; while ((t = w.nextNode())) if (/\$|\\\(/.test(t.data)) texts.push(t);
+  texts.forEach(tn => {
+    re.lastIndex = 0; if (!re.test(tn.data)) return; re.lastIndex = 0;
+    const tpl = document.createElement('template'); let last = 0, h = '', m;
+    while ((m = re.exec(tn.data))) { h += esc(tn.data.slice(last, m.index)) + eqHTML((m[1] || m[2] || m[3]).trim(), false); last = re.lastIndex; n++; }
+    h += esc(tn.data.slice(last)); tpl.innerHTML = h; tn.replaceWith(tpl.content);
+  });
+  if (n) { hydrateMath(); renumberFigures(); onEdit(); markDirty(); }
+  toast(n ? `Turned ${n} piece${n === 1 ? '' : 's'} of TeX into equation${n === 1 ? '' : 's'}.` : 'No TeX in $…$, $$…$$, \\(…\\) or \\[…\\] found in this document.');
+}
+
+/* ---- MathML (from MathJax) → Office Math (OMML), for Word ---- */
+const OM_NARY = '∑∏∐⋀⋁⋂⋃⨀⨁⨂⨄⨆∫∬∭∮∯∰∱∲∳⨌';
+const OM_REL = new Set([...'=<>≤≥≠≈≡∼≃≅∝→←↔⇒⇐⇔⟶⟵⟷⟹⟸⟺↦∈∉∋⊂⊃⊆⊇⊊⊋≪≫≺≻⪯⪰∣∥⊥≐≜:≔']);
+const OM_ACC = { '^': '̂', 'ˆ': '̂', '~': '̃', '˜': '̃', '˙': '̇', '¨': '̈', '→': '⃗', '⃗': '⃗', '´': '́', 'ˊ': '́', '`': '̀', 'ˋ': '̀', '˘': '̆', 'ˇ': '̌', '¯': '̅', 'ˉ': '̅', '°': '̊', '˚': '̊' };
+const OM_VAR = { normal: ['', 'p'], bold: ['', 'b'], italic: ['', 'i'], 'bold-italic': ['', 'bi'], 'double-struck': ['double-struck', 'p'], script: ['script', 'p'], 'bold-script': ['script', 'b'], fraktur: ['fraktur', 'p'], 'bold-fraktur': ['fraktur', 'b'], 'sans-serif': ['sans-serif', 'p'], 'bold-sans-serif': ['sans-serif', 'b'], 'sans-serif-italic': ['sans-serif', 'i'], 'sans-serif-bold-italic': ['sans-serif', 'bi'], monospace: ['monospace', 'p'] };
+const omX = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const OM_FONT = '<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/></w:rPr>';
+function omRun(t, pr = '') { return t ? `<m:r>${pr ? `<m:rPr>${pr}</m:rPr>` : ''}${OM_FONT}<m:t xml:space="preserve">${omX(t)}</m:t></m:r>` : ''; }
+function mathOMML(tex, display) {
+  if (!window.MathJax || !MathJax.tex2mml) return '';
+  let doc; try { doc = new DOMParser().parseFromString(MathJax.tex2mml(tex, { display }), 'application/xml'); } catch (e) { return ''; }
+  const root = doc.documentElement; if (!root || root.localName !== 'math' || doc.querySelector('parsererror')) return '';
+  const kids = n => [...n.children];
+  const txt = n => n.textContent.replace(/[⁡-⁤]/g, '');
+  const tc = n => (n && n.getAttribute && n.getAttribute('data-mjx-texclass')) || '';
+  const isMo = n => n && n.localName === 'mo';
+  const fenceCh = n => { if (!n) return null; if (isMo(n) && (/^(OPEN|CLOSE)$/.test(tc(n)) || n.getAttribute('fence') === 'true')) return txt(n); if (n.localName === 'mrow' && /^(OPEN|CLOSE)$/.test(tc(n)) && n.children.length === 1 && isMo(n.children[0])) return txt(n.children[0]); return null; };
+  const naryOf = n => {
+    if (isMo(n) && OM_NARY.includes(txt(n)) && txt(n).length === 1) return { chr: txt(n), und: false };
+    if (/^(msub|msup|msubsup|munder|mover|munderover)$/.test(n.localName) && isMo(n.children[0]) && OM_NARY.includes(txt(n.children[0])) && txt(n.children[0]).length === 1) {
+      const c = kids(n), L = n.localName, und = L[1] === 'u';
+      return { chr: txt(c[0]), und, sub: /sub|under/.test(L) ? c[1] : null, sup: L === 'msup' || L === 'mover' ? c[1] : /subsup|underover/.test(L) ? c[2] : null };
+    }
+    return null;
+  };
+  const isRel = n => isMo(n) && (tc(n) === 'REL' || OM_REL.has(txt(n).trim()));
+  const seq = nodes => {
+    let out = '';
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i], nr = naryOf(n);
+      if (nr) {
+        let j = i + 1; const body = []; while (j < nodes.length && !isRel(nodes[j])) body.push(nodes[j++]);
+        out += `<m:nary><m:naryPr><m:chr m:val="${omX(nr.chr)}"/><m:limLoc m:val="${nr.und ? 'undOvr' : 'subSup'}"/>${nr.sub ? '' : '<m:subHide m:val="1"/>'}${nr.sup ? '' : '<m:supHide m:val="1"/>'}</m:naryPr><m:sub>${nr.sub ? node(nr.sub) : ''}</m:sub><m:sup>${nr.sup ? node(nr.sup) : ''}</m:sup><m:e>${seq(body)}</m:e></m:nary>`;
+        i = j - 1; continue;
+      }
+      if (isMo(n) && /^[|‖]$/.test(txt(n))) { // |x| and ‖x‖ as Word's own bracket, not two loose bars
+        const j = nodes.findIndex((m, k) => k > i && isMo(m) && txt(m) === txt(n));
+        if (j > i + 1) { out += `<m:d><m:dPr><m:begChr m:val="${txt(n)}"/><m:endChr m:val="${txt(n)}"/></m:dPr><m:e>${seq(nodes.slice(i + 1, j))}</m:e></m:d>`; i = j; continue; }
+      }
+      if (n.localName === 'munder' && /^(lim|max|min|sup|inf|lim sup|lim inf|limsup|liminf|arg max|arg min|det|Pr|gcd)$/.test(txt(n.children[0] || n).trim()) && nodes[i + 1] && !isRel(nodes[i + 1])) { // \lim_{x\to0} f: Word's own "function with limit"
+        const c = kids(n); out += `<m:func><m:fName><m:limLow><m:e>${omRun(txt(c[0]), '<m:sty m:val="p"/>')}</m:e><m:lim>${c[1] ? node(c[1]) : ''}</m:lim></m:limLow></m:fName><m:e>${node(nodes[i + 1])}</m:e></m:func>`; i += 1; continue;
+      }
+      const nx = nodes[i + 1], arg = nodes[i + 2];
+      if (isMo(nx) && nx.textContent === '⁡' && arg && !(isMo(arg) && /^(OPEN|)$/.test(tc(arg)) && /^[([{|]$/.test(txt(arg)))) { out += `<m:func><m:fName>${node(n)}</m:fName><m:e>${node(arg)}</m:e></m:func>`; i += 2; continue; }
+      out += node(n);
+    }
+    return out;
+  };
+  const inner = n => seq(kids(n));
+  const aln = x => x.startsWith('<m:r><m:rPr>') ? x.replace('</m:rPr>', '<m:aln/></m:rPr>') : x.startsWith('<m:r>') ? x.replace('<m:r>', '<m:r><m:rPr><m:aln/></m:rPr>') : `<m:r><m:rPr><m:aln/></m:rPr>${OM_FONT}<m:t></m:t></m:r>` + x;
+  const table = n => {
+    const rows = kids(n).filter(r => /^m(labeled)?tr$/.test(r.localName)).map(r => kids(r).filter((c, k) => !(r.localName === 'mlabeledtr' && k === 0)));
+    const ca = (n.getAttribute('columnalign') || '').split(/\s+/).filter(Boolean);
+    if (ca[0] === 'right' && ca.includes('left')) return `<m:eqArr>${rows.map(r => { const first = r[0] ? inner(r[0]) : ''; return `<m:e>${first || omRun('\u200B')}${r.slice(1).map(c => aln(inner(c))).join('')}</m:e>`; }).join('')}</m:eqArr>`;
+    const cols = Math.max(1, ...rows.map(r => r.length)), jc = ['left', 'right'].includes(ca[0]) ? ca[0] : 'center';
+    return `<m:m><m:mPr><m:mcs><m:mc><m:mcPr><m:count m:val="${cols}"/><m:mcJc m:val="${jc}"/></m:mcPr></m:mc></m:mcs></m:mPr>${rows.map(r => `<m:mr>${Array.from({ length: cols }, (_, k) => `<m:e>${r[k] ? inner(r[k]) : ''}</m:e>`).join('')}</m:mr>`).join('')}</m:m>`;
+  };
+  const node = n => {
+    const L = n.localName, c = kids(n);
+    switch (L) {
+      case 'mi': { const t = txt(n); if (!t) return ''; const v = OM_VAR[n.getAttribute('mathvariant') || (t.length > 1 ? 'normal' : '')]; return omRun(t, v ? (v[0] ? `<m:scr m:val="${v[0]}"/>` : '') + `<m:sty m:val="${v[1]}"/>` : ''); }
+      case 'mn': { const v = OM_VAR[n.getAttribute('mathvariant') || '']; return omRun(txt(n), v ? (v[0] ? `<m:scr m:val="${v[0]}"/>` : '') + `<m:sty m:val="${v[1]}"/>` : ''); }
+      case 'mo': return omRun(txt(n), '<m:sty m:val="p"/>');
+      case 'mtext': case 'ms': return omRun(txt(n).replace(/ /g, ' '), '<m:nor/>');
+      case 'mspace': { const w = parseFloat(n.getAttribute('width') || '0'); return w >= 0.25 ? omRun(w >= 0.9 ? ' ' : ' ', '<m:sty m:val="p"/>') : w > 0 ? omRun(' ', '<m:sty m:val="p"/>') : ''; }
+      case 'mfrac': return `<m:f>${n.getAttribute('linethickness') === '0' ? '<m:fPr><m:type m:val="noBar"/></m:fPr>' : ''}<m:num>${c[0] ? node(c[0]) : ''}</m:num><m:den>${c[1] ? node(c[1]) : ''}</m:den></m:f>`;
+      case 'msqrt': return `<m:rad><m:radPr><m:degHide m:val="1"/></m:radPr><m:deg/><m:e>${inner(n)}</m:e></m:rad>`;
+      case 'mroot': return `<m:rad><m:deg>${c[1] ? node(c[1]) : ''}</m:deg><m:e>${c[0] ? node(c[0]) : ''}</m:e></m:rad>`;
+      case 'msub': return `<m:sSub><m:e>${node(c[0])}</m:e><m:sub>${c[1] ? node(c[1]) : ''}</m:sub></m:sSub>`;
+      case 'msup': return `<m:sSup><m:e>${node(c[0])}</m:e><m:sup>${c[1] ? node(c[1]) : ''}</m:sup></m:sSup>`;
+      case 'msubsup': return `<m:sSubSup><m:e>${node(c[0])}</m:e><m:sub>${c[1] ? node(c[1]) : ''}</m:sub><m:sup>${c[2] ? node(c[2]) : ''}</m:sup></m:sSubSup>`;
+      case 'mover': case 'munder': {
+        const top = L === 'mover', m = c[1], ch = isMo(m) ? txt(m).trim() : '';
+        if (nr0(n)) return seq([n]);
+        if (top && /^[‾―─¯]$/.test(ch) && m.getAttribute('stretchy') !== 'false') return `<m:bar><m:barPr><m:pos m:val="top"/></m:barPr><m:e>${node(c[0])}</m:e></m:bar>`;
+        if (!top && /^[_‾―─¯]$/.test(ch)) return `<m:bar><m:barPr><m:pos m:val="bot"/></m:barPr><m:e>${node(c[0])}</m:e></m:bar>`;
+        if (/^[⏞⏟⎴⎵⏜⏝]$/.test(ch)) return `<m:groupChr><m:groupChrPr><m:chr m:val="${ch}"/><m:pos m:val="${top ? 'top' : 'bot'}"/><m:vertJc m:val="${top ? 'bot' : 'top'}"/></m:groupChrPr><m:e>${node(c[0])}</m:e></m:groupChr>`;
+        if (top && ch && OM_ACC[ch] && (n.getAttribute('accent') === 'true' || m.getAttribute('accent') === 'true' || ch.length === 1)) return `<m:acc><m:accPr><m:chr m:val="${OM_ACC[ch]}"/></m:accPr><m:e>${node(c[0])}</m:e></m:acc>`;
+        return top ? `<m:limUpp><m:e>${node(c[0])}</m:e><m:lim>${m ? node(m) : ''}</m:lim></m:limUpp>` : `<m:limLow><m:e>${node(c[0])}</m:e><m:lim>${m ? node(m) : ''}</m:lim></m:limLow>`;
+      }
+      case 'munderover': if (nr0(n)) return seq([n]); return `<m:limUpp><m:e><m:limLow><m:e>${node(c[0])}</m:e><m:lim>${c[1] ? node(c[1]) : ''}</m:lim></m:limLow></m:e><m:lim>${c[2] ? node(c[2]) : ''}</m:lim></m:limUpp>`;
+      case 'mtable': return table(n);
+      case 'menclose': return /box/.test(n.getAttribute('notation') || '') ? `<m:borderBox><m:e>${inner(n)}</m:e></m:borderBox>` : inner(n);
+      case 'mphantom': return `<m:phant><m:phantPr><m:show m:val="0"/></m:phantPr><m:e>${inner(n)}</m:e></m:phant>`;
+      case 'semantics': case 'maction': return c[0] ? node(c[0]) : '';
+      case 'annotation': case 'annotation-xml': case 'none': case 'mprescripts': return '';
+      case 'merror': return omRun(n.getAttribute('data-mjx-error') ? txt(n) : txt(n), '<m:nor/>');
+      case 'mrow': case 'mstyle': case 'mpadded': case 'math': case 'mtd': default: {
+        const o = fenceCh(c[0]), z = fenceCh(c[c.length - 1]);
+        if (L === 'mrow' && c.length >= 2 && o !== null && z !== null && tc(c[0]) !== 'CLOSE' && tc(c[c.length - 1]) !== 'OPEN')
+          return `<m:d><m:dPr><m:begChr m:val="${omX(o)}"/><m:endChr m:val="${omX(z)}"/></m:dPr><m:e>${seq(c.slice(1, -1))}</m:e></m:d>`;
+        return seq(c);
+      }
+    }
+  };
+  const nr0 = n => !!naryOf(n);
+  try { return `<m:oMath>${seq(kids(root))}</m:oMath>`; } catch (e) { console.warn(e); return ''; }
+}
+
+/* ---- Office Math (OMML) → TeX, for equations in Word files you import ---- */
+const TEX_OF = { 'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε': 'epsilon', 'ϵ': 'epsilon', 'ζ': 'zeta', 'η': 'eta', 'θ': 'theta', 'ϑ': 'vartheta', 'ι': 'iota', 'κ': 'kappa', 'λ': 'lambda', 'μ': 'mu', 'ν': 'nu', 'ξ': 'xi', 'π': 'pi', 'ϖ': 'varpi', 'ρ': 'rho', 'ϱ': 'varrho', 'σ': 'sigma', 'ς': 'varsigma', 'τ': 'tau', 'υ': 'upsilon', 'φ': 'phi', 'ϕ': 'phi', 'χ': 'chi', 'ψ': 'psi', 'ω': 'omega',
+  'Γ': 'Gamma', 'Δ': 'Delta', 'Θ': 'Theta', 'Λ': 'Lambda', 'Ξ': 'Xi', 'Π': 'Pi', 'Σ': 'Sigma', 'Υ': 'Upsilon', 'Φ': 'Phi', 'Ψ': 'Psi', 'Ω': 'Omega',
+  '±': 'pm', '∓': 'mp', '×': 'times', '÷': 'div', '·': 'cdot', '⋅': 'cdot', '∘': 'circ', '∙': 'bullet', '≤': 'le', '≥': 'ge', '≠': 'ne', '≈': 'approx', '≡': 'equiv', '∼': 'sim', '≃': 'simeq', '≅': 'cong', '∝': 'propto', '≪': 'll', '≫': 'gg',
+  '→': 'to', '←': 'leftarrow', '↔': 'leftrightarrow', '⇒': 'Rightarrow', '⇐': 'Leftarrow', '⇔': 'Leftrightarrow', '⟹': 'implies', '⟸': 'impliedby', '⟺': 'iff', '↦': 'mapsto', '∈': 'in', '∉': 'notin', '∋': 'ni', '⊂': 'subset', '⊃': 'supset', '⊆': 'subseteq', '⊇': 'supseteq', '∪': 'cup', '∩': 'cap', '∅': 'emptyset', '∞': 'infty', '∂': 'partial', '∇': 'nabla', '∀': 'forall', '∃': 'exists', '¬': 'neg', '∧': 'wedge', '∨': 'vee', '⊕': 'oplus', '⊗': 'otimes', '⊥': 'perp', '∥': 'parallel', '∠': 'angle', '…': 'ldots', '⋯': 'cdots', '⋮': 'vdots', '⋱': 'ddots', 'ℏ': 'hbar', 'ℓ': 'ell', 'ℜ': 'Re', 'ℑ': 'Im', '′': 'prime', '°': 'circ',
+  '∑': 'sum', '∏': 'prod', '∐': 'coprod', '∫': 'int', '∬': 'iint', '∭': 'iiint', '∮': 'oint', '⋃': 'bigcup', '⋂': 'bigcap', '⋁': 'bigvee', '⋀': 'bigwedge', '⨁': 'bigoplus', '⨂': 'bigotimes', '⟨': 'langle', '⟩': 'rangle', '⌊': 'lfloor', '⌋': 'rfloor', '⌈': 'lceil', '⌉': 'rceil', '{': '{', '}': '}' };
+const TEX_FN = new Set('sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp lim max min sup inf det gcd deg dim arg ker Pr hom liminf limsup'.split(' '));
+const TEX_ACC = { '̂': 'hat', '̃': 'tilde', '̇': 'dot', '̈': 'ddot', '⃗': 'vec', '́': 'acute', '̀': 'grave', '̆': 'breve', '̌': 'check', '̅': 'bar', '̄': 'bar', '̊': 'mathring' };
+const texDelim = ch => ch === '' ? '.' : ch === '{' ? '\\{' : ch === '}' ? '\\}' : ch === '‖' ? '\\|' : TEX_OF[ch] && ch.length === 1 && !/[()[\]|]/.test(ch) ? '\\' + TEX_OF[ch] : ch;
+const texChars = s => [...s.replace(/[\u200B\u2061-\u2064]/g, '').replace(/\u2212/g, '-')].map(ch => ch === '{' || ch === '}' ? '\\' + ch : ch === '\\' ? '\\backslash ' : ch === '%' || ch === '#' || ch === '$' ? '\\' + ch : TEX_OF[ch] ? `\\${TEX_OF[ch]} ` : ch).join('');
+function ommlTex(xml) {
+  const ns = 'xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"';
+  const clean = xml.replace(/\s(?!(?:m|w|xml):)[\w-]+:[\w-]+="[^"]*"/g, '').replace(/<(\/?)(?!m:|w:)[\w-]+:[^>]*>/g, ''); // other namespaces Word adds can go
+  const d = new DOMParser().parseFromString(`<x ${ns}>${clean}</x>`, 'application/xml');
+  if (d.querySelector('parsererror')) return '';
+  const ch = (n, name) => [...n.children].find(c => c.localName === name);
+  const val = (n, pr, name) => { const p = ch(n, pr), c = p && ch(p, name); return c ? (c.getAttribute('m:val') ?? '') : null; };
+  const kids = n => n ? [...n.children].map(t).join('') : '';
+  const arg = (n, name) => kids(ch(n, name));
+  const grp = s => s.length === 1 || /^\\[a-zA-Z]+ ?$/.test(s) ? s.trim() : `{${s.trim()}}`;
+  const t = n => {
+    const L = n.localName;
+    if (/Pr$/.test(L) && L !== 'oMathPara') return '';
+    switch (L) {
+      case 'r': {
+        const s = [...n.getElementsByTagNameNS('*', 't')].map(x => x.textContent).join(''), rp = ch(n, 'rPr');
+        const sty = rp && ch(rp, 'sty') ? ch(rp, 'sty').getAttribute('m:val') : '', scr = rp && ch(rp, 'scr') ? ch(rp, 'scr').getAttribute('m:val') : '', nor = rp && ch(rp, 'nor'), al = rp && ch(rp, 'aln') ? '&' : '';
+        if (!s) return al;
+        if (nor) return al + `\\text{${s.replace(/[{}\\]/g, '')}}`;
+        if (TEX_FN.has(s.trim())) return al + `\\${s.trim()} `;
+        let o = texChars(s);
+        if (scr === 'double-struck') o = `\\mathbb{${o}}`; else if (scr === 'script') o = `\\mathcal{${o}}`; else if (scr === 'fraktur') o = `\\mathfrak{${o}}`; else if (scr === 'sans-serif') o = `\\mathsf{${o}}`; else if (scr === 'monospace') o = `\\mathtt{${o}}`;
+        else if (sty === 'b' || sty === 'bi') o = `\\mathbf{${o}}`; else if (sty === 'p' && /[A-Za-z]{2,}/.test(s)) o = `\\mathrm{${o}}`; else if (sty === 'p' && /^[A-Za-z]$/.test(s)) o = `\\mathrm{${o}}`;
+        return al + o;
+      }
+      case 'f': { const ty = val(n, 'fPr', 'type'), a = arg(n, 'num'), b = arg(n, 'den'); return ty === 'noBar' ? `{${a} \\atop ${b}}` : ty === 'lin' ? `${grp(a)}/${grp(b)}` : `\\frac{${a}}{${b}}`; }
+      case 'rad': { const hide = val(n, 'radPr', 'degHide'), dg = arg(n, 'deg'); return hide === '1' || hide === 'on' || !dg.trim() ? `\\sqrt{${arg(n, 'e')}}` : `\\sqrt[${dg}]{${arg(n, 'e')}}`; }
+      case 'sSup': return `${grp(arg(n, 'e'))}^{${arg(n, 'sup')}}`;
+      case 'sSub': return `${grp(arg(n, 'e'))}_{${arg(n, 'sub')}}`;
+      case 'sSubSup': return `${grp(arg(n, 'e'))}_{${arg(n, 'sub')}}^{${arg(n, 'sup')}}`;
+      case 'sPre': return `{}_{${arg(n, 'sub')}}^{${arg(n, 'sup')}}${grp(arg(n, 'e'))}`;
+      case 'nary': {
+        const c = val(n, 'naryPr', 'chr') || '∫', cmd = TEX_OF[c] ? '\\' + TEX_OF[c] : c, sh = val(n, 'naryPr', 'subHide'), uh = val(n, 'naryPr', 'supHide'), sb = arg(n, 'sub'), sp = arg(n, 'sup');
+        return `${cmd}${sh === '1' || sh === 'on' || !sb.trim() ? '' : `_{${sb}}`}${uh === '1' || uh === 'on' || !sp.trim() ? '' : `^{${sp}}`} ${arg(n, 'e')}`;
+      }
+      case 'd': {
+        const b = val(n, 'dPr', 'begChr'), e = val(n, 'dPr', 'endChr'), sep = val(n, 'dPr', 'sepChr');
+        const es = [...n.children].filter(c => c.localName === 'e').map(kids).join(` ${sep === null ? '|' : texDelim(sep)} `);
+        return `\\left${texDelim(b === null ? '(' : b)} ${es} \\right${texDelim(e === null ? ')' : e)}`;
+      }
+      case 'acc': { const c = val(n, 'accPr', 'chr'); return `\\${TEX_ACC[c === null ? '̂' : c] || 'hat'}{${arg(n, 'e')}}`; }
+      case 'bar': return `\\${val(n, 'barPr', 'pos') === 'top' ? 'overline' : 'underline'}{${arg(n, 'e')}}`;
+      case 'groupChr': { const c = val(n, 'groupChrPr', 'chr') || '⏟', top = val(n, 'groupChrPr', 'pos') === 'top' || c === '⏞'; return `\\${top ? 'overbrace' : 'underbrace'}{${arg(n, 'e')}}`; }
+      case 'limLow': { const e = arg(n, 'e').trim(); return /^(\\lim|\\max|\\min|\\sup|\\inf|\\mathrm\{lim\})\s*$/.test(e) ? `${e.replace('\\mathrm{lim}', '\\lim')}_{${arg(n, 'lim')}} ` : `\\underset{${arg(n, 'lim')}}{${e}}`; }
+      case 'limUpp': return `\\overset{${arg(n, 'lim')}}{${arg(n, 'e')}}`;
+      case 'func': return `${arg(n, 'fName').trim()} ${grp(arg(n, 'e'))}`;
+      case 'm': return `\\begin{matrix} ${[...n.children].filter(c => c.localName === 'mr').map(r => [...r.children].filter(c => c.localName === 'e').map(kids).join(' & ')).join(' \\\\ ')} \\end{matrix}`;
+      case 'eqArr': return `\\begin{aligned} ${[...n.children].filter(c => c.localName === 'e').map(kids).join(' \\\\ ')} \\end{aligned}`;
+      case 'borderBox': return `\\boxed{${arg(n, 'e')}}`;
+      case 'phant': return `\\phantom{${arg(n, 'e')}}`;
+      case 'oMathPara': { const ms = [...n.children].filter(c => c.localName === 'oMath').map(kids); return ms.length > 1 ? `\\begin{gathered} ${ms.join(' \\\\ ')} \\end{gathered}` : ms.join(''); }
+      default: return kids(n);
+    }
+  };
+  try { return kids(d.documentElement).replace(/\s+/g, ' ').trim(); } catch (e) { console.warn(e); return ''; }
+}
 function addTableRules(td) {
   td.addRule('figTable', {
     filter: n => n.nodeName === 'FIGURE' && n.classList.contains('tbl'),
@@ -5623,7 +6013,7 @@ function tableToPNG(table, caption = '') {
   return c.toDataURL('image/png');
 }
 function substackBuild(doc) {
-  const x = buildExport(doc, 'html');
+  const x = buildExport(doc, 'html', { texMath: true }); // Substack drops pasted SVG; its own equation block takes TeX
   const box = document.createElement('div'); box.innerHTML = (x.title ? x.title.replace(/<p class="tb-title">([\s\S]*?)<\/p>/, '<h1>$1</h1>') : '') + x.body;
   let tables = 0; const images = [];
   $$('figure.tbl', box).forEach(f => {
@@ -7416,7 +7806,7 @@ function docSentences() {
   [...editor.children].forEach(el => { if (!el.matches('p,blockquote')) return; const t = el.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt', t).forEach(m => m.remove()); const txt = t.textContent.replace(/\s+/g, ' ').trim(); (txt.match(/[^.!?]+[.!?]+["”’)]*/g) || [txt]).forEach(s => { s = s.trim(); if (s) out.push({ s, el }); }); });
   return out;
 }
-function plainBlocks() { return [...editor.children].map(el => { const t = el.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt', t).forEach(m => m.remove()); return { tag: el.nodeName, text: t.textContent.replace(/\s+/g, ' ').trim() }; }).filter(b => b.text); }
+function plainBlocks() { return [...editor.children].map(el => { const t = el.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt', t).forEach(m => m.remove()); if (t.matches && t.matches('p.eq')) t.textContent = 'Equation.'; $$('span.math', t).forEach(m => { const x = m.getAttribute('data-tex') || ''; m.textContent = /^[A-Za-z0-9 ]{1,12}$/.test(x) ? x : 'an equation'; }); return { tag: el.nodeName, text: t.textContent.replace(/\s+/g, ' ').trim() }; }).filter(b => b.text); }
 const pkFirst = t => (t.match(/^[^.!?]+[.!?]+["”’)]*/) || [t])[0].trim();
 function fitTo(t, n) { if (t.length <= n) return t; const cut = t.slice(0, n - 1); return cut.slice(0, Math.max(cut.lastIndexOf(' '), n * .6)).replace(/[,;:—–-]$/, '') + '…'; }
 function buildThread() {
@@ -7577,6 +7967,10 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '1.8.0': ['Equations. Click Σ in the toolbar (or Alt+=, as in Word), type TeX and watch the preview. Put an equation in a sentence or on its own line, numbered (1), (2) at the margin. Click one to change it.',
+    'Equations go into Word as real Word equations you can edit there, and Import Word brings them back as TeX, so a paper can make the round trip.',
+    'PDF, web pages and EPUB draw them sharply; LaTeX, Markdown and Pandoc exports keep the TeX. Pasted TeX in $…$ or $$…$$ turns into equations with one command.',
+    'It all works offline: MathJax is built in and loads only when a document has an equation.'],
   '1.7.1': ['Data in the writing: on a dashboard, Insert puts a table tile in the document as a real table with its source line, and a number tile into the sentence you’re writing, with its citation one click away. A whole dataset goes in with Insert as table.',
     'Figures, tables and numbers taken from a dataset keep track of it. When the data changes, Update from data (in the command palette, the Data view or the table toolbar) redraws them in every document.',
     'Click a number that came from the data to see where it comes from, or unlink it to keep it as plain text.'],
@@ -9373,12 +9767,35 @@ async function unzip(buf) {
   return files;
 }
 /* Before mammoth reads a .docx, tracked changes and comment ranges become visible markers in the text. */
+/* After mammoth: Word equation markers become equations. A paragraph holding only an equation (and
+   perhaps its number, as Anabasis and many writers set them) becomes a display equation. */
+function docxEquations(root, eqs) {
+  if (!eqs.length) return 0;
+  let n = 0; const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), texts = []; let t; while ((t = w.nextNode())) if (t.data.includes('⟦EQ|')) texts.push(t);
+  texts.forEach(tn => {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = tn.data.split(/(⟦EQ\|\d+⟧)/).map(p => { const m = /^⟦EQ\|(\d+)⟧$/.exec(p); if (!m) return esc(p); const e = eqs[+m[1]]; if (!e) return ''; n++; return e.tex ? `<span class="math" contenteditable="false" data-tex="${esc(e.tex)}"${e.d ? ' data-d="1"' : ''}>${esc(e.tex)}</span>` : flagHTML('check', 'An equation from Word that couldn’t be read'); }).join('');
+    tn.replaceWith(tpl.content);
+  });
+  $$('p', root).forEach(p => {
+    const ms = $$('span.math', p); if (ms.length !== 1) return;
+    const c = p.cloneNode(true); c.querySelector('span.math').remove();
+    const rest = c.textContent.replace(/[\s\u00a0]+/g, ''), m = /^\((\d+[a-z]?)\)$/.exec(rest);
+    if (rest && !m) return;
+    const tpl = document.createElement('template'); tpl.innerHTML = eqHTML(ms[0].getAttribute('data-tex'), true, !!m); p.replaceWith(tpl.content);
+  });
+  $$('span.math[data-d]', root).forEach(s => s.removeAttribute('data-d'));
+  return n;
+}
 async function docxMarkChanges(buf) {
   if (typeof DecompressionStream === 'undefined') return { buf, comments: {}, changes: 0 };
   let files; try { files = await unzip(buf); } catch (e) { return { buf, comments: {}, changes: 0 }; }
   const dec = new TextDecoder(), enc = new TextEncoder(), doc = files['word/document.xml']; if (!doc) return { buf, comments: {}, changes: 0 };
   let xml = dec.decode(doc).replace(/<w:(ins|del)\b[^>]*\/>/g, ''), changes = 0; // paragraph-mark changes carry no text
   const tok = s => `<w:r><w:t xml:space="preserve">${s}</w:t></w:r>`;
+  const eqs = []; // Word equations become markers here and TeX equations after mammoth (which drops them)
+  xml = xml.replace(/<m:oMathPara\b[\s\S]*?<\/m:oMathPara>/g, m => { eqs.push({ tex: ommlTex(m), d: true }); return tok(`⟦EQ|${eqs.length - 1}⟧`); })
+    .replace(/<m:oMath\b[\s\S]*?<\/m:oMath>/g, m => { eqs.push({ tex: ommlTex(m), d: false }); return tok(`⟦EQ|${eqs.length - 1}⟧`); });
   const attr = (a, k) => { const m = a.match(new RegExp(`w:${k}="([^"]*)"`)); return m ? m[1].replace(/[^\w .:,@'-]/g, '') : ''; };
   xml = xml.replace(/<w:ins\b([^>]*)>([\s\S]*?)<\/w:ins>/g, (m, a, body) => { if (!/<w:t[\s>]/.test(body)) return body; changes++; return `${tok(`⟦SGI|${attr(a, 'id')}|${attr(a, 'author')}|${attr(a, 'date')}⟧`)}${body}${tok('⟦/SG⟧')}`; });
   xml = xml.replace(/<w:del\b([^>]*)>([\s\S]*?)<\/w:del>/g, (m, a, body) => { if (!/<w:delText/.test(body)) return ''; changes++; return `${tok(`⟦SGD|${attr(a, 'id')}|${attr(a, 'author')}|${attr(a, 'date')}⟧`)}${body.replace(/<w:delText\b/g, '<w:t').replace(/<\/w:delText>/g, '</w:t>')}${tok('⟦/SG⟧')}`; });
@@ -9391,10 +9808,10 @@ async function docxMarkChanges(buf) {
       comments[id] = { author: c.getAttribute('w:author') || '', date: c.getAttribute('w:date') || '', text: paras.join('\n') };
     });
   }
-  if (!changes && !Object.keys(comments).length) return { buf, comments, changes };
+  if (!changes && !Object.keys(comments).length && !eqs.length) return { buf, comments, changes, eqs };
   files['word/document.xml'] = enc.encode(xml);
   const out = zipStore(Object.entries(files).filter(([, d]) => d).map(([name, data]) => ({ name, data })));
-  return { buf: await out.arrayBuffer(), comments, changes };
+  return { buf: await out.arrayBuffer(), comments, changes, eqs };
 }
 /* After mammoth: markers become suggestions and margin notes. */
 function docxApplyMarks(root, comments, doc) {
@@ -9921,7 +10338,7 @@ function scholarParts(doc) {
 function exportPandoc(doc = curDoc()) {
   if (!doc) return;
   const { x, tmp, images, keys, sources } = scholarParts(doc);
-  const td = addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' }));
+  const td = addMathRules(addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' })));
   let md = td.turndown(tmp.innerHTML);
   md = md.replace(/ZZC(\d+)ZZ/g, (m, i) => pandocCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `^[${x.fns[+i].replace(/[\[\]]/g, '\\$&')}]`);
   const style = STYLES[doc.style] && !STYLES[doc.style].custom ? doc.style : '';
@@ -9943,6 +10360,8 @@ function htmlToLatex(root, x, keys) {
     if (n.nodeType === 3) return texEsc(n.data).replace(/ZZC(\d+)ZZ/g, (m, i) => latexCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `\\footnote{${texEsc(x.fns[+i])}}`).replace(/[“”]/g, q => q === '“' ? '``' : "''").replace(/—/g, '---').replace(/–/g, '--').replace(/\u00a0/g, '~');
     if (n.nodeType !== 1) return '';
     const t = n.tagName.toLowerCase();
+    if (t === 'span' && n.classList.contains('math') && n.hasAttribute('data-tex')) return `\\(${n.getAttribute('data-tex')}\\)`;
+    if (t === 'p' && n.classList.contains('eq') && n.hasAttribute('data-tex')) return n.dataset.n ? `\n\\begin{equation}\n${n.getAttribute('data-tex')}\n\\end{equation}\n` : `\n\\[\n${n.getAttribute('data-tex')}\n\\]\n`;
     switch (t) {
       case 'h1': return `\n\\section{${inl(n)}}\n`;
       case 'h2': return `\n\\subsection{${inl(n)}}\n`;
@@ -9995,7 +10414,7 @@ function exportLatex(doc = curDoc()) {
   const name = fileSafe(doc.title), L = doc.layout || {};
   const tex = `% ${doc.title}: exported from Anabasis ${APP_VERSION}. Build with: latexmk -xelatex main.tex (Biber runs automatically)
 \\documentclass[12pt,${L.paper === 'A4' ? 'a4paper' : 'letterpaper'}]{article}
-\\usepackage{fontspec}
+${tmp.querySelector('.math,.eq') ? '\\usepackage{amsmath,amssymb}\n' : ''}\\usepackage{fontspec}
 \\usepackage[margin=1in]{geometry}
 \\usepackage{graphicx}
 \\usepackage[normalem]{ulem}
@@ -10191,7 +10610,7 @@ function splitDocRender() {
   if (SPLIT.docId === curDocId && !POPOUT) syncEditor();
   body.innerHTML = `<div class="sp-docbar"><label class="sr-only" for="spDocSel">Document</label><select id="spDocSel">${binderOrder().map(x => `<option value="${x.id}" ${x.id === SPLIT.docId ? 'selected' : ''}>${esc(x.title || 'Untitled')}</option>`).join('')}</select><button class="small" id="spDocEdit" title="Make this the document you’re editing">Edit this one</button></div>
     <div class="sp-docscroll" tabindex="0" aria-label="Document, read only"><article class="page docbody sp-page">${d ? `<h1 class="sp-doct">${esc(d.title || 'Untitled')}</h1>${DOMPurify.sanitize(d.html || '', { ADD_ATTR: ['data-items', 'data-text'] })}` : '<p class="muted">No document.</p>'}</article></div>`;
-  const pg = $('.sp-page', body); if (d && pg) { applyLayout(pg, d); pg.querySelectorAll('[contenteditable]').forEach(x => x.removeAttribute('contenteditable')); }
+  const pg = $('.sp-page', body); if (d && pg) { applyLayout(pg, d); pg.querySelectorAll('[contenteditable]').forEach(x => x.removeAttribute('contenteditable')); hydrateImages(pg); numberEquations(pg); }
 }
 function splitUnmount() {
   if (SPLIT.moved) {
@@ -10396,7 +10815,7 @@ async function popoutBoot() {
 }
 
 const KEYS = [
-  ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
+  ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
   ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
   ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],

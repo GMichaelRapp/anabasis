@@ -52,7 +52,9 @@ VIEWS = [
     ('split: research desk', "splitOpen('desk')"),
     ('split: a document', "splitOpen('doc')"),
     ('data in the writing', "splitClose(); closeDesk(); const d = P.datasets[0]; dataInsert(Object.assign(newTile('table', d), { title: d.name })); const st = P.dashboards[0].tiles.find(x => x.type === 'stat'); if (st) dataInsert(st); const td = editor.querySelector('figure.tbl[data-dl] td'); if (td) { const r = document.createRange(); r.selectNodeContents(td); r.collapse(true); getSelection().removeAllRanges(); getSelection().addRange(r); }"),
-    ('newer-version notice', "$('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
+    ('equations in the writing', "$('#eqDlg').close(); closeDesk(); editor.insertAdjacentHTML('beforeend', '<p>Energy ' + eqHTML('E = mc^2', false) + ' here.</p>' + eqHTML('\\\\frac{a}{b}', true, true)); hydrateImages(); renumberFigures();"),
+    ('equation box', "openEq(); $('#eqTex').value = '\\\\sqrt{x^2 + 1}'; eqPreview();"),
+    ('newer-version notice', "$('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
     async with async_playwright() as pw:

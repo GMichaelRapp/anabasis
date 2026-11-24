@@ -28,6 +28,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 
 **Write and cite**
 - A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
+- Equations written in TeX, in a sentence or on their own line and numbered, drawn offline by MathJax. They go into Word as real, editable Word equations and come back from Word as TeX; LaTeX, Markdown and Pandoc keep the TeX.
 - Citations in 55 styles: Chicago (notes or author-date), APA, MLA, MHRA, Harvard, APSA, ASA, OSCOLA, Bluebook, AMA, Vancouver, CSE, IEEE, Nature and more, plus the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
 - Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero's CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating.
 - **Suggest mode** marks your edits for review, like tracked changes, and Word files carry them both ways: tracked changes and comments in, tracked changes and comments out.
@@ -70,7 +71,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
 | ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar's ⋯ menu](docs/screenshots/phone.png) |
 | ![The research journal: hypotheses with their status, evidence for and against, and status history](docs/screenshots/journal.png) | ![A data dashboard: headline numbers with trend lines, a line chart and a table, each crediting its source](docs/screenshots/dashboard.png) |
-| ![Notes beside the writing, in split view](docs/screenshots/split.png) | |
+| ![Notes beside the writing, in split view](docs/screenshots/split.png) | ![Equations in a draft: inline symbols and numbered display equations](docs/screenshots/equations.png) |
 
 ## Getting started
 
