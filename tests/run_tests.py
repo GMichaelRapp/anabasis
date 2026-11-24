@@ -44,6 +44,8 @@ SUITES = {
     't37': 'split view beside the writing, and pop-out windows kept in step with the main window',
     't38': 'data in the writing: tables, numbers and figures that follow their dataset, Update from data',
     't39': 'equations: the equation box, numbering, TeX as text, pasting, Word equations out and back in, every export',
+    't40': 'cross-references, credits and the permissions log, link check (archive mocked), the reviewer PDF, Word manuscript format',
+
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']
 

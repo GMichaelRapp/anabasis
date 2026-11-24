@@ -28,6 +28,9 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 
 **Write and cite**
 - A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
+- Cross-references to figures, tables, equations, headings and chapters that renumber themselves and become links in Word, PDF and e-books.
+- Credit lines and permission status for every figure and table, with a permissions log for your editor; a link check against the Wayback Machine that keeps archived copies of your web sources.
+- A PDF for reviewers with numbered lines, and Word in standard manuscript format for submissions.
 - Equations written in TeX, in a sentence or on their own line and numbered, drawn offline by MathJax. They go into Word as real, editable Word equations and come back from Word as TeX; LaTeX, Markdown and Pandoc keep the TeX.
 - Citations in 55 styles: Chicago (notes or author-date), APA, MLA, MHRA, Harvard, APSA, ASA, OSCOLA, Bluebook, AMA, Vancouver, CSE, IEEE, Nature and more, plus the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
 - Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero's CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating.

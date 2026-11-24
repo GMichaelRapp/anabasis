@@ -73,3 +73,4 @@ mjx-container[jax="SVG"]{direction:ltr}mjx-container[jax="SVG"]>svg{overflow:vis
 .docbody div.eq{position:relative;text-align:center;margin:.8em 0;padding:0 3em;break-inside:avoid;page-break-inside:avoid}
 .docbody div.eq mjx-container[display="true"]{margin:0}
 .docbody .eq-n{position:absolute;right:0;top:50%;transform:translateY(-50%)}
+.docbody a.xref{color:inherit;text-decoration:none}

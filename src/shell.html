@@ -26,7 +26,7 @@
 <meta charset="utf-8">
 <!-- What this page may load or contact. Anabasis runs entirely in the browser: it reaches the network only to look up
      a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org https://archive.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -469,6 +469,17 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 #editor figure.fig{cursor:default}
 #editor figure.fig img{cursor:pointer}
 #editor figcaption{outline:none;min-height:1.2em}
+#editor figcaption[data-cp-credit]::after{content:"\00a0" attr(data-cp-credit);color:var(--muted);font-style:normal}
+.pm td,.lk td{vertical-align:top}.pm tr.pm-todo td,.audit tr.pm-todo td{background:color-mix(in srgb,var(--danger) 9%,transparent)}
+.lk-url{word-break:break-all}.lk-bad{color:var(--danger);font-weight:600}.lk-warn{color:var(--muted)}.lk-ok{color:inherit}
+#editor span.xref{color:var(--accent);border-bottom:1px dotted currentColor;cursor:pointer}
+#editor span.xref[data-cp-miss]{color:var(--danger);text-decoration:line-through wavy}
+#editor .xr-flash{outline:2px solid var(--accent);outline-offset:3px;transition:outline-color .6s}
+.xr-list{list-style:none;margin:8px 0 10px;padding:0;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px}
+.xr-list li{padding:6px 10px;cursor:pointer;border-bottom:1px solid var(--line2);line-height:1.35}
+.xr-list li:last-child{border-bottom:0}
+.xr-list li.on{background:var(--accent-soft)}
+.xr-list li.xr-doc{cursor:default;padding-top:10px;background:var(--panel)}
 #editor span.math:not([data-cp-r]){font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
 #editor p.eq:not([data-cp-r]){text-align:center;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
 #editor span.math,#editor p.eq{cursor:pointer}
@@ -1707,7 +1718,9 @@ body.focus .tip-card{display:none}
     <button id="btnExport" class="ghost" aria-label="Export"><svg viewBox="0 0 24 24" aria-hidden="true" class="ex-ic"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="lbl">Export</span> <span class="caret" aria-hidden="true">▾</span></button>
     <div class="menu-pop" id="exportMenu">
       <button data-x="docx">Word (.docx), real footnotes</button>
+      <button data-x="docxms">Word in manuscript format (for submission)…</button>
       <button data-x="pdf">PDF — print / save as PDF <span class="muted small">⌘P</span></button>
+      <button data-x="review">PDF for reviewers: line numbers, wide margins</button>
       <button data-x="html">Document as HTML</button>
       <button data-x="epub">ePub (e-book)</button>
       <button data-x="md">Document as Markdown</button>
@@ -1803,6 +1816,7 @@ body.focus .tip-card{display:none}
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
         <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
+        <div class="row"><button id="btnLinks" class="small" style="flex:1" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy">Check links</button><button id="btnPerms" class="small" style="flex:1" title="Credits and permissions for every figure and table, and quotations by source">Permissions log</button></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -1847,6 +1861,7 @@ body.focus .tip-card{display:none}
       <button id="btnFigure" data-tb="figure" data-pri="5" data-label="Figure: image, chart, map, timeline" aria-label="Figure: image, chart, map, timeline" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
       <button id="btnTable" data-tb="table" data-pri="6" data-label="Table" aria-label="Table" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
       <button id="btnEq" data-tb="equation" data-pri="6" data-label="Equation" aria-label="Equation" title="Insert an equation, written in TeX (Ctrl+Alt+E, or Alt+= as in Word)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5H7l5 7-5 7h10"/></svg></button>
+      <button id="btnXref" data-tb="xref" data-pri="4" data-label="Cross-reference" aria-label="Cross-reference" title="Cross-reference: Figure 3, Table 2, Equation (4), a heading or a chapter, kept up to date (Ctrl+Alt+R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/></svg></button>
       <button id="btnLink" data-tb="link" data-pri="5" data-label="Link" aria-label="Link" title="Link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
       <button data-cmd="removeFormat" data-tb="clear" data-pri="7" data-label="Clear formatting" aria-label="Clear formatting" title="Clear formatting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
       <span class="sep"></span>
@@ -1992,7 +2007,7 @@ body.focus .tip-card{display:none}
     <div class="scroller" id="scroller" tabindex="0" aria-label="Document page">
       <article class="page docbody" id="page">
         <aside class="margin" id="margin" aria-label="Margin notes"></aside>
-        <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="dlup" class="dl-only hidden" title="Redraw this table from its dataset">Update from data</button><button data-t="dlun" class="dl-only hidden" title="Keep the table as it is and stop following the dataset">Unlink</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
+        <div class="tblbar hidden" id="tblBar" role="toolbar" aria-label="Table"><button data-t="row" title="Add a row below">+ Row</button><button data-t="col" title="Add a column to the right">+ Column</button><button data-t="delrow" title="Delete this row">− Row</button><button data-t="delcol" title="Delete this column">− Column</button><button data-t="head" title="Header row on or off">Header</button><button data-t="cred" title="Credit line and permission for this table">Credit…</button><button data-t="dlup" class="dl-only hidden" title="Redraw this table from its dataset">Update from data</button><button data-t="dlun" class="dl-only hidden" title="Keep the table as it is and stop following the dataset">Unlink</button><button data-t="del" class="danger" title="Delete the table">Delete</button></div>
         <header class="title-block" id="titleBlock"></header>
         <div id="editor" contenteditable="true" spellcheck="true"></div>
         <aside class="tip-card hidden" id="tipCard" aria-label="Getting-started tips"></aside>
@@ -2168,7 +2183,7 @@ body.focus .tip-card{display:none}
       <div><label>Include</label><select id="msScope"></select></div>
       <div><label>Manuscript title</label><input id="msTitle"></div>
       <div><label>Citation style</label><select id="msStyle"></select></div>
-      <div><label>Output</label><select id="msFormat"><option value="docx">Word (.docx), real footnotes</option><option value="pdf">PDF (print)</option><option value="md">Markdown</option><option value="epub">ePub (e-book)</option><option value="html">HTML</option><option value="doc">A new document in this project</option></select></div>
+      <div><label>Output</label><select id="msFormat"><option value="docx">Word (.docx), real footnotes</option><option value="docxms">Word in manuscript format (for submission)</option><option value="pdf">PDF (print)</option><option value="review">PDF for reviewers (line numbers)</option><option value="md">Markdown</option><option value="epub">ePub (e-book)</option><option value="html">HTML</option><option value="doc">A new document in this project</option></select></div>
     </div>
     <div class="radio-row" style="margin-top:8px">
       <label><input type="checkbox" id="msPartTitles" checked> Part names as headings</label>
@@ -2336,6 +2351,57 @@ body.focus .tip-card{display:none}
     <div class="tip">Tab moves to the next cell (and adds a row at the end). A bar above the table adds or removes rows and columns. Type the caption on the line above the table.</div>
   </div>
   <footer><button id="tbCancel">Cancel</button><button id="tbOk" class="primary">Insert table</button></footer>
+</div></dialog>
+<dialog id="msfDlg" aria-labelledby="msfTitle"><div class="dlg">
+  <h3 id="msfTitle">Word in manuscript format</h3>
+  <div class="body">
+    <p class="small" style="margin-top:0">The layout agents, editors and many publishers ask for: Times New Roman 12, double-spaced, one-inch margins, indented paragraphs, # for section breaks, your name, a short title and the page number at the top of each page, and a first page with your contact details, the word count and the title. Footnotes stay footnotes; margin notes are left out.</p>
+    <div class="grid2"><div><label for="msfName">Your name</label><input id="msfName" autocomplete="name"></div><div><label for="msfByline">Byline <span class="muted">(if different, e.g. a pen name)</span></label><input id="msfByline"></div></div>
+    <label for="msfContact">Contact details <span class="muted">(one per line: address, email, phone, agent)</span></label><textarea id="msfContact" rows="4"></textarea>
+    <label for="msfShort">Short title for the top of each page</label><input id="msfShort">
+    <p class="small muted" id="msfHead"></p><p class="small muted" id="msfWords"></p>
+    <div class="tip">Your name and contact details are kept in this browser for next time, not in the project file.</div>
+  </div>
+  <footer><button id="msfCancel">Cancel</button><button id="msfOk" class="primary">Save Word file</button></footer>
+</div></dialog>
+<dialog id="crDlg" aria-labelledby="crTitle"><div class="dlg">
+  <h3 id="crTitle">Figure credit &amp; permission</h3>
+  <div class="body">
+    <label for="crCredit">Credit line <span class="muted">(ends the caption in every export)</span></label><input id="crCredit" placeholder="Photo: Library of Congress, Prints and Photographs Division">
+    <div class="grid2"><div><label for="crRights">Permission</label><select id="crRights"></select></div><div><label for="crHolder">Rights holder, or whom to ask</label><input id="crHolder" placeholder="Name, agency, email"></div></div>
+    <label for="crNote">Notes <span class="muted">(fee, date asked, licence terms; kept in the project, never exported)</span></label><input id="crNote">
+    <div class="tip">The Permissions log in the Sources tab lists every figure and table with its status, plus quotations by source, ready to hand to an editor.</div>
+  </div>
+  <footer><button id="crCancel">Cancel</button><button id="crOk" class="primary">Save</button></footer>
+</div></dialog>
+<dialog id="permDlg" class="wide" aria-labelledby="pmTitle"><div class="dlg">
+  <h3 id="pmTitle">Permissions log</h3>
+  <div class="body">
+    <div class="row" style="gap:8px;align-items:center"><label for="pmShow" class="sr-only">Show</label><select id="pmShow" style="width:auto"><option value="all">Everything</option><option value="todo">Still to clear</option></select><span id="pmSum" class="small muted"></span></div>
+    <div id="pmBody"></div>
+  </div>
+  <footer><button id="pmCsv">Download spreadsheet (CSV)</button><button id="pmDoc">Make it a document</button><button id="pmClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="lkDlg" class="wide" aria-labelledby="lkTitle"><div class="dlg">
+  <h3 id="lkTitle">Check links</h3>
+  <div class="body">
+    <p class="small">Asks the Internet Archive’s Wayback Machine about each web source: whether it keeps a copy, and whether the page was still there when it last looked. A browser can’t test other websites directly, so this is the archive’s record, not a live test. Only the addresses of your web sources are sent to archive.org, and only when you click Check.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><button id="lkRun" class="primary">Check</button><button id="lkAttach">Keep saved copies</button><button id="lkAcc">Fill in accessed dates</button></div>
+    <p id="lkSum" class="small" role="status"></p>
+    <div id="lkBody"></div>
+  </div>
+  <footer><button id="lkClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="xrDlg" aria-labelledby="xrTitle"><div class="dlg wide">
+  <h3 id="xrTitle">Insert a cross-reference</h3>
+  <div class="body">
+    <div class="grid2"><div><label for="xrQ">Find</label><input id="xrQ" type="search" placeholder="Caption, heading or number" autocomplete="off"></div>
+    <div><label for="xrKind">Show</label><select id="xrKind"><option value="">Everything</option><option value="figure">Figures</option><option value="table">Tables</option><option value="equation">Numbered equations</option><option value="heading">Headings</option><option value="doc">Documents (chapters)</option></select></div></div>
+    <ul id="xrBody" class="xr-list" role="listbox" tabindex="0" aria-label="Things to refer to"></ul>
+    <label for="xrForm">Write it as</label><select id="xrForm"></select>
+    <div class="tip">The words stay right as you add, move or delete figures, tables and equations, and every export uses its own numbering: in a compiled manuscript, Figure 3 of chapter two may become Figure 7. In Word, PDF, web pages and EPUB the reference is also a link.</div>
+  </div>
+  <footer><button id="xrCancel">Cancel</button><button id="xrOk" class="primary" disabled>Insert</button></footer>
 </div></dialog>
 <dialog id="eqDlg" aria-labelledby="eqTitle"><div class="dlg wide">
   <h3 id="eqTitle">Insert an equation</h3>
@@ -2751,6 +2817,28 @@ body.focus .tip-card{display:none}
       <li><b>Transcripts.</b> On a source, click Transcript…, paste a transcript, select lines, and make quote or paraphrase notes with the timestamp as the locator.</li>
       <li><b>Versions.</b> Save a named version, see what changed since (word-level), or restore it. Restoring saves your current text as a version first.</li>
       <li><b>Import Word</b> brings in .docx drafts with footnotes as text footnotes. <b>Import references</b> reads BibTeX and RIS as well as Zotero and OSINT lists. <b>Export → ePub</b> makes an e-book with tappable notes.</li>
+    </ul>
+    <h4>Cross-references</h4>
+    <ul>
+      <li>Click the arrow-to-bar button in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>) where the reference should go, then pick a figure, table, numbered equation, heading or another document (a chapter). Type to search; choose how it reads: “Figure 3”, “figure 3” in mid-sentence, or just “3”.</li>
+      <li>The words keep up as you add, move or delete things. A reference to something you deleted turns red and crossed out; click any reference to see where it points, with <b>Go there</b> to jump, even to another chapter.</li>
+      <li>Every export does its own numbering, so in a compiled manuscript a chapter’s Figure 1 becomes whatever it is in the whole book. In Word, PDF, web pages and EPUB the reference is a link to the caption, equation or heading; LaTeX gets <code>\ref</code>, <code>\eqref</code> and matching <code>\label</code>s; Markdown gets the words.</li>
+    </ul>
+    <h4>Credits &amp; permissions</h4>
+    <ul>
+      <li>Click a figure and choose <b>Credit &amp; permission…</b> (for a table, <b>Credit…</b> on its toolbar). The credit line (“Photo: Library of Congress”) ends the caption in every export and shows after it on screen. Record the permission status, whom to ask, and notes such as fees and dates; those stay in the project and never go into an export.</li>
+      <li><b>Permissions log</b> (Sources tab) lists every figure and table in the project with its credit and status, highlights what’s still to clear (permission needed, requested or refused, or a picture with nothing set), and adds quotations by source. Download it as a spreadsheet or make it a document to send your editor.</li>
+    </ul>
+    <h4>Checking links</h4>
+    <ul>
+      <li><b>Check links</b> (Sources tab) asks the Internet Archive’s Wayback Machine about each web source: when it last saved a copy, and whether the page was there, moved or gone at that visit. A browser isn’t allowed to test other websites directly, so this is the archive’s record rather than a live test.</li>
+      <li><b>Keep saved copies</b> stores the archived link with each source (the OSINT style cites it). For a page that’s gone, tick <b>the saved copy</b> to cite the archived address in any style. <b>Save now</b> asks the Wayback Machine to save a page today. <b>Fill in accessed dates</b> uses the day you added each source.</li>
+      <li>Only your web sources’ addresses go to archive.org, and only when you click Check.</li>
+    </ul>
+    <h4>Copies for reviewers and submission</h4>
+    <ul>
+      <li><b>Export → PDF for reviewers</b> numbers every line (starting again on each page), widens the outer margin for handwritten notes, and marks each page “Review copy” with the date, so comments can say “p. 4, line 12”.</li>
+      <li><b>Export → Word in manuscript format</b> sets what agents and editors expect: Times New Roman 12, double-spaced, one-inch margins, indented paragraphs, # for section breaks, “Surname / Short title / page” at the top of each page after the first, and a first page with your name, contact details, rounded word count, title and byline. Footnotes stay; margin notes are left out. It’s also an output in <b>Compile manuscript</b>.</li>
     </ul>
     <h4>Equations</h4>
     <ul>

@@ -4,6 +4,18 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.9.0] — 2026-11-24
+
+### Added
+- **Cross-references.** A toolbar button (and Ctrl+Alt+R) inserts a reference to a figure, table, numbered equation, heading or another document, as “Figure 3”, “figure 3” or “3” (“Chapter 4” or its title for a document). References renumber as you write, turn red if their target is deleted, and show where they point when clicked, with Go there. Every export numbers for itself, so references in a compiled manuscript follow the book’s numbering. Word gets links to bookmarks on the caption, equation number or heading; PDF, web pages and EPUB get links (across EPUB sections too); LaTeX gets `\ref`/`\eqref` with `\label`s; Markdown and Pandoc get the words.
+- **Credits and permissions.** Figures (Credit & permission… when you click one) and tables (Credit… on the table toolbar) take a credit line, a permission status, whom to ask and private notes. The credit line ends the caption in every export and shows after it on screen; status and notes never leave the project. The **Permissions log** (Sources tab) lists every figure and table with what’s still to clear, plus quotations by source, as a spreadsheet (CSV) or a document.
+- **Check links** (Sources tab) asks the Internet Archive’s Wayback Machine about each web source: its latest saved copy and whether the page was there, moved or gone at that visit. Keep the saved copies with their sources, cite the archived address for pages that are gone, ask the Wayback Machine to save a page now, and fill in missing accessed dates from the day each source was added. Only the addresses are sent, and only when asked (archive.org is added to the allowed connections).
+- **PDF for reviewers**: every line numbered, restarting on each page; a wide outer margin; “Review copy” and the date at the top.
+- **Word in manuscript format**: Times New Roman 12, double-spaced, one-inch margins, indented paragraphs, # section breaks, “Surname / Short title / page” on every page after the first, and a first page with name, contact details, rounded word count, title and byline. Your details are kept in this browser, not the project. Also a Compile manuscript output.
+
+### Fixed
+- LaTeX and Pandoc packages no longer make the browser try to load their renamed image files while building.
+
 ## [1.8.0] — 2026-11-24
 
 ### Added
@@ -190,6 +202,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.9.0
 [1.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.8.0
 [1.7.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.1
 [1.7.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.0

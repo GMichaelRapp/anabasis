@@ -54,7 +54,12 @@ VIEWS = [
     ('data in the writing', "splitClose(); closeDesk(); const d = P.datasets[0]; dataInsert(Object.assign(newTile('table', d), { title: d.name })); const st = P.dashboards[0].tiles.find(x => x.type === 'stat'); if (st) dataInsert(st); const td = editor.querySelector('figure.tbl[data-dl] td'); if (td) { const r = document.createRange(); r.selectNodeContents(td); r.collapse(true); getSelection().removeAllRanges(); getSelection().addRange(r); }"),
     ('equations in the writing', "$('#eqDlg').close(); closeDesk(); editor.insertAdjacentHTML('beforeend', '<p>Energy ' + eqHTML('E = mc^2', false) + ' here.</p>' + eqHTML('\\\\frac{a}{b}', true, true)); hydrateImages(); renumberFigures();"),
     ('equation box', "openEq(); $('#eqTex').value = '\\\\sqrt{x^2 + 1}'; eqPreview();"),
-    ('newer-version notice', "$('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
+    ('cross-reference box', "$('#eqDlg').close(); openXref(); $('#xrQ').value = ''; xrPick = 1; xrRender();"),
+    ('credit & permission box', "$('#xrDlg').close(); editor.insertAdjacentHTML('beforeend', figHTML(addAsset('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'x', 1, 1), 'A test figure')); hydrateImages(); renumberFigures(); openCredit(editor.querySelector('figure.fig:last-of-type') || $$('#editor figure.fig').pop());"),
+    ('permissions log', "$('#crDlg').close(); openPerms();"),
+    ('check links', "$('#permDlg').close(); P.sources.push({ id: 'axe1', csl: { type: 'webpage', title: 'A page', URL: 'https://example.org/a' }, lc: { at: '2026-01-01', url: 'https://web.archive.org/web/20240101000000/https://example.org/a', ts: '20240101000000', st: '404' }, created: nowISO() }); openLinks();"),
+    ('manuscript format box', "$('#lkDlg').close(); openMsf(curDoc());"),
+    ('newer-version notice', "$('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
     async with async_playwright() as pw:

@@ -6,6 +6,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MATH = { ready: null, css: '', cache: new Map() }, EQ_SEL = 'span.math[data-tex], p.eq[data-tex]'; // equations (see the Equations section)
+const WB_OK_N = /^https:\/\/web\.archive\.org\/web\/\d{4,14}[a-z_]*\//; // a Wayback Machine copy (link check)
 const uid = (p = '') => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const nowISO = () => new Date().toISOString();
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
@@ -13,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.8.0';
+const APP_VERSION = '1.9.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -179,7 +180,8 @@ function normalize(p) {
       searches: arr(J.searches).map(x => ({ id: String(x.id), date: dayOk(x.date) || todayISOof(x.created), where: rstr(x.where), terms: rstr(x.terms), filters: rstr(x.filters), results: num(x.results), kept: num(x.kept), notes: rstr(x.notes), created: rstr(x.created) || nowISO() })),
     };
   }
-  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}));
+  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {},
+    s.lc && typeof s.lc === 'object' ? { lc: Object.fromEntries(['at', 'url', 'ts', 'st', 'err'].filter(k => s.lc[k] != null && s.lc[k] !== '').map(k => [k, k === 'err' ? 1 : String(s.lc[k]).slice(0, 300)]).filter(([k, v]) => k !== 'url' || WB_OK_N.test(v))) } : {}));
   { // datasets and dashboards (1.7)
     const arr = v => (Array.isArray(v) ? v : []), obj = v => v && typeof v === 'object' && !Array.isArray(v), strs = v => arr(v).map(rstr).filter(Boolean);
     out.datasets = arr(out.datasets).filter(obj).map(d => ({ id: rstr(d.id) || uid('ds'), name: rstr(d.name) || 'Data', cols: arr(d.cols).map(rstr).slice(0, 500), rows: arr(d.rows).filter(Array.isArray).slice(0, 100000).map(r => r.slice(0, 500).map(rstr)), sourceId: rstr(d.sourceId), note: rstr(d.note), created: rstr(d.created) || nowISO(), modified: rstr(d.modified) || nowISO() }));
@@ -396,7 +398,9 @@ const engines = {}, previewEngines = {};
 function itemFor(id) {
   const s = P.sources.find(x => x.id === id);
   if (!s) return { id, type: 'document', title: '[missing source]' };
-  return Object.assign({}, s.csl, { id });
+  const it = Object.assign({}, s.csl, { id });
+  if (s.citeArchive && s.osint && /^https:\/\//.test(s.osint.archiveUrl || '')) it.URL = s.osint.archiveUrl; // the page is gone: cite the saved copy
+  return it;
 }
 function makeEngine(style) {
   return new CSL.Engine({ retrieveLocale: () => LOCALE, retrieveItem: itemFor }, cslXml(style), 'en-US');
@@ -735,7 +739,7 @@ function snapRange(r) {
 }
 function rescueStrayInline() {
   [...editor.childNodes].forEach(n => {
-    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag,.dnum,.math')) {
+    if (n.nodeType === 1 && n.matches('.cite,.fn,.flag,.dnum,.math,.xref')) {
       const prev = n.previousElementSibling;
       if (prev && /^(P|H[1-6]|BLOCKQUOTE)$/.test(prev.nodeName)) { const nx = n.nextSibling; prev.append(n); if (nx && nx.nodeType === 3 && nx.parentNode === editor && nx.data.trim() === '') { prev.append('\u00a0'); nx.remove(); } else if (nx && nx.nodeType === 3 && nx.parentNode === editor) prev.append(nx); }
       else { const pp = document.createElement('p'); n.replaceWith(pp); pp.append(n); }
@@ -748,17 +752,17 @@ function insertHTMLAtCursor(html) {
   restoreSelection();
   const sel = getSelection(); if (sel.rangeCount && !sel.isCollapsed) sel.collapseToEnd();
   if (sel.rangeCount) { const r = snapRange(sel.getRangeAt(0)); sel.removeAllRanges(); sel.addRange(r); }
-  const before = $$('.cite,.fn,.dnum,.math', editor).length;
+  const before = $$('.cite,.fn,.dnum,.math,.xref', editor).length;
   const range = sel.rangeCount ? sel.getRangeAt(0).cloneRange() : null;
   document.execCommand('insertHTML', false, html);
   // Chrome can silently refuse insertHTML right beside a non-editable marker; fall back to a plain DOM insert
-  if ($$('.cite,.fn,.dnum,.math', editor).length === before && /class="(cite|fn|dnum|math)"/.test(html) && range) {
+  if ($$('.cite,.fn,.dnum,.math,.xref', editor).length === before && /class="(cite|fn|dnum|math|xref)"/.test(html) && range) {
     const frag = range.createContextualFragment(html), last = frag.lastChild;
     range.insertNode(frag);
     const r = document.createRange(); r.setStartAfter(last); r.collapse(true); sel.removeAllRanges(); sel.addRange(r); savedRange = r.cloneRange();
   }
   // Chrome sometimes drops contenteditable=false from inserted markers; restore it
-  $$('.cite,.fn,.flag,.dnum,.math', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
+  $$('.cite,.fn,.flag,.dnum,.math,.xref', editor).forEach(m => { m.setAttribute('contenteditable', 'false'); m.removeAttribute('style'); });
   hydrateMath();
   rescueStrayInline();
   syncEditor(); renderRefs(true); updateWordCount(); markDirty();
@@ -839,11 +843,11 @@ function sanitize(html) {
       if (!ALLOWED[tag]) { walk(ch); ch.replaceWith(...ch.childNodes); return; }
       if ((tag === 'SPAN' && ch.classList.contains('math')) || (tag === 'P' && ch.classList.contains('eq'))) { // an equation: its TeX and nothing else
         const tex = ch.getAttribute('data-tex'); if (!tex) { ch.removeAttribute('class'); } else {
-          const num = tag === 'P' && ch.classList.contains('num'); [...ch.attributes].forEach(a => ch.removeAttribute(a.name));
+          const num = tag === 'P' && ch.classList.contains('num'), xid = ch.getAttribute('data-xid'); [...ch.attributes].forEach(a => ch.removeAttribute(a.name)); if (xid && tag === 'P') ch.setAttribute('data-xid', xid);
           ch.className = tag === 'P' ? (num ? 'eq num' : 'eq') : 'math'; ch.setAttribute('data-tex', tex); ch.textContent = tex; return; // made non-editable once in place: Chrome's paste drops non-editable pieces
         }
       }
-      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum'));
+      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum') || ch.classList.contains('xref'));
       if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
         const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
         walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
@@ -864,9 +868,10 @@ function sanitize(html) {
       }
       [...ch.attributes].forEach(a => {
         const keep = (tag === 'A' && a.name === 'href' && /^(https?:|mailto:|#)/i.test(a.value)) ||
-          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text' || a.name === 'data-cnote' || a.name === 'data-dl')) ||
+          (isMarker && (a.name === 'class' || a.name === 'data-items' || a.name === 'data-text' || a.name === 'data-cnote' || a.name === 'data-dl' || a.name === 'data-ref' || a.name === 'data-form')) ||
+          (/^H[1-3]$/.test(tag) && a.name === 'data-xid') ||
           (tag === 'IMG' && (a.name === 'data-asset' || a.name === 'alt' || (a.name === 'src' && /^data:image\/(png|jpeg|gif|webp)/i.test(a.value)))) ||
-          (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || a.name === 'data-size' || a.name === 'data-dl')) ||
+          (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || /^data-(size|dl|xid|credit|rights|holder|rnote)$/.test(a.name))) ||
           ((tag === 'TD' || tag === 'TH') && (a.name === 'colspan' || a.name === 'rowspan'));
         if (!keep) ch.removeAttribute(a.name);
       });
@@ -1995,7 +2000,7 @@ function buildExport(doc, mode = 'html', opt = {}) {
   $$('.flag', tmp).forEach(f => { const m = document.createElement('mark'); m.textContent = `[${(FLAG_KINDS[f.dataset.kind] || FLAG_KINDS.tk).label}${f.dataset.note ? ': ' + f.dataset.note : ''}]`; f.replaceWith(m); });
   $$('.qlink', tmp).forEach(q => q.replaceWith(...q.childNodes));
   $$('[data-qn]', tmp).forEach(q => q.removeAttribute('data-qn'));
-  const figs = prepExportFigures(tmp); prepExportMath(tmp, opt.texMath ? 'substack' : mode); fillAbbreviations(tmp);
+  const figs = prepExportFigures(tmp); prepExportXrefs(tmp, mode, doc); prepExportMath(tmp, opt.texMath ? 'substack' : mode); fillAbbreviations(tmp);
   const mgWant = doc.layout.marginalia || 'word';
   const mg = mgWant === 'page' && mode !== 'substack' ? collectMarginalia(tmp, mode) : [];
   if (mode !== 'docx' || mgWant !== 'word') $$('.cmt', tmp).forEach(c => c.replaceWith(...c.childNodes));
@@ -2089,6 +2094,8 @@ $('#exportMenu').addEventListener('click', e => {
   if (doc && /^(pdf|html|epub|md|substack|copy|pandoc|latex)$/.test(x) && doc.id === curDocId && sgAll().length) setTimeout(() => toast(`This export shows the ${sgAll().length} suggestion${sgAll().length === 1 ? '' : 's'} as if accepted. Word exports keep them as tracked changes.`), 900);
   if (x === 'pdf') exportPDF();
   if (x === 'docx') exportDocx(doc);
+  if (x === 'docxms') openMsf(doc);
+  if (x === 'review') exportPagedPDF(doc, { review: true });
   if (x === 'ms') openManuscript();
   if (x === 'html') { const go = () => download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html'); if (mathPending(doc)) mathLoad().then(go); else go(); }
   if (x === 'md') download(fileSafe(doc.title) + '.md', exportMarkdown(doc), 'text/markdown');
@@ -2166,6 +2173,7 @@ document.addEventListener('keydown', e => {
   if (mod && e.altKey && e.code === 'KeyA') { e.preventDefault(); if (!dlgOpen) addComment(); }
   if (mod && e.altKey && e.code === 'KeyX') { e.preventDefault(); if (!dlgOpen) openIndexMark(); }
   if (mod && e.altKey && e.code === 'KeyD') { e.preventDefault(); if (!dlgOpen) openSaveDraft(); }
+  if (mod && e.altKey && e.code === 'KeyR') { e.preventDefault(); if (!dlgOpen) openXref(); }
   if ((mod && e.altKey && e.code === 'KeyE') || (e.altKey && !mod && e.code === 'Equal' && document.activeElement === editor)) { e.preventDefault(); if (!dlgOpen) openEq(); }
   if (e.key === 'Escape') { closePop(); if (!dlgOpen && !$('#findBar').classList.contains('hidden')) closeFind(); else if (!dlgOpen && document.body.classList.contains('focus')) toggleFocus(false); }
 });
@@ -2340,11 +2348,11 @@ const COMMANDS = [
   ['Save project', () => saveProject(false)], ['Page setup', () => $('#btnPageSetup').click()], ['Settings', () => openSettings()],
   ['Notes board (cards, piles, canvas)', () => openBoard()], ['Web clipper (bookmarklet)', () => openClipper()], ['Add source from a URL, DOI or ISBN', () => { switchTab('sources'); document.body.classList.add('side-open'); $('#quickId').focus(); }],
   ['Import a Word document (.docx)', () => $('#fileDocx').click()], ['Versions: save or compare', () => openVersions()], ['Export ePub (e-book)', () => exportEpub(curDoc())],
-  ['Names & spellings', () => openNames()], ['Source audit', () => openAudit('all')], ['Writing record & chapter status', () => openRecord()], ['Revision lens', () => toggleLens()],
+  ['Names & spellings', () => openNames()], ['Source audit', () => openAudit('all')], ['Permissions log: credits and rights for figures, tables and quotations', () => openPerms()], ['Check links: web sources against the Wayback Machine', () => openLinks()], ['Writing record & chapter status', () => openRecord()], ['Revision lens', () => toggleLens()],
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert or edit an equation (TeX)', () => openEq()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -2503,7 +2511,7 @@ function buildManuscript() {
   const docs = sel.map((d, i) => [d, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]);
   const partTitles = $('#msPartTitles').checked, docTitles = $('#msDocTitles').checked, breaks = $('#msBreaks').checked;
   const numberCh = $('#msNumber').checked, wantToc = $('#msToc').checked;
-  let html = '', lastPart = null, chNo = 0, tocDone = !wantToc, k = 0;
+  let html = '', lastPart = null, chNo = 0, bodyNo = 0, tocDone = !wantToc, k = 0;
   const toc = [];
   const tocSlot = '<!--TOC-->';
   docs.forEach((d, i) => {
@@ -2511,8 +2519,9 @@ function buildManuscript() {
     const pt = d.role === 'body' || !d.role ? P.parts.find(x => x.id === d.partId) : null;
     if (partTitles && pt && pt.id !== lastPart) { const id = 'h' + (++k); html += `<h1 id="${id}" class="part-title${html.replace(tocSlot, '') ? ' ch-break' : ''}">${esc(pt.name)}</h1>`; toc.push({ id, t: pt.name, part: true }); }
     lastPart = pt ? pt.id : lastPart;
-    const label = (numberCh && (d.role || 'body') === 'body' ? `Chapter ${++chNo}: ` : '') + (d.title || 'Untitled');
-    if (docTitles) { const id = 'h' + (++k); html += `<h1 id="${id}" class="chapter-title${breaks && html.replace(tocSlot, '') && !/part-title[^>]*>[^<]*<\/h1>$/.test(html) ? ' ch-break' : ''}">${esc(label)}</h1>`; toc.push({ id, t: label }); }
+    const isBody = (d.role || 'body') === 'body'; if (isBody) bodyNo++;
+    const label = (numberCh && isBody ? `Chapter ${++chNo}: ` : '') + (d.title || 'Untitled');
+    if (docTitles) { const id = 'h' + (++k); html += `<h1 id="${id}" class="chapter-title${breaks && html.replace(tocSlot, '') && !/part-title[^>]*>[^<]*<\/h1>$/.test(html) ? ' ch-break' : ''}" data-doc="${esc(d.id)}"${isBody ? ` data-ch="${bodyNo}"` : ''}>${esc(label)}</h1>`; toc.push({ id, t: label }); }
     else if (breaks && html.replace(tocSlot, '')) html += '<div class="ch-break"></div>';
     html += stripCp(d.html);
   });
@@ -2530,6 +2539,8 @@ $('#msOk').addEventListener('click', async () => {
   const ms = buildManuscript(); if (!ms) { toast('Select at least one document.'); return; }
   const fmt = $('#msFormat').value; $('#msDlg').close();
   if (fmt === 'docx') await exportDocx(ms);
+  if (fmt === 'docxms') openMsf(ms);
+  if (fmt === 'review') exportPagedPDF(ms, { review: true });
   if (fmt === 'pdf') exportPDF(ms);
   if (fmt === 'md') download(fileSafe(ms.title) + '.md', exportMarkdown(ms), 'text/markdown');
   if (fmt === 'html') { const go = () => download(fileSafe(ms.title) + '.html', exportStandaloneHTML(ms), 'text/html'); if (mathPending(ms)) mathLoad().then(go); else go(); }
@@ -2539,22 +2550,25 @@ $('#msOk').addEventListener('click', async () => {
 $('#btnManuscript').addEventListener('click', () => openManuscript());
 
 /* ---------- Word (.docx) export with real footnotes ---------- */
-async function exportDocx(doc) {
+async function exportDocx(doc, opt = {}) {
   if (!doc) return;
   if (doc.id === curDocId) syncEditor(); if (hasMath(doc.html)) await mathLoad();
+  const ms = opt.ms || null; // manuscript format: Times 12, double-spaced, running head, title page; margin notes left out
+  if (ms) doc = Object.assign({}, doc, { layout: Object.assign({}, doc.layout, { font: 'times', size: '12', spacing: '2', indent: true, pageNums: false, marginalia: 'none' }) });
   const D = docx, x = buildExport(doc, 'docx'), L = doc.layout;
   const font = { book: 'Palatino Linotype', times: 'Times New Roman', sans: 'Arial' }[L.font] || 'Times New Roman';
   const size = Math.round(parseFloat(L.size) * 2), line = Math.round(parseFloat(L.spacing) * 240);
   const isNote = x.out.isNote;
   const cmtIds = {}, cmtList = [];
   ((L.marginalia || 'word') === 'word' ? (x.body.match(/data-cmt="([^"]+)"/g) || []) : []).forEach(m => { const id = m.slice(10, -1); if (id in cmtIds) return; const c = findComment(id); if (!c) return; cmtIds[id] = cmtList.length; cmtList.push({ id: cmtList.length, author: c.author || doc.meta.author || 'Author', initials: (c.author || doc.meta.author || 'A').split(/\s+/).map(w => w[0]).join('').slice(0, 3), date: new Date(c.date || Date.now()), children: [new D.Paragraph({ children: [new D.TextRun(c.text)] })] }); });
-  const ctxBody = { font, size, line, footnotes: {}, comments: cmtIds, textW: (doc.layout.paper === 'A4' ? 11906 : 12240) - 2880 }, ctxNote = { font, size: Math.max(16, size - 4), line: 240, footnotes: {} };
+  const ctxBody = { font, size, line, footnotes: {}, comments: cmtIds, textW: (doc.layout.paper === 'A4' ? 11906 : 12240) - 2880, sceneBreak: ms ? '#' : '' }, ctxNote = { font, size: Math.max(16, size - 4), line: 240, footnotes: {} };
   const notes = {};
   x.out.notes.forEach(n => { notes[n.n] = n.html; ctxBody.footnotes[n.n] = true; });
   const footnotes = {};
   for (const n in notes) footnotes[n] = { children: htmlToDocx(notes[n], ctxNote, { inlineOnly: true, spacingAfter: 120 }) };
   const children = [];
-  if (x.title) {
+  if (ms) children.push(...msTitlePage(doc, ms, { font, size, W: ctxBody.textW }));
+  else if (x.title) {
     const tb = document.createElement('div'); tb.innerHTML = x.title;
     $$('p', tb).forEach((p, i) => children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: i ? 0 : 120, line: 276 }, children: [new D.TextRun({ text: p.textContent, bold: i === 0, size: i === 0 ? size + 8 : size, font })] })));
     children.push(new D.Paragraph({ spacing: { after: 240 }, children: [] }));
@@ -2585,7 +2599,8 @@ async function exportDocx(doc) {
   if (x.mgDocx) children.push(...x.mgDocx);
   const page = L.paper === 'A4' ? { width: 11906, height: 16838 } : { width: 12240, height: 15840 };
   const footers = L.pageNums ? { default: new D.Footer({ children: [new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ children: [D.PageNumber.CURRENT], font, size: 20 })] })] }) } : undefined;
-  const hstyle = (sz, it) => ({ run: { font, size: sz, bold: true, italics: !!it, color: '000000' }, paragraph: { spacing: { before: 360, after: 160, line: 276 }, keepNext: true } });
+  const hstyle = (sz, it) => ({ run: { font, size: ms ? size : sz, bold: true, italics: !!it, color: '000000' }, paragraph: { spacing: ms ? { before: 480, after: 0, line: 480 } : { before: 360, after: 160, line: 276 }, keepNext: true } });
+  const headers = ms ? { default: new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, children: [new D.TextRun({ children: [`${ms.surname} / ${ms.short} / `, D.PageNumber.CURRENT], font, size })] })] }), first: new D.Header({ children: [new D.Paragraph({ children: [] })] }) } : undefined;
   const bullets = ['•', '◦', '▪'];
   const wdoc = new D.Document({
     creator: doc.meta.author || 'Anabasis', title: doc.title, ...(x.index || (x.mg && x.mg.length) ? { features: { updateFields: true } } : {}),
@@ -2598,24 +2613,56 @@ async function exportDocx(doc) {
     ] },
     footnotes,
     ...(cmtList.length ? { comments: { children: cmtList } } : {}),
-    sections: [{ properties: { page: { size: page, margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } }, footers, children }],
+    sections: [{ properties: { ...(ms ? { titlePage: true } : {}), page: { size: page, margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } }, ...(headers ? { headers } : {}), footers, children }],
   });
   try {
     const blob = await D.Packer.toBlob(wdoc);
-    download(fileSafe(doc.title) + '.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    download(fileSafe(doc.title) + (ms ? ' - manuscript' : '') + '.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    if (ms) { toast(`Manuscript saved: Times New Roman 12, double-spaced, ${ms.words}, with your name and page numbers at the top of each page.`); return; }
     const fl = (doc.html.match(/class="flag/g) || []).length;
     if (cmtList.length) toast(`Word file saved with ${cmtList.length} comment${cmtList.length > 1 ? 's' : ''} in the margin${fl ? ` and ${fl} unresolved flag${fl > 1 ? 's' : ''}` : ''}.`); else
     toast(fl ? `Word file saved. Note: ${fl} unresolved flag${fl > 1 ? 's' : ''} printed as [TK].` : (isNote ? 'Word file saved with real footnotes.' : 'Word file saved.'));
   } catch (e) { console.error(e); toast('Couldn’t build the Word file: ' + e.message); }
 }
+const docxMark = el => { const a = el.getAttribute && el.getAttribute('data-anchor'); return a ? [new docx.Bookmark({ id: a, children: [new docx.TextRun({ text: '' })] })] : []; }; // a place cross-references can link to
 /* A display equation as a Word paragraph: a Word equation, centred; a numbered one has its number at the right margin */
 function eqToDocx(el, ctx) {
   const D = docx, tex = el.getAttribute('data-tex'), n = el.dataset.n, om = mathOMML(tex, true), W = ctx.textW || 9360, sp = { before: 120, after: 120 };
   if (!om) return new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: sp, children: [new D.TextRun({ text: tex + (n ? `    (${n})` : ''), font: 'Cambria Math', size: ctx.size })] });
   if (!n) return new D.Paragraph({ spacing: sp, children: [D.ImportedXmlComponent.fromXmlString(`<m:oMathPara><m:oMathParaPr><m:jc m:val="center"/></m:oMathParaPr>${om}</m:oMathPara>`)] });
   return new D.Paragraph({ spacing: sp, tabStops: [{ type: D.TabStopType.CENTER, position: Math.round(W / 2) }, { type: D.TabStopType.RIGHT, position: W }],
-    children: [new D.TextRun({ text: '\t', font: ctx.font, size: ctx.size }), D.ImportedXmlComponent.fromXmlString(om), new D.TextRun({ text: `\t(${n})`, font: ctx.font, size: ctx.size })] });
+    children: [new D.TextRun({ text: '\t', font: ctx.font, size: ctx.size }), D.ImportedXmlComponent.fromXmlString(om), new D.TextRun({ text: '\t', font: ctx.font, size: ctx.size }), ...docxMark(el), new D.TextRun({ text: `(${n})`, font: ctx.font, size: ctx.size })] });
 }
+/* ---- Word in manuscript format (1.9.0) ---- */
+function msWords(doc) { const n = wc(docPlain(doc.html || '')); const r = n < 10000 ? Math.max(100, Math.round(n / 100) * 100) : Math.round(n / 1000) * 1000; return `about ${r.toLocaleString('en-US')} words`; }
+function msTitlePage(doc, ms, { font, size, W }) { // name and contact top left, word count top right, title a third of the way down
+  const D = docx, run = (t, o = {}) => new D.TextRun(Object.assign({ text: t, font, size }, o)), single = { line: 240, after: 0 };
+  const out = [new D.Paragraph({ spacing: single, tabStops: [{ type: D.TabStopType.RIGHT, position: W }], children: [run(ms.name || ''), run('\t' + ms.words.replace(/^a/, 'A'))] })];
+  (ms.contact || '').split('\n').map(l => l.trim()).filter(Boolean).forEach(l => out.push(new D.Paragraph({ spacing: single, children: [run(l)] })));
+  out.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { before: Math.max(1200, 4320 - out.length * 276), line: 480, after: 0 }, children: [run(doc.title || 'Untitled')] }));
+  if (doc.meta && doc.meta.subtitle) out.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { line: 480, after: 0 }, children: [run(doc.meta.subtitle)] }));
+  out.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { line: 480, after: 480 }, children: [run('by ' + (ms.byline || ms.name || ''))] }));
+  return out;
+}
+let msfDoc = null;
+function openMsf(doc) {
+  if (!doc) return; msfDoc = doc; const m = PREFS.msf || {}, author = (doc.meta && doc.meta.author) || '';
+  $('#msfName').value = m.name || author; $('#msfByline').value = m.byline || ''; $('#msfContact').value = m.contact || '';
+  $('#msfShort').value = (doc.title || 'Untitled').split(/[:—–]/)[0].trim().split(/\s+/).slice(0, 4).join(' ');
+  if (doc.id === curDocId) syncEditor(); $('#msfWords').textContent = `The first page will say “${msWords(doc).replace(/^a/, 'A')}” (rounded, as publishers expect).`;
+  msfHead(); $('#msfDlg').showModal(); ($('#msfName').value ? $('#msfContact') : $('#msfName')).focus();
+}
+const msfSurname = n => { const w = n.replace(/,?\s+(Jr\.?|Sr\.?|II|III|IV|PhD|Ph\.D\.)$/i, '').trim().split(/\s+/); return w[w.length - 1] || ''; };
+function msfHead() { const sn = msfSurname($('#msfByline').value.trim() || $('#msfName').value.trim()); $('#msfHead').textContent = `Each page after the first: ${sn || 'Surname'} / ${$('#msfShort').value.trim() || 'Short title'} / 2`; }
+['#msfName', '#msfByline', '#msfShort'].forEach(sel => $(sel).addEventListener('input', msfHead));
+$('#msfCancel').addEventListener('click', () => $('#msfDlg').close());
+$('#msfOk').addEventListener('click', async () => {
+  const name = $('#msfName').value.trim(), byline = $('#msfByline').value.trim(), contact = $('#msfContact').value.replace(/\r/g, '').trim();
+  if (!name) { toast('Add your name: it goes on the first page and at the top of every page.'); $('#msfName').focus(); return; }
+  PREFS.msf = { name, byline, contact }; savePrefs(); $('#msfDlg').close();
+  const doc = msfDoc; msfDoc = null;
+  await exportDocx(doc, { ms: { name, byline, contact, surname: msfSurname(byline || name), short: $('#msfShort').value.trim() || doc.title, words: msWords(doc) } });
+});
 /* Convert sanitized document HTML into docx Paragraphs. */
 function htmlToDocx(html, ctx, opt = {}) {
   const D = docx, root = document.createElement('div'); root.innerHTML = html;
@@ -2634,6 +2681,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (ch.nodeType !== 1) return;
       const tag = ch.nodeName;
       if (tag === 'BR') { r.push(new D.TextRun({ break: 1 })); return; }
+      if (tag === 'SPAN' && ch.classList.contains('xref')) { const run = new D.TextRun({ text: ch.getAttribute('data-label') || ch.textContent, bold: f.b, italics: f.i, font: ctx.font, size: sz }), an = ch.getAttribute('data-anchor'); r.push(an ? new D.InternalHyperlink({ anchor: an, children: [run] }) : run); return; }
       if (tag === 'SPAN' && ch.classList.contains('math') && ch.hasAttribute('data-tex')) { const tex = ch.getAttribute('data-tex'), om = mathOMML(tex, false); r.push(om ? D.ImportedXmlComponent.fromXmlString(om) : new D.TextRun({ text: tex, font: 'Cambria Math', size: sz })); return; }
       if ((tag === 'INS' || tag === 'DEL') && ch.classList.contains('sg')) { r.push(...runs(ch, Object.assign({}, f, { track: tag, ta: sgAttrs(ch) }), sz)); return; }
       if (tag === 'SPAN' && ch.classList.contains('cmt') && ctx.comments && ch.dataset.cmt in ctx.comments) { const id = ctx.comments[ch.dataset.cmt]; r.push(new D.CommentRangeStart(id), ...runs(ch, f, sz), new D.CommentRangeEnd(id), new D.TextRun({ children: [new D.CommentReference(id)] })); return; }
@@ -2675,7 +2723,7 @@ function htmlToDocx(html, ctx, opt = {}) {
     if (/^H[1-6]$/.test(tag)) {
       const lvl = Math.min(3, +tag[1]);
       const brk = el.classList.contains('ch-break');
-      out.push(new D.Paragraph({ heading: [D.HeadingLevel.HEADING_1, D.HeadingLevel.HEADING_2, D.HeadingLevel.HEADING_3][lvl - 1], pageBreakBefore: brk, alignment: el.classList.contains('part-title') ? D.AlignmentType.CENTER : align(el), children: runs(trimRuns(el)) }));
+      out.push(new D.Paragraph({ heading: [D.HeadingLevel.HEADING_1, D.HeadingLevel.HEADING_2, D.HeadingLevel.HEADING_3][lvl - 1], pageBreakBefore: brk, alignment: el.classList.contains('part-title') ? D.AlignmentType.CENTER : align(el), children: [...docxMark(el), ...runs(trimRuns(el))] }));
       prevHeading = true; return;
     }
     if (tag === 'DIV' && el.classList.contains('ch-break') && !el.textContent.trim()) { out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); prevHeading = true; return; }
@@ -2691,7 +2739,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       prevHeading = true; return;
     }
     if (/^(SECTION|ARTICLE|HEADER|DIV)$/.test(tag) && [...el.children].some(c => /^(P|H[1-6]|UL|OL|BLOCKQUOTE|DIV|SECTION)$/.test(c.nodeName))) { [...el.childNodes].forEach(block); return; }
-    if (tag === 'HR') { out.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: '* * *', font: ctx.font, size: ctx.size })] })); prevHeading = true; return; }
+    if (tag === 'HR') { out.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, children: [new D.TextRun({ text: ctx.sceneBreak || '* * *', font: ctx.font, size: ctx.size })] })); prevHeading = true; return; }
     if (!el.textContent.trim() && !el.querySelector('sup')) return;
     out.push(para(el, opt.indent && !prevHeading && !(el.style && el.style.textAlign) ? { indent: { firstLine: 720 } } : {}));
     prevHeading = false;
@@ -3120,18 +3168,29 @@ html,body{margin:0;background:#fff;color:#000}
 .docbody .mg-ref::after{content:target-counter(attr(href url), page)}
 .docbody .mg-ref{color:inherit;text-decoration:none}`;
 }
-function exportPagedPDF(doc) {
-  if (mathPending(doc)) { mathLoad().then(() => exportPagedPDF(doc)); return; }
+/* A copy for reviewers: every line numbered (per page), a wide outer margin for notes, and "Review copy" with the date at the top */
+const LINE_NUMS_JS = `function cpLineNums(){var pages=document.querySelectorAll('.pagedjs_page');for(var p=0;p<pages.length;p++){var pg=pages[p],area=pg.querySelector('.pagedjs_page_content');if(!area)continue;var pr=pg.getBoundingClientRect(),ar=area.getBoundingClientRect(),lines=[];
+var add=function(t,b){var m=(t+b)/2;for(var k=0;k<lines.length;k++){var L=lines[k];if(m>=L.t&&m<=L.b){if(t<L.t)L.t=t;if(b>L.b)L.b=b;return;}}lines.push({t:t,b:b});};
+var w=document.createTreeWalker(area,NodeFilter.SHOW_TEXT,null),n;while((n=w.nextNode())){if(!n.data.trim())continue;var el=n.parentElement;if(!el||el.closest('mjx-container,.pagedjs_footnote_area,.fn-note,.rh,.title-block,img'))continue;var r=document.createRange();r.selectNodeContents(n);var rs=r.getClientRects();for(var i=0;i<rs.length;i++){if(rs[i].height>3&&rs[i].width>0)add(rs[i].top,rs[i].bottom);}}
+area.querySelectorAll('mjx-container').forEach(function(m){var b=m.getBoundingClientRect();if(b.height>0)add(b.top,b.bottom);});
+lines.sort(function(a,b){return a.t-b.t;});for(var j=0;j<lines.length;j++){var d=document.createElement('span');d.className='cp-ln';d.textContent=j+1;d.style.top=((lines[j].t+lines[j].b)/2-pr.top-6)+'px';d.style.left=(ar.left-pr.left-40)+'px';pg.appendChild(d);}}}`;
+function reviewCSS() {
+  const day = new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+  return `@page{margin:1in 2.4in 1in 1.25in;@top-right{content:"Review copy · ${day.replace(/"/g, '')}";font:9pt Helvetica,Arial,sans-serif;color:#777;white-space:nowrap}}
+.pagedjs_page{position:relative}.cp-ln{position:absolute;width:30px;text-align:right;font:7.5pt/12px Helvetica,Arial,sans-serif;color:#888;user-select:none}`;
+}
+function exportPagedPDF(doc, opt = {}) {
+  if (mathPending(doc)) { mathLoad().then(() => exportPagedPDF(doc, opt)); return; }
   const x = buildExport(doc, 'paged'), cs = docClassAndStyle(doc);
   const lib = document.getElementById('lib-paged').textContent;
   const bib = refsHTML(Object.assign({}, x.out, { notes: [] }), true);
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(fileSafe(doc.title))}</title><style>${$('#docCss').textContent}\n${pagedCSS(doc)}</style>
-<script>${IX_PAGES_JS}window.PagedConfig={auto:true,after:function(){try{cpIndexPages()}catch(e){}parent.postMessage({cpPaged:1},'*')}};<\/script><script>${lib}<\/script></head>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(fileSafe(doc.title))}</title><style>${$('#docCss').textContent}\n${pagedCSS(doc)}${opt.review ? '\n' + reviewCSS() : ''}</style>
+<script>${IX_PAGES_JS}${opt.review ? LINE_NUMS_JS : ''}window.PagedConfig={auto:true,after:function(){try{cpIndexPages()}catch(e){}${opt.review ? 'try{cpLineNums()}catch(e){}' : ''}parent.postMessage({cpPaged:1},'*')}};<\/script><script>${lib}<\/script></head>
 <body><article class="${cs.cls}" style="${cs.style}"><p class="rh">${esc(doc.title)}</p>${x.title ? `<header class="title-block">${x.title}</header>` : ''}${x.body}${bib}${x.index || ''}${x.marginalia || ''}</article></body></html>`;
   $$('iframe.paged-print').forEach(f => f.remove());
   const f = document.createElement('iframe'); f.className = 'paged-print';
   f.style.cssText = 'position:fixed;left:-10000px;top:0;width:8.5in;height:11in;border:0';
-  toast('Laying out pages with footnotes…');
+  toast(opt.review ? 'Laying out the review copy, numbering every line…' : 'Laying out pages with footnotes…');
   const done = e => {
     if (!e.data || !e.data.cpPaged || e.source !== f.contentWindow) return;
     window.removeEventListener('message', done);
@@ -3540,6 +3599,8 @@ async function exportEpub(doc) {
     f.html = f.html.replace(/<a class="noteref" data-n="(\d+)" id="r\d+">/g, (m, n) => `<a class="noteref" epub:type="noteref" href="notes.xhtml#n${n}" id="r${n}">`);
     f.html = f.html.replace(/<nav class="toc[^"]*">[\s\S]*?<\/nav>/, '');
   });
+  const idFile = {}; files.forEach(f => (f.html.match(/\sid="([^"]+)"/g) || []).forEach(m => { const id = m.slice(5, -1); if (!(id in idFile)) idFile[id] = f.file; }));
+  files.forEach(f => { f.html = f.html.replace(/<a class="xref" href="#([^"]+)"/g, (m, id) => idFile[id] && idFile[id] !== f.file ? `<a class="xref" href="${idFile[id]}#${id}"` : m); }); // cross-references between sections
   const notesPage = x.out.notes.length ? `<section epub:type="endnotes"><h1>Notes</h1>${x.out.notes.map(n => `<aside epub:type="footnote" id="n${n.n}"><p><a href="${refFile[n.n] || files[0].file}#r${n.n}">${n.n}.</a> ${n.html}</p></aside>`).join('')}</section>` : '';
   const ixFile = {}; files.forEach(f => (f.html.match(/id="ix\d+"/g) || []).forEach(m => ixFile[m.slice(4, -1)] = f.file));
   const ixPage = x.index ? x.index.replace(/href="#(ix\d+)"/g, (m, id) => `href="${ixFile[id] || files[0].file}#${id}"`).replace(/<section class="end-sec index">/, '<section epub:type="index">').replace(/<h2 class="end-h">/, '<h1>').replace(/<\/h2>/, '</h1>') : '';
@@ -5235,6 +5296,8 @@ function renumberFigures(root = editor) {
     if (cap.getAttribute('data-cp-n') !== lab) cap.setAttribute('data-cp-n', lab);
   });
   numberEquations(root);
+  creditMarks(root);
+  refreshXrefs(root);
 }
 function prepFigureDom(root) { // contenteditable plumbing after paste/import/open
   $$('figure.fig', root).forEach(f => { f.setAttribute('contenteditable', 'false'); const c = f.querySelector(':scope > figcaption'); if (c) c.setAttribute('contenteditable', 'true'); });
@@ -5266,7 +5329,7 @@ $('#fileFigure').addEventListener('change', async e => {
   insertFigureFiles(fs);
 });
 function saveSelectionNow() { const s = getSelection(); if (s.rangeCount && editor.contains(s.anchorNode)) savedRange = s.getRangeAt(0).cloneRange(); }
-$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnFigure,#btnTable,#btnEq')) { saveSelectionNow(); e.preventDefault(); } });
+$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnFigure,#btnTable,#btnEq,#btnXref')) { saveSelectionNow(); e.preventDefault(); } });
 
 /* tables */
 function insertTable(rows, cols, header) {
@@ -5290,6 +5353,7 @@ function tableOp(op) {
   const tr = cell.parentElement, table = cell.closest('table'), fig = table.closest('figure') || table, idx = cell.cellIndex;
   const blank = tag => { const c = document.createElement(tag); c.innerHTML = '<br>'; return c; };
   if (op === 'dlun') { dlUnlink(fig); tblBar.classList.add('hidden'); return; }
+  if (op === 'cred') { tblBar.classList.add('hidden'); openCredit(fig); return; }
   if (op === 'dlup') { dlUpdate(fig).then(r => { renumberFigures(); onEdit(); toast(r === 'gone' ? 'Couldn’t update: the dataset is gone or no longer has those columns.' : r === 'same' ? 'This table is up to date with its data.' : 'Table updated from the data.'); }).catch(e => toast(e.message)); tblBar.classList.add('hidden'); return; }
   if (op === 'row') { const nr = document.createElement('tr'); [...tr.cells].forEach(() => nr.append(blank('td'))); if (tr.parentElement.nodeName === 'THEAD') { let tb = table.tBodies[0]; if (!tb) { tb = document.createElement('tbody'); table.append(tb); } tb.prepend(nr); } else tr.after(nr); caretInto(nr.cells[0]); }
   if (op === 'col') { [...table.rows].forEach(r => { const c = r.cells[Math.min(idx, r.cells.length - 1)]; if (c) c.after(blank(c.nodeName.toLowerCase())); }); caretInto(tr.cells[idx + 1]); }
@@ -5350,7 +5414,7 @@ editor.addEventListener('click', e => {
   const sz = fig.dataset.size || 'full';
   const spec = (P.assets[img.dataset.asset] || {}).spec;
   const specLabel = spec ? { chart: 'chart', map: 'map', timeline: 'timeline', network: 'relationship map' }[spec.type] : '';
-  popEl.innerHTML = `${spec ? `<div class="pbtns" style="margin-bottom:8px"><button class="primary" data-a="spec">Edit ${specLabel}…</button></div>` : ''}<div class="small muted" style="margin-bottom:6px">Figure size</div><div class="pbtns" style="margin-bottom:8px">${[['full', 'Full width'], ['large', 'Large'], ['half', 'Half']].map(([k, l]) => `<button data-a="sz" data-v="${k}" class="${k === sz ? 'primary' : ''}">${l}</button>`).join('')}</div><div class="pbtns"><button data-a="alt">Alt text…</button><button data-a="rep">Replace image…</button><button class="danger" data-a="del">Remove</button></div>`;
+  popEl.innerHTML = `${spec ? `<div class="pbtns" style="margin-bottom:8px"><button class="primary" data-a="spec">Edit ${specLabel}…</button></div>` : ''}<div class="small muted" style="margin-bottom:6px">Figure size</div><div class="pbtns" style="margin-bottom:8px">${[['full', 'Full width'], ['large', 'Large'], ['half', 'Half']].map(([k, l]) => `<button data-a="sz" data-v="${k}" class="${k === sz ? 'primary' : ''}">${l}</button>`).join('')}</div><div class="pbtns"><button data-a="alt">Alt text…</button><button data-a="cred">Credit &amp; permission…</button><button data-a="rep">Replace image…</button><button class="danger" data-a="del">Remove</button></div>`;
   document.body.appendChild(popEl);
   popEl.style.left = Math.max(8, Math.min(innerWidth - popEl.offsetWidth - 8, r.left + r.width / 2 - popEl.offsetWidth / 2)) + 'px';
   popEl.style.top = Math.max(8, Math.min(innerHeight - popEl.offsetHeight - 8, r.top + 12)) + 'px';
@@ -5360,6 +5424,7 @@ editor.addEventListener('click', e => {
     if (a === 'sz') { fig.dataset.size = b.dataset.v; onEdit(); }
     if (a === 'alt') { const t = await ask('Alt text', 'Describe the image for screen readers and e-books (the caption is separate).', 'Save', img.alt || ''); if (t !== null) { img.alt = t; onEdit(); } }
     if (a === 'rep') { figReplace = fig; $('#fileFigure').click(); }
+    if (a === 'cred') openCredit(fig);
     if (a === 'del') { const nx = fig.nextElementSibling; fig.remove(); if (nx) caretInto(nx); onEdit(); renumberFigures(); }
   });
 });
@@ -5408,6 +5473,9 @@ function prepExportFigures(tmp) {
     if (!text && !cap.querySelector('.cite,.fn,.flag')) cap.innerHTML = '';
     const lab = document.createElement('span'); lab.className = 'fig-n'; lab.textContent = label;
     cap.prepend(lab, document.createTextNode(cap.childNodes.length ? ' ' : ''));
+    const credit = (fig.getAttribute('data-credit') || '').trim(); // the credit line ends the caption
+    if (credit) { const cr = document.createElement('span'); cr.className = 'fig-credit'; cr.textContent = credit.replace(/([^.!?])$/, '$1.'); cap.append(document.createTextNode(' '), cr); }
+    ['data-credit', 'data-rights', 'data-holder', 'data-rnote'].forEach(a => fig.removeAttribute(a)); // working notes stay in the project
     $$('img', fig).forEach(img => { const a = P.assets[img.dataset.asset]; if (a) { img.setAttribute('src', a.data); if (!img.hasAttribute('alt')) img.setAttribute('alt', ''); } else img.remove(); });
   });
   $$('nav.lof', tmp).forEach(nav => {
@@ -5429,7 +5497,7 @@ function prepExportMath(tmp, mode) {
     let inner = MATH.css && mode !== 'substack' ? mathMarkup(tex, disp) : '';
     if (inner && mode === 'epub') { const m = /<svg[\s\S]*<\/svg>/.exec(inner); inner = m ? m[0].replace(/\saria-hidden="true"/, '').replace(/\srole="img"/, '').replace('<svg', `<svg role="img" aria-label="${esc(tex)}"`) : ''; }
     if (!inner) inner = esc(mode === 'substack' ? (disp ? `$$${tex}$$` : `$${tex}$`) : (disp ? `\\[${tex}\\]` : `\\(${tex}\\)`));
-    const w = document.createElement(disp ? 'div' : 'span'); w.className = disp ? 'eq' : 'math';
+    const w = document.createElement(disp ? 'div' : 'span'); w.className = disp ? 'eq' : 'math'; if (el.id) w.id = el.id;
     w.innerHTML = inner + (n ? `<span class="eq-n">(${n})</span>` : ''); el.replaceWith(w);
   });
   return q;
@@ -5440,6 +5508,312 @@ function addMathRules(td) { // Markdown and Pandoc: TeX between dollars
   return td;
 }
 function lofPlaceholder() { return '<nav class="lof" contenteditable="false"><p>List of figures and tables — filled in when you export.</p></nav>'; }
+/* ================================================================
+   Credits and permissions (1.9.0)
+   On a figure or table: data-credit (the credit line, added to the caption in every export),
+   data-rights (status), data-holder (whom to ask), data-rnote (fees, dates, terms; never exported).
+   ================================================================ */
+const RIGHTS = [['', 'Not set'], ['own', 'Yours (you made or took it)'], ['pd', 'Public domain'], ['open', 'Open licence (e.g. CC BY)'], ['fair', 'Fair use or fair dealing'], ['needed', 'Permission needed'], ['asked', 'Permission requested'], ['granted', 'Permission granted'], ['refused', 'Permission refused']];
+const RIGHTS_TODO = new Set(['needed', 'asked', 'refused']);
+let crFig = null;
+function openCredit(fig) {
+  crFig = fig; if (!fig) return;
+  $('#crRights').innerHTML = RIGHTS.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+  $('#crCredit').value = fig.getAttribute('data-credit') || ''; $('#crRights').value = fig.getAttribute('data-rights') || '';
+  $('#crHolder').value = fig.getAttribute('data-holder') || ''; $('#crNote').value = fig.getAttribute('data-rnote') || '';
+  $('#crTitle').textContent = fig.classList.contains('tbl') ? 'Table credit & permission' : 'Figure credit & permission';
+  $('#crDlg').showModal(); $('#crCredit').focus();
+}
+$('#crOk').addEventListener('click', () => {
+  const f = crFig; crFig = null; $('#crDlg').close(); if (!f || !f.isConnected) return;
+  [['data-credit', '#crCredit'], ['data-rights', '#crRights'], ['data-holder', '#crHolder'], ['data-rnote', '#crNote']].forEach(([a, sel]) => { const v = $(sel).value.trim(); if (v) f.setAttribute(a, v); else f.removeAttribute(a); });
+  renumberFigures(); onEdit(); toast('Saved. The credit line goes at the end of the caption when you export.');
+});
+$('#crCancel').addEventListener('click', () => { crFig = null; $('#crDlg').close(); });
+function creditMarks(root = editor) { // show the credit after the caption on screen
+  $$('figure:not(.av)', root).forEach(f => { const cap = f.querySelector(':scope > figcaption'); if (!cap) return; const c = f.getAttribute('data-credit') || ''; if ((cap.getAttribute('data-cp-credit') || '') !== c) { if (c) cap.setAttribute('data-cp-credit', c); else cap.removeAttribute('data-cp-credit'); } });
+}
+/* the log: every figure and table in the project, plus quotations by source */
+function permRows() {
+  syncEditor(); const rows = [];
+  binderOrder().forEach(d => {
+    const root = d.id === curDocId ? editor : new DOMParser().parseFromString('<body>' + d.html + '</body>', 'text/html').body;
+    let f = 0, t = 0;
+    $$('figure:not(.av)', root).forEach((fig, i) => {
+      const isT = fig.classList.contains('tbl'), cap = fig.querySelector(':scope > figcaption'); if (!cap) return;
+      const n = isT ? ++t : ++f, c = cap.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.xref', c).forEach(x => x.remove());
+      const img = fig.querySelector('img[data-asset]'), a = img && P.assets[img.dataset.asset], made = !!(a && a.spec) || !!fig.getAttribute('data-dl');
+      let rights = fig.getAttribute('data-rights') || '';
+      const status = rights ? (RIGHTS.find(r => r[0] === rights) || ['', rights])[1] : made ? 'Made in Anabasis' : isT ? 'Not set' : 'Not set: check';
+      rows.push({ docId: d.id, doc: d.title || 'Untitled', i, label: (isT ? 'Table ' : 'Figure ') + n, caption: c.textContent.replace(/\s+/g, ' ').trim(), credit: fig.getAttribute('data-credit') || '', rights, status, holder: fig.getAttribute('data-holder') || '', note: fig.getAttribute('data-rnote') || '', todo: RIGHTS_TODO.has(rights) || (!rights && !made && !isT) });
+    });
+  });
+  return rows;
+}
+function openPerms() { $('#pmShow').value = 'all'; renderPerms(); $('#permDlg').showModal(); }
+function renderPerms() {
+  const all = permRows(), todo = $('#pmShow').value === 'todo', rows = todo ? all.filter(r => r.todo) : all;
+  const quotes = auditData('all').list.filter(r => r.quoted > 0).sort((a, b) => b.quoted - a.quoted);
+  const td = all.filter(r => r.todo).length; $('#pmSum').textContent = `${all.length} ${all.length === 1 ? 'figure or table' : 'figures and tables'}, ${td ? `${td} still to clear` : 'none left to clear'}; ${quotes.length ? `${quotes.length} source${quotes.length === 1 ? '' : 's'} quoted` : 'no quotations from notes'}.`;
+  $('#pmBody').innerHTML = `<table class="audit pm"><thead><tr><th>Where</th><th>Caption</th><th>Credit line</th><th>Status</th><th>Ask</th><th>Notes</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="${r.todo ? 'pm-todo' : ''}"><td><a href="#" data-go="${r.docId}|${r.i}">${esc(r.label)}</a><div class="muted small">${esc(r.doc)}</div></td><td>${esc(r.caption.slice(0, 90)) || '<span class="muted">—</span>'}</td><td>${esc(r.credit) || '<span class="muted">—</span>'}</td><td>${esc(r.status)}</td><td>${esc(r.holder)}</td><td class="small">${esc(r.note)}</td></tr>`).join('') || `<tr><td colspan="6" class="muted">${todo ? 'Nothing left to clear.' : 'No figures or tables yet.'}</td></tr>`}</tbody></table>
+    <h4>Quotations</h4>${quotes.length ? `<table class="audit"><thead><tr><th>Source</th><th>Quoted words</th></tr></thead><tbody>${quotes.map(q => { const l = sourceLabel(q.s); return `<tr class="${q.quoted >= 300 ? 'pm-todo' : ''}"><td>${esc([l.who, l.title].filter(Boolean).join(', '))}</td><td>${q.quoted}</td></tr>`; }).join('')}</tbody></table><p class="small muted">Counts quotations inserted from quote notes. Publishers set their own limits for quoting without permission; 300 words or more from one work is highlighted.</p>` : '<p class="small muted">No quotations inserted from quote notes yet.</p>'}`;
+}
+$('#pmShow').addEventListener('change', renderPerms);
+$('#pmBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-go]'); if (!a) return; e.preventDefault();
+  const [docId, i] = a.dataset.go.split('|'); $('#permDlg').close(); if (docId !== curDocId) openDoc(docId);
+  const fig = $$('figure:not(.av)', editor).filter(f => f.querySelector(':scope > figcaption'))[+i] || $$('figure:not(.av)', editor)[+i];
+  if (fig) { fig.scrollIntoView({ block: 'center' }); openCredit(fig); }
+});
+const csvCell = v => /[",\n]/.test(v) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
+$('#pmCsv').addEventListener('click', () => {
+  const rows = permRows(), q = auditData('all').list.filter(r => r.quoted > 0);
+  const csv = [['Document', 'Item', 'Caption', 'Credit line', 'Status', 'Rights holder / whom to ask', 'Notes'], ...rows.map(r => [r.doc, r.label, r.caption, r.credit, r.status, r.holder, r.note]),
+    [], ['Source', 'Quoted words'], ...q.map(r => { const l = sourceLabel(r.s); return [[l.who, l.title].filter(Boolean).join(', '), r.quoted]; })].map(r => r.map(csvCell).join(',')).join('\n');
+  download(fileSafe(P.title || 'Project') + ' - permissions.csv', csv, 'text/csv'); toast('Permissions log saved as a spreadsheet file (CSV).');
+});
+$('#pmDoc').addEventListener('click', () => {
+  const rows = permRows(), q = auditData('all').list.filter(r => r.quoted > 0);
+  const html = `<h1>Permissions log</h1><p>${esc(P.title || '')}: ${new Date().toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}</p><figure class="tbl"><figcaption>Figures and tables</figcaption><table><thead><tr><th>Item</th><th>Caption</th><th>Credit line</th><th>Status</th><th>Whom to ask</th><th>Notes</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.label)} (${esc(r.doc)})</td><td>${esc(r.caption) || '<br>'}</td><td>${esc(r.credit) || '<br>'}</td><td>${esc(r.status)}</td><td>${esc(r.holder) || '<br>'}</td><td>${esc(r.note) || '<br>'}</td></tr>`).join('')}</tbody></table></figure>` +
+    (q.length ? `<figure class="tbl"><figcaption>Quotations</figcaption><table><thead><tr><th>Source</th><th>Quoted words</th></tr></thead><tbody>${q.map(r => { const l = sourceLabel(r.s); return `<tr><td>${esc([l.who, l.title].filter(Boolean).join(', '))}</td><td>${r.quoted}</td></tr>`; }).join('')}</tbody></table></figure>` : '') + '<p><br></p>';
+  const d = newDoc('Permissions log', html); d.role = 'back'; addDoc(d); $('#permDlg').close(); toast('The permissions log is now a document (at the back of the binder), ready to export to Word for your editor.');
+});
+$('#pmClose').addEventListener('click', () => $('#permDlg').close());
+$('#btnPerms').addEventListener('click', openPerms);
+
+/* ================================================================
+   Link check (1.9.0): each web source against the Internet Archive's Wayback Machine.
+   Browsers can't test other sites directly, so this asks the archive what it last saw and
+   whether a copy is kept. Only the addresses of your web sources are sent, and only when asked.
+   ================================================================ */
+const WB_OK = /^https?:\/\/web\.archive\.org\/web\/\d{4,14}[a-z_]*\//;
+async function waybackLookup(url) {
+  const r = await fetch('https://archive.org/wayback/available?url=' + encodeURIComponent(url), { cache: 'no-store', credentials: 'omit' });
+  if (!r.ok) throw new Error('The Internet Archive answered ' + r.status + '.');
+  const j = await r.json(), c = j && j.archived_snapshots && j.archived_snapshots.closest;
+  if (!c || !c.available || !WB_OK.test(String(c.url || ''))) return null;
+  return { url: String(c.url).replace(/^http:/, 'https:'), ts: String(c.timestamp || '').replace(/\D/g, '').slice(0, 14), st: String(c.status || '').replace(/\D/g, '').slice(0, 3) };
+}
+const wbDate = ts => ts && ts.length >= 8 ? fmtDate({ 'date-parts': [[+ts.slice(0, 4), +ts.slice(4, 6), +ts.slice(6, 8)]] }) : '';
+const webSources = () => P.sources.filter(s => /^https?:\/\//i.test(s.csl.URL || ''));
+let lkBusy = false;
+function openLinks() { renderLinks(); $('#lkDlg').showModal(); }
+function lkVerdict(s) {
+  const c = s.lc; if (!c) return ['', 'Not checked'];
+  if (c.err) return ['warn', 'Couldn’t check'];
+  if (!c.ts) return ['warn', 'No saved copy'];
+  if (/^(4|5)/.test(c.st)) return ['bad', `Gone when last seen (${c.st})`];
+  if (/^3/.test(c.st)) return ['warn', `Moved when last seen (${c.st})`];
+  return ['ok', 'Fine when last seen'];
+}
+function renderLinks() {
+  const ws = webSources(), noAcc = ws.filter(s => !s.csl.accessed), checked = ws.filter(s => s.lc && !s.lc.err);
+  const attach = ws.filter(s => s.lc && s.lc.url && (!s.osint || s.osint.archiveUrl !== s.lc.url));
+  $('#lkRun').textContent = lkBusy ? 'Checking…' : `Check ${ws.length} web source${ws.length === 1 ? '' : 's'}`; $('#lkRun').disabled = lkBusy || !ws.length;
+  $('#lkAcc').textContent = `Fill in ${noAcc.length} missing accessed date${noAcc.length === 1 ? '' : 's'}`; $('#lkAcc').disabled = !noAcc.length;
+  $('#lkAttach').textContent = `Keep ${attach.length} saved cop${attach.length === 1 ? 'y' : 'ies'} with ${attach.length === 1 ? 'its source' : 'their sources'}`; $('#lkAttach').disabled = !attach.length;
+  $('#lkBody').innerHTML = ws.length ? `<table class="audit lk"><thead><tr><th>Source</th><th>Last saved copy</th><th>Last seen</th><th>Cite</th><th></th></tr></thead><tbody>${ws.map(s => {
+    const l = sourceLabel(s), [cls, say] = lkVerdict(s), c = s.lc || {}, au = (s.osint && s.osint.archiveUrl) || c.url || '';
+    return `<tr data-id="${s.id}"><td><b>${esc(l.who || '')}</b>${l.who ? ': ' : ''}${esc(l.title || s.csl.URL)}<div class="muted small lk-url">${esc(s.csl.URL)}</div></td>
+      <td>${c.url ? `<a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(wbDate(c.ts))}</a>` : '<span class="muted">—</span>'}</td>
+      <td><span class="lk-${cls}">${esc(say)}</span></td>
+      <td>${au ? `<label class="small"><input type="checkbox" data-arch ${s.citeArchive ? 'checked' : ''}> the saved copy</label>` : '<span class="muted small">live link</span>'}</td>
+      <td><a class="small" href="https://web.archive.org/save/${esc(s.csl.URL)}" target="_blank" rel="noopener" title="Ask the Wayback Machine to save the page now (opens a new tab)">Save now</a></td></tr>`;
+  }).join('')}</tbody></table>` : '<p class="muted">No sources with a web address yet.</p>';
+  const gone = ws.filter(s => lkVerdict(s)[0] === 'bad').length, none = checked.filter(s => !s.lc.ts).length;
+  $('#lkSum').textContent = checked.length ? `${checked.length} checked: ${gone} gone when the archive last looked, ${none} with no saved copy.${gone ? ' For a page that’s gone, tick “the saved copy” to cite the archived version instead.' : ''}` : '';
+}
+$('#lkRun').addEventListener('click', async () => {
+  if (lkBusy) return; lkBusy = true; renderLinks();
+  const ws = webSources(); let k = 0, fail = 0;
+  for (const s of ws) {
+    k++; $('#lkSum').textContent = `Asking the Internet Archive about ${k} of ${ws.length}…`;
+    try { const r = await waybackLookup(s.csl.URL); s.lc = r ? Object.assign(r, { at: todayISO() }) : { at: todayISO() }; }
+    catch (e) { fail++; s.lc = { at: todayISO(), err: 1 }; if (fail >= 3 && fail === k) break; }
+    await new Promise(r => setTimeout(r, 250));
+  }
+  lkBusy = false; markDirty(); renderLinks(); renderSourceList();
+  if (fail && fail >= k) toast('The Internet Archive couldn’t be reached from here. Check your connection, or use “Save now” to open each page in the Wayback Machine.');
+});
+$('#lkAcc').addEventListener('click', () => {
+  let n = 0; webSources().forEach(s => { if (s.csl.accessed) return; const d = new Date(s.created || Date.now()); s.csl.accessed = { 'date-parts': [[d.getFullYear(), d.getMonth() + 1, d.getDate()]] }; s.modified = nowISO(); n++; });
+  srcVersion++; markDirty(); renderRefs(true); renderLinks(); toast(`Filled in ${n} accessed date${n === 1 ? '' : 's'} with the day you added each source.`);
+});
+$('#lkAttach').addEventListener('click', () => {
+  let n = 0; webSources().forEach(s => { if (!s.lc || !s.lc.url) return; s.osint = Object.assign({}, s.osint || {}, { archiveUrl: s.lc.url, archiveDate: wbDate(s.lc.ts) }); s.modified = nowISO(); n++; });
+  srcVersion++; markDirty(); renderRefs(true); renderLinks(); toast(`Kept ${n} saved cop${n === 1 ? 'y' : 'ies'}. The OSINT style cites them; tick “the saved copy” to use one in other styles.`);
+});
+$('#lkBody').addEventListener('change', e => {
+  const cb = e.target.closest('[data-arch]'); if (!cb) return; const s = P.sources.find(x => x.id === cb.closest('tr').dataset.id); if (!s) return;
+  if (cb.checked && s.lc && s.lc.url && !(s.osint && s.osint.archiveUrl)) s.osint = Object.assign({}, s.osint || {}, { archiveUrl: s.lc.url, archiveDate: wbDate(s.lc.ts) });
+  if (cb.checked) s.citeArchive = true; else delete s.citeArchive;
+  s.modified = nowISO(); srcVersion++; markDirty(); renderRefs(true);
+});
+$('#lkClose').addEventListener('click', () => $('#lkDlg').close());
+$('#btnLinks').addEventListener('click', openLinks);
+/* ================================================================
+   Cross-references (1.9.0)
+   <span class="xref" contenteditable="false" data-ref="…" data-form="full|lower|num|title">Figure 3</span>
+   data-ref is a target's data-xid (figures, tables, numbered equations, headings) or "doc:<id>"
+   for a whole document (a chapter). The words are worked out again whenever numbering changes,
+   and again for every export from that export's own numbering.
+   ================================================================ */
+const XR_SEL = 'figure:not(.av), p.eq.num, h1, h2, h3';
+const XR_WORD = { figure: 'Figure', table: 'Table', equation: 'Equation', doc: 'Chapter' };
+function xrScan(root) { // targets in a document, numbered as the editor numbers them
+  let f = 0, t = 0, q = 0; const out = [];
+  root.querySelectorAll(XR_SEL).forEach((el, i) => {
+    let kind, n = 0, text = '';
+    if (el.nodeName === 'FIGURE') {
+      const cap = el.querySelector(':scope > figcaption'); if (!cap) return;
+      const c = cap.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.xref', c).forEach(x => x.remove()); text = c.textContent.replace(/\s+/g, ' ').trim();
+      if (el.classList.contains('tbl')) { kind = 'table'; n = ++t; } else { kind = 'figure'; n = ++f; }
+    } else if (el.nodeName === 'P') { kind = 'equation'; n = ++q; text = el.getAttribute('data-tex') || ''; }
+    else { const c = el.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.xref', c).forEach(x => x.remove()); text = c.textContent.replace(/\s+/g, ' ').trim(); if (!text) return; kind = 'heading'; }
+    out.push({ el, i, kind, n, text, xid: el.getAttribute('data-xid') || '' });
+  });
+  return out;
+}
+const XR_CACHE = new Map(); // doc id → { html, list } for documents not open
+function xrDocTargets(d) {
+  if (d.id === curDocId && !POPOUT) return xrScan(editor);
+  const c = XR_CACHE.get(d.id); if (c && c.html === d.html) return c.list;
+  const list = xrScan(new DOMParser().parseFromString('<body>' + (d.html || '') + '</body>', 'text/html').body).map(x => Object.assign(x, { el: null }));
+  XR_CACHE.set(d.id, { html: d.html, list }); return list;
+}
+function xrChapterNo(id) { const body = binderOrder().filter(d => (d.role || 'body') === 'body'); const k = body.findIndex(d => d.id === id); return k < 0 ? 0 : k + 1; }
+function xrFind(ref) { // → { kind, n, text, docId } or null
+  if (!ref) return null;
+  if (ref.startsWith('doc:')) { const d = P.docs.find(x => x.id === ref.slice(4)); return d ? { kind: 'doc', n: xrChapterNo(d.id), text: d.title || 'Untitled', docId: d.id } : null; }
+  const order = [curDoc(), ...P.docs.filter(d => d.id !== curDocId)].filter(Boolean);
+  for (const d of order) { if (d.id !== curDocId && !(d.html || '').includes(ref)) continue; const t = xrDocTargets(d).find(x => x.xid === ref); if (t) return Object.assign({}, t, { docId: d.id }); }
+  return null;
+}
+function xrText(t, form) {
+  if (t.kind === 'heading') return `“${t.text}”`;
+  if (t.kind === 'doc' && (form === 'title' || !t.n)) return `“${t.text}”`;
+  const num = t.kind === 'equation' ? `(${t.n})` : String(t.n);
+  if (form === 'num') return num;
+  const w = XR_WORD[t.kind]; return (form === 'lower' ? w.toLowerCase() : w) + ' ' + num;
+}
+/* keep every reference in the open document saying the right thing */
+function refreshXrefs(root = editor) {
+  if (root !== editor) return;
+  // a pasted or split heading can carry a copy of another's id: only the first keeps it
+  const seen = new Set(); $$('[data-xid]', editor).forEach(el => { const v = el.getAttribute('data-xid'); if (seen.has(v) || !el.matches(XR_SEL)) el.removeAttribute('data-xid'); else seen.add(v); });
+  const refs = $$('span.xref', editor); if (!refs.length) return;
+  refs.forEach(r => {
+    const t = xrFind(r.getAttribute('data-ref'));
+    if (!t) { if (!r.hasAttribute('data-cp-miss')) r.setAttribute('data-cp-miss', '1'); return; }
+    r.removeAttribute('data-cp-miss');
+    const txt = xrText(t, r.getAttribute('data-form') || 'full'); if (r.textContent !== txt) r.textContent = txt;
+  });
+}
+function xrEnsureId(t) { // give a target a lasting id (in the open document, or written into another one)
+  if (t.xid) return t.xid;
+  const id = uid('x');
+  if (t.docId === curDocId && t.el) { t.el.setAttribute('data-xid', id); syncEditor(); return id; }
+  const d = P.docs.find(x => x.id === t.docId); if (!d) return '';
+  const b = new DOMParser().parseFromString('<body>' + d.html + '</body>', 'text/html').body, el = b.querySelectorAll(XR_SEL)[t.i];
+  if (!el) return ''; el.setAttribute('data-xid', id); d.html = b.innerHTML; XR_CACHE.delete(d.id); markDirty(); return id;
+}
+
+/* ---- the cross-reference box ---- */
+let xrList = [], xrPick = -1;
+function openXref() {
+  if (deskOn || boardOn || planOn || homeOn || draftsOn) return;
+  const s = getSelection(); if (s.rangeCount && editor.contains(s.anchorNode)) saveSelectionNow();
+  syncEditor();
+  const docs = [curDoc(), ...binderOrder().filter(d => d.id !== curDocId)].filter(Boolean);
+  xrList = [];
+  docs.forEach(d => {
+    const here = d.id === curDocId;
+    xrList.push({ kind: 'doc', n: xrChapterNo(d.id), text: d.title || 'Untitled', docId: d.id, here, xid: 'doc:' + d.id });
+    xrDocTargets(d).forEach(t => xrList.push(Object.assign({}, t, { docId: d.id, docTitle: d.title || 'Untitled', here })));
+  });
+  xrPick = -1; $('#xrQ').value = ''; xrRender(); $('#xrDlg').showModal(); $('#xrQ').focus();
+}
+const XR_KIND = { figure: 'Figure', table: 'Table', equation: 'Equation', heading: 'Heading', doc: 'Document' };
+function xrRender() {
+  const q = $('#xrQ').value.trim().toLowerCase(), kind = $('#xrKind').value;
+  const rows = xrList.map((t, k) => ({ t, k })).filter(({ t }) => (!kind || t.kind === kind) && (!q || (t.text + ' ' + (t.docTitle || '') + ' ' + XR_KIND[t.kind] + ' ' + t.n).toLowerCase().includes(q)));
+  let lastDoc = null;
+  $('#xrBody').innerHTML = rows.length ? rows.map(({ t, k }) => {
+    const head = t.docId !== lastDoc && t.kind !== 'doc' && !t.here ? `<li class="xr-doc muted small" role="presentation">In “${esc(t.docTitle)}”</li>` : '';
+    if (t.kind !== 'doc') lastDoc = t.docId;
+    const lab = t.kind === 'doc' ? (t.n ? `Chapter ${t.n}` : 'Document') : t.kind === 'heading' ? 'Heading' : xrText(t, 'full');
+    return `${head}<li role="option" id="xr-${k}" aria-selected="${k === xrPick}" data-k="${k}" class="${k === xrPick ? 'on' : ''}"><b>${esc(lab)}</b> <span class="muted">${esc((t.kind === 'equation' ? t.text : t.text).slice(0, 110)) || '<i>no caption yet</i>'}</span>${t.here && t.kind !== 'doc' ? '' : t.kind === 'doc' && t.here ? ' <span class="muted small">(this document)</span>' : ''}</li>`;
+  }).join('') : `<li class="muted" role="presentation">${xrList.length > P.docs.length ? 'Nothing matches.' : 'Nothing to refer to yet: add a figure, a table, a numbered equation or a heading, or refer to another document.'}</li>`;
+  const t = xrList[xrPick];
+  const forms = !t ? [] : t.kind === 'heading' ? [['full', xrText(t, 'full')]] : t.kind === 'doc' ? [['full', xrText(t, 'full')], ['lower', xrText(t, 'lower')], ['title', xrText(t, 'title')]].filter((f, i) => t.n || i === 2) : [['full', xrText(t, 'full')], ['lower', xrText(t, 'lower')], ['num', xrText(t, 'num')]];
+  const was = $('#xrForm').value;
+  $('#xrForm').innerHTML = forms.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join('');
+  if (forms.some(f => f[0] === was)) $('#xrForm').value = was;
+  $('#xrForm').disabled = !t; $('#xrOk').disabled = !t;
+  if (t && $('#xr-' + xrPick)) $('#xrBody').setAttribute('aria-activedescendant', 'xr-' + xrPick); else $('#xrBody').removeAttribute('aria-activedescendant');
+}
+$('#xrQ').addEventListener('input', xrRender); $('#xrKind').addEventListener('change', xrRender);
+$('#xrBody').addEventListener('click', e => { const li = e.target.closest('li[data-k]'); if (!li) return; xrPick = +li.dataset.k; xrRender(); });
+$('#xrBody').addEventListener('dblclick', e => { if (e.target.closest('li[data-k]')) xrApply(); });
+const xrKeys = e => {
+  const ks = $$('#xrBody li[data-k]').map(li => +li.dataset.k); if (!ks.length) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const i = ks.indexOf(xrPick); xrPick = ks[Math.max(0, Math.min(ks.length - 1, i < 0 ? 0 : i + (e.key === 'ArrowDown' ? 1 : -1)))]; xrRender(); $(`#xrBody li[data-k="${xrPick}"]`)?.scrollIntoView({ block: 'nearest' }); }
+  if (e.key === 'Enter') { e.preventDefault(); if (xrPick < 0) { xrPick = ks[0]; xrRender(); } else xrApply(); }
+};
+$('#xrQ').addEventListener('keydown', xrKeys); $('#xrBody').addEventListener('keydown', xrKeys);
+function xrApply() {
+  const t = xrList[xrPick]; if (!t) return;
+  const ref = t.kind === 'doc' ? 'doc:' + t.docId : xrEnsureId(t); if (!ref) { toast('That item couldn’t be found any more. Try again.'); return; }
+  const form = $('#xrForm').value || 'full';
+  $('#xrDlg').close();
+  restoreSelection();
+  const before = new Set($$('span.xref', editor));
+  insertHTMLAtCursor(`<span class="xref" contenteditable="false" data-ref="${esc(ref)}" data-form="${esc(form)}">${esc(xrText(t, form))}</span>`);
+  const el = $$('span.xref', editor).find(x => !before.has(x)); if (el) inlineSpaces(el);
+  refreshXrefs(); onEdit();
+}
+$('#xrOk').addEventListener('click', xrApply);
+$('#xrCancel').addEventListener('click', () => $('#xrDlg').close());
+function inlineSpaces(el) { // word spaces either side of an inline piece, which the browser can drop
+  const p = el.previousSibling, n = el.nextSibling;
+  if (p && p.nodeType === 3) { if (/[^\s(\[{“‘"'\/-]$/.test(p.data)) p.data += ' '; else p.data = p.data.replace(/[\u00a0 ]+$/, ' '); }
+  else if (p && p.nodeType === 1 && p.nodeName !== 'BR') el.before(document.createTextNode(' '));
+  if (n && n.nodeType === 3) { if (/^[\p{L}\p{N}]/u.test(n.data)) n.data = ' ' + n.data; else n.data = n.data.replace(/^[\u00a0 ]+/, ' '); }
+  else if (!n || (n.nodeType === 3 && !n.data)) el.after(document.createTextNode('\u00a0'));
+}
+function xrGo(ref) {
+  const t = xrFind(ref); if (!t) { toast('This reference points to something that’s been deleted. Delete the reference, or point it somewhere else.'); return; }
+  if (t.docId !== curDocId) openDoc(t.docId);
+  const el = t.kind === 'doc' ? editor.firstElementChild : editor.querySelector(`[data-xid="${CSS.escape(ref)}"]`);
+  if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.classList.add('xr-flash'); setTimeout(() => el.classList.remove('xr-flash'), 1600); }
+}
+editor.addEventListener('click', e => {
+  const r = e.target.closest && e.target.closest('span.xref'); if (!r || !editor.contains(r)) return;
+  const t = xrFind(r.getAttribute('data-ref'));
+  toast(t ? `Refers to ${t.kind === 'heading' ? 'the heading' : t.kind === 'doc' ? '' : ''}${xrText(t, t.kind === 'doc' ? 'title' : 'full')}${t.kind === 'figure' || t.kind === 'table' ? (t.text ? `: ${t.text.slice(0, 80)}` : '') : ''}${t.docId !== curDocId && t.kind !== 'doc' ? ` in “${(P.docs.find(d => d.id === t.docId) || {}).title || ''}”` : ''}.` : 'This reference points to something that’s been deleted.', t ? { label: 'Go there', fn: () => xrGo(r.getAttribute('data-ref')) } : undefined);
+});
+$('#btnXref').addEventListener('click', () => openXref());
+
+/* in an export: words from the export's own numbering, and links to the right place */
+function prepExportXrefs(tmp, mode, doc) {
+  const refs = $$('span.xref', tmp); if (!refs.length) return 0;
+  const local = new Map(); let q = 0, miss = 0;
+  $$('figure:not(.av)', tmp).forEach(f => { const m = /^(fig|tbl)-(\d+)$/.exec(f.id || ''); if (m && f.dataset.xid) local.set(f.dataset.xid, { kind: m[1] === 'tbl' ? 'table' : 'figure', n: +m[2], id: f.id, el: f }); });
+  $$('p.eq', tmp).forEach(p => { if (!p.classList.contains('num')) return; q++; if (p.dataset.xid) local.set(p.dataset.xid, { kind: 'equation', n: q, id: 'r-' + p.dataset.xid, el: p }); });
+  $$('h1, h2, h3', tmp).forEach(h => { const c = h.cloneNode(true); $$('.cite,.fn,.xref', c).forEach(x => x.remove()); const text = c.textContent.replace(/\s+/g, ' ').trim(); if (h.dataset.xid) local.set(h.dataset.xid, { kind: 'heading', text, id: h.id || 'r-' + h.dataset.xid, el: h }); if (h.dataset.doc) local.set('doc:' + h.dataset.doc, { kind: 'doc', n: +(h.dataset.ch || 0), text: (P.docs.find(d => d.id === h.dataset.doc) || {}).title || text, id: h.id || 'r-doc-' + h.dataset.doc, el: h }); });
+  refs.forEach(r => {
+    const ref = r.getAttribute('data-ref') || '', form = r.getAttribute('data-form') || 'full', loc = local.get(ref), t = loc || xrFind(ref);
+    if (!t) miss++;
+    const label = t ? xrText(t, form) : (r.textContent || '??');
+    if (loc && loc.el && !loc.el.id) loc.el.id = loc.id;
+    if (loc) loc.el.setAttribute('data-anchor', 'x_' + loc.id.replace(/[^A-Za-z0-9]/g, '_').slice(0, 36));
+    if (mode === 'docx' || mode === 'scholar') { r.removeAttribute('contenteditable'); r.textContent = label; r.setAttribute('data-label', label); if (loc) { r.setAttribute('data-anchor', 'x_' + loc.id.replace(/[^A-Za-z0-9]/g, '_').slice(0, 36)); r.setAttribute('data-kind', loc.kind); r.setAttribute('data-tid', ref); } return; }
+    if (loc && /^(html|paged|epub)$/.test(mode)) { const a = document.createElement('a'); a.className = 'xref'; a.href = '#' + loc.id; a.textContent = label; r.replaceWith(a); }
+    else r.replaceWith(document.createTextNode(label));
+  });
+  tmp._xrMissing = miss; return miss;
+}
 /* ================================================================
    Equations (1.8.0)
    Inline:  <span class="math" contenteditable="false" data-tex="…">…the TeX…</span>
@@ -5565,12 +5939,7 @@ function eqApply() {
     restoreSelection(); if (eqFromSel) document.execCommand('delete');
     const before = new Set($$('span.math', editor)); insertHTMLAtCursor(html);
     const el = $$('span.math', editor).find(x => !before.has(x));
-    if (el) { // word spaces either side, which the browser can drop next to a non-editable piece
-      const p = el.previousSibling, n = el.nextSibling;
-      if (p && p.nodeType === 3) { if (/[^\s(\[{“‘"'\/-]$/.test(p.data)) p.data += ' '; else p.data = p.data.replace(/[\u00a0 ]+$/, ' '); }
-      if (n && n.nodeType === 3) { if (/^[\p{L}\p{N}]/u.test(n.data)) n.data = ' ' + n.data; else n.data = n.data.replace(/^[\u00a0 ]+/, ' '); }
-      else if (!n || (n.nodeType === 3 && !n.data)) el.after(document.createTextNode('\u00a0'));
-    }
+    if (el) inlineSpaces(el);
   }
   hydrateMath(); renumberFigures(); onEdit(); markDirty();
 }
@@ -5804,7 +6173,7 @@ function addTableRules(td) {
 function figureToDocx(fig, ctx, runs, trimRuns) {
   const D = docx, out = [], isT = fig.classList.contains('tbl');
   const cap = fig.querySelector(':scope > figcaption');
-  const capPara = keepNext => { if (!cap) return null; const c = cap.cloneNode(true); $$('.fig-n', c).forEach(s => { const b = document.createElement('strong'); b.textContent = s.textContent; s.replaceWith(b); }); return new D.Paragraph({ children: runs(trimRuns(c), {}, Math.max(16, ctx.size - 2)), alignment: isT ? D.AlignmentType.LEFT : D.AlignmentType.CENTER, keepNext, spacing: { before: isT ? 200 : 60, after: isT ? 80 : 240, line: 260 } }); };
+  const capPara = keepNext => { if (!cap) return null; const c = cap.cloneNode(true); $$('.fig-n', c).forEach(s => { const b = document.createElement('strong'); b.textContent = s.textContent; s.replaceWith(b); }); return new D.Paragraph({ children: [...docxMark(fig), ...runs(trimRuns(c), {}, Math.max(16, ctx.size - 2))], alignment: isT ? D.AlignmentType.LEFT : D.AlignmentType.CENTER, keepNext, spacing: { before: isT ? 200 : 60, after: isT ? 80 : 240, line: 260 } }); };
   if (isT) { const p = capPara(true); if (p) out.push(p); const t = fig.querySelector('table'); if (t) out.push(tableToDocx(t, ctx, runs, trimRuns)); out.push(new D.Paragraph({ spacing: { after: 120 }, children: [] })); return out; }
   $$('img', fig).forEach(img => {
     const p = dataURLParts(img.getAttribute('src')); if (!p) return;
@@ -7967,6 +8336,11 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '1.9.0': ['Cross-references: “see Figure 3”, “Table 2”, “Equation (4)”, a heading or a chapter, inserted from the toolbar (or Ctrl+Alt+R). They renumber themselves as you write, and become links in Word, PDF, web pages and EPUB.',
+    'Credits and permissions: give a figure or table its credit line and permission status. The credit ends the caption in every export, and the Permissions log in the Sources tab shows what’s still to clear.',
+    'Check links asks the Wayback Machine whether each web source is still there, keeps the saved copies, and can cite the archived page when the live one is gone.',
+    'PDF for reviewers: every line numbered, a wide margin for notes, “Review copy” on each page.',
+    'Word in manuscript format: Times 12, double-spaced, your name and page numbers at the top, and a proper first page with contact details and word count.'],
   '1.8.0': ['Equations. Click Σ in the toolbar (or Alt+=, as in Word), type TeX and watch the preview. Put an equation in a sentence or on its own line, numbered (1), (2) at the margin. Click one to change it.',
     'Equations go into Word as real Word equations you can edit there, and Import Word brings them back as TeX, so a paper can make the round trip.',
     'PDF, web pages and EPUB draw them sharply; LaTeX, Markdown and Pandoc exports keep the TeX. Pasted TeX in $…$ or $$…$$ turns into equations with one command.',
@@ -10329,7 +10703,7 @@ function extractImages(tmp, dir = 'figures') {
   return files;
 }
 function scholarParts(doc) {
-  const x = buildExport(doc, 'scholar'), tmp = document.createElement('div'); tmp.innerHTML = x.body;
+  const x = buildExport(doc, 'scholar'), tmp = document.implementation.createHTMLDocument('').createElement('div'); tmp.innerHTML = x.body; // inert: images renamed to files aren't fetched
   const images = extractImages(tmp);
   const used = new Set(x.cites.flatMap(c => c.items.map(it => it.id)));
   const keys = citeKeys(P.sources), sources = P.sources.filter(s => used.has(s.id));
@@ -10360,8 +10734,12 @@ function htmlToLatex(root, x, keys) {
     if (n.nodeType === 3) return texEsc(n.data).replace(/ZZC(\d+)ZZ/g, (m, i) => latexCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `\\footnote{${texEsc(x.fns[+i])}}`).replace(/[“”]/g, q => q === '“' ? '``' : "''").replace(/—/g, '---').replace(/–/g, '--').replace(/\u00a0/g, '~');
     if (n.nodeType !== 1) return '';
     const t = n.tagName.toLowerCase();
+    if (t === 'span' && n.classList.contains('xref')) { const k = n.dataset.kind, id = n.dataset.tid, f = n.dataset.form || 'full', lab = texEsc(n.dataset.label || n.textContent);
+      if (!id || !/^(figure|table|equation)$/.test(k)) return lab;
+      const ref = k === 'equation' ? `\\eqref{eq:${id}}` : `\\ref{${k === 'figure' ? 'fig' : 'tab'}:${id}}`, w = { figure: 'Figure', table: 'Table', equation: 'Equation' }[k];
+      return f === 'num' ? ref : `${f === 'lower' ? w.toLowerCase() : w}~${ref}`; }
     if (t === 'span' && n.classList.contains('math') && n.hasAttribute('data-tex')) return `\\(${n.getAttribute('data-tex')}\\)`;
-    if (t === 'p' && n.classList.contains('eq') && n.hasAttribute('data-tex')) return n.dataset.n ? `\n\\begin{equation}\n${n.getAttribute('data-tex')}\n\\end{equation}\n` : `\n\\[\n${n.getAttribute('data-tex')}\n\\]\n`;
+    if (t === 'p' && n.classList.contains('eq') && n.hasAttribute('data-tex')) return n.dataset.n ? `\n\\begin{equation}\n${n.getAttribute('data-tex')}${n.dataset.xid ? `\\label{eq:${n.dataset.xid}}` : ''}\n\\end{equation}\n` : `\n\\[\n${n.getAttribute('data-tex')}\n\\]\n`;
     switch (t) {
       case 'h1': return `\n\\section{${inl(n)}}\n`;
       case 'h2': return `\n\\subsection{${inl(n)}}\n`;
@@ -10383,10 +10761,10 @@ function htmlToLatex(root, x, keys) {
         const table = n.querySelector('table');
         if (table) {
           const rows = [...table.rows], cols = Math.max(1, ...rows.map(r => r.cells.length));
-          return `\n\\begin{table}[htbp]\n\\centering\n${capTex ? `\\caption{${capTex}}\n` : ''}\\begin{tabular}{${'l'.repeat(cols)}}\n\\hline\n${rows.map((r, i) => [...r.cells].map(c => inl(c).trim()).join(' & ') + ' \\\\' + (i === 0 && r.querySelector('th') ? ' \\hline' : '')).join('\n')}\n\\hline\n\\end{tabular}\n\\end{table}\n`;
+          return `\n\\begin{table}[htbp]\n\\centering\n${capTex ? `\\caption{${capTex}}\n` : ''}${n.dataset.xid ? `\\label{tab:${n.dataset.xid}}\n` : ''}\\begin{tabular}{${'l'.repeat(cols)}}\n\\hline\n${rows.map((r, i) => [...r.cells].map(c => inl(c).trim()).join(' & ') + ' \\\\' + (i === 0 && r.querySelector('th') ? ' \\hline' : '')).join('\n')}\n\\hline\n\\end{tabular}\n\\end{table}\n`;
         }
         const img = n.querySelector('img'), src = img && img.getAttribute('src');
-        if (src && !/\.svg$/.test(src)) return `\n\\begin{figure}[htbp]\n\\centering\n\\includegraphics[width=\\linewidth]{${src}}\n${capTex ? `\\caption{${capTex}}\n` : ''}\\end{figure}\n`;
+        if (src && !/\.svg$/.test(src)) return `\n\\begin{figure}[htbp]\n\\centering\n\\includegraphics[width=\\linewidth]{${src}}\n${capTex ? `\\caption{${capTex}}\n` : ''}${n.dataset.xid ? `\\label{fig:${n.dataset.xid}}\n` : ''}\\end{figure}\n`;
         return capTex ? `\n% A figure that LaTeX can't include directly (${src || 'interactive'}): ${capTex.replace(/\n/g, ' ')}\n` : '';
       }
       case 'table': return node(Object.assign(document.createElement('figure'), { innerHTML: n.outerHTML }));
@@ -10815,7 +11193,7 @@ async function popoutBoot() {
 }
 
 const KEYS = [
-  ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
+  ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Alt R', 'Cross-reference'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
   ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
   ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
