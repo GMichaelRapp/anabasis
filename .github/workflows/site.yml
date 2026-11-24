@@ -1,0 +1,25 @@
+name: Update zerohistory.net
+
+# zerohistory.net/anabasis is built by the zerohistory repo's Netlify site, which pulls this
+# repo's product page (web/) and the latest release. This asks Netlify to rebuild after a release
+# or a change to the page. Set the repository secret NETLIFY_BUILD_HOOK to the Netlify build hook URL.
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths: ['web/**', 'tools/site/**', 'docs/screenshots/**']
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Netlify build
+        env:
+          HOOK: ${{ secrets.NETLIFY_BUILD_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "::notice::NETLIFY_BUILD_HOOK isn't set, so zerohistory.net wasn't asked to rebuild."; exit 0; fi
+          curl -fsS -X POST -d '{}' "$HOOK" > /dev/null && echo "Netlify build requested."

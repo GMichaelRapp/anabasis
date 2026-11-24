@@ -12,7 +12,8 @@
 
 <p align="center">
   <a href="https://github.com/gmichaelrapp/anabasis/releases/latest"><b>Download</b></a> ·
-  <a href="https://gmichaelrapp.github.io/anabasis/"><b>Try it in your browser</b></a> ·
+  <a href="https://zerohistory.net/anabasis/app/"><b>Try it in your browser</b></a> ·
+  <a href="https://zerohistory.net/anabasis/">Website</a> ·
   <a href="docs/quick-start.md"><b>Quick start</b></a> ·
   <a href="docs/privacy.md">Privacy</a> ·
   <a href="CHANGELOG.md">What’s new</a>
@@ -85,11 +86,13 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 2. Open it in your browser. A short tour and a sample project show you around.
 3. Choose **Save** to keep your project as a `.json` file. Keep that file somewhere backed up, such as a synced folder.
 
-You can also use the [hosted copy](https://gmichaelrapp.github.io/anabasis/). It is the same file and still keeps everything in your browser.
+You can also use the [hosted copy](https://zerohistory.net/anabasis/app/). It is the same file and still keeps everything in your browser.
+
+Anabasis is published by [Zero History](https://zerohistory.net/). The old address, gmichaelrapp.github.io/anabasis, keeps working. A browser keeps a separate working copy for each address, so if you move to the new one, save your project from the old address and open the file at the new one.
 
 ### On an iPhone or iPad
 
-Open the [hosted copy](https://gmichaelrapp.github.io/anabasis/) in Safari, tap **Share**, then **Add to Home Screen**. Anabasis then opens like an app, full screen, and works offline once it has loaded. Android browsers offer **Install app** in their menu.
+Open the [hosted copy](https://zerohistory.net/anabasis/app/) in Safari, tap **Share**, then **Add to Home Screen**. Anabasis then opens like an app, full screen, and works offline once it has loaded. Android browsers offer **Install app** in their menu.
 
 The installed app keeps its own working copy, separate from Safari's, so save your project file and open it there to carry work across. Saving on a phone or tablet puts the `.json` file in Files (or Downloads) each time.
 

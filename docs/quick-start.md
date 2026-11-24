@@ -6,7 +6,7 @@ You need a desktop browser. Chrome or Edge work best; Firefox and Safari work to
 
 ## 1. Open Anabasis
 
-Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest) and open it in your browser, or use the [hosted copy](https://gmichaelrapp.github.io/anabasis/). Either way, your work stays on your computer.
+Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest) and open it in your browser, or use the [hosted copy](https://zerohistory.net/anabasis/app/). Either way, your work stays on your computer.
 
 The first time, a short tour points out the main controls. Take it, or choose **Skip tour**. A sample project opens behind it; it’s there to explore and you can replace it.
 
