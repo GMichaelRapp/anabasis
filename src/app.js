@@ -7360,7 +7360,10 @@ function showWhatsNew(since) {
 function wnCheck() {
   const seen = PREFS.seenVersion || (FIRST_VISIT ? APP_VERSION : '1.5.0');
   PREFS.seenVersion = APP_VERSION; savePrefs();
-  if (!FIRST_VISIT && vcmp(seen, APP_VERSION) < 0 && WHATS_NEW[APP_VERSION]) setTimeout(() => { if (!$('#tour').classList.contains('hidden') || document.querySelector('dialog[open]')) return; showWhatsNew(seen); }, 700);
+  if (FIRST_VISIT || vcmp(seen, APP_VERSION) >= 0 || !WHATS_NEW[APP_VERSION]) return;
+  let tries = 0; // wait politely for the tour or any open dialog (an unlock prompt, say) to finish
+  const go = () => { if ((!$('#tour').classList.contains('hidden') || document.querySelector('dialog[open]')) && ++tries < 40) { setTimeout(go, 1500); return; } if (!document.querySelector('dialog[open]')) showWhatsNew(seen); };
+  setTimeout(go, 700);
 }
 $('#wnOk').addEventListener('click', () => $('#wnDlg').close());
 

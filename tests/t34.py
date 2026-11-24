@@ -29,14 +29,17 @@ async def main():
 
         # ---- what's new
         ctx, pg = await page({'startHome': False, 'toured': True, 'seenVersion': '1.5.0'})
+        await pg.wait_for_function("() => $('#wnDlg').open", timeout=8000)
         r = await pg.evaluate("() => ({ open: $('#wnDlg').open, t: $('#wnTitle').textContent, items: $$('#wnBody li').length, h: $$('#wnBody h4').map(h => h.textContent), seen: PREFS.seenVersion })")
         check('after an update, What’s new opens once with this version’s changes', r['open'] and r['t'] == 'What’s new in Anabasis 1.6.0' and r['items'] == 5 and r['seen'] == '1.6.0', r)
-        await pg.click('#wnOk'); await pg.evaluate("() => wnCheck()"); await pg.wait_for_timeout(900)
+        await pg.click('#wnOk'); await pg.evaluate("() => wnCheck()"); await pg.wait_for_timeout(1200)
         check('…and not again', not await pg.evaluate("() => $('#wnDlg').open"))
         await pg.evaluate("() => { fillHelpTips(); $('#helpDlg').showModal(); }"); await pg.click('#helpNew'); await pg.wait_for_timeout(150)
         check('Help shows it any time', await pg.evaluate("() => $('#wnDlg').open && $$('#wnBody li').length >= 5"))
         await pg.click('#wnOk'); await ctx.close()
         ctx, pg = await page({'startHome': False, 'toured': True})
+        try: await pg.wait_for_function("() => $('#wnDlg').open", timeout=8000)
+        except Exception: pass
         check('someone updating from before 1.6 (no record) sees it too', await pg.evaluate("() => $('#wnDlg').open && $$('#wnBody li').length === 5"))
         await ctx.close()
         ctx, pg = await page(None, raw=True)
