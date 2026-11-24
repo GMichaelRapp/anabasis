@@ -4,6 +4,25 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-11-24
+
+The release to hand to people who have never heard of Anabasis: co-writing without a server, an interface organized around what it has become, and a promise that the file format holds.
+
+### Added
+- **Co-writing and review without a server.** Export → **Send a copy** saves a copy of the project for a collaborator, with a note they see when they open it, and keeps a record of what was sent. Export → **Take changes back** compares their returned file with what you sent and with what you’ve written since (a three-way merge). Their edits arrive as suggestions under their name, word by word inside paragraphs, with paragraphs they added or cut marked whole; their margin notes, notes, sources, images and new documents are added; where you both changed the same paragraph you see the two side by side and choose to keep yours, take theirs as suggestions, or keep both. A safety copy of each changed document goes into Drafts first, and the next exchange compares from what came back. A file that wasn’t sent from the project can still be compared, every difference shown as a suggestion.
+- **Help → Where things are**: a map of the interface at the top of Help, and a section on co-writing.
+
+### Changed
+- **One Insert menu** (the plus in the toolbar) for everything that goes into the page: image, chart, map, timeline, relationship map, table, equation, cross-reference, index entry, list of figures and tables, list of abbreviations. The toolbar keeps what you do while writing.
+- **Export is grouped** by purpose: share and print; review, co-write and submit; other formats; the project file.
+- **Sources → Tools** holds the source audit, link check and permissions log.
+- **Sidebar tabs have icons**, each in its tab’s colour, as signposts.
+- The tour and the sample document point to the new places.
+- Comparing two versions of a collection ignores the order of fields, so pop-out windows and co-writing only see real changes.
+
+### File format
+- Format 2 is frozen for 2.x, with a written compatibility promise (docs/file-format.md). New optional fields: `collab` and `copyOf`, and the `sgb` class on wholly added or removed paragraphs.
+
 ## [1.9.0] — 2026-11-24
 
 ### Added
@@ -202,6 +221,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[2.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.0.0
 [1.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.9.0
 [1.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.8.0
 [1.7.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.7.1

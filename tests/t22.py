@@ -53,7 +53,7 @@ async def m():
     await pg.screenshot(path='v1-brief.png')
     # ---- chart via figure menu
     await pg.click('#editor h2 >> nth=1'); await pg.keyboard.press('End')
-    await pg.click('#btnFigure'); await pg.click('.fig-menu [data-f=chart]'); await pg.wait_for_timeout(300)
+    await pg.click('#btnInsert'); await pg.click('.ins-menu [data-i=chart]'); await pg.wait_for_timeout(300)
     await pg.fill('#chData','Year\tPLAN\tUS Navy\tJMSDF\n2015\t255\t271\t47\n2020\t333\t296\t48\n2025\t370\t290\t51'); await pg.fill('#chYLabel','Battle force ships'); await pg.fill('#chCaption','Battle force ships, 2015–2025'); await pg.fill('#chSource','Office of Naval Intelligence')
     await pg.wait_for_timeout(500); await pg.screenshot(path='v2-chart.png')
     await pg.click('#chOk'); await pg.wait_for_timeout(800)
@@ -63,7 +63,7 @@ async def m():
     await pg.click('.pop [data-a=spec]'); await pg.wait_for_timeout(300); await pg.select_option('#chType','line'); await pg.wait_for_timeout(300); await pg.click('#chOk'); await pg.wait_for_timeout(800)
     print('chart edited:', await pg.evaluate("(()=>{const f=$$('figure.fig',editor).pop(); return [P.assets[f.querySelector('img').dataset.asset].spec.kind, $$('figure.fig',editor).length, f.querySelector('figcaption').textContent]})()"))
     # ---- map
-    await pg.click('#btnFigure'); await pg.click('.fig-menu [data-f=map]'); await pg.wait_for_timeout(600)
+    await pg.click('#btnInsert'); await pg.click('.ins-menu [data-i=map]'); await pg.wait_for_timeout(600)
     await pg.select_option('#mpPreset','east'); await pg.wait_for_timeout(300)
     await pg.fill('#mpSearch','Kharkiv'); await pg.wait_for_timeout(300); await pg.click('#mpResults [data-place="0"]'); await pg.wait_for_timeout(300)
     await pg.fill('#mpSearch','Sevastopol'); await pg.wait_for_timeout(300); print('search Sevastopol:', await pg.inner_text('#mpResults'))

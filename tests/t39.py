@@ -26,7 +26,7 @@ async def main():
 
         # ---- the equation box: inline, in a sentence
         await pg.evaluate("() => { editor.innerHTML = '<p>Einstein wrote  in 1905.</p><p><br></p>'; syncEditor(); const t = editor.querySelector('p').firstChild; const r = document.createRange(); r.setStart(t, 15); r.collapse(true); getSelection().removeAllRanges(); getSelection().addRange(r); editor.focus(); }")
-        await pg.click('#btnEq'); await pg.wait_for_timeout(900)
+        await pg.click('#btnInsert'); await pg.click('.ins-menu [data-i=eq]'); await pg.wait_for_timeout(900)
         r = await pg.evaluate("() => ({ open: $('#eqDlg').open, inline: $('#eqInline').checked, num: $('#eqNum').disabled, title: $('#eqTitle').textContent })")
         check('the toolbar button opens the equation box, set to “in the sentence” when the caret is in text', r == {'open': True, 'inline': True, 'num': True, 'title': 'Insert an equation'}, r)
         await pg.fill('#eqTex', r'\foo + 1'); await pg.wait_for_timeout(400)

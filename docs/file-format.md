@@ -4,6 +4,10 @@ A project is one UTF-8 JSON file. Anabasis writes it with two-space indentation,
 
 The format is open on purpose. Your work should never depend on this app to be readable.
 
+## Compatibility promise
+
+Format 2 is frozen for Anabasis 2.x. Every 2.x release opens every file written by 1.0 or later, and keeps anything in a file it doesn’t understand rather than dropping it. New features add optional fields (listed below with the version that added them); they never change the meaning of an existing one. If a future release ever needs a format 3, it will still open format 2 files, and a 2.x copy opening a format 3 file will say so before it changes anything.
+
 ## Top level
 
 ```json
@@ -22,7 +26,8 @@ The format is open on purpose. Your work should never depend on this app to be r
   "house": {}, "checkpoints": [],
   "threads": [], "claims": [], "reviewKeys": [],
   "journal": { "design": {}, "hypotheses": [], "log": [], "searches": [] },
-  "datasets": [], "dashboards": []
+  "datasets": [], "dashboards": [],
+  "collab": { "sent": [] }, "copyOf": {}
 }
 ```
 
@@ -39,6 +44,9 @@ The format is open on purpose. Your work should never depend on this app to be r
 | `threads` | Research threads: `{ id, name, color, note, hidden }`. Their passages are marked in document `html` (below). Since 1.1. |
 | `sources` (1.7) | A source may carry `stype`: `primary`, `secondary` or `tertiary`. A note may carry `stype` too, overriding its source’s; `none` means no type. |
 | `sources` (1.9) | A web source may carry `lc`, the last link check: `at` (date), `url` (the Wayback Machine copy), `ts` (its timestamp), `st` (the HTTP status the archive saw) or `err`. `citeArchive: true` cites the archived address (kept in `osint.archiveUrl`) instead of the live one. |
+| `collab` (2.0) | What you’ve sent collaborators: `sent` holds up to five `{ id, at, to, note, back, docs: [{ id, title, html, comments }], colls }`, the documents and collections as they were sent (or as they last came back), so their changes can be told from yours. Never included in a copy you send. |
+| `copyOf` (2.0) | On a copy made with Send a copy: `{ send, from, to, at, note }`, matching it to the `collab.sent` record when it comes back. |
+| `ins.sg` / `del.sg` with `class="sgb"` on their paragraph (2.0) | A paragraph a collaborator added or removed as a whole; accepting or rejecting the suggestion keeps or removes the paragraph rather than leaving an empty line. |
 | `claims` | The claims register: `{ id, status, note, checkedText, checkedAt, checkedBy }` (`checkedBy` since 1.5: the name in Settings when the claim was marked supported). `status` is `open` (not checked), `ok` (supported), `need` (needs a source), `disp` (contested) or `cut`. `checkedText` is the claim's text when it was marked supported, so later edits can be flagged. Since 1.1. |
 | `reviewKeys` | Review keys: `{ id, reason, due, note, done, doneAt }`, with `due` as `YYYY-MM-DD` or empty. Since 1.1. |
 | `datasets` | Since 1.7. Tables kept in the project: `{ id, name, cols, rows, sourceId, note }`, `cols` a list of column names and `rows` a list of rows of strings. |

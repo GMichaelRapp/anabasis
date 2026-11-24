@@ -74,7 +74,7 @@ async def main():
     await pg.set_input_files('#fileCsl','refs.ris'); await pg.wait_for_timeout(300)
     print('imported:', await pg.evaluate("JSON.stringify(P.sources.slice(-5).map(s=>[s.csl.type,s.csl.title,(s.csl.author||[]).map(a=>a.family||a.literal).join('/'),JSON.stringify(s.csl.issued)]))"))
     # ---------- audit
-    await pg.click('.tabs button[data-tab=sources]'); await pg.click('#btnAudit'); await pg.wait_for_timeout(300)
+    await pg.click('.tabs button[data-tab=sources]'); await pg.click('#btnSrcMore'); await pg.click('#btnAudit'); await pg.wait_for_timeout(300)
     print('audit rows:', await pg.eval_on_selector_all('table.audit tbody tr','e=>e.map(x=>x.innerText.replace(/\\s+/g," ").slice(0,80))'))
     await shot('x5.png'); await pg.click('#auClose')
     # ---------- timeline

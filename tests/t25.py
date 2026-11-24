@@ -59,7 +59,12 @@ VIEWS = [
     ('permissions log', "$('#crDlg').close(); openPerms();"),
     ('check links', "$('#permDlg').close(); P.sources.push({ id: 'axe1', csl: { type: 'webpage', title: 'A page', URL: 'https://example.org/a' }, lc: { at: '2026-01-01', url: 'https://web.archive.org/web/20240101000000/https://example.org/a', ts: '20240101000000', st: '404' }, created: nowISO() }); openLinks();"),
     ('manuscript format box', "$('#lkDlg').close(); openMsf(curDoc());"),
-    ('newer-version notice', "$('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
+    ('insert menu', "$('#msfDlg').close(); openInsertMenu(false);"),
+    ('export menu (grouped)', "closePop(); $('#exportMenu').classList.add('open');"),
+    ('sources tools menu', "$('#exportMenu').classList.remove('open'); switchTab('sources'); $('#srcMoreMenu').classList.add('open');"),
+    ('send a copy', "$('#srcMoreMenu').classList.remove('open'); openSendCopy();"),
+    ('take changes back', "$('#scDlg').close(); TB = { T: JSON.parse(JSON.stringify(P)), send: null, name: 'x.json', who: 'Dana' }; TB.T.docs[0].html = TB.T.docs[0].html.replace(/<p>/, '<p>Changed. '); $('#tkWho').value = 'Dana'; tbPrepare(); $('#tkDlg').showModal();"),
+    ('newer-version notice', "$('#tkDlg').close(); $('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
     async with async_playwright() as pw:

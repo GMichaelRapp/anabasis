@@ -472,6 +472,25 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 #editor figcaption[data-cp-credit]::after{content:"\00a0" attr(data-cp-credit);color:var(--muted);font-style:normal}
 .pm td,.lk td{vertical-align:top}.pm tr.pm-todo td,.audit tr.pm-todo td{background:color-mix(in srgb,var(--danger) 9%,transparent)}
 .lk-url{word-break:break-all}.lk-bad{color:var(--danger);font-weight:600}.lk-warn{color:var(--muted)}.lk-ok{color:inherit}
+.tb-list{margin:6px 0 10px;padding-left:1.2em}.tb-list li{margin:3px 0}.tb-cf{color:var(--danger)}
+.tb-c{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+.tb-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 6px}.tb-text{font:14px/1.45 var(--serif,Georgia,serif);background:var(--page);color:var(--page-ink);border:1px solid var(--line2);border-radius:6px;padding:4px 8px;max-height:220px;overflow:auto}
+.tb-text p,.tb-text h1,.tb-text h2,.tb-text h3{margin:.3em 0;font-size:inherit}
+@media (max-width:640px){.tb-two{grid-template-columns:1fr}}
+.tabs .tab-ic{display:block;width:18px;height:18px;margin:0 auto 1px;color:var(--k,var(--muted));opacity:.7}
+.tabs button.on .tab-ic{opacity:1}
+.tabs .tab-l{display:inline}
+#exportMenu{max-height:min(78vh,640px);overflow:auto}
+.menu-pop .mh{display:flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;color:var(--muted);padding:9px 12px 3px;letter-spacing:.01em}
+.menu-pop .mh:not(:first-child){border-top:1px solid var(--line2);margin-top:4px}
+.menu-pop .mh svg{width:15px;height:15px}
+.ins-menu{min-width:280px;padding:6px 0}.ins-menu .mh{font-size:11.5px;font-weight:700;color:var(--muted);padding:8px 14px 3px}.ins-menu .mh:not(:first-child){border-top:1px solid var(--line2);margin-top:4px}
+.ins-menu{display:block}.ins-menu button{display:flex;justify-content:flex-start;align-items:center;gap:10px;width:100%;text-align:left;border:0;background:transparent;padding:7px 14px;border-radius:0;color:var(--ink)}
+.ins-menu button:hover,.ins-menu button:focus-visible{background:var(--accent-soft)}
+.ins-menu button svg{flex:0 0 auto;color:var(--muted)}
+.ins-menu button kbd{margin-left:auto;font-size:11px;color:var(--muted)}
+.row:has(> .src-more){position:relative}.src-more{flex:1;position:static}.src-more .menu-pop{left:0;right:0;min-width:0}
+#srcMoreMenu button svg{flex:0 0 auto}#srcMoreMenu button{display:flex;justify-content:flex-start;align-items:center;gap:9px;width:100%;text-align:left}
 #editor span.xref{color:var(--accent);border-bottom:1px dotted currentColor;cursor:pointer}
 #editor span.xref[data-cp-miss]{color:var(--danger);text-decoration:line-through wavy}
 #editor .xr-flash{outline:2px solid var(--accent);outline-offset:3px;transition:outline-color .6s}
@@ -1119,6 +1138,10 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 :root .tabs [data-tab=docs]{--k:var(--k-docs)} :root .tabs [data-tab=notes]{--k:var(--k-notes)}
 :root .tabs [data-tab=sources]{--k:var(--k-sources)} :root .tabs [data-tab=outline]{--k:var(--k-outline)}
 :root [data-pane=docs]{--k:var(--k-docs)} :root [data-pane=notes]{--k:var(--k-notes)} :root [data-pane=sources]{--k:var(--k-sources)} :root [data-pane=outline]{--k:var(--k-outline)}
+:root .tabs button::before{content:none}
+:root .tabs button{flex-direction:column;flex-wrap:nowrap;align-items:center;justify-content:center;gap:1px;row-gap:1px;padding:7px 2px 6px}
+.tabs .tab-l{white-space:nowrap}.tabs .tab-l .count{margin-left:3px}
+
 :root .list li.on{background:transparent;box-shadow:inset 3px 0 0 var(--k,var(--k-docs)),inset 0 0 0 1px var(--line)}
 :root .doc-bar{border-bottom:1px solid var(--line)}
 :root .toolbar{border-bottom:1px solid var(--neat)}
@@ -1717,29 +1740,33 @@ body.focus .tip-card{display:none}
   <div class="menu">
     <button id="btnExport" class="ghost" aria-label="Export"><svg viewBox="0 0 24 24" aria-hidden="true" class="ex-ic"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="lbl">Export</span> <span class="caret" aria-hidden="true">▾</span></button>
     <div class="menu-pop" id="exportMenu">
+<div class="mh" role="presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>Share and print</div>
       <button data-x="docx">Word (.docx), real footnotes</button>
-      <button data-x="docxms">Word in manuscript format (for submission)…</button>
       <button data-x="pdf">PDF — print / save as PDF <span class="muted small">⌘P</span></button>
+      <button data-x="html">Web page (HTML)</button>
+      <button data-x="epub">E-book (ePub)</button>
+      <button data-x="copy">Copy formatted text (for Docs, email…)</button>
+      <button data-x="substack">Substack post: endnotes, images, tables…</button>
+      <button data-x="promo">Promo kit: thread, subtitle, quote cards…</button>
+<div class="mh" role="presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg>Review, co-write and submit</div>
+      <button data-x="send">Send a copy for review or co-writing…</button>
+      <button data-x="takeback">Take changes back…</button>
       <button data-x="review">PDF for reviewers: line numbers, wide margins</button>
-      <button data-x="html">Document as HTML</button>
-      <button data-x="epub">ePub (e-book)</button>
+      <button data-x="docxms">Word in manuscript format (for submission)…</button>
+      <button data-x="ms">Compile manuscript (several documents)…</button>
+<div class="mh" role="presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg>Other formats</div>
       <button data-x="md">Document as Markdown</button>
       <button data-x="pandoc">Pandoc / Quarto package (.md + .bib + style)</button>
       <button data-x="latex">LaTeX package (.tex + .bib)</button>
-      <button data-x="substack">Substack post: endnotes, images, tables…</button>
-      <button data-x="promo">Promo kit: thread, subtitle, quote cards…</button>
-      <button data-x="copy">Copy formatted text (for Docs, email…)</button>
-      <hr>
-      <button data-x="ms">Compile manuscript (several documents)…</button>
-      <hr>
-      <button data-x="saveas">Save project as…</button>
-      <button data-x="checkpoints">Project checkpoints…</button>
-      <button data-x="lock">Lock project with a password…</button>
-      <button data-x="github">Back up to GitHub…</button>
       <button data-x="notesmd">All notes as Markdown</button>
       <button data-x="annot">Annotated bibliography (new document)</button>
       <button data-x="refs">Sources as BibTeX, RIS or CSL-JSON…</button>
       <button data-x="osintlist">Sources as OSINT Citation Generator list</button>
+<div class="mh" role="presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>The project file</div>
+      <button data-x="saveas">Save project as…</button>
+      <button data-x="checkpoints">Project checkpoints…</button>
+      <button data-x="lock">Lock project with a password…</button>
+      <button data-x="github">Back up to GitHub…</button>
     </div>
   </div>
   <button id="btnTheme" class="icon ghost" data-pri="5" data-label="Light / dark theme" aria-label="Light or dark theme" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
@@ -1759,11 +1786,11 @@ body.focus .tip-card{display:none}
 <div class="layout">
   <aside id="sidebar">
     <nav class="tabs">
-      <button data-tab="docs" class="on">Docs<span class="count" id="cntDocs"></span></button>
-      <button data-tab="notes">Notes<span class="count" id="cntNotes"></span></button>
-      <button data-tab="sources">Sources<span class="count" id="cntSources"></span></button>
-      <button data-tab="outline" title="Outline and drafting checklist">Outline<span class="count badge" id="tabOutlineBadge"></span></button>
-      <button data-tab="research" title="Threads, claims, review keys and questions">Research<span class="count badge" id="tabResearchBadge"></span></button>
+      <button data-tab="docs" class="on"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg><span class="tab-l">Docs<span class="count" id="cntDocs"></span></span></button>
+      <button data-tab="notes"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h10M7 14h6"/></svg><span class="tab-l">Notes<span class="count" id="cntNotes"></span></span></button>
+      <button data-tab="sources"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/></svg><span class="tab-l">Sources<span class="count" id="cntSources"></span></span></button>
+      <button data-tab="outline" title="Outline and drafting checklist"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1"/><circle cx="4" cy="12" r="1"/><circle cx="4" cy="18" r="1"/></svg><span class="tab-l">Outline<span class="count badge" id="tabOutlineBadge"></span></span></button>
+      <button data-tab="research" title="Threads, claims, review keys and questions"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4.9-4.9M8.5 11l2 2 3.5-3.5"/></svg><span class="tab-l">Research<span class="count badge" id="tabResearchBadge"></span></span></button>
     </nav>
     <section class="pane on" data-pane="docs">
       <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" class="ghost" title="New part (a folder for chapters)">+ Part</button></div>
@@ -1815,8 +1842,7 @@ body.focus .tip-card{display:none}
         <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
-        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><button id="btnAudit" title="Which sources each chapter leans on, quoted words, unused sources">Audit</button></div>
-        <div class="row"><button id="btnLinks" class="small" style="flex:1" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy">Check links</button><button id="btnPerms" class="small" style="flex:1" title="Credits and permissions for every figure and table, and quotations by source">Permissions log</button></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -1858,10 +1884,7 @@ body.focus .tip-card{display:none}
       <button data-cmd="justifyCenter" data-tb="center" data-pri="9" data-label="Center" aria-label="Center" title="Center"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M6 12h12M4 18h16"/></svg></button>
       <button data-cmd="justifyRight" data-tb="right" data-pri="9" data-label="Align right" aria-label="Align right" title="Align right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 12h12M5 18h16"/></svg></button>
       <span class="sep"></span>
-      <button id="btnFigure" data-tb="figure" data-pri="5" data-label="Figure: image, chart, map, timeline" aria-label="Figure: image, chart, map, timeline" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button>
-      <button id="btnTable" data-tb="table" data-pri="6" data-label="Table" aria-label="Table" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button>
-      <button id="btnEq" data-tb="equation" data-pri="6" data-label="Equation" aria-label="Equation" title="Insert an equation, written in TeX (Ctrl+Alt+E, or Alt+= as in Word)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5H7l5 7-5 7h10"/></svg></button>
-      <button id="btnXref" data-tb="xref" data-pri="4" data-label="Cross-reference" aria-label="Cross-reference" title="Cross-reference: Figure 3, Table 2, Equation (4), a heading or a chapter, kept up to date (Ctrl+Alt+R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/></svg></button>
+      <button id="btnInsert" class="tb-lbl" data-tb="insert" data-pri="1" data-label="Insert: figure, table, equation, cross-reference…" title="Insert a figure, chart, map, table, equation, cross-reference or index entry" aria-haspopup="menu" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="lbl">Insert</span></button>
       <button id="btnLink" data-tb="link" data-pri="5" data-label="Link" aria-label="Link" title="Link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg></button>
       <button data-cmd="removeFormat" data-tb="clear" data-pri="7" data-label="Clear formatting" aria-label="Clear formatting" title="Clear formatting"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h16v3M9 20h6M12 4v16M3 3l18 18"/></svg></button>
       <span class="sep"></span>
@@ -1870,7 +1893,6 @@ body.focus .tip-card{display:none}
       <button id="btnFlag" data-tb="flag" data-pri="3" data-label="Flag (TK, citation needed, check)" aria-label="Flag (TK, citation needed, check)" title="Leave a flag: TK, citation needed, check this (Ctrl/Cmd+Shift+K)" class="flag-btn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"/><path d="M5 4h12l-2.5 4.5L17 13H5"/></svg></button>
       <button id="btnCapture" data-tb="capture" data-pri="3" data-label="Capture as a note" aria-label="Capture as a note" title="Capture the selection as a note, or start a blank note (Ctrl/Cmd+Shift+E)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6"/><path d="M8 15h7M12.5 12.5 15 15l-2.5 2.5"/></svg></button>
       <button id="btnComment" data-tb="comment" data-pri="4" data-label="Margin note" aria-label="Margin note" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.3a8 8 0 1 1 15.2-4.2z"/><path d="M9 10h7M9 13.5h4.5"/></svg></button>
-      <button id="btnIndexMark" data-tb="index" data-pri="8" data-label="Index entry" aria-label="Index entry" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5V4h7.5l9.5 9.5-7.5 7.5z"/><circle cx="7.6" cy="8.1" r="1.2" fill="currentColor" stroke="none"/></svg></button>
       <button id="btnSuggest" data-tb="suggest" data-pri="4" data-label="Suggest changes" aria-label="Suggest changes" aria-pressed="false" title="Suggest mode: your edits are marked for review, like tracked changes in Word"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/><path d="M15 20h6M18 17v6" transform="translate(0 -2)"/></svg></button>
       <button id="btnMark" class="mark-btn tb-lbl" data-tb="mark" data-pri="1" data-label="Mark: thread, claim, review, question" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg><span class="lbl">Mark</span><span class="caret" aria-hidden="true">▾</span></button>
       <button id="btnLens" data-tb="lens" data-pri="6" data-label="Revision lens" aria-label="Revision lens" title="Revision lens: long sentences, passive voice, hedges, repeats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
@@ -2352,6 +2374,27 @@ body.focus .tip-card{display:none}
   </div>
   <footer><button id="tbCancel">Cancel</button><button id="tbOk" class="primary">Insert table</button></footer>
 </div></dialog>
+<input type="file" id="fileTakeBack" accept=".json,application/json" hidden>
+<dialog id="scDlg" aria-labelledby="scTitle"><div class="dlg">
+  <h3 id="scTitle">Send a copy for review or co-writing</h3>
+  <div class="body">
+    <p class="small" style="margin-top:0">Saves a copy of the whole project as a file to send by email or a shared folder. Your collaborator opens it in Anabasis (the web page or the file; no account) and works as usual. When the file comes back, <b>Take changes back</b> shows their edits in your draft as suggestions to accept or reject, under their name.</p>
+    <label for="scTo">Who it’s for</label><input id="scTo" placeholder="Their name, as it should appear on their suggestions">
+    <label for="scNote">A note for them <span class="muted">(optional; shown when they open it)</span></label><input id="scNote" placeholder="Could you look at chapter 3 by Friday?">
+    <div class="tip">This project keeps a record of what you sent, so their changes can be told apart from yours. What you’ve sent others isn’t included in the copy.</div>
+  </div>
+  <footer><button id="scCancel">Cancel</button><button id="scOk" class="primary">Save the copy</button></footer>
+</div></dialog>
+<dialog id="tkDlg" class="wide" aria-labelledby="tkTitle"><div class="dlg">
+  <h3 id="tkTitle">Take changes back</h3>
+  <div class="body">
+    <label for="tkWho">Whose changes</label><input id="tkWho" placeholder="Their name">
+    <div id="tkSum"></div>
+    <div id="tkConf"></div>
+    <div class="tip">Edits to text come in as suggestions; new notes, sources, margin notes and images are added. A safety copy of each changed document is kept in Drafts first.</div>
+  </div>
+  <footer><button id="tkCancel">Cancel</button><button id="tkOk" class="primary">Bring them in</button></footer>
+</div></dialog>
 <dialog id="msfDlg" aria-labelledby="msfTitle"><div class="dlg">
   <h3 id="msfTitle">Word in manuscript format</h3>
   <div class="body">
@@ -2392,6 +2435,7 @@ body.focus .tip-card{display:none}
   </div>
   <footer><button id="lkClose" class="primary">Done</button></footer>
 </div></dialog>
+<div id="insertHost" hidden><button id="btnFigure" data-label="Figure: image, chart, map, timeline" aria-label="Figure: image, chart, map, timeline" title="Insert a figure: image, chart, map, timeline or relationship map. You can also paste or drop images."><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/></svg></button><button id="btnTable" data-label="Table" aria-label="Table" title="Insert a table with a numbered caption"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/></svg></button><button id="btnEq" data-label="Equation" aria-label="Equation" title="Insert an equation, written in TeX (Ctrl+Alt+E, or Alt+= as in Word)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 5H7l5 7-5 7h10"/></svg></button><button id="btnXref" data-label="Cross-reference" aria-label="Cross-reference" title="Cross-reference: Figure 3, Table 2, Equation (4), a heading or a chapter, kept up to date (Ctrl+Alt+R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/></svg></button><button id="btnIndexMark" data-label="Index entry" aria-label="Index entry" title="Mark an index entry at the cursor (Ctrl/Cmd+Alt+X)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5V4h7.5l9.5 9.5-7.5 7.5z"/><circle cx="7.6" cy="8.1" r="1.2" fill="currentColor" stroke="none"/></svg></button></div>
 <dialog id="xrDlg" aria-labelledby="xrTitle"><div class="dlg wide">
   <h3 id="xrTitle">Insert a cross-reference</h3>
   <div class="body">
@@ -2765,6 +2809,14 @@ body.focus .tip-card{display:none}
     <h4>Your privacy</h4>
     <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
+    <h4>Where things are</h4>
+    <ul class="help-map">
+      <li><b>The sidebar</b>, each tab with its own icon: <b>Docs</b> (chapters and parts), <b>Notes</b> (quotes and ideas), <b>Sources</b> (your bibliography), <b>Outline</b> (structure and checks) and <b>Research</b> (claims, threads, questions and your journal).</li>
+      <li><b>The toolbar</b> holds what you do while writing: style, bold and lists, <b>Cite</b>, footnote, flag, margin note, Suggest, <b>Mark</b> and Find. <b>Insert</b> (the plus) holds everything that goes into the page: figures, charts, maps, timelines, tables, equations, cross-references, index entries and the lists of figures and abbreviations.</li>
+      <li><b>Export</b> is grouped by what you’re doing: <i>share and print</i> (Word, PDF, web page, e-book, Substack); <i>review, co-write and submit</i> (send a copy, take changes back, the reviewer PDF, manuscript format, compile); <i>other formats</i> (Markdown, Pandoc, LaTeX, sources); and <i>the project file</i> (save as, checkpoints, lock, GitHub backup).</li>
+      <li><b>Sources → Tools</b> holds the source audit, link check and permissions log.</li>
+      <li>Anything else: <b>Search</b> (<kbd>Ctrl</kbd>+<kbd>K</kbd>) finds every command by name.</li>
+    </ul>
     <h4>Writing</h4>
     <ul>
       <li><b>Cite</b> inserts a citation at the cursor. Pick one or more sources, add page or other locators, and it formats in the document’s style. Note styles (Chicago notes &amp; bibliography) number it as a note. Author-date, APA and MLA show a parenthetical.</li>
@@ -2808,7 +2860,7 @@ body.focus .tip-card{display:none}
     <ul>
       <li><b>Quote check.</b> Quotes inserted from quote notes stay linked to the note. If the wording in the draft drifts from your note, Outline → Quotes flags it. Compare shows the difference, and you can restore the original or update the note. Ellipses (…) and [bracketed changes] count as legitimate edits. Long quotations typed or pasted without a note are listed as unlinked.</li>
       <li><b>Names &amp; spellings.</b> Keep a list of people, organizations, places and terms with their preferred spelling. Variants (Kiev, Prigozin) are highlighted in the draft and fixable in one click. Anabasis also suggests near-duplicate spellings it finds.</li>
-      <li><b>Source audit</b> (Sources tab). Citations and share per source, a warning when one chapter leans on a single source, quoted words per source for permissions, sources missing details, and sources you haven’t used.</li>
+      <li><b>Source audit</b> (Sources tab → Tools). Citations and share per source, a warning when one chapter leans on a single source, quoted words per source for permissions, sources missing details, and sources you haven’t used.</li>
       <li><b>Timeline.</b> Give notes an <i>event date</i> (when it happened), then set the board to Timeline to see them in order. Templates → Chronology turns them into a document.</li>
       <li><b>Comments.</b> Select text and click 💬. Comments are listed under Outline and travel to Word as real margin comments. They’re left out of PDF, ePub and other exports.</li>
       <li><b>Revision lens.</b> Highlights long sentences (35+ words), passive voice, hedges and filler, and repeated words, and shows grade level. It runs on your device, so nothing is sent anywhere.</li>
@@ -2820,18 +2872,18 @@ body.focus .tip-card{display:none}
     </ul>
     <h4>Cross-references</h4>
     <ul>
-      <li>Click the arrow-to-bar button in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>) where the reference should go, then pick a figure, table, numbered equation, heading or another document (a chapter). Type to search; choose how it reads: “Figure 3”, “figure 3” in mid-sentence, or just “3”.</li>
+      <li>Choose <b>Insert → Cross-reference</b> in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd>) where the reference should go, then pick a figure, table, numbered equation, heading or another document (a chapter). Type to search; choose how it reads: “Figure 3”, “figure 3” in mid-sentence, or just “3”.</li>
       <li>The words keep up as you add, move or delete things. A reference to something you deleted turns red and crossed out; click any reference to see where it points, with <b>Go there</b> to jump, even to another chapter.</li>
       <li>Every export does its own numbering, so in a compiled manuscript a chapter’s Figure 1 becomes whatever it is in the whole book. In Word, PDF, web pages and EPUB the reference is a link to the caption, equation or heading; LaTeX gets <code>\ref</code>, <code>\eqref</code> and matching <code>\label</code>s; Markdown gets the words.</li>
     </ul>
     <h4>Credits &amp; permissions</h4>
     <ul>
       <li>Click a figure and choose <b>Credit &amp; permission…</b> (for a table, <b>Credit…</b> on its toolbar). The credit line (“Photo: Library of Congress”) ends the caption in every export and shows after it on screen. Record the permission status, whom to ask, and notes such as fees and dates; those stay in the project and never go into an export.</li>
-      <li><b>Permissions log</b> (Sources tab) lists every figure and table in the project with its credit and status, highlights what’s still to clear (permission needed, requested or refused, or a picture with nothing set), and adds quotations by source. Download it as a spreadsheet or make it a document to send your editor.</li>
+      <li><b>Permissions log</b> (Sources tab → Tools) lists every figure and table in the project with its credit and status, highlights what’s still to clear (permission needed, requested or refused, or a picture with nothing set), and adds quotations by source. Download it as a spreadsheet or make it a document to send your editor.</li>
     </ul>
     <h4>Checking links</h4>
     <ul>
-      <li><b>Check links</b> (Sources tab) asks the Internet Archive’s Wayback Machine about each web source: when it last saved a copy, and whether the page was there, moved or gone at that visit. A browser isn’t allowed to test other websites directly, so this is the archive’s record rather than a live test.</li>
+      <li><b>Check links</b> (Sources tab → Tools) asks the Internet Archive’s Wayback Machine about each web source: when it last saved a copy, and whether the page was there, moved or gone at that visit. A browser isn’t allowed to test other websites directly, so this is the archive’s record rather than a live test.</li>
       <li><b>Keep saved copies</b> stores the archived link with each source (the OSINT style cites it). For a page that’s gone, tick <b>the saved copy</b> to cite the archived address in any style. <b>Save now</b> asks the Wayback Machine to save a page today. <b>Fill in accessed dates</b> uses the day you added each source.</li>
       <li>Only your web sources’ addresses go to archive.org, and only when you click Check.</li>
     </ul>
@@ -2842,7 +2894,7 @@ body.focus .tip-card{display:none}
     </ul>
     <h4>Equations</h4>
     <ul>
-      <li>Click <b>Σ</b> in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>, or <kbd>Alt</kbd>+<kbd>=</kbd> as in Word) and type the equation in TeX, the way LaTeX writes it: <code>x^2</code>, <code>\frac{a}{b}</code>, <code>\sqrt{x}</code>, <code>\sum_{i=1}^n</code>, <code>\alpha</code>. The buttons under the box add common pieces, and the preview shows it as you type, with a note if something isn’t right (a missing brace, a command it doesn’t know).</li>
+      <li>Choose <b>Insert → Equation</b> in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>, or <kbd>Alt</kbd>+<kbd>=</kbd> as in Word) and type the equation in TeX, the way LaTeX writes it: <code>x^2</code>, <code>\frac{a}{b}</code>, <code>\sqrt{x}</code>, <code>\sum_{i=1}^n</code>, <code>\alpha</code>. The buttons under the box add common pieces, and the preview shows it as you type, with a note if something isn’t right (a missing brace, a command it doesn’t know).</li>
       <li><b>In the sentence</b> puts it in the line of text. <b>On its own line</b> sets it apart, centred; numbered ones get (1), (2)… at the right margin, renumbered as you add or remove them. In an empty paragraph the box starts with “on its own line”; in a sentence, “in the sentence”.</li>
       <li>Click an equation to change it, switch it between the two, or remove it. Select TeX you’ve typed or pasted (with or without its <code>$…$</code>) and open the box to turn it into an equation; <b>Turn TeX in $…$ and $$…$$ into equations</b> in the command palette does a whole document at once. Amounts of money like “$5 and $10” are left alone.</li>
       <li><b>Word:</b> equations go into the .docx as Word equations, which you (or an editor) can change in Word’s equation editor; numbered ones keep their numbers. <b>Import Word</b> brings Word equations back in as TeX, so a document can go to Word and back. LibreOffice opens them too, though it draws a few things (boxes, fancy letters like ℝ) more plainly than Word.</li>
@@ -2851,7 +2903,7 @@ body.focus .tip-card{display:none}
     </ul>
     <h4>Charts, maps, timelines &amp; relationships</h4>
     <ul>
-      <li>The <b>figure button</b> in the toolbar now offers an image, a <b>chart from data</b> (paste a table or use one from the document), a <b>map</b>, a <b>timeline</b> from your dated notes, or a <b>relationship map</b>. Each becomes a numbered figure with a caption and source line; click it later and choose <i>Edit</i> to change it.</li>
+      <li><b>Insert</b> in the toolbar offers an image, a <b>chart from data</b> (paste a table or use one from the document), a <b>map</b>, a <b>timeline</b> from your dated notes, or a <b>relationship map</b>. Each becomes a numbered figure with a caption and source line; click it later and choose <i>Edit</i> to change it.</li>
       <li><b>Maps</b> work offline: shade countries, search about 7,300 places (or save your own), place markers, and draw routes, arrows and hatched areas, with a legend you label. Borders come from Natural Earth, with Crimea shown as part of Ukraine; other disputed lines follow Natural Earth’s de facto view.</li>
       <li><b>Timeline:</b> notes with an event date line up on the board’s Timeline view (Group by: Timeline). Gaps in the record are marked, and <i>Insert as figure</i> turns them into a graphic. Dates can be years, “Aug 1680”, full dates, ranges like “1680–1692”, or BCE.</li>
       <li><b>Relationships</b> (Docs tab) maps the people, organizations and places in your Names list by how often they appear together, with the passages one click away. Shift-click two names to add your own labeled link.</li>
@@ -2909,6 +2961,12 @@ body.focus .tip-card{display:none}
       <li>A <b>Next step</b> log entry is a to-do: tick it when it’s done. Open next steps show in This week, the Research tab and the research memo.</li>
       <li><b>Start from a method</b>, at the top of the research design, fills empty fields with prompts for archival research, interviews, open-source investigation, document analysis, case studies, data analysis, a literature review or investigative reporting. Replace the [brackets]. Add a second method for mixed methods.</li>
       <li><b>Everything about…</b> searches the journal too, and deleting a hypothesis, entry or search can be undone.</li>
+    </ul>
+    <h4>Co-writing and review</h4>
+    <ul>
+      <li><b>Export → Send a copy for review or co-writing</b> saves a copy of the whole project as a file, with a note for your collaborator. They open it in Anabasis (the web page or the downloaded file; no account), work as usual, save, and send the file back.</li>
+      <li><b>Export → Take changes back</b> opens their file and compares it with what you sent and what you’ve written since. Their edits come into your draft as <b>suggestions</b> under their name, ready to accept or reject; their margin notes, new notes, sources, images and documents are added. Where you both changed the same paragraph, you see the two side by side and choose: keep yours, take theirs as suggestions, or keep both.</li>
+      <li>A safety copy of every changed document is kept in <b>Drafts</b> first. Take changes back again later and only what they changed since comes in. A file that wasn’t sent from this project can still be compared: every difference is shown as their suggestion.</li>
     </ul>
     <h4>Suggest mode &amp; working with editors</h4>
     <ul>

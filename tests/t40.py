@@ -35,7 +35,7 @@ async def main():
           syncEditor(); hydrateImages(); renumberFigures(); renderDocList(); window._b2 = b2; }""", PX)
         await pg.wait_for_timeout(800)
         await caret_end("editor.querySelectorAll('p')[0]")
-        await pg.click('#btnXref'); await pg.wait_for_timeout(300)
+        await pg.click('#btnInsert'); await pg.click('.ins-menu [data-i=xref]'); await pg.wait_for_timeout(300)
         items = await pg.evaluate("() => $$('#xrBody li[data-k]').map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
         check('the cross-reference box lists headings, figures, tables, equations and documents', any(i.startswith('Figure 1 The route east') for i in items) and any(i.startswith('Table 1 Rations') for i in items) and any(i.startswith('Equation (1)') for i in items) and any('Supply lines' in i for i in items) and any(i.startswith('Chapter 2 Second chapter') for i in items) and any('A road in winter' in i for i in items), items)
         await pg.fill('#xrQ', 'route'); await pg.keyboard.press('Enter'); await pg.wait_for_timeout(150)
@@ -109,7 +109,7 @@ async def main():
         async with pg.expect_download() as d: await pg.evaluate("() => exportDocx(curDoc())")
         xml = zipfile.ZipFile(await (await d.value).path()).read('word/document.xml').decode()
         check('…Word too', 'Map: Library of Congress.' in xml and 'fee $40' not in xml)
-        await pg.evaluate("() => switchTab('sources')"); await pg.click('#btnPerms'); await pg.wait_for_timeout(400)
+        await pg.evaluate("() => switchTab('sources')"); await pg.click('#btnSrcMore'); await pg.click('#btnPerms'); await pg.wait_for_timeout(400)
         rows = await pg.evaluate("() => $$('#pmBody table.pm tbody tr').map(tr => [...tr.cells].map(c => c.textContent.trim()))")
         check('the permissions log lists every figure and table in the project, with status', len(rows) == 3 and rows[0][0].startswith('Figure 1') and rows[0][3] == 'Permission requested' and rows[1][3] == 'Fair use or fair dealing' and rows[2][3] == 'Not set: check', rows)
         await pg.select_option('#pmShow', 'todo'); await pg.wait_for_timeout(200)
@@ -133,7 +133,7 @@ async def main():
         await pg.evaluate("""() => { P.sources = P.sources.filter(s => !/^https?:/.test(s.csl.URL || ''));
           [['Gone page', 'https://gone.example/a'], ['Never saved', 'https://never.example/b'], ['Fine page', 'https://fine.example/'], ['Odd answer', 'https://evil.example/']].forEach(([t, u], i) => P.sources.push({ id: 'w' + i, csl: { type: 'webpage', title: t, URL: u }, created: '2025-03-0' + (i + 1) + 'T12:00:00Z', modified: nowISO() }));
           P.sources.find(s => s.id === 'w2').csl.accessed = { 'date-parts': [[2025, 1, 1]] }; renderSourceList(); }""")
-        await pg.evaluate("() => switchTab('sources')"); await pg.click('#btnLinks'); await pg.wait_for_timeout(200)
+        await pg.evaluate("() => switchTab('sources')"); await pg.click('#btnSrcMore'); await pg.click('#btnLinks'); await pg.wait_for_timeout(200)
         check('Check links offers to check the web sources and fill in accessed dates', (await pg.inner_text('#lkRun')) == 'Check 4 web sources' and (await pg.inner_text('#lkAcc')) == 'Fill in 3 missing accessed dates')
         await pg.click('#lkRun'); await pg.wait_for_timeout(2500)
         v = await pg.evaluate("() => $$('#lkBody tbody tr').map(tr => [tr.cells[0].querySelector('.lk-url').textContent, tr.cells[2].textContent.trim(), tr.cells[1].textContent.trim()])")

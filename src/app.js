@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.9.0';
+const APP_VERSION = '2.0.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -152,6 +152,9 @@ function normalize(p) {
   out.entities = Array.isArray(out.entities) ? out.entities.filter(e => e && e.name).map(e => ({ id: e.id || uid('e'), name: e.name, kind: e.kind || 'person', variants: Array.isArray(e.variants) ? e.variants : [], note: e.note || '' })) : [];
   out.indexTerms = Array.isArray(out.indexTerms) ? out.indexTerms.filter(t => t && t.term).map(t => ({ id: t.id || uid('x'), term: t.term, sub: t.sub || '', match: Array.isArray(t.match) ? t.match : [], see: t.see || '', seeAlso: t.seeAlso || '' })) : [];
   out.indexOpts = Object.assign({ names: false }, out.indexOpts || {});
+  // co-writing: what was sent (kept for comparing) and, on a copy, where it came from
+  if (out.collab && typeof out.collab === 'object' && Array.isArray(out.collab.sent)) out.collab = { sent: out.collab.sent.filter(x => x && typeof x === 'object' && typeof x.id === 'string').slice(0, 5).map(x => ({ id: x.id, at: asStr(x.at), to: asStr(x.to), note: asStr(x.note), back: asStr(x.back), docs: Array.isArray(x.docs) ? x.docs.filter(d => d && typeof d.id === 'string').map(d => ({ id: d.id, title: asStr(d.title), html: asStr(d.html), comments: Array.isArray(d.comments) ? d.comments : [] })) : [], colls: x.colls && typeof x.colls === 'object' && !Array.isArray(x.colls) ? x.colls : {} })) }; else delete out.collab;
+  if (out.copyOf && typeof out.copyOf === 'object') out.copyOf = { send: asStr(out.copyOf.send), from: asStr(out.copyOf.from), to: asStr(out.copyOf.to), at: asStr(out.copyOf.at), note: asStr(out.copyOf.note) }; else delete out.copyOf;
   // images: keep only assets some document (or a saved version) still uses
   const used = new Set(); [...out.docs.map(d => d.html), ...out.docs.flatMap(d => (d.snapshots || []).map(v => v.html))].forEach(h => (String(h || '').match(/data-asset="([^"]+)"/g) || []).forEach(m => used.add(m.slice(12, -1))));
   out.assets = out.assets && typeof out.assets === 'object' ? Object.fromEntries(Object.entries(out.assets).filter(([k, a]) => used.has(k) && a && typeof a.data === 'string' && a.data.startsWith('data:image/'))) : {};
@@ -221,7 +224,7 @@ function sampleProject() {
 <p>Plans built for speed can crowd out diplomacy.${c(s1.id, '17–18')}</p>
 <p>Change the style in the menu next to the title (try <i>Chicago author-date</i>, <i>APA</i>, <i>MLA</i>, or the <i>OSINT Style Guide</i>) and every citation reformats.</p>
 <h2>Figures</h2>
-<p>Choose the figure button in the toolbar, then <i>Chart from data</i>, and pick this table from the Data menu. Maps, timelines and relationship maps live in the same menu.</p>
+<p>Choose <b>Insert</b> in the toolbar, then <i>Chart from data</i>, and pick this table from the Data menu. Maps, timelines and relationship maps live in the same menu.</p>
 <figure class="tbl"><table><thead><tr><th>Week</th><th>Words drafted</th><th>Words cut</th></tr></thead><tbody><tr><td>1</td><td>2,400</td><td>300</td></tr><tr><td>2</td><td>3,100</td><td>900</td></tr><tr><td>3</td><td>1,800</td><td>1,600</td></tr><tr><td>4</td><td>3,600</td><td>700</td></tr></tbody></table><figcaption>An example writing log (invented numbers)</figcaption></figure>
 <h2>Checks</h2>
 <p>The Outline tab reads over your shoulder. This paragraph trips two checks on purpose: the NATO summit was a turning point, and the delegation flew in from Kiev. Open the Outline tab to see them, with one-click fixes.</p>
@@ -377,7 +380,8 @@ async function loadProjectText(text, handle = null, name = '') {
   renderAll(); if (P.docs.some(d => hasMath(d.html))) mathLoad();
   persistLocal();
   updateSaveState();
-  toast((useLocal ? 'Continuing from the newer browser copy of “' : 'Opened “') + P.title + '”');
+  if (P.copyOf && P.copyOf.from && !useLocal) toast(`This is a copy of “${P.title}” from ${P.copyOf.from}${P.copyOf.note ? `: “${P.copyOf.note}”` : ''}. Work as you normally would, save, and send the file back; your changes will show up for ${P.copyOf.from} as suggestions.`);
+  else toast((useLocal ? 'Continuing from the newer browser copy of “' : 'Opened “') + P.title + '”');
   if (repaired) setTimeout(() => toast('The file was slightly damaged and has been repaired. Check your work, then use Save project as… to write a clean copy.'), 1600);
   ghBarHide(); setTimeout(() => ghCheckNewer(true), 1200);
   rememberRecent(handle, lastFileName);
@@ -913,7 +917,7 @@ function wrapBareTables(root) {
 
 /* clicking a marker */
 let popEl = null;
-function closePop() { if (popEl) { popEl.remove(); popEl = null; } }
+function closePop() { if (popEl) { popEl.remove(); popEl = null; } const b = document.getElementById('btnInsert'); if (b) b.setAttribute('aria-expanded', 'false'); }
 editor.addEventListener('click', e => {
   const m = e.target.closest('.cite,.fn'); closePop();
   if (!m) return;
@@ -2096,6 +2100,8 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'docx') exportDocx(doc);
   if (x === 'docxms') openMsf(doc);
   if (x === 'review') exportPagedPDF(doc, { review: true });
+  if (x === 'send') openSendCopy();
+  if (x === 'takeback') openTakeBack();
   if (x === 'ms') openManuscript();
   if (x === 'html') { const go = () => download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html'); if (mathPending(doc)) mathLoad().then(go); else go(); }
   if (x === 'md') download(fileSafe(doc.title) + '.md', exportMarkdown(doc), 'text/markdown');
@@ -2352,7 +2358,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -5509,6 +5515,230 @@ function addMathRules(td) { // Markdown and Pandoc: TeX between dollars
 }
 function lofPlaceholder() { return '<nav class="lof" contenteditable="false"><p>List of figures and tables — filled in when you export.</p></nav>'; }
 /* ================================================================
+   Co-writing without a server (2.0)
+   Send a copy: the project goes to a collaborator as a file, and this project keeps a record of
+   what was sent (P.collab.sent: the documents and collections at that moment). The copy carries
+   P.copyOf so it can be matched when it comes back.
+   Take changes back: a three-way merge of what was sent, what you have now, and what came back.
+   Their edits arrive as suggestions (tracked changes) under their name; their margin notes, notes,
+   sources and other new material are added; paragraphs you both changed are shown side by side
+   for you to choose. A safety copy of every changed document is kept first.
+   ================================================================ */
+const COLLAB_KEYS = ['notes', 'sources', 'threads', 'claims', 'reviewKeys', 'journal', 'datasets', 'dashboards', 'piles', 'entities', 'plan', 'indexTerms'];
+const ATOMIC = 'img,br,hr,span.cite,span.fn,span.flag,span.math,span.xref,span.dnum,p.eq,[contenteditable="false"]';
+function collabBase() { // what the copy will look like when it's opened again, so nothing but real edits shows as a change
+  const Q = normalize(JSON.parse(projectJSON()));
+  return { docs: Q.docs.map(d => ({ id: d.id, title: d.title, html: d.html, comments: d.comments || [] })), colls: Object.fromEntries(COLLAB_KEYS.map(k => [k, Q[k] ?? null])) };
+}
+function openSendCopy() { syncEditor(); $('#scTo').value = ''; $('#scNote').value = ''; $('#scDlg').showModal(); $('#scTo').focus(); }
+$('#scOk').addEventListener('click', () => {
+  const to = $('#scTo').value.trim(); if (!to) { toast('Add who it’s for, so their changes come back under their name.'); $('#scTo').focus(); return; }
+  const id = uid('send'), at = nowISO(), from = sgName();
+  P.collab = P.collab || { sent: [] };
+  P.collab.sent = [{ id, at, to, note: $('#scNote').value.trim(), ...collabBase() }, ...P.collab.sent].slice(0, 5);
+  const copy = Object.assign(JSON.parse(projectJSON()), { copyOf: { send: id, from, to, at, note: $('#scNote').value.trim() } });
+  delete copy.collab; // what you've sent other people stays with you
+  $('#scDlg').close(); markDirty();
+  download(fileSafe(P.title) + ' - for ' + fileSafe(to) + '.json', JSON.stringify(copy, null, 2), 'application/json');
+  toast(`Copy for ${to} saved. Send them the file. When it comes back, use Take changes back (Export menu, Review) and their edits arrive as suggestions.`);
+});
+$('#scCancel').addEventListener('click', () => $('#scDlg').close());
+
+/* tokens of a block's contents: words, spaces, whole non-editable pieces, and tags */
+function sgTokens(el) {
+  const out = [];
+  const walk = n => n.childNodes.forEach(c => {
+    if (c.nodeType === 3) { c.data.split(/(\s+)/).forEach(t => { if (t) out.push({ s: esc(t), k: 'w' }); }); return; }
+    if (c.nodeType !== 1) return;
+    if (c.matches(ATOMIC)) { out.push({ s: c.outerHTML, k: 'a' }); return; }
+    const sh = c.cloneNode(false), o = sh.outerHTML, close = `</${c.localName}>`;
+    out.push({ s: o.endsWith(close) ? o.slice(0, -close.length) : o, k: 't' }); walk(c); if (o.endsWith(close)) out.push({ s: close, k: 't' });
+  });
+  walk(el); return out;
+}
+/* the contents of mine turned into theirs, as suggestions: removed words in <del>, added in <ins>, tags kept */
+function sgDiffHTML(mine, theirs, who, at) {
+  const A = sgTokens(mine), B = sgTokens(theirs), parts = Diff.diffArrays(A.map(t => t.s), B.map(t => t.s));
+  const out = []; let del = [], add = [], n = 0;
+  const wrap = (toks, tag, id) => { let run = ''; const flush = () => { if (run) { out.push(`<${tag} class="sg" data-sg="${id}" data-by="${esc(who)}" data-at="${at}">${run}</${tag}>`); run = ''; } }; toks.forEach(t => { if (t.k === 't') { flush(); out.push(t.s); } else run += t.s; }); flush(); };
+  const flushChange = () => { if (!del.length && !add.length) return; if ([...del, ...add].some(t => t.k === 'a' || (t.k === 'w' && t.s.trim()))) n++; const id = uid('sg'); wrap(del, 'del', id); wrap(add, 'ins', id); del = []; add = []; };
+  let ia = 0, ib = 0;
+  parts.forEach(p => {
+    const c = p.count || p.value.length;
+    if (p.removed) { del.push(...A.slice(ia, ia + c)); ia += c; return; }
+    if (p.added) { add.push(...B.slice(ib, ib + c)); ib += c; return; }
+    if (c === 1 && A[ia].k === 'w' && !A[ia].s.trim() && (del.length || add.length)) { del.push(A[ia]); add.push(B[ib]); ia++; ib++; return; } // a lone space between two changes joins them
+    flushChange(); out.push(...A.slice(ia, ia + c).map(t => t.s)); ia += c; ib += c;
+  });
+  flushChange();
+  return { html: out.join(''), n };
+}
+const blkText = el => /^(P|H[1-6]|BLOCKQUOTE|UL|OL|PRE)$/.test(el.nodeName) && !el.matches('p.eq');
+function blocksOf(html) { const b = new DOMParser().parseFromString('<body>' + (html || '') + '</body>', 'text/html').body; return [...b.childNodes].filter(n => n.nodeType === 1 || n.data.trim()).map(n => { if (n.nodeType === 3) { const p = b.ownerDocument.createElement('p'); p.textContent = n.data; return p; } return n; }); }
+const blkKey = el => el.outerHTML.replace(/\sdata-cp-[a-z-]+="[^"]*"/g, '').replace(/\s+/g, ' ');
+function acceptAllSg(html) { const b = new DOMParser().parseFromString('<body>' + (html || '') + '</body>', 'text/html').body; $$('del.sg', b).forEach(d => d.remove()); $$('ins.sg', b).forEach(i => i.replaceWith(...i.childNodes)); $$('.sgb', b).forEach(x => { x.classList.remove('sgb'); if (!x.className) x.removeAttribute('class'); }); return b.innerHTML; }
+function hunks(base, other) { // changes relative to the base: { b0, b1, rep: [blocks] }; b0 === b1 is an insertion
+  const out = []; let i = 0, j = 0, cur = null;
+  Diff.diffArrays(base.map(blkKey), other.map(blkKey)).forEach(p => {
+    const c = p.count || p.value.length;
+    if (!p.added && !p.removed) { if (cur) { out.push(cur); cur = null; } i += c; j += c; return; }
+    if (!cur) cur = { b0: i, b1: i, rep: [], base };
+    if (p.removed) { i += c; cur.b1 = i; } else { cur.rep.push(...other.slice(j, j + c)); j += c; }
+  });
+  if (cur) out.push(cur);
+  return out;
+}
+const blkWords = el => new Set(el.textContent.toLowerCase().split(/\W+/).filter(Boolean));
+function blkSim(a, b) { if (a.nodeName !== b.nodeName && (blkText(a) !== blkText(b))) return 0; const A = blkWords(a), B = blkWords(b); if (!A.size && !B.size) return a.nodeName === b.nodeName ? 0.6 : 0; let n = 0; A.forEach(w => { if (B.has(w)) n++; }); return n / Math.max(A.size, B.size); }
+function fineHunks(hs) { // a run of changed paragraphs becomes one change per paragraph, so two people's edits only meet where they really do
+  const out = [];
+  hs.forEach(h => {
+    let o = h.b0, j = 0; const rep = h.rep;
+    while (o < h.b1 || j < rep.length) {
+      if (o < h.b1 && j < rep.length) {
+        const s0 = blkSim(h.base[o], rep[j]), s1 = j + 1 < rep.length ? blkSim(h.base[o], rep[j + 1]) : 0, s2 = o + 1 < h.b1 ? blkSim(h.base[o + 1], rep[j]) : 0;
+        if (s0 >= 0.3 || (s0 >= s1 && s0 >= s2 && s0 > 0)) { out.push({ b0: o, b1: o + 1, rep: [rep[j]] }); o++; j++; continue; }
+        if (s1 > s2) { out.push({ b0: o, b1: o, rep: [rep[j]] }); j++; continue; }
+        out.push({ b0: o, b1: o + 1, rep: [] }); o++; continue;
+      }
+      if (o < h.b1) { out.push({ b0: o, b1: o + 1, rep: [] }); o++; } else { out.push({ b0: o, b1: o, rep: [rep[j]] }); j++; }
+    }
+  });
+  return out;
+}
+function wholeBlock(el, gone, who, at) { // a paragraph added or removed as a whole, as one suggestion
+  const e = el.cloneNode(false), empty = el.ownerDocument.createElement(el.nodeName); e.classList.add('sgb');
+  e.innerHTML = (gone ? sgDiffHTML(el, empty, who, at) : sgDiffHTML(empty, el, who, at)).html; return e.outerHTML;
+}
+function suggestBlocks(olds, news, who, at, st) { // turn the blocks olds into news, as suggestions where text is concerned
+  const out = [];
+  for (let x = 0; x < Math.max(olds.length, news.length); x++) {
+    const o = olds[x], t = news[x];
+    if (o && t) {
+      if (blkKey(o) === blkKey(t)) { out.push(o.outerHTML); continue; }
+      if ((blkText(o) && blkText(t)) || (o.nodeName === 'FIGURE' && t.nodeName === 'FIGURE')) { const e = t.cloneNode(false), d = sgDiffHTML(o, t, who, at); e.innerHTML = d.html; st.sug += Math.max(1, d.n); out.push(e.outerHTML); continue; }
+      out.push(t.outerHTML); st.repl++; continue; // an equation or other piece changed: theirs (your version is in the safety copy)
+    }
+    if (o) { if (blkText(o)) { out.push(wholeBlock(o, true, who, at)); st.sug++; } else { out.push(o.outerHTML); st.kept++; } }
+    if (t) { if (blkText(t)) { out.push(wholeBlock(t, false, who, at)); st.sug++; } else { out.push(t.outerHTML); st.added++; } }
+  }
+  return out;
+}
+/* one document: the merged blocks (conflicts left as markers to decide), counts, and the conflicts */
+function mergeDoc(baseHTML, mineHTML, theirsHTML, who, at) {
+  const B = blocksOf(baseHTML), M = blocksOf(mineHTML), T = blocksOf(theirsHTML);
+  const hm = fineHunks(hunks(B, M)), ht = fineHunks(hunks(B, T)), res = [], conflicts = [], st = { sug: 0, added: 0, kept: 0, repl: 0 };
+  let i = 0, a = 0, b = 0;
+  while (i < B.length || a < hm.length || b < ht.length) {
+    const m = hm[a] && hm[a].b0 === i ? hm[a] : null, t = ht[b] && ht[b].b0 === i ? ht[b] : null;
+    if (m && m.b0 === m.b1) { res.push(...m.rep.map(x => x.outerHTML)); a++; continue; } // you added here
+    if (t && t.b0 === t.b1) { res.push(...suggestBlocks([], t.rep, who, at, st)); b++; continue; } // they added here
+    if (!m && !t) { if (i < B.length) res.push(B[i].outerHTML); i++; continue; }
+    let end = Math.max(m ? m.b1 : i, t ? t.b1 : i); const ms = m ? [m] : [], ts = t ? [t] : []; if (m) a++; if (t) b++;
+    for (;;) { let grew = false; if (hm[a] && hm[a].b0 < end) { end = Math.max(end, hm[a].b1); ms.push(hm[a++]); grew = true; } if (ht[b] && ht[b].b0 < end) { end = Math.max(end, ht[b].b1); ts.push(ht[b++]); grew = true; } if (!grew) break; }
+    const span = hs => { const out = []; let k = i; hs.forEach(h => { out.push(...B.slice(k, h.b0), ...h.rep); k = h.b1; }); out.push(...B.slice(k, end)); return out; };
+    if (ms.length && ts.length) { const id = 'cf' + conflicts.length, mine = span(ms), theirs = span(ts); conflicts.push({ id, mine: mine.map(x => x.outerHTML), theirs: theirs.map(x => x.outerHTML), mineEls: mine, theirsEls: theirs }); res.push(`<!--CONFLICT:${id}-->`); }
+    else if (ms.length) res.push(...span(ms).map(x => x.outerHTML));
+    else res.push(...suggestBlocks(B.slice(i, end), span(ts), who, at, st));
+    i = end;
+  }
+  return { parts: res, conflicts, st };
+}
+function finishDoc(parts, conflicts, choice, who, at) { // put the decided conflicts in
+  const st = { sug: 0, added: 0, kept: 0, repl: 0 };
+  return parts.map(p => {
+    const m = /^<!--CONFLICT:(cf\d+)-->$/.exec(p); if (!m) return p;
+    const c = conflicts.find(x => x.id === m[1]), how = choice[c.id] || 'mine';
+    if (how === 'mine') return c.mine.join('');
+    if (how === 'both') return c.mine.join('') + suggestBlocks([], c.theirsEls, who, at, st).join('');
+    return suggestBlocks(c.mineEls, c.theirsEls, who, at, st).join('');
+  }).join('');
+}
+
+/* ---- Take changes back ---- */
+let TB = null; // the merge being prepared
+function openTakeBack() { $('#fileTakeBack').click(); }
+$('#fileTakeBack').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  let data; try { data = JSON.parse(await f.text()); } catch (err) { toast('That file couldn’t be read as an Anabasis project.'); return; }
+  if (isLocked(data)) { const r = await unlockLoop(data, `Unlock “${f.name.replace(/\.json$/i, '')}”`, 'Their copy is locked with a password.', false); if (!r) return; try { data = JSON.parse(r.text); } catch (err) { toast('That file couldn’t be read.'); return; } }
+  if (!data || !Array.isArray(data.docs)) { toast('That doesn’t look like an Anabasis project.'); return; }
+  let T; try { T = normalize(JSON.parse(JSON.stringify(data))); } catch (err) { toast('That project couldn’t be read: ' + err.message); return; }
+  syncEditor();
+  const send = data.copyOf && P.collab && (P.collab.sent || []).find(s => s.id === data.copyOf.send);
+  if (!send && T.id !== P.id && !(await ask('A different project', `“${T.title}” isn’t a copy of this project. Bring its changes in anyway? Every difference will be shown as a suggestion.`, 'Compare anyway'))) return;
+  TB = { T, send, name: f.name, who: (data.copyOf && data.copyOf.to) || (send && send.to) || '' };
+  $('#tkWho').value = TB.who; tbPrepare(); $('#tkDlg').showModal(); if (!TB.who) $('#tkWho').focus();
+});
+function tbPrepare() {
+  const { T, send } = TB, who = $('#tkWho').value.trim() || 'Co-author', at = nowISO();
+  const baseDoc = id => send ? send.docs.find(d => d.id === id) : null;
+  const docs = [], added = [], kept = [];
+  T.docs.forEach(td => {
+    const mine = P.docs.find(d => d.id === td.id), base = baseDoc(td.id), th = acceptAllSg(td.html);
+    if (!mine) { if (base) kept.push(`“${td.title}” (you deleted it; theirs is added back)`); added.push(td); return; }
+    const bh = base ? base.html : mine.html; // no record of sending: every difference is theirs
+    if (blocksOf(th).map(blkKey).join('\n') === blocksOf(bh).map(blkKey).join('\n')) { docs.push({ d: mine, td, base, same: true }); return; }
+    const r = mergeDoc(bh, mine.html, th, who, at);
+    docs.push({ d: mine, td, base, r });
+  });
+  P.docs.forEach(d => { if (!T.docs.some(x => x.id === d.id) && send && send.docs.some(x => x.id === d.id)) kept.push(`“${d.title}” (they deleted it; yours is kept)`); });
+  // margin notes: theirs that you don't have
+  docs.forEach(x => { const mineIds = new Set((x.d.comments || []).map(c => c.id)); x.newComments = (x.td.comments || []).filter(c => c && c.id && !mineIds.has(c.id)); });
+  // collections
+  const colls = {}, counts = {};
+  COLLAB_KEYS.forEach(k => {
+    if (T[k] === undefined) return;
+    const merged = send ? merge3(P[k], T[k], send.colls[k] ?? undefined) : (Array.isArray(P[k]) && Array.isArray(T[k]) ? [...P[k], ...T[k].filter(x => x && x.id && !P[k].some(y => y.id === x.id))] : P[k]);
+    if (stableJSON(merged) !== stableJSON(P[k])) { colls[k] = merged; if (Array.isArray(merged) && Array.isArray(P[k])) { const before = new Set(P[k].map(x => x && x.id)); counts[k] = { add: merged.filter(x => x && !before.has(x.id)).length, chg: merged.filter(x => x && before.has(x.id) && stableJSON(x) !== stableJSON(P[k].find(y => y.id === x.id))).length }; if (!counts[k].add && !counts[k].chg) { delete counts[k]; } } else counts[k] = { chg: 1 }; }
+  });
+  const newAssets = Object.keys(T.assets || {}).filter(k => !(k in P.assets));
+  TB.plan = { docs, added, kept, colls, counts, newAssets, who, at };
+  tbRender();
+}
+const tbLabel = { notes: 'notes', sources: 'sources', threads: 'threads', claims: 'claims', reviewKeys: 'review keys', journal: 'research journal', datasets: 'datasets', dashboards: 'dashboards', piles: 'piles', entities: 'names', plan: 'plan', indexTerms: 'index entries' };
+function tbRender() {
+  const p = TB.plan, ch = p.docs.filter(x => x.r), conf = ch.flatMap(x => x.r.conflicts.map(c => Object.assign(c, { doc: x.d })));
+  const lines = [
+    ...ch.map(x => `<li><b>${esc(x.d.title)}</b>: ${x.r.st.sug} suggestion${x.r.st.sug === 1 ? '' : 's'}${x.r.st.added ? `, ${x.r.st.added} figure${x.r.st.added === 1 ? '' : 's'}, table${x.r.st.added === 1 ? '' : 's'} or equation${x.r.st.added === 1 ? '' : 's'} added` : ''}${x.r.st.repl ? `, ${x.r.st.repl} figure${x.r.st.repl === 1 ? '' : 's'} or equation${x.r.st.repl === 1 ? '' : 's'} replaced with theirs` : ''}${x.r.st.kept ? `, ${x.r.st.kept} they removed (kept)` : ''}${x.r.conflicts.length ? `, <span class="tb-cf">${x.r.conflicts.length} place${x.r.conflicts.length === 1 ? '' : 's'} you both changed</span>` : ''}${x.newComments.length ? `, ${x.newComments.length} margin note${x.newComments.length === 1 ? '' : 's'}` : ''}</li>`),
+    ...p.docs.filter(x => !x.r && x.newComments.length).map(x => `<li><b>${esc(x.d.title)}</b>: ${x.newComments.length} margin note${x.newComments.length === 1 ? '' : 's'}</li>`),
+    ...p.added.map(d => `<li>New document: <b>${esc(d.title)}</b></li>`),
+    ...Object.entries(p.counts).map(([k, c]) => `<li>${tbLabel[k] || k}: ${[c.add && `${c.add} new`, c.chg && `${c.chg} changed`].filter(Boolean).join(', ') || 'updated'}</li>`),
+    ...(p.newAssets.length ? [`<li>${p.newAssets.length} image${p.newAssets.length === 1 ? '' : 's'}</li>`] : []),
+    ...p.kept.map(k => `<li class="muted">${esc(k)}</li>`),
+  ];
+  $('#tkSum').innerHTML = (TB.send ? `<p class="small">Matched to the copy you sent ${esc(TB.send.to)} on ${new Date(TB.send.at).toLocaleDateString(undefined, { day: 'numeric', month: 'long' })}.</p>` : `<p class="small warnbox">There’s no record of sending this copy from here, so every difference from your version is shown as their suggestion.</p>`) +
+    (lines.length ? `<ul class="tb-list">${lines.join('')}</ul>` : '<p>Nothing has changed in their copy.</p>');
+  $('#tkConf').innerHTML = conf.length ? `<h4>You both changed these (${conf.length})</h4>` + conf.map(c => `<div class="tb-c" data-c="${c.doc.id}|${c.id}"><div class="muted small">${esc(c.doc.title)}</div><div class="tb-two"><div><b class="small">Yours</b><div class="tb-text" tabindex="0">${c.mine.join('') || '<p class="muted">(nothing)</p>'}</div></div><div><b class="small">Theirs</b><div class="tb-text" tabindex="0">${c.theirs.join('') || '<p class="muted">(nothing)</p>'}</div></div></div>
+    <div class="radio-row" role="radiogroup" aria-label="Which to keep"><label><input type="radio" name="tbc-${c.doc.id}-${c.id}" value="mine" checked> Keep mine</label><label><input type="radio" name="tbc-${c.doc.id}-${c.id}" value="theirs"> Theirs, as suggestions</label><label><input type="radio" name="tbc-${c.doc.id}-${c.id}" value="both"> Keep both</label></div></div>`).join('') : '';
+  $$('#tkConf .tb-text').forEach(el => { $$('[contenteditable]', el).forEach(x => x.removeAttribute('contenteditable')); hydrateImages(el); });
+  $('#tkOk').disabled = !lines.length && !conf.length;
+}
+$('#tkWho').addEventListener('change', () => { if (TB) tbPrepare(); });
+$('#tkCancel').addEventListener('click', () => { TB = null; $('#tkDlg').close(); });
+$('#tkOk').addEventListener('click', () => {
+  if (!TB) return; const p = TB.plan, { T } = TB; $('#tkDlg').close(); syncEditor();
+  let nDocs = 0, nSug = 0;
+  p.docs.forEach(x => {
+    if (x.r) {
+      const choice = {}; x.r.conflicts.forEach(c => { const r = $(`#tkConf input[name="tbc-${x.d.id}-${c.id}"]:checked`); choice[c.id] = r ? r.value : 'mine'; });
+      snapshot(x.d, `Before ${p.who}’s changes`, 'safety');
+      x.d.html = finishDoc(x.r.parts, x.r.conflicts, choice, p.who, p.at); x.d.modified = nowISO(); nDocs++; nSug += x.r.st.sug;
+    }
+    if (x.newComments.length) x.d.comments = [...(x.d.comments || []), ...JSON.parse(JSON.stringify(x.newComments))];
+    if (x.td.title !== x.d.title && x.base && x.base.title === x.d.title) x.d.title = x.td.title;
+  });
+  p.added.forEach(d => { const nd = Object.assign(newDoc(), JSON.parse(JSON.stringify(d)), { snapshots: [] }); if (P.docs.some(x => x.id === nd.id)) nd.id = uid('d'); nd.order = P.docs.length; P.docs.push(nd); });
+  Object.entries(p.colls).forEach(([k, v]) => { P[k] = v; });
+  p.newAssets.forEach(k => { P.assets[k] = T.assets[k]; });
+  if (p.colls.sources) srcVersion++;
+  if (TB.send) { const s = TB.send; s.docs = T.docs.map(d => ({ id: d.id, title: d.title, html: acceptAllSg(d.html), comments: JSON.parse(JSON.stringify(d.comments || [])) })); s.colls = Object.fromEntries(COLLAB_KEYS.map(k => [k, JSON.parse(JSON.stringify(T[k] ?? null))])); s.back = nowISO(); } // next time, compare from what they sent back
+  const first = p.docs.find(x => x.r);
+  TB = null; markDirty();
+  openDoc(first ? first.d.id : curDocId, true); renderAll(); sgRefresh();
+  toast(nDocs ? `Brought in ${p.who}’s changes: ${nSug} suggestion${nSug === 1 ? '' : 's'} in ${nDocs} document${nDocs === 1 ? '' : 's'}. Accept or reject them with the suggestion bar; a safety copy of each document is in Drafts.` : `Brought in ${p.who}’s additions.`);
+});
+/* ================================================================
    Credits and permissions (1.9.0)
    On a figure or table: data-credit (the credit line, added to the caption in every export),
    data-rights (status), data-holder (whom to ask), data-rnote (fees, dates, terms; never exported).
@@ -6689,6 +6919,40 @@ function openFigureMenu() {
     if (k === 'network') openRel(true);
   });
 }
+
+/* ================================================================
+   2.0: one Insert menu for everything that goes into the page, and a Tools menu in Sources.
+   The old buttons live on, out of sight, so shortcuts and the command palette still reach them.
+   ================================================================ */
+const INSERT_ITEMS = [
+  ['Figures', [['img', 'Image from a file…', '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/>'], ['chart', 'Chart from data…', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'], ['map', 'Map…', '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>'], ['timeline', 'Timeline from dated notes…', '<path d="M3 12h18"/><circle cx="7" cy="12" r="2"/><circle cx="14" cy="12" r="2"/><path d="M7 5v5M14 14v5"/>'], ['network', 'Relationship map…', '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="11" cy="18" r="2.5"/><path d="m8.3 7 7.4 1M7.3 8.2l2.7 7.6M16.6 10.1 12.5 16"/>']]],
+  ['In the text', [['table', 'Table…', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'], ['eq', 'Equation…', '<path d="M17 5H7l5 7-5 7h10"/>', 'Alt+='], ['xref', 'Cross-reference…', '<path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/>', 'Ctrl+Alt+R'], ['index', 'Index entry…', '<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>', 'Ctrl+Alt+X']]],
+  ['Lists', [['lof', 'List of figures and tables', '<path d="M9 6h12M9 12h12M9 18h12"/><rect x="3" y="4" width="3" height="4"/><rect x="3" y="10" width="3" height="4"/><rect x="3" y="16" width="3" height="4"/>'], ['abbr', 'List of abbreviations', '<path d="M4 7h4M4 12h4M4 17h4M11 7h9M11 12h9M11 17h9"/>']]],
+];
+function openInsertMenu(viaKeys) {
+  saveSelectionNow(); closePop();
+  const a = tbAnchor('#btnInsert'), b = a.getBoundingClientRect();
+  popEl = document.createElement('div'); popEl.className = 'pop ins-menu'; popEl.setAttribute('role', 'menu'); popEl.setAttribute('aria-label', 'Insert');
+  popEl.innerHTML = INSERT_ITEMS.map(([h, items]) => `<div class="mh" role="presentation">${esc(h)}</div>` + items.map(([k, t, ic, key]) => `<button role="menuitem" data-i="${k}"><svg viewBox="0 0 24 24" aria-hidden="true">${ic}</svg><span>${esc(t)}</span>${key ? `<kbd>${esc(fmtKey(key))}</kbd>` : ''}</button>`).join('')).join('');
+  document.body.appendChild(popEl);
+  popEl.style.left = Math.max(8, Math.min(innerWidth - popEl.offsetWidth - 8, b.left)) + 'px'; popEl.style.top = Math.max(8, Math.min(innerHeight - popEl.offsetHeight - 8, b.bottom + 6)) + 'px';
+  $('#btnInsert').setAttribute('aria-expanded', 'true');
+  const btns = $$('button', popEl); if (viaKeys) btns[0].focus();
+  popEl.addEventListener('keydown', e => { const i = btns.indexOf(document.activeElement); if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); btns[(i + (e.key === 'ArrowDown' ? 1 : -1) + btns.length) % btns.length].focus(); } if (e.key === 'Escape') { closePop(); $('#btnInsert').focus(); } });
+  popEl.addEventListener('click', e => {
+    const k = e.target.closest('[data-i]')?.dataset.i; if (!k) return; closePop(); specTarget = null; restoreSelection();
+    ({ img: () => $('#fileFigure').click(), chart: () => openChart(), map: () => openMap(), timeline: () => openTimelineFig(), network: () => openRel(true),
+       table: () => $('#btnTable').click(), eq: () => openEq(), xref: () => openXref(), index: () => openIndexMark(),
+       lof: () => { insertBlocksAtCursor(lofPlaceholder()); onEdit(); }, abbr: () => { insertBlocksAtCursor(abbrPlaceholder()); onEdit(); } })[k]();
+  });
+}
+$('#btnInsert').addEventListener('click', e => { e.stopPropagation(); if (popEl && popEl.classList.contains('ins-menu')) { closePop(); return; } openInsertMenu(e.detail === 0); });
+$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnInsert')) { saveSelectionNow(); e.preventDefault(); } });
+document.addEventListener('click', e => { if (popEl && popEl.classList.contains('ins-menu') && !popEl.contains(e.target) && !e.target.closest('#btnInsert,.pb-pop')) closePop(); });
+/* Sources: Tools menu */
+$('#btnSrcMore').addEventListener('click', e => { e.stopPropagation(); const m = $('#srcMoreMenu'), open = !m.classList.contains('open'); closeMenusExcept(m); m.classList.toggle('open', open); $('#btnSrcMore').setAttribute('aria-expanded', String(open)); if (open && e.detail === 0) m.querySelector('button').focus(); });
+$('#srcMoreMenu').addEventListener('click', () => { $('#srcMoreMenu').classList.remove('open'); $('#btnSrcMore').setAttribute('aria-expanded', 'false'); });
+document.addEventListener('click', e => { if (!e.target.closest('.src-more')) { $('#srcMoreMenu').classList.remove('open'); $('#btnSrcMore').setAttribute('aria-expanded', 'false'); } });
 
 /* ---------------- charts ---------------- */
 function parseTable(text) {
@@ -8336,6 +8600,10 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.0.0': ['Co-writing without a server: Export → Send a copy gives a co-author or editor a copy of the project. When it comes back, Take changes back brings their edits into your draft as suggestions under their name, adds their notes, sources and margin notes, and shows side by side anything you both changed.',
+    'Everything that goes into the page now lives in one Insert menu (the plus in the toolbar): figures, charts, maps, timelines, tables, equations, cross-references, index entries and lists.',
+    'Export is grouped by what you’re doing: share and print, review and submit, other formats, and the project file. In Sources, Tools holds the source audit, link check and permissions log.',
+    'The sidebar tabs have icons, and Help opens with a map of where everything is. Ctrl+K still finds any command by name.'],
   '1.9.0': ['Cross-references: “see Figure 3”, “Table 2”, “Equation (4)”, a heading or a chapter, inserted from the toolbar (or Ctrl+Alt+R). They renumber themselves as you write, and become links in Word, PDF, web pages and EPUB.',
     'Credits and permissions: give a figure or table its credit line and permission status. The credit ends the caption in every export, and the Permissions log in the Sources tab shows what’s still to clear.',
     'Check links asks the Wayback Machine whether each web source is still there, keeps the saved copies, and can cite the archived page when the live one is gone.',
@@ -8435,9 +8703,9 @@ const TOUR = [
   { sel: '#docStyle', t: '55 citation styles', x: 'Chicago, APA, MLA, Harvard, IEEE, Bluebook, journal and press styles, and the OSINT Style Guide. Switch at any time and every citation reformats.' },
   { sel: '#btnMark', t: 'Mark what matters', x: 'Select a passage and mark it as a claim to check, a thread to follow through the book, a question, or something to review by a date. Marks never print.' },
   { sel: '.tabs button[data-tab=research]', t: 'The research desk', x: 'The Research tab keeps the claims register, threads, evidence grid and your journal: research design, hypotheses, a dated log, searches and a weekly review.' },
-  { sel: '#btnFigure', t: 'Figures', x: 'Charts from a table, maps that work offline, timelines from dated notes, and relationship maps. Each figure stays editable.' },
-  { sel: '#btnSuggest', t: 'Work with editors', x: 'Suggest mode records your edits as changes to accept or reject, and Word files keep them both ways. Margin notes sit beside the text.' },
-  { sel: '#btnExport', t: 'Export and share', x: 'PDF, Word, ePub, Markdown, LaTeX, a Substack post or a promo kit. Checkpoints and GitHub backup live here too.' },
+  { sel: '#btnInsert', t: 'Insert', x: 'Figures, charts from a table, maps that work offline, timelines, tables, equations and cross-references that renumber themselves. Each figure stays editable.' },
+  { sel: '#btnSuggest', t: 'Work with editors and co-authors', x: 'Suggest mode records edits as changes to accept or reject, and Word files keep them both ways. Export → Send a copy lets someone work on their own copy; Take changes back brings their edits in as suggestions.' },
+  { sel: '#btnExport', t: 'Export and share', x: 'Grouped by what you’re doing: share and print (Word, PDF, ePub, Substack), review and submit (reviewer PDF, manuscript format, send a copy), other formats (Markdown, LaTeX), and the project file (checkpoints, GitHub backup).' },
   { sel: '#btnSave', t: 'Save the project file', x: 'Save writes the whole project to one .json file. Keep it in a synced or backed-up folder. Help (the ? button) has the full guide, tips for getting started, this tour, and a way to send feedback.' },
 ];
 let tourAt = -1;
@@ -10058,7 +10326,11 @@ editor.addEventListener('paste', e => {
 /* ---------- reviewing ---------- */
 const sgAll = (root = editor) => { const by = new Map(); $$('ins.sg,del.sg', root).forEach(el => { const k = el.dataset.sg; if (!by.has(k)) by.set(k, []); by.get(k).push(el); }); return [...by.values()]; };
 function sgResolve(els, accept) {
-  els.forEach(el => { const keep = (el.nodeName === 'INS') === accept; const p = el.parentNode; if (!p) return; if (keep) el.replaceWith(...el.childNodes); else el.remove(); p.normalize(); });
+  els.forEach(el => {
+    const keep = (el.nodeName === 'INS') === accept; const p = el.parentNode; if (!p) return; const blk = el.closest('.sgb');
+    if (keep) el.replaceWith(...el.childNodes); else el.remove(); p.normalize();
+    if (blk && !blk.querySelector('ins.sg,del.sg')) { if (!blk.textContent.trim() && !blk.querySelector('img,span.cite,span.fn,span.math,span.xref')) blk.remove(); else { blk.classList.remove('sgb'); if (!blk.className) blk.removeAttribute('class'); } } // a paragraph added or removed whole goes or stays whole
+  });
 }
 function sgDo(id, accept) {
   const els = $$(`[data-sg="${rmEsc(id)}"]`, editor); if (!els.length) return;
@@ -11048,8 +11320,9 @@ function popOut(view, o = {}) {
   return w;
 }
 // three-way merge: what the other window sent, what we have, and what we both last agreed on
+const stableJSON = v => JSON.stringify(v, (k, x) => x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map(n => [n, x[n]])) : x); // key order doesn't matter
 function merge3(local, incoming, prev) {
-  const J = JSON.stringify;
+  const J = stableJSON;
   if (J(incoming) === J(local)) return local;
   if (prev !== undefined && J(incoming) === J(prev)) return local; // they didn't change it
   if (prev !== undefined && J(local) === J(prev)) return incoming; // we didn't change it

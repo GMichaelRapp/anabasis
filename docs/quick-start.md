@@ -115,7 +115,9 @@ The same menu exports Word (with real footnotes), ePub, HTML, Markdown and a Sub
 
 ## Where to go next
 
-- **Help** (the **?** button) explains every feature and can replay the tour.
+- **Help** (the **?** button) explains every feature and can replay the tour; its first section, *Where things are*, is a map of the interface.
+- **Insert** in the toolbar adds figures, charts, maps, tables, equations and cross-references.
+- **Export → Send a copy** lets a co-author or editor work on their own copy; **Take changes back** brings their edits in as suggestions to accept or reject.
 - **Page setup** changes fonts, spacing, paper size and where notes go.
 - **Drafts** saves named versions of a document you can compare side by side; **Export → Project checkpoints** saves the whole project.
 - Read how Anabasis [handles your data](privacy.md), or the [project file format](file-format.md).

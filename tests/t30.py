@@ -74,13 +74,13 @@ async def main():
 
         # ---- proxied buttons open their menus beside the ⋯ button
         ctx, pg = await page(600, 900, True)
-        await pg.evaluate("() => { PREFS.tbHidden = ['mark', 'figure']; TB_PB.layout(); }")
+        await pg.evaluate("() => { PREFS.tbHidden = ['mark', 'insert']; TB_PB.layout(); }")
         await pg.click('#btnTbMore'); await pg.locator('#tbMore [data-pbi]', has_text='Mark').click(); await pg.wait_for_timeout(250)
         r = await pg.evaluate("() => { const m = $('#markMenu').getBoundingClientRect(), b = $('#btnTbMore').getBoundingClientRect(); return { open: $('#markMenu').classList.contains('open'), near: Math.abs(m.top - b.bottom) < 12 && m.right <= innerWidth }; }")
         check('Mark opened from the ⋯ menu appears beside it', r['open'] and r['near'], r)
         await pg.keyboard.press('Escape'); await pg.mouse.click(300, 600)
-        await pg.click('#btnTbMore'); await pg.locator('#tbMore [data-pbi]', has_text='Figure').click(); await pg.wait_for_timeout(250)
-        check('Figure menu from the ⋯ menu stays on screen', await pg.evaluate("() => { const p = $('.fig-menu'); if (!p) return false; const r = p.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top > 0; }"))
+        await pg.click('#btnTbMore'); await pg.locator('#tbMore [data-pbi]', has_text='Insert').click(); await pg.wait_for_timeout(250)
+        check('the Insert menu from the ⋯ menu stays on screen', await pg.evaluate("() => { const p = $('.ins-menu'); if (!p) return false; const r = p.getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top > 0; }"))
         await ctx.close()
 
         # ---- customize toolbar, shortcut sheet, writing view, sidebar toggle, undo for marks

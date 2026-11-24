@@ -28,6 +28,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 
 **Write and cite**
 - A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
+- Co-writing without a server: send a co-author or editor a copy, then take their changes back as suggestions to accept or reject, with anything you both changed shown side by side.
 - Cross-references to figures, tables, equations, headings and chapters that renumber themselves and become links in Word, PDF and e-books.
 - Credit lines and permission status for every figure and table, with a permissions log for your editor; a link check against the Wayback Machine that keeps archived copies of your web sources.
 - A PDF for reviewers with numbered lines, and Word in standard manuscript format for submissions.

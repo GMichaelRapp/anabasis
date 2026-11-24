@@ -29,7 +29,7 @@ async def m():
     print('figs after paste:', await pg.evaluate("$$('figure.fig figcaption',editor).map(c=>c.getAttribute('data-cp-n'))"))
     # ---- table
     await pg.click('#editor h2'); await pg.keyboard.press('End')
-    await pg.click('#btnTable'); await pg.fill('#tbRows','2'); await pg.fill('#tbCols','3'); await pg.click('#tbOk'); await pg.wait_for_timeout(300)
+    await pg.click('#btnInsert'); await pg.click('.ins-menu [data-i=table]'); await pg.fill('#tbRows','2'); await pg.fill('#tbCols','3'); await pg.click('#tbOk'); await pg.wait_for_timeout(300)
     await pg.keyboard.type('Fleet comparison')
     await pg.keyboard.press('Enter')   # caption Enter -> first cell
     for t in ['Navy','Hulls','Tonnage']: await pg.keyboard.type(t); await pg.keyboard.press('Tab')
