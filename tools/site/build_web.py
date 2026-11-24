@@ -1,6 +1,8 @@
 """Build the product site for Netlify: the front page, with the app behind it.
 
     python tools/site/build_web.py           # needs dist/anabasis.html (python build.py, or a release download)
+    python tools/site/build_web.py --out DIR --base /anabasis/
+                                             # for a site that serves Anabasis under a path (zerohistory.net/anabasis/)
 
 site/
   index.html                 the front page (web/index.html, with version and size filled in)
@@ -9,10 +11,11 @@ site/
   fonts/, img/               the page's own fonts and images: it loads nothing from elsewhere
   _headers, _redirects       Netlify settings
 
-On Netlify, netlify.toml first downloads the latest release into dist/, so the hosted app
-always matches the published release while the front page follows main.
+zerohistory.net builds this into its own site under /anabasis/ (see build-anabasis.sh in the
+zerohistory repo): it downloads this repo and the latest release, then runs this script with
+--base, which adds a <base> to the page and prefixes the Netlify headers and redirects.
 """
-import re, shutil, sys
+import argparse, re, shutil, sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -25,40 +28,41 @@ FONTS = ['alegreya-latin-500-normal', 'alegreya-latin-700-normal', 'alegreya-lat
          'atkinson-hyperlegible-next-latin-700-normal']
 SHOTS = ['editor-light', 'editor-dark', 'phone']  # the detail crops live in web/img
 
-HEADERS = """/*
+CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'self'; form-action 'none'; frame-ancestors 'none'"
+
+HEADERS = """{P}/*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Permissions-Policy: interest-cohort=()
 
-/
-  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+{P}/
+  Content-Security-Policy: {CSP}
   X-Frame-Options: DENY
 
-/index.html
-  Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+{P}/index.html
+  Content-Security-Policy: {CSP}
   X-Frame-Options: DENY
 
-/anabasis.html
+{P}/anabasis.html
   Content-Disposition: attachment; filename="anabasis.html"
   Cache-Control: public, max-age=0, must-revalidate
 
-/app/sw.js
+{P}/app/sw.js
   Cache-Control: no-cache
 
-/fonts/*
+{P}/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 """
 
-REDIRECTS = """/download        /anabasis.html                                        302
-/source          https://github.com/gmichaelrapp/anabasis              302
-/changelog       https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md   302
-/quick-start     https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md   302
-/privacy         https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md   302
-/file-format     https://github.com/gmichaelrapp/anabasis/blob/main/docs/file-format.md   302
+REDIRECTS = """{P}/download        {P}/anabasis.html                                        302
+{P}/source          https://github.com/gmichaelrapp/anabasis              302
+{P}/changelog       https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md   302
+{P}/quick-start     https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md   302
+{P}/privacy         https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md   302
+{P}/file-format     https://github.com/gmichaelrapp/anabasis/blob/main/docs/file-format.md   302
 """
 
 
-def main(out=SITE):
+def main(out=SITE, base='/'):
     app = ROOT / 'dist' / 'anabasis.html'
     if not app.exists(): sys.exit('Build first (python build.py), or download a release into dist/anabasis.html')
     html = app.read_text(encoding='utf-8')
@@ -71,6 +75,8 @@ def main(out=SITE):
     page = (ROOT / 'web' / 'index.html').read_text(encoding='utf-8')
     page = page.replace('{{VERSION}}', version).replace('{{SIZE}}', size)
     assert '{{' not in page, 'unfilled placeholder in web/index.html'
+    if base != '/':  # relative links resolve under the path, with or without a trailing slash in the address
+        page = page.replace('<meta charset="utf-8">', f'<meta charset="utf-8">\n<base href="{base}">', 1)
     (out / 'index.html').write_text(page, encoding='utf-8')
     (out / 'fonts').mkdir()
     for f in FONTS: shutil.copy(ROOT / 'assets' / 'fonts' / f'{f}.woff2', out / 'fonts')
@@ -78,10 +84,17 @@ def main(out=SITE):
     for s in SHOTS: shutil.copy(ROOT / 'docs' / 'screenshots' / f'{s}.png', out / 'img')
     for f in (ROOT / 'web' / 'img').glob('*.png'): shutil.copy(f, out / 'img')
     for f in ('contour-light.svg', 'contour-dark.svg', 'icon.svg'): shutil.copy(ROOT / 'assets' / f, out / 'img')
-    (out / '_headers').write_text(HEADERS, encoding='utf-8')
-    (out / '_redirects').write_text(REDIRECTS, encoding='utf-8')
+    pre = base.rstrip('/')
+    headers = HEADERS.replace('{CSP}', CSP).replace('{P}', pre)
+    redirects = REDIRECTS.replace('{P}', pre)
+    (out / '_headers').write_text(headers, encoding='utf-8')
+    (out / '_redirects').write_text(redirects, encoding='utf-8')
     print(f'site/ for Anabasis {version} ({size}): front page, app/, download, {len(FONTS)} fonts, {len(SHOTS)} screenshots')
 
 
 if __name__ == '__main__':
-    main()
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--out', type=Path, default=SITE)
+    ap.add_argument('--base', default='/')
+    a = ap.parse_args()
+    main(a.out.resolve(), a.base if a.base.endswith('/') else a.base + '/')

@@ -50,4 +50,4 @@ If something goes wrong, delete the tag (`git push --delete origin v1.0.0` and `
 
 ## The product site
 
-anabasis.zerohistory.net is built by Netlify from `netlify.toml`: it downloads the latest release's `anabasis.html`, then `tools/site/build_web.py` puts the front page (`web/index.html`) at `/`, the installable app at `/app/` and the download at `/anabasis.html`. The front page follows `main`; the app follows releases, so a new release reaches the site at its next deploy (trigger one from Netlify, or push to `main`).
+zerohistory.net/anabasis/ is built by the zerohistory repo's Netlify site (`build-anabasis.sh` there): it downloads this repo's `main` and the latest release's `anabasis.html`, then runs `tools/site/build_web.py --base /anabasis/`, which puts the front page (`web/index.html`) at `/anabasis/`, the installable app at `/anabasis/app/` and the download at `/anabasis/anabasis.html`. The front page follows `main`; the app follows releases. A new release, or a change to `web/`, reaches the site at the next zerohistory deploy (trigger one from Netlify).
