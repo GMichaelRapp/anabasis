@@ -9,7 +9,7 @@ async def m():
     ctx=await b.new_context(viewport={'width':1440,'height':900}, accept_downloads=True)
     pg=await ctx.new_page(); errs=[]
     await pg.add_init_script("delete window.showSaveFilePicker; delete window.showOpenFilePicker;")
-    await pg.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({toured:true}))}catch(e){}")
+    await pg.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({toured:true,seenVersion:'99.0.0'}))}catch(e){}")
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: errs.append('console:'+m.text) if m.type=='error' else None)
     await pg.goto(URL); await pg.wait_for_timeout(1200)

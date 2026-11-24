@@ -6,7 +6,7 @@ from env import URL, HTTP, OUT, FX, AXE
 URL = os.environ.get('ANABASIS_URL', URL)
 AXE = os.environ.get('AXE_PATH', AXE)
 VIEWS = [
-    ('editor', "ghBarHide(); if (curDocId !== P.docs[0].id) openDoc(P.docs[0].id); switchTab('docs')"),
+    ('editor', "ghBarHide(); $('#updBar').classList.add('hidden'); if (curDocId !== P.docs[0].id) openDoc(P.docs[0].id); switchTab('docs')"),
     ('notes tab', "switchTab('notes')"),
     ('sources tab', "switchTab('sources')"),
     ('outline tab', "switchTab('outline')"),
@@ -41,12 +41,15 @@ VIEWS = [
     ('tour', "$('#pkDlg').close(); startTour()"),
     ('getting-started tips', "closeDesk(); P.goal.kind = 'article'; addDoc(newDoc('Empty'))"),
     ('newer-backup notice', "ghBarShow({ sha: 'x', at: new Date().toISOString() })"),
+    ('what’s new', "ghBarHide(); showWhatsNew('1.4.0')"),
+    ('send feedback', "$('#wnDlg').close(); openFeedback()"),
+    ('newer-version notice', "$('#fbDlg').close(); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
         pg = await b.new_page(viewport={'width': 1440, 'height': 900})
-        await pg.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true}))")
+        await pg.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg.on('console', lambda m: print('VIEW SCRIPT WARNING', m.text) if m.type == 'warning' else None)
         await pg.goto(URL); await pg.wait_for_timeout(1200)
         await pg.add_script_tag(content=open(AXE).read())

@@ -4,6 +4,19 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [1.6.0] — 2026-11-23
+
+### Added
+- **What’s new**: a short list of changes after each update, shown once, and any time from Help.
+- **Send feedback** (Help and the command palette): a report with the version, browser, device and window size filled in, never anything from the project. Open it as a GitHub issue, or copy it into an email.
+- **Check for a newer version**: from Help any time, or once a week if you switch it on in Settings (downloaded copies; off by default). It asks GitHub for the latest release number and nothing else.
+- **The writing page on this screen** (Settings): text size, typeface (book serif, easy-reading sans, typewriter) and line spacing. Screen only: PDF, Word and print follow Page setup.
+
+### Changed
+- A lighter look: hairlines in place of heavy rules and frames, soft shadows, rounder cards and dialogs, plain-text New, Open and Export in the top bar, and a quiet row of sidebar tools (Plan, Compile, Templates, Import Word, Relationships) in place of six boxed buttons.
+- Line spacing on screen is comfortable (at most 1.7) unless you choose As in Page setup; a double-spaced manuscript still exports double-spaced.
+- The tour is up to date: 55 citation styles, marks, the research desk and journal, and working with editors.
+
 ## [1.5.0] — 2026-11-23
 
 ### Added
@@ -148,6 +161,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[1.6.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.6.0
 [1.5.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.5.0
 [1.4.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.4.0
 [1.3.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.3.0

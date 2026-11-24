@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 ROOT = Path(__file__).resolve().parents[2]
 APP = (ROOT / 'dist' / 'anabasis.html').as_uri()
 OUT = ROOT / 'docs' / 'screenshots'
-PREFS = "localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true}))"
+PREFS = "localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))"
 
 MARKS = """() => {
   const ps = editor.querySelectorAll('p');

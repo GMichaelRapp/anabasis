@@ -22,9 +22,14 @@ Only when you ask it to, and only to these addresses:
 | Add a source by DOI | doi.org (which may hand off to Crossref or DataCite) | the DOI |
 | Add a source by ISBN | openlibrary.org | the ISBN |
 | Add a source by web address | en.wikipedia.org (its citation service) | the address |
-| Back up to GitHub | api.github.com | your project file and your access token, sent to a repository you choose |
+| Back up to GitHub, or open a backup | api.github.com | your project file and your access token, sent to a repository you choose |
+| Check for a newer version (Help, or the weekly check you can switch on in Settings) | api.github.com | nothing but the request for the latest release number |
 
 The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web.
+
+## Feedback
+
+**Send feedback** (Help) opens a GitHub issue in your browser, or copies the report for you to paste elsewhere. It holds what you type plus the Anabasis version, browser, device type, window size and theme. Nothing from your project goes in it, and nothing is sent until you submit it yourself.
 
 ## GitHub backup
 

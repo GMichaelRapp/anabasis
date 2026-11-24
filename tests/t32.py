@@ -17,7 +17,7 @@ async def main():
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
-        await ctx.add_init_script("delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true}))")
+        await ctx.add_init_script("delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg = await ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
         pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)

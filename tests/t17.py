@@ -7,7 +7,7 @@ async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch()
     pg=await b.new_page(viewport={'width':1500,'height':920}); errs=[]
-    await pg.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false}))}catch(e){}")
+    await pg.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))}catch(e){}")
     pg.on('pageerror', lambda e: errs.append(str(e))); pg.on('console', lambda m: errs.append(m.text) if m.type=='error' else None)
     await pg.goto(APP); await pg.wait_for_timeout(700)
     titles = lambda: pg.eval_on_selector_all('#plArea .pl-row','e=>e.map(r=>"  ".repeat(+r.style.getPropertyValue("--d"))+r.querySelector(".pl-title").value)')

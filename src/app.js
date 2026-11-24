@@ -12,7 +12,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '1.5.0';
+const APP_VERSION = '1.6.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -633,6 +633,15 @@ function applyLayout(el, doc) {
   el.classList.toggle('bib-ds', !!STYLES[doc.style].ds && L.spacing === '2');
   el.style.setProperty('--doc-size', L.size + 'pt');
   el.style.setProperty('--doc-lh', L.spacing);
+  if (el.id === 'page') applyScreen(L);
+}
+/* screen-only reading comfort: never touches exports, print or Page setup */
+function applyScreen(L) {
+  const pg = $('#page'); if (!pg) return; L = L || (curDoc() || {}).layout || { spacing: '2' };
+  const size = [85, 100, 115, 130, 150].includes(+PREFS.scrSize) ? +PREFS.scrSize : 100, sp = +L.spacing || 2;
+  const lh = { page: sp, compact: Math.min(sp, 1.4) }[PREFS.scrLh] || Math.min(sp, 1.7);
+  pg.style.setProperty('--scr-scale', size / 100); pg.style.setProperty('--scr-lh', lh);
+  pg.dataset.scrFont = ['sans', 'serif', 'mono'].includes(PREFS.scrFont) ? PREFS.scrFont : '';
 }
 function titleBlockHTML(doc) {
   const m = doc.meta; if (!m.showTitleBlock) return '';
@@ -2283,7 +2292,7 @@ const COMMANDS = [
   ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert figure (image)', () => $('#btnFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
-  ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Switch light / dark theme', () => $('#btnTheme').click()],
+  ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
 ];
 let palItems = [], palIdx = 0;
 function snippetAround(text, q, n = 60) {
@@ -2397,14 +2406,14 @@ document.addEventListener('selectionchange', debounce(focusTrack, 30));
 /* ---------- settings ---------- */
 function openSettings() {
   $('#stRemind').value = String(PREFS.remindMins); $('#stGoal').value = PREFS.sessionGoal || '';
-  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stTips').checked = !PREFS.tipsOff; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
+  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stScrSize').value = String(PREFS.scrSize || 100); $('#stScrFont').value = PREFS.scrFont || ''; $('#stScrLh').value = PREFS.scrLh || ''; $('#stUpd').checked = !!PREFS.updCheck; $('#stUpdRow').classList.toggle('hidden', IS_HOSTED); $('#stTips').checked = !PREFS.tipsOff; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
   $('#settingsDlg').showModal(); renderStorageStatus();
 }
 $('#btnSettings').addEventListener('click', openSettings);
 $('#stCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#stOk').addEventListener('click', () => {
   PREFS.remindMins = +$('#stRemind').value; PREFS.sessionGoal = Math.max(0, parseInt($('#stGoal').value, 10) || 0);
-  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; PREFS.tipsOff = !$('#stTips').checked; tipCheck(); const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
+  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; PREFS.scrSize = +$('#stScrSize').value; PREFS.scrFont = $('#stScrFont').value; PREFS.scrLh = $('#stScrLh').value; const updWas = PREFS.updCheck; PREFS.updCheck = $('#stUpd').checked; applyScreen(); if (PREFS.updCheck && !updWas) { PREFS.updAt = 0; setTimeout(updMaybe, 300); } PREFS.tipsOff = !$('#stTips').checked; tipCheck(); const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
   savePrefs(); $('#settingsDlg').close(); applyWritingView(); sgRefresh();
   editor.spellcheck = PREFS.spellcheck; snoozeUntil = 0; checkReminder(); renderOutline(); updateTargets();
 });
@@ -7327,15 +7336,91 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
 /* ================================================================
    First-run tour
    ================================================================ */
+/* ---------- What's new: shown once after an update ---------- */
+const WHATS_NEW = {
+  '1.6.0': ['A lighter look: finer lines, a quieter sidebar and top bar, and roomier home and desk.',
+    'Text size, typeface and line spacing for the writing page, in Settings. Screen only: PDF and Word still follow Page setup.',
+    'Help → Send feedback starts a report with the version and browser filled in, and nothing from your project.',
+    'Downloaded copies can check once a week for a newer version (off unless you turn it on in Settings).',
+    'An updated two-minute tour (Help → Take the tour).'],
+  '1.5.0': ['Pick up a project on another device from your GitHub backup, and get told when a newer backup is waiting.',
+    'This week: a weekly review in the Journal, with next steps you can tick off.',
+    'Research design templates for eight methods.', 'Getting-started tips on empty documents.',
+    'The fact-check sheet records who checked each claim, with page numbers.'],
+  '1.4.0': ['The research journal: research design, hypotheses tracked against evidence, a dated log and a search log, with a research memo and a methods appendix.'],
+};
+const vcmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(Number), y = String(b).replace(/^v/, '').split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0 ? 1 : -1; } return 0; };
+function showWhatsNew(since) {
+  const vs = Object.keys(WHATS_NEW).filter(v => !since || vcmp(v, since) > 0).sort((a, b) => vcmp(b, a)).slice(0, 3);
+  if (!vs.length) vs.push(Object.keys(WHATS_NEW).sort((a, b) => vcmp(b, a))[0]);
+  $('#wnTitle').textContent = since ? `What’s new in Anabasis ${APP_VERSION}` : 'What’s new';
+  $('#wnBody').innerHTML = vs.map((v, i) => `${vs.length > 1 || i ? `<h4>${esc(v.replace(/\.0$/, ''))}</h4>` : ''}<ul>${WHATS_NEW[v].map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('');
+  $('#wnDlg').showModal();
+}
+function wnCheck() {
+  const seen = PREFS.seenVersion || (FIRST_VISIT ? APP_VERSION : '1.5.0');
+  PREFS.seenVersion = APP_VERSION; savePrefs();
+  if (!FIRST_VISIT && vcmp(seen, APP_VERSION) < 0 && WHATS_NEW[APP_VERSION]) setTimeout(() => { if (!$('#tour').classList.contains('hidden') || document.querySelector('dialog[open]')) return; showWhatsNew(seen); }, 700);
+}
+$('#wnOk').addEventListener('click', () => $('#wnDlg').close());
+
+/* ---------- Send feedback: a report with the facts filled in, nothing from the project ---------- */
+function envInfo() {
+  const ua = navigator.userAgent, b = (/Edg\/(\d+)/.exec(ua) && ['Edge', RegExp.$1]) || (/OPR\/(\d+)/.exec(ua) && ['Opera', RegExp.$1]) || (/Firefox\/(\d+)/.exec(ua) && ['Firefox', RegExp.$1])
+    || (/Chrome\/(\d+)/.exec(ua) && ['Chrome', RegExp.$1]) || (/Version\/([\d.]+).*Safari/.exec(ua) && ['Safari', RegExp.$1]) || ['Unknown browser', ''];
+  const os = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1) ? (/iPhone/.test(ua) ? 'iPhone' : 'iPad') : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'macOS' : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Linux/.test(ua) ? 'Linux' : 'unknown';
+  const where = document.querySelector('meta[name=anabasis-installable]') ? (matchMedia('(display-mode: standalone)').matches ? 'installed app' : 'hosted copy') : location.protocol === 'file:' ? 'downloaded file' : 'web page';
+  return [`Anabasis ${APP_VERSION}`, `${b[0]} ${b[1]} on ${os}`.trim(), `${where}, window ${innerWidth}×${innerHeight}, ${document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'} theme`];
+}
+const FB_KINDS = { bug: 'Something went wrong', idea: 'An idea', q: 'A question' };
+function fbText() {
+  const kind = $('#fbKind').value, msg = $('#fbMsg').value.trim();
+  return { kind, msg, title: `${kind === 'bug' ? 'Problem' : kind === 'idea' ? 'Idea' : 'Question'}: ${(msg.split('\n')[0] || FB_KINDS[kind]).slice(0, 80)}`,
+    body: `${msg || '(Describe what happened, or what would help.)'}\n\n---\n${envInfo().map(x => '- ' + x).join('\n')}` };
+}
+function openFeedback() {
+  $('#fbEnv').textContent = envInfo().join(' · ');
+  $('#helpDlg').open && $('#helpDlg').close(); $('#fbDlg').showModal(); $('#fbMsg').focus();
+}
+$('#fbCopy').addEventListener('click', async () => { const f = fbText(); const t = `${f.title}\n\n${f.body}`; try { await navigator.clipboard.writeText(t); toast('Copied. Paste it into an email or message.'); } catch (e) { $('#fbMsg').value = t; $('#fbMsg').select(); toast('Select and copy the text in the box.'); } });
+$('#fbGitHub').addEventListener('click', () => {
+  const f = fbText(), u = `https://github.com/gmichaelrapp/anabasis/issues/new?title=${encodeURIComponent(f.title)}&body=${encodeURIComponent(f.body)}&labels=${f.kind === 'bug' ? 'bug' : f.kind === 'idea' ? 'enhancement' : 'question'}`;
+  window.open(u, '_blank', 'noopener'); $('#fbDlg').close();
+});
+$('#fbClose').addEventListener('click', () => $('#fbDlg').close());
+
+/* ---------- Is there a newer version? (downloaded copies only, and only if you say so) ---------- */
+const IS_HOSTED = !!document.querySelector('meta[name=anabasis-installable]');
+async function updCheck(manual) {
+  if (IS_HOSTED && !manual) return null;
+  try {
+    const r = await fetch('https://api.github.com/repos/gmichaelrapp/anabasis/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+    if (!r.ok) throw new Error(r.status);
+    const j = await r.json(), tag = String(j.tag_name || '').replace(/^v/, '');
+    PREFS.updAt = Date.now(); savePrefs();
+    if (tag && vcmp(tag, APP_VERSION) > 0) { $('#updMsg').textContent = `Anabasis ${tag} is out. You have ${APP_VERSION}. Save your project file first, then download the new version and open your project file in it.`; $('#updBar').classList.remove('hidden'); return tag; }
+    if (manual) toast(`You have the newest version (${APP_VERSION}).`);
+    return '';
+  } catch (e) { if (manual) toast('Couldn’t reach GitHub to check. Try again later.'); return null; }
+}
+$('#updBar').addEventListener('click', e => {
+  const a = e.target.closest('[data-ub]'); if (!a) return;
+  if (a.dataset.ub === 'get') window.open('https://github.com/gmichaelrapp/anabasis/releases/latest', '_blank', 'noopener');
+  $('#updBar').classList.add('hidden');
+});
+function updMaybe() { if (!IS_HOSTED && PREFS.updCheck && Date.now() - (PREFS.updAt || 0) > 7 * DAY) updCheck(false); }
+
 const TOUR = [
-  { t: 'Welcome to Anabasis', x: 'A writing desk for nonfiction: documents, notes and sources in one project. Your work stays on this computer. There’s no account and no server; Anabasis goes online only to look up a source or back up to GitHub when you ask. This tour takes about two minutes.' },
-  { sel: '.tabs', t: 'Docs, notes and sources', x: 'Docs holds your chapters and parts. Notes are quotes and ideas you can drag into a draft. Sources are your bibliography, each with its own reliability rating.' },
-  { sel: '#btnCite', t: 'Cite as you write', x: 'Put the cursor where the citation goes and choose Cite. Notes and the bibliography rebuild below the text as you write.' },
-  { sel: '#docStyle', t: 'Pick a style', x: 'Chicago, APA, MLA or the OSINT Style Guide. Switch at any time and every citation reformats.' },
+  { t: 'Welcome to Anabasis', x: 'A writing and research desk for nonfiction: drafts, notes, sources and your research record in one project. Your work stays on this device. There’s no account and no server; Anabasis goes online only when you look up a source or back up to GitHub. This tour takes about two minutes.' },
+  { sel: '.tabs', t: 'Docs, notes and sources', x: 'Docs holds your chapters and parts. Notes are quotes and ideas you can drag into a draft. Sources are your bibliography, each with a reliability rating. Outline runs checks on the draft.' },
+  { sel: '#btnCite', t: 'Cite as you write', x: 'Put the cursor where the citation goes and choose Cite. Add a source by DOI, ISBN or web address, and the notes and bibliography rebuild as you write.' },
+  { sel: '#docStyle', t: '55 citation styles', x: 'Chicago, APA, MLA, Harvard, IEEE, Bluebook, journal and press styles, and the OSINT Style Guide. Switch at any time and every citation reformats.' },
+  { sel: '#btnMark', t: 'Mark what matters', x: 'Select a passage and mark it as a claim to check, a thread to follow through the book, a question, or something to review by a date. Marks never print.' },
+  { sel: '.tabs button[data-tab=research]', t: 'The research desk', x: 'The Research tab keeps the claims register, threads, evidence grid and your journal: research design, hypotheses, a dated log, searches and a weekly review.' },
   { sel: '#btnFigure', t: 'Figures', x: 'Charts from a table, maps that work offline, timelines from dated notes, and relationship maps. Each figure stays editable.' },
-  { sel: '.tabs button[data-tab=outline]', t: 'Checks', x: 'The Outline tab flags undefined acronyms, vague estimative words, thin sourcing, house-style slips and accessibility problems, with one-click fixes.' },
-  { sel: '#btnExport', t: 'Export and share', x: 'PDF, Word, ePub, Markdown, a Substack post or a promo kit. Checkpoints and GitHub backup live here too.' },
-  { sel: '#btnSave', t: 'Save the project file', x: 'Save writes the whole project to one .json file. Keep it in a synced or backed-up folder. Help (the ? button) has the full guide and can replay this tour.' },
+  { sel: '#btnSuggest', t: 'Work with editors', x: 'Suggest mode records your edits as changes to accept or reject, and Word files keep them both ways. Margin notes sit beside the text.' },
+  { sel: '#btnExport', t: 'Export and share', x: 'PDF, Word, ePub, Markdown, LaTeX, a Substack post or a promo kit. Checkpoints and GitHub backup live here too.' },
+  { sel: '#btnSave', t: 'Save the project file', x: 'Save writes the whole project to one .json file. Keep it in a synced or backed-up folder. Help (the ? button) has the full guide, tips for getting started, this tour, and a way to send feedback.' },
 ];
 let tourAt = -1;
 function tourVisible(sel) { const el = sel && $(sel); if (!el) return null; const r = el.getBoundingClientRect(); return r.width && r.height && r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight && getComputedStyle(el).visibility !== 'hidden' ? el : null; }
@@ -7372,6 +7457,9 @@ $('#tourSkip').addEventListener('click', endTour);
 $('#tour').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); endTour(); } if (e.key === 'ArrowRight') tourGo(1); if (e.key === 'ArrowLeft') tourGo(-1); });
 addEventListener('resize', () => { if (tourAt >= 0) tourPlace(); });
 $('#helpTour').addEventListener('click', () => { $('#helpDlg').close(); startTour(); });
+$('#helpFeedback').addEventListener('click', openFeedback);
+$('#helpNew').addEventListener('click', () => { $('#helpDlg').close(); showWhatsNew(''); });
+$('#helpUpd').addEventListener('click', () => { if (IS_HOSTED) { toast('This copy updates itself. Reload the page to get the newest version.'); return; } updCheck(true); });
 $('#aboutVersion').textContent = APP_VERSION;
 
 /* Labels written as a sibling of their field get tied to it, so screen readers announce every field by name. */
@@ -9468,5 +9556,5 @@ function sendClip(to, clip) {
   else if (!clip && PREFS.startHome !== false) openHome();
   if (rec && rec.project && dirtyFile && !clip) toast('Restored your unsaved work from this browser.');
   if (clip) handleClip(clip);
-  else setTimeout(() => ghCheckNewer(true), 1500);
+  else { setTimeout(() => ghCheckNewer(true), 1500); wnCheck(); setTimeout(updMaybe, 4000); }
 })();

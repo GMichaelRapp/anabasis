@@ -1116,6 +1116,40 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
   :root[data-theme="dark"] .scroller{box-shadow:inset 0 0 0 5px #0C121A,inset 0 0 0 6px #3A4757}
   :root .page{box-shadow:0 0 0 1px rgba(22,32,44,.25),3px 3px 0 rgba(22,32,44,.12)}
 }
+/* ================================================================
+   1.6 “lighter sheet”: same map paper and navy, hairlines instead of rules,
+   soft shadows instead of hard offsets, fewer boxes. One accent, used sparingly.
+   ================================================================ */
+:root{--neat:color-mix(in srgb,var(--ink) 30%,var(--bg));--hair:color-mix(in srgb,var(--ink) 14%,transparent);--soft-shadow:0 1px 2px rgba(22,32,44,.06),0 10px 30px -14px rgba(22,32,44,.28)}
+:root[data-theme="dark"]{--neat:#3A4757;--hair:rgba(255,255,255,.09);--soft-shadow:0 1px 2px rgba(0,0,0,.35),0 14px 34px -14px rgba(0,0,0,.7)}
+:root .topbar{box-shadow:0 1px 0 var(--hair);margin-bottom:0}
+:root #sidebar{box-shadow:inset -1px 0 0 var(--hair)}
+:root .tabs{border-bottom:1px solid var(--hair)}
+:root .tabs button{font-size:12.5px}
+:root .toolbar,:root .board-bar,:root .doc-bar{border-bottom:1px solid var(--hair)}
+:root .scroller,:root[data-theme="dark"] .scroller{box-shadow:none}
+:root .page{box-shadow:0 0 0 1px rgba(22,32,44,.08),0 2px 4px rgba(22,32,44,.05),0 22px 48px -26px rgba(16,28,44,.45)}
+:root[data-theme="dark"] .page{box-shadow:0 0 0 1px rgba(255,255,255,.06),0 22px 48px -22px rgba(0,0,0,.8)}
+:root .hm-card,:root .hm-grid > .hm-card:first-child{border:1px solid var(--hair);border-radius:10px;box-shadow:var(--soft-shadow);background:var(--panel)}
+:root .hm-grid{gap:18px}
+:root dialog{border:1px solid var(--hair);border-radius:12px;box-shadow:0 30px 80px -24px rgba(10,18,30,.55)}
+:root dialog .dlg > h3{border-bottom:1px solid var(--hair)}
+:root .menu-pop,:root .pop{border:1px solid var(--hair);border-radius:10px;box-shadow:0 18px 44px -16px rgba(16,28,44,.45)}
+:root button.primary{box-shadow:none}
+:root .topbar button.ghost:not(.icon):not(.brand){font-weight:500}
+:root .topbar #btnSave{padding:4px 16px}
+:root .list li{border-radius:8px}
+:root .list li.on{box-shadow:inset 3px 0 0 var(--k,var(--k-docs));background:color-mix(in srgb,var(--k,var(--k-docs)) 7%,var(--panel))}
+:root dialog .dlg .body:focus{outline:2px solid color-mix(in srgb,var(--accent) 28%,transparent);outline-offset:-2px}
+.wk-next label{font-size:14px!important}
+:root .eg-sum div{border:1px solid var(--hair);border-radius:8px}
+:root .j-side li{border-radius:6px}
+.pane-tools{display:flex;flex-wrap:wrap;gap:2px 4px;margin:0 -4px}
+.pane-tools button{min-height:28px;padding:3px 8px;color:var(--muted);font-weight:500}
+.pane-tools button:hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent);border-color:transparent}
+.pane-tools svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+:root .desk-tabs,:root .desk-head{border-bottom:1px solid var(--hair)}
+@media (max-width:700px){ :root .page{box-shadow:0 0 0 1px rgba(22,32,44,.08),0 10px 24px -16px rgba(16,28,44,.4)} }
 /* ---------- responsive ---------- */
 .only-narrow{display:none}
 @media (max-width:1100px){ .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-shadow:var(--shadow)} }
@@ -1537,6 +1571,15 @@ span.h-chip{cursor:default;padding:1px 8px;font-size:11.5px!important}
 .j-kind-chip .j-next{margin:0;width:14px;height:14px}
 .j-entry.done .j-body{color:var(--muted);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 60%,transparent)}
 .j-span{margin:-6px 0 12px}
+@media screen{
+  #page.docbody{font-size:calc(var(--doc-size) * var(--scr-scale,1));line-height:var(--scr-lh,var(--doc-lh))}
+  #page.docbody[data-scr-font=serif]{--doc-font:Charter,"Bitstream Charter","Iowan Old Style","Sitka Text",Cambria,Georgia,serif}
+  #page.docbody[data-scr-font=sans]{--doc-font:"Atkinson Hyperlegible Next",system-ui,sans-serif}
+  #page.docbody[data-scr-font=mono]{--doc-font:"Courier Prime","Courier New",ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+}
+.wn-body ul{margin:4px 0 12px;padding-left:20px}.wn-body li{margin:5px 0}.wn-body h4{margin:12px 0 2px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 14px}@media (max-width:620px){.grid3{grid-template-columns:1fr}}
+.st-h{margin:16px 0 6px;font-size:14px}
 .tip-card{position:absolute;z-index:2;box-sizing:border-box;background:var(--page);padding:14px 18px 12px;border:1px dashed color-mix(in srgb,var(--page-ink) 28%,transparent);border-radius:6px;font:var(--fs-2,14px)/1.5 var(--ui);color:color-mix(in srgb,var(--page-ink) 78%,transparent);user-select:text}
 .tip-card header{display:flex;align-items:center;gap:10px;margin-bottom:6px}.tip-card header b{font:600 15px/1.2 var(--display,Georgia);color:var(--page-ink)}.tip-card header select{width:auto;font-size:13px;padding:3px 6px}.tip-card header button{margin-left:auto}
 .tip-card ul{margin:0;padding-left:18px}.tip-card li{margin:4px 0}.tip-card footer{margin-top:8px}
@@ -1582,11 +1625,11 @@ body.focus .tip-card{display:none}
   <button id="autoResume" class="ghost small hidden auto-resume" title="Chrome needs one click to let Anabasis write to your project file again">Resume autosave</button>
   <div class="spacer"></div>
   <button id="btnSearch" class="search-btn" data-pri="6" data-label="Search everything" title="Search everything and run commands (Ctrl/Cmd+K)"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="hide-narrow"> Search</span> <kbd class="hide-narrow">⌘K</kbd></button>
-  <button id="btnNewProj" data-pri="4" data-label="New project" title="New project">New</button>
-  <button id="btnOpen" data-pri="3" data-label="Open a project file…" title="Open a project .json file">Open</button>
+  <button id="btnNewProj" class="ghost" data-pri="4" data-label="New project" title="New project">New</button>
+  <button id="btnOpen" class="ghost" data-pri="3" data-label="Open a project file…" title="Open a project .json file">Open</button>
   <button id="btnSave" class="primary" title="Save project (Ctrl/Cmd+S)">Save</button>
   <div class="menu">
-    <button id="btnExport" aria-label="Export"><svg viewBox="0 0 24 24" aria-hidden="true" class="ex-ic"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="lbl">Export</span> <span class="caret" aria-hidden="true">▾</span></button>
+    <button id="btnExport" class="ghost" aria-label="Export"><svg viewBox="0 0 24 24" aria-hidden="true" class="ex-ic"><path d="M12 3v12M7.5 7.5 12 3l4.5 4.5"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg><span class="lbl">Export</span> <span class="caret" aria-hidden="true">▾</span></button>
     <div class="menu-pop" id="exportMenu">
       <button data-x="docx">Word (.docx), real footnotes</button>
       <button data-x="pdf">PDF — print / save as PDF <span class="muted small">⌘P</span></button>
@@ -1635,9 +1678,8 @@ body.focus .tip-card{display:none}
       <button data-tab="research" title="Threads, claims, review keys and questions">Research<span class="count badge" id="tabResearchBadge"></span></button>
     </nav>
     <section class="pane on" data-pane="docs">
-      <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" title="New part (a folder for chapters)">+ Part</button></div>
-        <div class="row"><button id="btnPlan" class="primary-soft" style="flex:1" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" style="flex:1" title="Combine documents into one manuscript">Compile manuscript…</button></div>
-        <div class="row"><button id="btnTemplates" style="flex:1" title="Front and back matter, chronology, annotated bibliography">Templates…</button><button id="btnImportDocx" style="flex:1" title="Bring in a Word document, footnotes included">Import Word…</button></div><div class="row"><button id="btnRel" style="flex:1" title="Who’s connected to whom, from your names list">Relationship map</button></div></div>
+      <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" class="ghost" title="New part (a folder for chapters)">+ Part</button></div>
+        <div class="pane-tools"><button id="btnPlan" class="ghost small" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" class="ghost small" title="Combine documents into one manuscript"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg>Compile</button><button id="btnTemplates" class="ghost small" title="Front and back matter, chronology, annotated bibliography"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 9h16M9 9v11"/></svg>Templates</button><button id="btnImportDocx" class="ghost small" title="Bring in a Word document, footnotes included"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Import Word</button><button id="btnRel" class="ghost small" title="Who’s connected to whom, from your names list"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 8.3 10.6 16M15.8 8.3 13.4 16M8.5 7h7"/></svg>Relationships</button></div></div>
       <ul class="list binder" id="docList"></ul>
     </section>
     <section class="pane" data-pane="outline" id="outlinePane">
@@ -1942,7 +1984,7 @@ body.focus .tip-card{display:none}
     <div class="grid3">
       <div><label>Font</label><select id="suFont"><option value="book">Book serif</option><option value="times">Times</option><option value="sans">Sans-serif</option></select></div>
       <div><label>Size</label><select id="suSize"><option>11</option><option>12</option><option>13</option></select></div>
-      <div><label>Line spacing</label><select id="suSpacing"><option value="1.25">Single</option><option value="1.5">1.5</option><option value="2">Double</option></select></div>
+      <div><label>Line spacing</label><select id="suSpacing" aria-describedby="suSpNote"><option value="1.25">Single</option><option value="1.5">1.5</option><option value="2">Double</option></select><div class="small muted" id="suSpNote">For PDF, Word and print. On screen, Settings decides.</div></div>
     </div>
     <div class="grid2">
       <div><label>Paper (PDF)</label><select id="suPaper"><option value="letter">US Letter</option><option value="A4">A4</option></select></div>
@@ -2336,6 +2378,7 @@ body.focus .tip-card{display:none}
   </div>
   <footer><button id="ghTest">Test connection</button><button id="ghProjects" title="Open any project backed up to this repository, e.g. one you worked on with another device">Open a project…</button><button id="ghHistory">History…</button><button id="ghClose">Close</button><button id="ghNow" class="primary">Back up now</button></footer>
 </div></dialog>
+<div class="gh-bar hidden" id="updBar" role="status"><span id="updMsg"></span><span class="gh-bar-acts"><button class="primary small" data-ub="get">Get it</button><button class="small ghost" data-ub="no">Not now</button></span></div>
 <div class="gh-bar hidden" id="ghBar" role="status"><span id="ghBarMsg"></span><span class="gh-bar-acts"><button class="primary small" data-gb="open">Open the newer backup</button><button class="small" data-gb="copy" title="Save the copy you have open to a file first">Save this copy…</button><button class="small ghost" data-gb="no">Not now</button></span></div>
 <div class="tp hidden" id="tp" role="dialog" aria-label="Teleprompter">
   <div class="tp-scroll" id="tpScroll"><div class="tp-pad"></div><div class="tp-text" id="tpText"></div><div class="tp-pad"></div></div>
@@ -2449,6 +2492,12 @@ body.focus .tip-card{display:none}
     </div>
     <div class="radio-row" style="margin-top:10px">
     </div>
+    <h4 class="st-h">The writing page on this screen <span class="muted small">(PDF, Word and print follow Page setup)</span></h4>
+    <div class="grid3">
+      <div><label for="stScrSize">Text size</label><select id="stScrSize"><option value="85">Smaller</option><option value="100">Standard</option><option value="115">Larger</option><option value="130">Large</option><option value="150">Largest</option></select></div>
+      <div><label for="stScrFont">Typeface</label><select id="stScrFont"><option value="">As in Page setup</option><option value="serif">Book serif</option><option value="sans">Easy-reading sans</option><option value="mono">Typewriter</option></select></div>
+      <div><label for="stScrLh">Line spacing</label><select id="stScrLh"><option value="">Comfortable</option><option value="compact">Compact</option><option value="page">As in Page setup</option></select></div>
+    </div>
     <div class="grid2">
       <div><label for="stType">Typewriter scrolling <span class="muted">(keep your line mid-screen)</span></label><select id="stType"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
       <div><label for="stDim">Dim other paragraphs</label><select id="stDim"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
@@ -2459,6 +2508,7 @@ body.focus .tip-card{display:none}
       <label><input type="checkbox" id="stSpell"> Spellcheck</label>
       <label><input type="checkbox" id="stHome"> Open to the project home (otherwise straight to the draft)</label>
       <label><input type="checkbox" id="stTips"> Show getting-started tips on empty documents</label>
+      <label id="stUpdRow" title="Asks GitHub for the latest release number. Nothing about you or your work is sent."><input type="checkbox" id="stUpd"> Check weekly for a newer version</label>
       <label><input type="checkbox" id="stAuto"> Autosave to the project file (Chrome and Edge)</label><div class="small muted" id="stAutoNote" style="margin:-2px 0 6px 24px"></div>
     </div>
     <label>Browser storage</label><div class="small" id="stStorage">Checking…</div>
@@ -2504,14 +2554,33 @@ body.focus .tip-card{display:none}
   <footer><button id="askCancel">Cancel</button><button id="askOk" class="primary">OK</button></footer>
 </div></dialog>
 
+<dialog id="wnDlg"><div class="dlg">
+  <h3 id="wnTitle">What’s new</h3>
+  <div class="body wn-body" id="wnBody"></div>
+  <footer><a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md" target="_blank" rel="noopener" class="small">Full list of changes</a><span class="spacer"></span><button id="wnOk" class="primary">Got it</button></footer>
+</div></dialog>
+<dialog id="fbDlg"><div class="dlg">
+  <h3>Send feedback</h3>
+  <div class="body">
+    <p class="small" style="margin-top:0">Found a problem, or have an idea? Describe it below. Your project stays out of it: the report holds only what you write and the details under the box.</p>
+    <label for="fbKind">What is it?</label>
+    <select id="fbKind"><option value="bug">Something went wrong</option><option value="idea">An idea</option><option value="q">A question</option></select>
+    <label for="fbMsg">Details</label>
+    <textarea id="fbMsg" rows="6" placeholder="What did you do, what happened, and what did you expect? For an idea, what would it help you do?"></textarea>
+    <p class="small muted">Included: <span id="fbEnv"></span></p>
+    <p class="small muted">Open on GitHub needs a free GitHub account. Without one, choose Copy and paste it into an email or a message.</p>
+  </div>
+  <footer><button id="fbClose">Cancel</button><span class="spacer"></span><button id="fbCopy">Copy</button><button id="fbGitHub" class="primary">Open on GitHub</button></footer>
+</div></dialog>
+
 <!-- help -->
 <dialog id="helpDlg" class="wide"><div class="dlg">
   <h3>Anabasis <span class="muted small" style="font-weight:500">version <span id="aboutVersion"></span></span> — help &amp; about</h3>
   <div class="body help">
     <blockquote class="help-epigraph" lang="en"><p><span lang="grc">θάλαττα θάλαττα</span></p><p>Presently they could hear the soldiers shouting and passing on the joyful word, “The sea! the sea!”</p><footer>Xenophon, <cite>Anabasis</cite> IV.7, translated by H. G. Dakyns</footer></blockquote>
-    <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><a href="https://github.com/gmichaelrapp/anabasis/releases" target="_blank" rel="noopener">Check for a newer version</a></div>
+    <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><button id="helpFeedback">Send feedback</button><button id="helpNew" class="ghost">What’s new</button><button id="helpUpd" class="ghost">Check for a newer version</button></div>
     <h4>Your privacy</h4>
-    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), or backing up to GitHub. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
+    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
     <h4>Writing</h4>
     <ul>
@@ -2583,6 +2652,12 @@ body.focus .tip-card{display:none}
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
       <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
+    </ul>
+    <h4>Settings for the screen</h4>
+    <ul>
+      <li><b>Text size, typeface and line spacing</b> for the writing page are in Settings. They change only what you see: PDF, Word and print follow Page setup. Line spacing is <b>Comfortable</b> on screen unless you choose <b>As in Page setup</b>, so a double-spaced manuscript doesn’t read double-spaced while you write.</li>
+      <li><b>Check weekly for a newer version</b> (Settings, downloaded copies only) asks GitHub for the latest release number once a week; you can also check any time from Help. The hosted copy updates itself.</li>
+      <li><b>What’s new</b> appears once after an update, and any time from Help. <b>Send feedback</b> starts a report with the version and browser filled in: open it on GitHub, or copy it into an email.</li>
     </ul>
     <h4>Getting-started tips</h4>
     <p>A new, empty document shows a short card of tips for the kind of writing you’re doing. It goes away when you start typing. Pick another kind from the card, close it for one document, or turn tips off in Settings. All of them are here too:</p>

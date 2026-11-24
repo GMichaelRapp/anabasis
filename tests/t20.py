@@ -7,7 +7,7 @@ async def m():
   async with async_playwright() as p:
     b=await p.chromium.launch()
     ctx=await b.new_context(viewport={'width':1500,'height':950}, accept_downloads=True)
-    await ctx.add_init_script("delete window.showSaveFilePicker; delete window.showOpenFilePicker; try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false}))}catch(e){}")
+    await ctx.add_init_script("delete window.showSaveFilePicker; delete window.showOpenFilePicker; try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))}catch(e){}")
     pg=await ctx.new_page(); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: errs.append('console:'+m.text) if m.type=='error' else None)
@@ -128,7 +128,7 @@ async def m():
     await pg.fill('#pw1','correct horse battery'); await pg.click('#pwOk'); await pg.wait_for_timeout(2500)
     print('unlocked:', await pg.evaluate("({docs:P.docs.map(d=>d.title).includes('Figures test'), locked:!!LOCK})"))
     # open the locked file in a fresh context
-    ctx2=await b.new_context(accept_downloads=True); await ctx2.add_init_script("delete window.showOpenFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false}))")
+    ctx2=await b.new_context(accept_downloads=True); await ctx2.add_init_script("delete window.showOpenFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))")
     p2=await ctx2.new_page(); p2.on('pageerror', lambda e: errs.append('p2:'+str(e)))
     await p2.goto(URL); await p2.wait_for_timeout(1200)
     await p2.set_input_files('#fileOpen', lp); await p2.wait_for_timeout(600)

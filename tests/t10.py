@@ -8,7 +8,7 @@ async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch()
     ctx=await b.new_context(viewport={'width':1440,'height':900}, accept_downloads=True)
-    await ctx.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false}))}catch(e){}")
+    await ctx.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))}catch(e){}")
     await ctx.route('https://en.wikipedia.org/**', lambda r: r.fulfill(status=200, headers={'access-control-allow-origin':'*','content-type':'application/json'}, body=json.dumps(CIT)))
     errs=[]
     A=await ctx.new_page(); A.on('pageerror', lambda e: errs.append('A '+str(e))); A.on('console', lambda m: errs.append('A '+m.text) if m.type=='error' else None)
@@ -47,7 +47,7 @@ async def main():
     print('ERRS', errs)
     # fresh context: clip with no app tab open
     ctx2=await b.new_context(viewport={'width':1440,'height':900})
-    await ctx2.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false}))}catch(e){}")
+    await ctx2.add_init_script("try{if(!localStorage.getItem('commonplace.prefs'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))}catch(e){}")
     await ctx2.route('https://en.wikipedia.org/**', lambda r: r.fulfill(status=500, body='x'))
     C=await ctx2.new_page(); C.on('pageerror', lambda e: errs.append('C '+str(e)))
     clip={"v":1,"url":"https://example.org/report","title":"Annual Threat Assessment | ODNI","titleFromDoc":True,"site":"ODNI","authors":[],"date":"2025-03-18","sel":"China remains the top threat."}

@@ -24,7 +24,7 @@ async def main():
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
 
-        async def page(w, h, mobile=False, prefs='{startHome:false,toured:true}'):
+        async def page(w, h, mobile=False, prefs="{startHome:false,toured:true,seenVersion:'99.0.0'}"):
             ctx = await b.new_context(viewport={'width': w, 'height': h}, is_mobile=mobile, has_touch=mobile)
             await ctx.add_init_script(f"delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({prefs}))")
             pg = await ctx.new_page()
@@ -156,7 +156,7 @@ async def main():
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         site = f'http://127.0.0.1:{srv.server_address[1]}/'
         ctx = await b.new_context(viewport={'width': 1200, 'height': 800})
-        await ctx.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true}))")
+        await ctx.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(f'site: {e}'))
         await pg.goto(site); await pg.wait_for_timeout(1500)
         await pg.evaluate("() => navigator.serviceWorker.ready"); await pg.wait_for_timeout(300)

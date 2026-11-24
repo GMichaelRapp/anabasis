@@ -57,6 +57,7 @@ The whole app is a single HTML file of about 10 MB. Download it, open it in your
 **Publish**
 - PDF with real footnotes, Word (.docx), ePub, HTML, Markdown and a Substack-ready post, plus a promo kit with a social thread, subtitle and quote cards.
 - Video-script mode with run time, an A/V table and a teleprompter.
+- Text size, typeface and line spacing for the screen, separate from what you export; what’s new after each update; and Send feedback in Help.
 - Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
 
 | | |
