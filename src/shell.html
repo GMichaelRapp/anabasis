@@ -1814,6 +1814,13 @@ body.rr-on #rdNotes{display:none}
 .rr-body{margin:0;font:15px/1.5 var(--display,Georgia,serif);color:var(--page-ink);cursor:text;white-space:pre-wrap}
 .rr-edit{width:100%;font:15px/1.5 var(--display,Georgia,serif)}
 @media (max-width:860px){body.rr-on .layout{flex-direction:column}body.rr-on .reader{flex:1 1 55%;min-height:0}.rr{width:auto;min-width:0;flex:1 1 45%;border-left:0;border-top:1px solid var(--line)}}
+.j-prompts{margin:0 0 10px}
+.j-prompts p{margin:0 0 6px}
+.j-prow{display:flex;flex-wrap:wrap;gap:6px}
+.j-prow button.done{background:var(--accent-soft);border-color:transparent}
+.j-psrc{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.j-psrc.hidden{display:none}
+.j-psrc select{max-width:100%;flex:1 1 260px}
 .pf-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:8px;max-height:min(56vh,520px);overflow:auto}
 .pf-list li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:var(--page)}
 .pf-k{font-size:12px;font-weight:700;color:var(--muted);text-transform:none}
@@ -3139,7 +3146,7 @@ body.rr-on #rdNotes{display:none}
     <div id="helpTips" class="help-tips"></div>
     <h4>The research journal</h4>
     <ul>
-      <li>Open <b>Journal</b> on the research desk, or <b>＋ Today’s entry</b> in the Research tab. It has four parts: the research design, hypotheses, a dated log and a search log.</li>
+      <li>Open <b>Journal</b> on the research desk, or <b>＋ Today’s entry</b> in the Research tab. It has four parts: the research design, hypotheses, a dated log and a search log. Above the log, <b>Research process</b> offers a prompt for each stage, from topic and first results through research question, keywords, notes on a source (pick the source and its citation goes in, in the document’s style), working title, thesis, outline and Draft 0, to peer feedback. Each sets the kind of entry and tags it with its stage; a tick marks the stages you’ve written about.</li>
       <li><b>Research design</b> holds the purpose, your research questions (the same ones as in Plan and the Questions tab), methods, sources and data, scope and limitations, ethics and milestones. Tick a question when it’s answered.</li>
       <li><b>Hypotheses</b> are claims you could be wrong about. Give each a status (untested, supported, mixed evidence, weakened, refuted), the question it answers, and the claims, notes and sources that support or challenge it. Changing the status asks what changed; the change is dated in the hypothesis’s history and recorded in the log.</li>
       <li>The <b>log</b> is a dated record: what you did, found or decided, dead ends, ideas and new questions, with tags and a link to a claim, note, source or question. <kbd>⌘/Ctrl Enter</kbd> adds the entry. Filter by kind or tag, or search it.</li>

@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.5.0';
+const APP_VERSION = '2.5.1';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -8918,6 +8918,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.5.1': ['The research journal has prompts for each stage of the research process, from first idea to peer feedback: topic, first results, narrowed topic, research question, keywords, leads, notes on a source (the citation goes in, in your document’s style), working title, thesis, outline, Draft 0 and peer feedback. Each sets the kind of entry and tags it, and the row of stages shows which you’ve written about. Open the journal’s Log, or press Today’s entry.'],
   '2.5.0': ['Proofread (F7, or in Tools) catches what the browser’s spell checker misses or doesn’t explain: about 400 common misspellings, mixed-up words in the places they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”), “a” and “an” by sound, doubled words, spacing, capitals after a full stop, and brackets or quotation marks that never close. Fix one, fix all spellings, or ignore a word for the whole project.',
     'Abstract and keywords (Export, or Document setup): build an abstract a part at a time, shaped for a research article, an essay or chapter, or a report; fill the parts from your own sentences; watch the word limit; and pick keywords from the names and terms this document uses most. They go under the title in Word, PDF, the web page, ePub, Markdown, Pandoc and LaTeX.',
     'Read and take notes: in the PDF reader, press Take notes. The PDF fills the screen with a note pad beside it; select a passage to quote it in the pad, add your comment, and save. Notes go to the PDF’s source with the page filled in as you scroll.'],
@@ -11199,6 +11200,40 @@ function aboutDoc() {
    desk. Research questions are the question items in Plan, shared.
    ================================================================ */
 const H_ST = { untested: 'Untested', supported: 'Supported', mixed: 'Mixed evidence', weakened: 'Weakened', refuted: 'Refuted' };
+// Journal prompts for the research process (2.5.1), stage by stage from first idea to peer feedback. Each sets the
+// kind of entry and tags it with its stage, so the row of stages shows which you've written about.
+const J_PROMPTS = [
+  ['topic', 'Topic', 'idea', 'Research topic: What do you want to find out about, and why does it matter to you?'],
+  ['initial results', 'First results', 'found', 'Initial research results: What did a first search turn up? What surprised you, and what keeps coming up?'],
+  ['narrowed topic', 'Narrowed topic', 'decided', 'Narrowed topic: Which part of the topic will you write about, and what will you leave out?'],
+  ['research question', 'Research question', 'question', 'Research question: What one question will this piece answer?'],
+  ['keywords', 'Keywords', 'did', 'Keywords and search phrases: Which words and phrases did you search with? Which worked, and which didn’t?'],
+  ['leads', 'Leads and trends', 'idea', 'Leads, questions and trends: Which threads are worth following? What patterns are you starting to see?'],
+  ['source notes', 'Notes on a source', 'found', 'Source: {cite}\nNotes: What does it say? How does it help answer your question, and how far do you trust it?'],
+  ['title', 'Working title', 'decided', 'Working title: Does it hook a reader, and does it tell them what the piece is about?'],
+  ['thesis', 'Thesis', 'decided', 'Thesis: Your answer to the research question, in one or two sentences.'],
+  ['outline', 'Outline', 'idea', 'Outline\nIntroduction: the hook, the context, the thesis.\nBody: three or four main points, each with its evidence.\n1. \n2. \n3. \nConclusion: so what, and who cares?'],
+  ['draft 0', 'Draft 0', 'did', 'Draft 0 (a skeleton draft): What did you get down? What tone and approach are you finding? What will you do differently in the next draft?'],
+  ['peer feedback', 'Peer feedback', 'found', 'Peer: \nFeedback: \nWhat I’ll change, and what I’ll keep: ']];
+function jPromptsHTML() {
+  const have = new Set(jr().log.flatMap(e => e.tags.map(t => t.toLowerCase())));
+  const done = J_PROMPTS.filter(p => have.has(p[0])).length;
+  return `<div class="j-prompts"><p class="small"><b>Research process</b> <span class="muted">${done} of ${J_PROMPTS.length} stages written about. Pick one to start an entry with its question.</span></p>
+    <div class="j-prow">${J_PROMPTS.map(([k, l], i) => `<button type="button" class="small${have.has(k) ? ' done' : ''}" data-jp="${i}" title="${esc(J_PROMPTS[i][3].split('\n')[0])}">${have.has(k) ? '<span aria-hidden="true">✓ </span>' : ''}${esc(l)}${have.has(k) ? '<span class="sr-only"> (written about)</span>' : ''}</button>`).join('')}</div>
+    <div class="j-psrc hidden" id="jPSrc"><label for="jPSrcSel" class="small">Which source?</label><select id="jPSrcSel"><option value="">Choose a source…</option>${sortedSources().map(x => { const l = sourceLabel(x); return `<option value="${esc(x.id)}">${esc(((l.who ? l.who + ', ' : '') + l.title).slice(0, 80))}</option>`; }).join('')}</select><span class="small muted">The citation goes in, in this document’s style.</span></div></div>`;
+}
+function jPrompt(i) {
+  const [k, , kind, tpl] = J_PROMPTS[i], t = $('#jText'); if (!t) return;
+  const r = $(`#jForm input[name=jkind][value=${kind}]`); if (r) r.checked = true;
+  const tags = jTags($('#jTags').value); if (!tags.map(x => x.toLowerCase()).includes(k)) tags.push(k); $('#jTags').value = tags.join(', ');
+  const body = tpl.includes('{cite}') ? tpl : tpl + '\n';
+  t.value = (t.value.trim() ? t.value.trim() + '\n\n' : '') + body;
+  $('#jPSrc').classList.toggle('hidden', !tpl.includes('{cite}'));
+  if (tpl.includes('{cite}')) { $('#jPSrcSel').value = ''; $('#jPSrcSel').focus(); return; }
+  // the caret goes where the writing starts: after "Peer: ", or on the line after the question
+  t.focus(); const at = /^Peer: $/m.test(t.value) ? t.value.lastIndexOf('Peer: ') + 6 : /\n1\. $/m.test(t.value) ? t.value.indexOf('\n1. ') + 4 : t.value.length;
+  t.setSelectionRange(at, at); t.scrollTop = t.scrollHeight;
+}
 const LOG_K = { did: 'Did', found: 'Found', decided: 'Decided', dead: 'Dead end', idea: 'Idea', question: 'Question', next: 'Next step', auto: 'Recorded' };
 const J_DESIGN = [
   ['purpose', 'Purpose and significance', 'What you’re trying to find out, and why it matters to your readers or your field.'],
@@ -11360,7 +11395,7 @@ function jLogView() {
   if (f) list = list.filter(e => e.kind === f); if (ft) list = list.filter(e => e.tags.includes(ft));
   if (fq) list = list.filter(e => (e.text + ' ' + e.tags.join(' ')).toLowerCase().includes(fq));
   let lastDate = '';
-  const compose = `<form class="j-compose" id="jForm"><div class="row j-kinds" role="radiogroup" aria-label="Kind of entry">${Object.entries(LOG_K).filter(([k]) => k !== 'auto').map(([k, v], i) => `<label class="j-kind k-${k}"><input type="radio" name="jkind" value="${k}" ${i === 0 ? 'checked' : ''}>${v}</label>`).join('')}</div>
+  const compose = jPromptsHTML() + `<form class="j-compose" id="jForm"><div class="row j-kinds" role="radiogroup" aria-label="Kind of entry">${Object.entries(LOG_K).filter(([k]) => k !== 'auto').map(([k, v], i) => `<label class="j-kind k-${k}"><input type="radio" name="jkind" value="${k}" ${i === 0 ? 'checked' : ''}>${v}</label>`).join('')}</div>
     <textarea id="jText" rows="3" placeholder="What you did, found or decided today. Dead ends count: they stop you searching the same place twice." aria-label="Journal entry"></textarea>
     <div class="row"><input id="jTags" placeholder="Tags, comma separated" aria-label="Tags" list="jTagList"><datalist id="jTagList">${tags.map(t => `<option value="${esc(t)}">`).join('')}</datalist><input id="jDate" type="date" value="${todayISO()}" aria-label="Date">${jPicker('jLink', true)}<button class="primary">Add entry</button></div>
     <p class="small muted">⌘/Ctrl+Enter adds the entry.</p></form>`;
@@ -11429,6 +11464,14 @@ function jWire(sec) {
       renderDesk(); renderResearch(); setTimeout(() => $('#jText')?.focus(), 20); toast('Entry added.');
     };
     form.addEventListener('submit', add);
+    $$('[data-jp]').forEach(b => b.addEventListener('click', () => jPrompt(+b.dataset.jp)));
+    $('#jPSrcSel')?.addEventListener('change', e => {
+      const id = e.target.value; if (!id) return; const d = curDoc() || P.docs[0], t = $('#jText');
+      let cite = ''; try { cite = htmlToText(previewBib((d && d.style) || DEFAULT_STYLE, id)).trim(); } catch (er) {} if (!cite) cite = citeFull(id);
+      t.value = t.value.replace('{cite}', cite);
+      const L = $('#jLink'), o = L && [...L.options].find(x => x.value === 'src:' + id); if (o) L.value = o.value;
+      $('#jPSrc').classList.add('hidden'); t.focus(); const at = t.value.indexOf('Notes: ', t.value.lastIndexOf(cite)) + 7; t.setSelectionRange(at, t.value.length);
+    });
     $('#jText').addEventListener('keydown', ev => { if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) add(ev); });
     $('#jTagF')?.addEventListener('change', e => { PREFS.jTag = e.target.value; savePrefs(); renderDesk(); });
     $('#jQ')?.addEventListener('input', debounce(e => { PREFS.jQ = e.target.value; renderDesk(); setTimeout(() => { const q = $('#jQ'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } }, 0); }, 300));

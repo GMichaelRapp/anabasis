@@ -4,6 +4,11 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.5.1] — 2026-11-25
+
+### Added
+- **Research process prompts in the journal.** Above the log, twelve stages of the research process, after a research-process worksheet used in teaching: topic, first results, narrowed topic, research question, keywords and search phrases, leads and trends, notes on a source, working title, thesis, outline (introduction, three or four points with evidence, conclusion), Draft 0 (the skeleton draft) and peer feedback (peer, feedback, what I’ll change). Each starts the entry with its question, sets the kind of entry (idea, found, decided, question, did) and tags it with its stage; a tick marks the stages with an entry. **Notes on a source** asks which source, puts in its full citation in the document’s style (APA if the document uses APA) and links the entry to the source.
+
 ## [2.5.0] — 2026-11-25
 
 ### Added

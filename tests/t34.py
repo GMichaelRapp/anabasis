@@ -12,7 +12,7 @@ async def main():
         nonlocal ok
         print(('PASS ' if cond else 'FAIL ') + name, extra if not cond else ''); ok = ok and bool(cond)
     errs = []
-    latest = {'tag': 'v2.5.0'}; calls = []
+    latest = {'tag': 'v2.5.1'}; calls = []
     async def gh(r):
         calls.append(r.request.url)
         await r.fulfill(status=200, content_type='application/json', body=json.dumps({'tag_name': latest['tag']}))
@@ -31,7 +31,7 @@ async def main():
         ctx, pg = await page({'startHome': False, 'toured': True, 'seenVersion': '1.5.0'})
         await pg.wait_for_function("() => $('#wnDlg').open", timeout=8000)
         r = await pg.evaluate("() => ({ open: $('#wnDlg').open, t: $('#wnTitle').textContent, items: $$('#wnBody li').length, h: $$('#wnBody h4').map(h => h.textContent), seen: PREFS.seenVersion })")
-        check('after an update, What’s new opens once with this version’s changes', r['open'] and r['t'] == 'What’s new in Anabasis 2.5.0' and r['items'] == 8 and r['seen'] == '2.5.0', r)
+        check('after an update, What’s new opens once with this version’s changes', r['open'] and r['t'] == 'What’s new in Anabasis 2.5.1' and r['items'] == 7 and r['seen'] == '2.5.1', r)
         await pg.click('#wnOk'); await pg.evaluate("() => wnCheck()"); await pg.wait_for_timeout(1200)
         check('…and not again', not await pg.evaluate("() => $('#wnDlg').open"))
         await pg.evaluate("() => { fillHelpTips(); $('#helpDlg').showModal(); }"); await pg.click('#helpNew'); await pg.wait_for_timeout(150)
@@ -40,11 +40,11 @@ async def main():
         ctx, pg = await page({'startHome': False, 'toured': True})
         try: await pg.wait_for_function("() => $('#wnDlg').open", timeout=8000)
         except Exception: pass
-        check('someone updating from before 1.6 (no record) sees it too', await pg.evaluate("() => $('#wnDlg').open && $$('#wnBody li').length === 8"))
+        check('someone updating from before 1.6 (no record) sees it too', await pg.evaluate("() => $('#wnDlg').open && $$('#wnBody li').length === 7"))
         await ctx.close()
         ctx, pg = await page(None, raw=True)
         r = await pg.evaluate("() => ({ wn: $('#wnDlg').open, tour: !$('#tour').classList.contains('hidden'), seen: PREFS.seenVersion })")
-        check('a first visit gets the tour, not What’s new', r == {'wn': False, 'tour': True, 'seen': '2.5.0'}, r)
+        check('a first visit gets the tour, not What’s new', r == {'wn': False, 'tour': True, 'seen': '2.5.1'}, r)
 
         # ---- the tour
         steps = []
@@ -55,17 +55,17 @@ async def main():
         check('the tour covers the research desk, marks and citation styles, and finishes', 9 <= len(steps) <= 10 and steps[0] == 'Welcome to Anabasis' and steps[-1] == 'Save the project file' and 'The research desk' in steps and 'Mark what matters' in steps and '55 citation styles' in steps, steps)
         await ctx.close()
 
-        ctx, pg = await page({'startHome': False, 'toured': True, 'seenVersion': '2.5.0'})
+        ctx, pg = await page({'startHome': False, 'toured': True, 'seenVersion': '2.5.1'})
         # ---- send feedback
         await pg.evaluate("() => { fillHelpTips(); $('#helpDlg').showModal(); }"); await pg.click('#helpFeedback'); await pg.wait_for_timeout(150)
         env = await pg.inner_text('#fbEnv')
-        check('feedback fills in the version, browser and device', env.startswith('Anabasis 2.5.0') and 'Chrome' in env and 'window 1440×900' in env, env)
+        check('feedback fills in the version, browser and device', env.startswith('Anabasis 2.5.1') and 'Chrome' in env and 'window 1440×900' in env, env)
         await pg.select_option('#fbKind', 'idea'); await pg.fill('#fbMsg', 'A word-count widget for each part\nwould help.')
         await pg.evaluate("() => { window.__opened = []; window.open = (u) => { window.__opened.push(u); }; }")
         await pg.evaluate("() => { window.__clip = ''; navigator.clipboard.writeText = async t => { window.__clip = t; }; }")
         await pg.click('#fbCopy'); await pg.wait_for_timeout(100)
         clip = await pg.evaluate("() => window.__clip")
-        check('Copy gives a report to paste into an email', clip.startswith('Idea: A word-count widget for each part') and '- Anabasis 2.5.0' in clip, clip[:120])
+        check('Copy gives a report to paste into an email', clip.startswith('Idea: A word-count widget for each part') and '- Anabasis 2.5.1' in clip, clip[:120])
         await pg.click('#fbGitHub'); await pg.wait_for_timeout(100)
         u = (await pg.evaluate("() => window.__opened"))[0]
         q = urllib.parse.parse_qs(urllib.parse.urlparse(u).query)
@@ -76,13 +76,13 @@ async def main():
         # ---- update check: never unless asked
         await pg.wait_for_timeout(300)
         check('no update check unless it’s switched on', not calls)
-        latest['tag'] = 'v2.5.0'
+        latest['tag'] = 'v2.5.1'
         await pg.evaluate("() => updCheck(true)"); await pg.wait_for_timeout(300)
         check('Check for a newer version says when you’re current', 'newest version' in await pg.inner_text('#toast') and await pg.evaluate("() => $('#updBar').classList.contains('hidden')"))
-        latest['tag'] = 'v2.5.1'
+        latest['tag'] = 'v2.5.2'
         await pg.evaluate("() => { PREFS.updCheck = true; PREFS.updAt = Date.now() - 8 * 864e5; updMaybe(); }"); await pg.wait_for_timeout(400)
         r = await pg.evaluate("() => ({ bar: !$('#updBar').classList.contains('hidden'), msg: $('#updMsg').textContent })")
-        check('switched on, a weekly check announces a newer release', r['bar'] and '2.5.1 is out' in r['msg'], r)
+        check('switched on, a weekly check announces a newer release', r['bar'] and '2.5.2 is out' in r['msg'], r)
         n = len(calls)
         await pg.evaluate("() => updMaybe()"); await pg.wait_for_timeout(200)
         check('…and asks at most once a week', len(calls) == n)
