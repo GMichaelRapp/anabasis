@@ -25,7 +25,7 @@ async def main():
 
         # ---- the deck itself
         deck = await pg.evaluate("() => socData().map(g => ({ id: g.id, label: g.label, suits: g.suits, n: g.stems.length, bad: g.stems.filter(s => !/[?.][”]?$/.test(s) || (s.match(/___/g) || []).length > 2) }))")
-        check('Socrates has 19 kinds of question and 342 stems', len(deck) == 19 and sum(g['n'] for g in deck) == 342, [(g['id'], g['n']) for g in deck])
+        check('Socrates has 19 kinds of question and 364 stems', len(deck) == 19 and sum(g['n'] for g in deck) == 364, [(g['id'], g['n']) for g in deck])
         check('every stem ends as a question or sentence and has at most two blanks', all(not g['bad'] for g in deck), [g['bad'] for g in deck if g['bad']])
         check('every kind says which selections it suits', all(g['suits'] and all(x in {'term', 'claim', 'number', 'source', 'person', 'event', 'none'} for x in g['suits']) for g in deck))
 
@@ -75,7 +75,9 @@ async def main():
         await pg.evaluate("() => { getSelection().removeAllRanges(); savedRange = null; switchTab('research'); }")
         await pg.click('#rsSoc'); await pg.wait_for_timeout(250)
         mx = await pg.evaluate("() => ({ about: $('#socAbout').value, kind: socKindNow, foot: $('#socFoot').textContent, n: $$('#socCards li').length })")
-        check('with nothing selected Socrates deals a mix of kinds', mx['about'] == '' and mx['kind'] == 'none' and mx['n'] == 3 and 'a mix of kinds' in mx['foot'] and '342 questions in 19 kinds' in mx['foot'], mx)
+        check('with nothing selected Socrates deals a mix of kinds', mx['about'] == '' and mx['kind'] == 'none' and mx['n'] == 3 and 'a mix of kinds' in mx['foot'] and '364 questions in 19 kinds' in mx['foot'], mx)
+        noblank = await pg.evaluate("() => { let n = 0; for (let i = 0; i < 20; i++) { socShuffle(); n += socDeal.filter(d => d.s.includes('___')).length; } return n; }")
+        check('with nothing selected, most questions stand on their own instead of leaving a blank', noblank <= 20, noblank)
         await pg.select_option('#socKind', 'clarify'); await pg.wait_for_timeout(100)
         await pg.evaluate("() => { const g = socData().find(x => x.id === 'clarify'); socDeal[0] = { g, s: 'What exactly do I mean by ___?' }; socRender(); }")
         await pg.click('[data-soc-use="0"]'); await pg.wait_for_timeout(300)
@@ -139,6 +141,18 @@ async def main():
         rd = z.read(root + '/README.txt').decode()
         check('a README says what is where and how to use it without Anabasis', 'documents/' in rd and 'notes/' in rd and 'references.bib' in rd and 'pandoc' in rd.lower() and 'zerohistory.net/anabasis' in rd, rd[:300])
         check('Markdown has no leftover placeholders', 'ZZC' not in text and 'ZZF' not in text)
+        # still the thesis starter, loaded for the archive above
+        # 2.3: a person, a place, a claim and your project
+        fit = await pg.evaluate("""() => { const out = {}; [['Xenophon', 'person'], ['Cunaxa', 'event']].forEach(([w, want]) => { const k = socNameKind(w); let bad = 0, proj = 0;
+            for (let i = 0; i < 40; i++) { openSocrates({ about: w, fresh: true }); socDeal.forEach(d => { const t = SOC_TAG[d.s] || ''; if (k === 'person' && /(had not happened|___ (had )?happen)/.test(d.s)) bad++; if (k !== 'person' && /What did ___ want|had decided the other way/.test(d.s)) bad++; if (/Lee|Engels|Waterfield|Xenophon|Chapter|thread/.test(d.s.replace(w, ''))) proj++; }); }
+            out[w] = { k, bad, proj }; }); $('#socDlg').close(); return out; }""")
+        check('a name used with "says" is a person, one used with "at" or "left" a place or event', fit['Xenophon']['k'] == 'person' and fit['Cunaxa']['k'] == 'event', fit)
+        check('a person never gets a question meant for an event, nor a place one meant for a person', fit['Xenophon']['bad'] == 0 and fit['Cunaxa']['bad'] == 0, fit)
+        check('some questions name the project: an author, the chapter, a thread', fit['Xenophon']['proj'] > 0 and fit['Cunaxa']['proj'] > 0, fit)
+        tags = await pg.evaluate("() => { const t = Object.values(SOC_TAG); return { p: t.filter(x => x === 'p').length, x: t.filter(x => x === 'x').length, c: t.filter(x => x === 'c').length, leak: socData().some(g => g.stems.some(s => /\\{[pxc]\\}/.test(s))) }; }")
+        check('stems carry person, non-person and claim tags, stripped from the text', tags['p'] >= 15 and tags['x'] >= 18 and tags['c'] >= 5 and not tags['leak'], tags)
+        short = await pg.evaluate("() => { socKindNow = 'claim'; return socQ('Daily needs ran into many tons of grain for a force of this size and more'); }")
+        check('a long claim is quoted by its opening words', short == '“Daily needs ran into many tons of…”', short)
         await b.close()
     check('no page errors', not errs, errs[:5])
     print('t42', 'OK' if ok else 'FAILED'); sys.exit(0 if ok else 1)

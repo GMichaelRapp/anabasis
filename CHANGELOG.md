@@ -4,6 +4,25 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-11-25
+
+### Changed
+- **The Oracle talks more like a person and less like a form.** Still no AI and nothing online: the additions are about 9 KB of patterns and replies.
+  - It remembers what it just asked, so a short answer (“yes”, “no”, “maybe”, “hmm”, “fair enough”) is answered against that question, and an either-or question answered “yes” gets “Yes to which?”.
+  - It answers when you talk about the talk: thanks, praise, “what do you think?” (it reads back what you’ve said and asks which you’d put your name to), “why do you keep asking questions?”, “are you an AI?”, and “you’re useless” (with a way out to the check-in, open questions or Socrates).
+  - It acknowledges how you say you feel (tired, frustrated, worried, overwhelmed, discouraged, excited, bored) before asking anything, and knows when it’s late.
+  - It notices when you repeat yourself, and asks what won’t let go.
+  - It knows your sources’ authors by name: “Lee says the army was a moving city” gets “Does Lee say that in so many words? If so, note the page,” with a button to open the source; “I agree with Lee” asks who would push back.
+  - Once in a long talk, or when you say “recap”, it reads back the claims you’ve made; after a long session it offers to save the conversation to the journal.
+  - New script groups for advisers, editors and reviewers, things you found, distrust, sources that contradict each other, and what you’re working on; “maybe” no longer gets a lecture on probability (that’s kept for “reportedly”, “allegedly” and the like).
+  - It no longer drops a passing word into a question (“Could don’t be deliberately misleading?”): a topic has to be a quotation, a name, or something your project treats as a subject. It no longer repeats a reply it gave in the last few turns.
+- **Socrates fits the question to the selection and the project.**
+  - It tells a person from a place or an event by how you write about the name (“Xenophon says…”, “at Cunaxa”) and by your sources’ authors, and 42 stems that suit only a person, only a non-person or only a claim are now tagged, so a battle no longer gets “What did ___ want?” and a person no longer gets “What if ___ had not happened?”.
+  - 22 new stems name parts of your project: one of your sources’ authors (one who writes about the selection, when one does), the document you’re in, or a thread (“How would Lee explain ___? Where would we part ways?”). 364 stems in all.
+  - A long claim is quoted by its opening words, so the question still reads as one. With nothing selected, it deals questions that stand on their own instead of ones with empty blanks.
+  - The kinds of question you use come up a little more often.
+- Names & spellings: an entry marked as an organization now counts as a person or group for Socrates, and a place as a place.
+
 ## [2.2.0] — 2026-11-24
 
 ### Added

@@ -56,4 +56,4 @@ Send a copy and Take changes back work entirely through files you pass along you
 
 The Oracle is a script of keywords and sentence patterns built into the file, not AI. It reads what you type and searches your project in the browser, and nothing you say to it leaves your computer. Conversations are kept only if you press Save to journal, and then only in your project file.
 
-Socrates is a list of question stems built into the file. It reads only what you've selected and suggests questions on the spot, without AI and without going online, and it keeps nothing about what you asked. The archive export is put together in your browser and saved straight to your computer.
+Socrates is a list of question stems built into the file. It reads only what you've selected and suggests questions on the spot, without AI and without going online. All it keeps is a count, in this browser's settings, of which kinds of question you've used, so those come up a little more often; it keeps nothing about what you selected or asked. The archive export is put together in your browser and saved straight to your computer.

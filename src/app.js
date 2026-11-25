@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.2.0';
+const APP_VERSION = '2.3.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -8601,6 +8601,8 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.3.0': ['The Oracle talks more like a person and less like a form, still with no AI. It remembers what it just asked, so “yes”, “no” or “hmm” gets a sensible answer. It responds when you thank it, ask what it thinks, tell it you’re tired or frustrated, or repeat yourself. It knows your sources’ authors by name (“Lee says…” gets “Does Lee say that in so many words?”), and once in a long talk it reads back what you’ve said.',
+    'Socrates knows your project: some questions name your sources’ authors, the chapter you’re in or a thread (“How would Lee explain this?”). It tells a person from a place by how you write about them, so Xenophon no longer gets questions meant for a battle. Long claims are cut to their opening words, and the kinds of question you use come up a little more often.'],
   '2.2.0': ['The Oracle: talk your research through, beside the writing (Research tab → The Oracle, or Ctrl+K). It works the way ELIZA did in the 1960s: no AI, no internet, just patterns that turn what you say into questions, and a good memory for your own project. Ask “what have I written about Cunaxa?”, “how many claims need a source?”, “what’s due?” or “how far am I from my word goal?”.',
     'Say “note: …”, “question: …”, “hypothesis: …” or “next step: …” and the Oracle files it. “Argue the other side” makes it push back on a claim, with any notes and contested claims of yours that cut against it. “Check in” starts the day with what’s waiting; “done for today” logs what you did and signs off with a maxim from Delphi.',
     'Select a passage and choose Mark → Consult the Oracle (or O): it reads the passage back with questions about its sources, numbers, hedges and causes. Conversations are forgotten unless you press Save to journal.'],
@@ -9013,7 +9015,7 @@ $('#qCancel').addEventListener('click', () => { qRange = null; $('#qDlg').close(
    ================================================================ */
 const TRIPOD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg>';
 let ORS = null;
-const ORC = { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, selfTalk: 0, said: 0 };
+const ORC = { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, selfTalk: 0, said: 0, asked: '', recent: [], you: [], topic: '', recapped: false, longSaid: false };
 function orcScript() {
   if (ORS) return ORS;
   const S = { subs: {}, syn: {}, groups: [], none: [] }; let g = null, rule = null;
@@ -9089,8 +9091,8 @@ function orcReply(text) {
   for (const g of hits) for (const r of g.rules) {
     const caps = orcMatch(r.pat, toks); if (!caps) continue;
     const n = r.replies.length; let out = null;
-    for (let k = 0; k < n && !out; k++) { const i = ((ORC.rot[r.id] || 0) + k) % n; out = orcFill(r.replies[i], caps); if (out) ORC.rot[r.id] = i + 1; }
-    r.mem.forEach(m => { const f = orcFill(m, caps); if (f && !ORC.mem.includes(f)) { ORC.mem.push(f); if (ORC.mem.length > 5) ORC.mem.shift(); } });
+    for (let pass = 0; pass < 2 && !out; pass++) for (let k = 0; k < n && !out; k++) { const i = ((ORC.rot[r.id] || 0) + k) % n, f = orcFill(r.replies[i], caps); if (f && (pass || !ORC.recent.includes(f))) { out = f; ORC.rot[r.id] = i + 1; } }
+    r.mem.forEach(m => { const f = orcFill(m, caps); if (f && !ORC.mem.some(x => x.t === f)) { ORC.mem.push({ t: f, at: ORC.said }); if (ORC.mem.length > 6) ORC.mem.shift(); } });
     if (out) return { text: out, group: g.id };
   }
   return null;
@@ -9112,7 +9114,7 @@ function orcTopic(text) {
 function orcAct(fn) { ORC.acts.push(fn); return ORC.acts.length - 1; }
 function orcBtn(label, fn, cls = '') { return `<button class="small ${cls}" data-oa="${orcAct(fn)}">${label}</button>`; }
 function orcPush(who, html, text) { ORC.log.push({ who, html, text: text || htmlToText(html), at: nowISO() }); orcRender(); }
-function orcSay(html) { orcPush('oracle', html); }
+function orcSay(html) { orcPush('oracle', html); const t = htmlToText(html).trim(); ORC.recent.push(t, ...((html.match(/<p>([^<]{8,200})<\/p>/g) || []).map(x => htmlToText(x).trim()))); ORC.recent = ORC.recent.slice(-16); }
 function orcRender() {
   const L = $('#orcLog'); if (!L) return;
   L.innerHTML = ORC.log.map(m => m.who === 'you' ? `<div class="orc-m you"><div class="orc-b">${m.html}</div></div>` : `<div class="orc-m or"><span class="orc-ic" aria-hidden="true">${TRIPOD}</span><div class="orc-b"><span class="sr-only">The Oracle: </span>${m.html}</div></div>`).join('');
@@ -9216,8 +9218,8 @@ function orcStem(st, subj) {
 }
 function orcCounter(claim) {
   const G = socData(), pick = ['alternatives', 'assumptions', 'evidence', 'causation'].map(id => G.find(g => g.id === id)).filter(Boolean);
-  const g = pick[ORC.rounds % pick.length];
-  return orcStem(socPick(g, claim), `“${claim}”`);
+  const g = pick[ORC.rounds % pick.length]; SOCX = socContext(claim);
+  return orcStem(socPick(g, claim, 'claim'), `“${claim}”`);
 }
 function orcAgainst(claim) {
   const out = [], terms = [...new Set([orcTopic(claim), ...(claim.match(/\b[A-Z][\wÀ-ɏ'-]{3,}/g) || [])])].filter(Boolean).slice(0, 3);
@@ -9308,10 +9310,103 @@ function oracleConsult(range) {
   if (acr.length) qs.push(`Will a reader know what ${acr.slice(0, 2).map(a => `“${esc(a)}”`).join(' and ')} ${acr.length > 1 ? 'mean' : 'means'} by this point?`);
   const marked = claimRows().filter(x => (x.c.status === 'need' || x.c.status === 'disp') && text.includes(x.p.text.slice(0, 40)));
   if (marked.length) qs.push(`You marked part of this as ${marked[0].c.status === 'disp' ? 'contested' : 'needing a source'}. Has that changed?`);
-  if (qs.length < 3 && sents.length) { const g = socData().find(x => x.id === (cites ? 'implications' : 'evidence')); if (g) qs.push(esc(orcStem(socPick(g, 'x'), 'this'))); }
+  if (qs.length < 3 && sents.length) { const g = socData().find(x => x.id === (cites ? 'implications' : 'evidence')); if (g) { SOCX = socContext(''); qs.push(esc(orcStem(socPick(g, 'x', 'claim'), 'this'))); } }
   ORC.last = text;
   orcSay(qs.length ? `<p>Reading it back to you:</p><ol class="orc-ex">${qs.slice(0, 5).map(q => `<li>${q}</li>`).join('')}</ol><p>Which do you want to take on first? Say <b>question: …</b> to keep one.</p>` : '<p>It reads cleanly to me: cited, no loose numbers, no hedges. What’s the weakest word in it?</p>');
   ORC.said++;
+}
+/* ---------- talking like a person, not a form (2.3) ----------
+   Still no AI: it remembers what it last asked, so a "yes" or a "hmm" is answered in context; it says
+   something back when you thank it, ask its opinion, tell it you are tired, or repeat yourself; it knows
+   your sources' authors by name; and once in a long talk it reads back what you have said. */
+// one of several ways to say a thing, not the one it said lately
+function orcOne(key, list) {
+  const n = list.length; let i = (ORC.rot[key] || 0);
+  for (let k = 0; k < n; k++) { const x = list[(i + k) % n]; if (!ORC.recent.includes(x)) { ORC.rot[key] = (i + k + 1) % n; return x; } }
+  ORC.rot[key] = (i + 1) % n; return list[i % n];
+}
+const orcHour = () => new Date().getHours();
+const orcLate = () => { const h = orcHour(); return h >= 23 || h < 5; };
+// a topic worth asking about: a quotation, a name, or a word your project actually uses
+function orcStrong(text) {
+  const t = orcTopic(text); if (!t) return '';
+  if (/["“]/.test(text) && text.includes(t)) return t;
+  if (/^[A-ZÀ-Ý]/.test(t) || (P.entities || []).some(e => [e.name, ...(e.variants || [])].some(v => String(v).toLowerCase() === t.toLowerCase()))) return t;
+  if (/['’]|ly$/.test(t)) return '';
+  // a plain word counts when the project treats it as a subject: a note's title or tag, a thread, a source's title, or a run of paragraphs
+  const low = t.toLowerCase(), r = aboutSearch(t); if (!r) return '';
+  const named = P.notes.some(n => (n.title || '').toLowerCase().includes(low) || (n.tags || []).some(g => g.toLowerCase() === low)) || P.threads.some(h => (h.name || '').toLowerCase().includes(low)) || r.sources.some(x => (x.csl.title || '').toLowerCase().includes(low));
+  return named || r.paras.length >= 3 ? t : '';
+}
+// a Socrates question that suits the topic: a person, a place or event, or a term
+function orcTopicStem(topic) {
+  // an author of one of your sources is a witness or a scholar, not a figure in the story
+  if (P.sources.some(s => socAuthor(s) === topic)) { const ps = topic + (/s$/.test(topic) ? '’' : '’s'); return orcOne('auth', [`What does ${topic} rely on there: evidence, or ${ps} own estimate?`, `Where would ${ps} critics push hardest?`, `If ${topic} is wrong about this, what else in your draft falls with it?`]); }
+  const kind = /^[A-ZÀ-Ý]/.test(topic) ? socNameKind(topic) : 'term', suits = kind === 'name' ? ['person', 'event'] : kind === 'event' ? ['event', 'term'] : [kind];
+  const G = socData().filter(g => g.suits.some(x => suits.includes(x))); if (!G.length) return '';
+  SOCX = socContext(topic);
+  return orcStem(socPick(G[Math.floor(Math.random() * G.length)], topic, kind), topic);
+}
+// "yes", "no", "hmm": answered against what it just asked
+const ORC_SHORT = /^(?:(yes|yeah|yep|yup|sure|definitely|absolutely|of course|correct|i do|it is|it does)|(no|nope|nah|not really|not exactly|i do not think so|i don'?t think so)|(maybe|perhaps|possibly|i guess|i suppose|kind of|sort of|could be|partly)|(hmm+|hm+|um+|uh+|er+|ok|okay|k|right|i see|well|so|huh)|(exactly|true|fair|fair enough|good point|agreed|indeed|that'?s true|that'?s fair))[\s.!?…,]*$/i;
+function orcShort(m) {
+  const asked = ORC.asked || '', choice = / or /.test(asked) && /\?$/.test(asked), t = ORC.topic;
+  if (m[1]) return choice ? orcOne('ych', ['Yes to which? It was an either-or.', 'Which one, though?']) : orcOne('yes', ['Then say it in one sentence, the way you’d put it to a reader.', 'Go on, then: why?', 'What would you point to, if someone asked you to show it?', 'Good. What follows from it?']);
+  if (m[2]) return choice ? orcOne('nch', ['Neither, then? What’s the third possibility?', 'Then what is it?']) : orcOne('no', ['Then what?', 'What would have to be different for the answer to be yes?', 'Fair enough. What’s the real answer, then?', 'What makes you sure it’s a no?']);
+  if (m[3]) return orcOne('may', ['Which way are you leaning?', 'What would tip it one way or the other?', 'Half a yes is a start. What’s the half you’re sure of?']);
+  if (m[5]) return orcOne('agr', ['Then write it down before it slips away. Say note: and the thought, and I’ll keep it.', 'So where does that leave the draft?', 'Then the next question is what follows from it.']);
+  const pause = orcOne('pause', ['Take your time.', 'No hurry.', 'Mm.', 'Still here.']);
+  if (t && Math.random() < 0.7) { const q = orcTopicStem(t); if (q) return `${pause} Try it from another side: ${q}`; }
+  const mem = orcMemory(); if (mem) return `${pause} ${mem}`;
+  return `${pause} ${orcOne('pause2', ['What were you about to say?', 'Start anywhere. What’s the first thing that comes to mind?', 'What’s the part you’re least sure of?'])}`;
+}
+// something you said a while ago, raised again
+function orcMemory() { const i = ORC.mem.findIndex(x => ORC.said - x.at >= 4); return i < 0 ? '' : ORC.mem.splice(i, 1)[0].t; }
+// feelings: said back before any question
+const ORC_FEEL = [
+  [/\b(tired|exhausted|sleepy|knackered|worn out|burn[ te]+out|drained|wiped)\b/i, () => orcLate() ? ['It’s late, and late work often needs redoing in the morning.', 'It’s late. The page will still be here tomorrow.'] : ['Then let’s keep it small.', 'Tired is information too.'], ['What’s one thing you could finish in the next twenty minutes, and then stop?', 'Would it help more to stop now, or to set up tomorrow’s first step? Say next step: and I’ll keep it.']],
+  [/\b(anxious|worried|nervous|panic\w*|scared|stressed|dread\w*)\b/i, () => ['That’s a heavy way to work.', 'Worry tends to make the whole thing look bigger than it is.'], ['What, specifically, are you afraid will go wrong?', 'What’s the part you’re sure of? Start from there.']],
+  [/\b(frustrat\w*|annoyed|angry|fed up|sick of|hate (this|it))\b/i, () => ['That sounds maddening.', 'Frustration usually means you care about getting it right.'], ['What exactly is in the way: the sources, the argument, or the sentences?', 'If you had to name the one thing that isn’t working, what is it?']],
+  [/\b(overwhelmed|drowning|too much|swamped|buried)\b/i, () => ['Then let’s make it smaller.', 'One thing at a time, then.'], ['If you could only do one thing on this project this week, what would it be?', 'What could you set aside, safely, for now?']],
+  [/\b(sad|discouraged|demoral[iz]s?ed|hopeless|giving up|want to quit)\b/i, () => ['Some days the work is heavy. Be kind to yourself about it.', 'That’s a hard place to write from.'], ['What would count as a small win today, even a very small one?', 'Is there someone you could talk this through with, besides me?']],
+  [/\b(excited|happy|thrilled|breakthrough|it works|nailed it|on a roll|feeling good|finally (got|found|worked|figured))\b/i, () => ['Good!', 'That’s the good part of the job.'], ['Write down what you did while you remember it. Say found: or log: and I’ll keep it.', 'What does it open up next?']],
+  [/\b(bored|boring|tedious|a slog|slogging)\b/i, () => ['Every project has a stretch like this.', 'Then let’s find the interesting part.'], ['What’s the one question in it you actually want answered?', 'Is it boring because it’s routine, or because you already know how it ends?']]];
+function orcFeel(text) {
+  for (const [re, ack, ask] of ORC_FEEL) if (re.test(text)) { const k = String(re).slice(3, 12); return `${orcOne('fa' + k, ack())} ${orcOne('fq' + k, ask)}`; }
+  return '';
+}
+// what you've said, read back: the statements, not the commands
+function orcStatements() {
+  const seen = new Set();
+  return ORC.you.filter(x => x.w >= 6 && !x.feel && !/\?$/.test(x.t) && !ORC_SHORT.test(x.t) && !/^(note|question|hypothesis|log|argue|what|how|which|who|why)\b/i.test(x.t)).reverse().filter(x => !seen.has(x.n) && seen.add(x.n)).reverse();
+}
+function orcRecap(lead) {
+  const st = orcStatements().slice(-3);
+  if (!st.length) return `<p>${lead || 'I don’t have opinions, only your words and your notes.'} Tell me what you think, and I’ll push on it.</p>`;
+  ORC.recapped = true;
+  return `<p>${lead || 'I don’t have opinions, only your words. Here’s some of what you’ve told me:'}</p><ul class="orc-ex">${st.map(x => `<li>“${esc(x.t.slice(0, 180))}”</li>`).join('')}</ul><p>${orcOne('recap', ['Which of these would you put your name to in print?', 'Which one is the spine, and which are you still testing?', 'Which of these needs a source before it can go in the draft?'])}</p>`;
+}
+// you said this before, word for word or nearly
+function orcSame(n) {
+  const a = new Set(n.split(' '));
+  return ORC.you.find(x => ORC.said - x.at >= 2 && x.w >= 5 && (x.n === n || (() => { const b = new Set(x.n.split(' ')); let k = 0; a.forEach(w => b.has(w) && k++); return k / Math.max(a.size, b.size) >= 0.8; })()));
+}
+// your sources' authors, by name
+function orcPeople(text) {
+  for (const s of P.sources) {
+    const fam = socAuthor(s); if (!fam || fam.length < 3 || !/^[A-ZÀ-Ý]/.test(fam)) continue;
+    const re = new RegExp(`\\b${fam.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`); if (!re.test(text)) continue;
+    const recent = ORC.echoed['@' + fam] !== undefined && ORC.said - ORC.echoed['@' + fam] < 6;
+    ORC.echoed['@' + fam] = ORC.said; ORC.echoed[fam.toLowerCase()] = ORC.said;
+    const l = sourceLabel(s), what = `<i>${esc(l.title.slice(0, 90))}</i>${l.yr ? ` (${esc(l.yr)})` : ''}`, open = orcBtn('Open the source', () => openSource(s.id));
+    const said = new RegExp(`\\b${fam}\\s+(?:says|said|argues|argued|writes|wrote|claims|claimed|thinks|thought|calls|called|suggests|suggested|shows|showed|reckons|believes)\\s+(?:that\\s+)?(.{6,})$`, 'i').exec(text.replace(/[.!]+$/, ''));
+    if (said) return `<p>${esc(fam)} is in your sources: ${what}. Does ${esc(fam)} say “${esc(said[1].slice(0, 120))}” in so many words? If so, note the page. If it’s your reading of ${esc(fam)}, the draft should say so. ${open}</p>`;
+    if (/\bdisagree\w*\s+with\b/i.test(text)) return `<p>Where exactly do you part ways with ${esc(fam)} (${what}): over the evidence, or over what ${esc(fam)} makes of it? ${open}</p>`;
+    if (/\bagree\w*\s+with\b/i.test(text)) return `<p>Agreeing with ${esc(fam)} is easy when ${esc(fam)} is the source you know best. Who among your sources would push back? ${open}</p>`;
+    if (recent) return '';
+    return `<p>${esc(fam)}: that’s ${what} in your sources. ${orcOne('ppl', ['Was this author in a position to know?', 'Is that the author talking, or the author’s own sources?', 'How close to the events was this written?'])} ${open}</p>`;
+  }
+  return '';
 }
 /* ---------- one turn ---------- */
 const ORC_RE = {
@@ -9334,6 +9429,13 @@ const ORC_RE = {
   saveLong: /^(?:please\s+)?(?:save|keep|file|add|make|log|record|put|turn|write)\b(.*?)\b(?:as|to|into|in|a)?\s*(?:a|an|the|my)?\s*(note|question|hypothesis|journal entry|journal|log entry|log|next step|idea|dead end)\b\s*[:\-–]?\s*(.*)$/i,
   noteThat: /^(?:note|log|remember|record) that\s+(.+)$/i,
   unsure: /\b(i (do not|don'?t) know|not sure|no idea|unsure|stuck|lost|confused|can'?t (figure|work) (it )?out|dunno|idk)\b/i,
+  thanks: /^(?:ok(?:ay)?[,!]?\s*)?(thanks|thank you|thx|ty|cheers|much appreciated)\b/i,
+  praise: /\b(this|that|you)\s+(?:(?:is|are|was|were|’s|'s)\s+)?(?:really\s+|actually\s+|very\s+|so\s+)?(helping|helpful|useful|great|good|clever)\b|\b(that|this) helps\b|\bgood question\b/i,
+  rude: /\byou('?re| are) (useless|stupid|dumb|annoying|unhelpful|no help|a joke)\b|\b(isn'?t|is not|not|aren'?t) (helping|helpful|useful)\b|\bthis is (useless|pointless)\b|\bshut up\b|\bgo away\b/i,
+  opinion: /\bwhat (do|would) you (think|say|suggest|recommend|do)\b|\byour (opinion|view|take|advice)\b|\btell me what to (do|write|think)\b|\bwhat should i (do|write)\b|\bany (ideas|advice|suggestions)\b|\bhelp me (decide|choose)\b/i,
+  meta: /\bwhy (do|are) you (keep(ing)? )?(ask|asking)\b|\b(stop|quit) asking\b|\b(only|just|all you do is) (ask|asking|questions)\b|\bare you (a bot|a robot|real|ai|an ai|human|alive|a person|conscious|sentient|smart|chatgpt|claude)\b|\bwho are you\b|\bwhat are you\b/i,
+  recap: /\b(recap|sum (it|this|that) up|summari[sz]e|where are we|what have i (said|told you))\b/i,
+  hi: /^(hi|hello|hey|hiya|greetings|good (afternoon|evening)|evening|yo|howdy)\b[\s!.,]*(oracle)?[\s!.,]*$/i,
   sure: /\b(certain|sure|definitely|undoubtedly|proves?|obviously|clearly)\b/i,
   selfx: /\b(i (think|believe|feel|want|wish|hope)|my (view|bias|instinct|gut))\b/i };
 function orcTurn(raw) {
@@ -9378,25 +9480,48 @@ function orcTurn(raw) {
   if ((m = ORC_RE.about.exec(text))) return orcAbout((m[1] || m[2] || '').replace(/^(the|my)\s+/i, ''));
   // a statement: argue it, or reflect it, and bring in the project where it helps
   if (ORC.mode === 'devil') { ORC.last = text; return orcDevilTurn(text); }
-  const unsure = ORC_RE.unsure.test(text); if (unsure) ORC.unsure++;
-  const topic = orcTopic(text);
-  if (topic) ORC.topics[topic.toLowerCase()] = (ORC.topics[topic.toLowerCase()] || 0) + 1;
-  const r = orcReply(text);
-  let html = '';
-  if (r) html = `<p>${esc(r.text)}</p>`;
-  else if (ORC.mem.length && ORC.said % 3 === 0) html = `<p>${esc(ORC.mem.shift())}</p>`;
-  else if (topic && Math.random() < 0.6) { const G = socData().filter(g => g.suits.some(x => ['term', 'event', 'person'].includes(x))), g = G[Math.floor(Math.random() * G.length)]; html = `<p>${esc(orcStem(socPick(g, topic), topic))}</p>`; }
-  else { const n = orcScript().none.rules[0].replies; html = `<p>${esc(n[(ORC.rot.none = ((ORC.rot.none || 0) + 1)) % n.length])}</p>`; }
-  // the project: what you have on this, once in a while
-  if (topic && topic.length > 2 && (ORC.echoed[topic.toLowerCase()] === undefined || ORC.said - ORC.echoed[topic.toLowerCase()] > 8)) {
-    const a = aboutSearch(topic), n = a ? a.notes.length + a.sources.length + a.paras.length : 0;
-    if (n) { ORC.echoed[topic.toLowerCase()] = ORC.said; html += `<p class="orc-proj">You have ${[[a.notes.length, 'note', 'notes'], [a.sources.length, 'source', 'sources'], [a.paras.length, 'paragraph', 'paragraphs']].filter(x => x[0]).map(x => orcPl(x[0], x[1], x[2])).join(', ')} on <b>${esc(topic)}</b>. ${orcBtn('Show me', () => orcAbout(topic))}</p>`; }
+  const norm = text.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim(), wc = norm ? norm.split(' ').length : 0;
+  const same = wc >= 5 ? orcSame(norm) : null;
+  ORC.you.push({ t: text, n: norm, w: wc, at: ORC.said, feel: !!orcFeel(text) }); if (ORC.you.length > 60) ORC.you.shift();
+  const out = (html, ask) => { ORC.last = text; ORC.asked = ask || htmlToText(html).trim().split(/\n/).pop(); orcSay(html); };
+  // talk about the talk
+  if (ORC_RE.rude.test(text)) return out(`<p>${orcOne('rude', ['Fair. I’m a blunt instrument: a script, no AI, and questions are most of what I have.', 'That’s fair. I only turn your words around and look things up in your notes.'])} If that isn’t what you need right now, try one of these. ${orcBtn('Check in', () => orcCheckin(false))} ${orcBtn('What’s open?', () => orcStatus('open'))} ${orcBtn('Ask Socrates', () => openSocrates({ fresh: true }))}</p>`);
+  if (ORC_RE.meta.test(text)) return out(`<p>${orcOne('meta', ['Because the answers are yours, and you’ll trust them more than mine. I’m a script with a good memory for your notes, not an AI.', 'Questions are most of what I have. I can’t think, but I can look things up in your project: ask what you’ve written about something.', 'Socrates got the same complaint. It didn’t end well for him. But the answers you give are the useful part.'])}</p>`);
+  if (ORC_RE.opinion.test(text)) return out(orcRecap());
+  if (ORC_RE.recap.test(text)) return out(orcRecap('Here’s some of what you’ve told me so far:'));
+  if (ORC_RE.thanks.test(text) && wc <= 6) return out(`<p>${orcOne('thx', ['You’re welcome.', 'Any time.', 'Glad to.'])}${ORC.topic ? ` ${orcOne('thx2', [`Back to ${esc(ORC.topic)}?`, `Anything else on ${esc(ORC.topic)}?`])}` : ''}</p>`);
+  if (ORC_RE.praise.test(text) && wc <= 9) return out(`<p>${orcOne('praise', ['Good. Keep going while it’s moving: what’s next?', 'Then let’s not stop. What do you need to know next?', 'Good. Say note: if there’s something you want to keep.'])}</p>`);
+  if (ORC_RE.hi.test(text)) { const h = orcHour(), g = h < 5 ? 'You’re up late.' : h < 12 ? 'Good morning.' : h < 18 ? 'Hello again.' : 'Good evening.'; return out(`<p>${g} ${ORC.topic ? `Still on ${esc(ORC.topic)}?` : orcOne('hi', ['What are you working on?', 'Where did you leave off?'])}</p>`); }
+  let m2;
+  if ((m2 = ORC_SHORT.exec(text))) return out(`<p>${esc(orcShort(m2))}</p>`);
+  if (same) {
+    const q = same.t.split(/\s+/).slice(0, 8).join(' ') + (same.w > 8 ? '…' : '');
+    return out(`<p>${orcOne('same', [`You said that before, almost word for word: “${esc(q)}” It seems to matter. What is it about it that won’t let go?`, `That’s the second time you’ve said it. What would it take to settle it, so you can move on?`, `You keep coming back to that. Is it the heart of the chapter, or the thing in its way?`])}</p>`);
   }
-  // circling and being stuck
+  const unsure = ORC_RE.unsure.test(text); if (unsure) ORC.unsure++;
+  const topic = orcStrong(text);
+  if (topic) { ORC.topic = topic; ORC.topics[topic.toLowerCase()] = (ORC.topics[topic.toLowerCase()] || 0) + 1; }
+  const feel = orcFeel(text), people = orcPeople(text);
+  let html = '';
+  if (feel) html = `<p>${esc(feel)}</p>`;
+  else if (people) html = people;
+  else {
+    const r = orcReply(text);
+    if (r) html = `<p>${esc(r.text)}</p>`;
+    else if (!ORC.recapped && orcStatements().length >= 4 && ORC.said >= 10) html = orcRecap('Let me read some of it back to you. You’ve said:');
+    else { const mem = ORC.said % 2 ? orcMemory() : ''; const q = !mem && topic && Math.random() < 0.7 ? orcTopicStem(topic) : '';
+      html = `<p>${esc(mem || q || orcOne('none', orcScript().none.rules[0].replies))}</p>`; }
+  }
+  // the project: what you have on this, once in a while
+  if (topic && topic.length > 2 && !people && (ORC.echoed[topic.toLowerCase()] === undefined || ORC.said - ORC.echoed[topic.toLowerCase()] > 8)) {
+    const a = aboutSearch(topic), n = a ? a.notes.length + a.sources.length + a.paras.length : 0;
+    if (n) { ORC.echoed[topic.toLowerCase()] = ORC.said; html += `<p class="orc-proj">You have ${[[a.paras.length, 'paragraph', 'paragraphs'], [a.notes.length, 'note', 'notes'], [a.sources.length, 'source', 'sources']].filter(x => x[0]).map(x => orcPl(x[0], x[1], x[2])).join(', ')} on <b>${esc(topic)}</b>. ${orcBtn('Show me', () => orcAbout(topic))}</p>`; }
+  }
+  // circling and being stuck, and a long talk
   if (unsure && ORC.unsure >= 3 && ORC.unsure % 3 === 0) html += orcNudge();
   else if (topic && ORC.topics[topic.toLowerCase()] === 4) html += `<p class="orc-nudge">We keep coming back to <b>${esc(topic)}</b>. ${orcBtn('Everything about ' + esc(topic), () => openDesk('about', topic))} or <b>argue the other side</b> of what you think about it?</p>`;
-  ORC.last = text;
-  orcSay(html);
+  else if (ORC.said >= 24 && !ORC.longSaid) { ORC.longSaid = true; html += `<p class="orc-nudge">We’ve been at this a while. Keep what’s useful before it scrolls away? ${orcBtn('Save this conversation to the journal', orcSaveJournal)}</p>`; }
+  out(html);
 }
 function orcSaveJournal() {
   const lines = ORC.log.map(m => `${m.who === 'you' ? 'You' : 'Oracle'}: ${m.text.replace(/\s+/g, ' ').trim()}`).join('\n');
@@ -9404,7 +9529,7 @@ function orcSaveJournal() {
   jLog('did', 'Talked it through with the Oracle.\n\n' + lines, { tags: ['oracle'] }); markDirty(); renderResearch();
   toast('Saved the conversation to today’s journal.');
 }
-function orcNew() { Object.assign(ORC, { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, said: 0 }); orcGreet(); }
+function orcNew() { Object.assign(ORC, { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, said: 0, asked: '', recent: [], you: [], topic: '', recapped: false, longSaid: false }); orcGreet(); }
 function orcMount(body) {
   body.innerHTML = `<div class="orc">
     <div class="orc-head"><span class="orc-badge" aria-hidden="true">${TRIPOD}</span><div class="orc-t"><b>The Oracle</b><span class="small muted">Questions from your own words and notes. No AI: it reflects, it doesn’t think.</span></div><button class="small" id="orcSave" title="Save this conversation to today’s journal">Save to journal</button><button class="small ghost" id="orcNew">New</button></div>
@@ -9424,7 +9549,7 @@ $('#spBody').addEventListener('click', e => {
 });
 
 /* ---------- Socrates (2.1): question stems to start from ----------
-   342 unfinished questions in 19 kinds (data/socrates.txt). Socrates deals three from different
+   364 unfinished questions in 19 kinds (data/socrates.txt), some naming parts of your project. Socrates deals three from different
    kinds, suited to what is selected (a term, a claim, a name, a number, a citation) and to the kind of
    writing, and fills the first blank with the selection. No AI and nothing online: it is a deck of
    good questions, dealt with some care. "Use this question" hands it to the question dialog, linked
@@ -9432,15 +9557,53 @@ $('#spBody').addEventListener('click', e => {
 let SOC = null, socRange = null, socDeal = [], socKindNow = 'none';
 const socSeen = new Set();
 const OWL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg>';
+const SOC_TAG = {};
 function socData() {
   if (SOC) return SOC;
   const groups = []; let g = null;
   ($('#data-socrates')?.textContent || '').split('\n').forEach(l => {
     l = l.trim(); if (!l || l[0] === '#') return;
     if (l[0] === '@') { const [id, label, suits] = l.slice(1).split('|').map(x => x.trim()); g = { id, label, suits: (suits || 'none').split(/\s+/), stems: [] }; groups.push(g); }
-    else if (g) g.stems.push(l.replace(/&lt;/g, '<'));
+    else if (g) { const m = /\s+\{([pxc])\}$/.exec(l), st = (m ? l.slice(0, m.index) : l).replace(/&lt;/g, '<'); if (m) SOC_TAG[st] = m[1]; g.stems.push(st); }
   });
   return (SOC = groups);
+}
+// What your project knows that a question can name: the authors who write about the selection, the document
+// you are in, the thread the selection belongs to. Worked out once per deal.
+let SOCX = {};
+function socAuthor(s) { const n = (s.csl.author || s.csl.editor || [])[0]; return n ? (n.family || n.literal || '').trim() : ''; }
+function socContext(subj) {
+  const r = subj ? aboutSearch(subj) : null, pickOne = a => a[Math.floor(Math.random() * a.length)];
+  const names = srcs => [...new Set(srcs.map(socAuthor).filter(n => n && n.length < 40))];
+  const near = r ? names(r.sources) : [], all = names(P.sources);
+  const a1 = near.length ? pickOne(near) : all.length ? pickOne(all) : '';
+  const a2 = pickOne([...near, ...all].filter(n => n !== a1)) || '';
+  const d = curDoc(), th = (r && r.threads && r.threads[0]) || (P.threads.length ? pickOne(P.threads) : null);
+  return { author: a1, author2: a2, doc: d && d.title ? `“${d.title}”` : '', thread: th ? `the ${th.name || th.title || ''} thread`.replace(/the\s+thread/, '') : '' };
+}
+const socTokens = st => st.replace(/\{(author2?|doc|thread)\}/g, (m, k) => SOCX[k] || '\u0000');
+// a name, read from how you use it: "Xenophon says" is a person, "at Cunaxa" a place or an event
+let socTextCache = { key: '', text: '' };
+function socCorpus() {
+  const docs = binderOrder(), key = P.id + '|' + docs.reduce((n, d) => n + (d.html || '').length, 0) + '|' + P.notes.length;
+  if (socTextCache.key !== key) socTextCache = { key, text: docs.map(d => htmlToText(d.html)).join('\n') + '\n' + P.notes.map(n => n.title + '\n' + n.body).join('\n') };
+  return socTextCache.text;
+}
+function socNameKind(name) {
+  const low = name.toLowerCase();
+  if (P.sources.some(s => socAuthor(s).toLowerCase() === low)) return 'person';
+  const t = socCorpus(), n = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const who = (t.match(new RegExp(`\\b${n}(?:[’']s)?\\s+(?:says|said|writes|wrote|argues|argued|claims|claimed|thinks|thought|believed|believes|tells|told|describes|described|recalls|recalled|reports|reported|ordered|led|was born|died|himself|herself|themselves|insists|admits|admitted|knew|wanted|feared)\\b`, 'gi')) || []).length;
+  const where = (t.match(new RegExp(`\\b(?:at|in|near|from|into|toward|towards|across|left|leaving|reached|reaching|crossed|battle of|siege of|treaty of|war of|fall of|after|before|since)\\s+${n}\\b`, 'gi')) || []).length;
+  return who > where ? 'person' : where > who ? 'event' : 'name';
+}
+// whether a stem reads well for this kind of selection
+function socFits(st, kind) {
+  const t = SOC_TAG[st];
+  if (t === 'p' && kind !== 'person') return false;
+  if (t === 'x' && (kind === 'person' || kind === 'name')) return false;
+  if (t === 'c' && kind !== 'claim') return false;
+  return !/\{(author2?|doc|thread)\}/.test(st) || !socTokens(st).includes('\u0000');
 }
 // the selection, tidied into something that reads well inside a question
 const SOC_LOWER = /^(The|A|An|This|That|These|Those|It|There|Most|Many|Some|Our|We|They|He|She|His|Her|Its|Their|Every|Each|No|All)\b/;
@@ -9457,28 +9620,35 @@ function socKindOf(text, range) {
   const words = text.split(/\s+/).length, low = text.toLowerCase();
   if (/\d/.test(text) && words <= 10) return 'number';
   const ent = (P.entities || []).find(e => [e.name, ...(e.variants || [])].some(v => String(v).toLowerCase() === low));
-  if (ent) return ent.kind === 'person' || ent.kind === 'org' ? 'person' : 'term';
-  if (words <= 4 && text.split(/\s+/).every(w => /^[A-ZÀ-ɏ]/.test(w))) return 'name';
+  if (ent) return ent.kind === 'person' || ent.kind === 'organization' || ent.kind === 'org' ? 'person' : ent.kind === 'place' ? 'event' : 'term';
+  if (words <= 4 && text.split(/\s+/).every(w => /^[A-ZÀ-ɏ]/.test(w))) return socNameKind(text);
   return words <= 5 ? 'term' : 'claim';
 }
 // which kinds of question suit this selection and this kind of writing
 function socPool(kind) {
-  const G = socData(), suits = kind === 'name' ? ['person', 'event'] : [kind];
+  const G = socData(), suits = kind === 'name' ? ['person', 'event'] : kind === 'event' ? ['event', 'term'] : [kind];
   let pool = G.filter(g => g.suits.some(x => suits.includes(x)));
   if (!pool.length) pool = G.filter(g => g.suits.includes('none'));
   const tk = tipKind(), extra = { brief: ['intel'], whitepaper: ['intel', 'evidence'], investigation: ['journalism'], narrative: ['journalism', 'perspectives'], article: ['journalism', 'argument'], series: ['argument', 'reader'], thesis: ['causation', 'sources'], book: ['causation', 'argument'], proposal: ['reader', 'argument'], script: ['reader'] }[tk] || [];
   extra.forEach(id => { const g = G.find(x => x.id === id); if (g && (kind === 'none' || g.suits.some(x => suits.includes(x)))) pool.push(g, g); });
+  // the kinds of question you have actually used come up a little more often
+  const used = PREFS.socUsed || {};
+  pool.slice().forEach(g => { if ((used[g.id] || 0) >= 2) pool.push(g); });
   return pool;
 }
-function socPick(g, subj) {
-  let c = g.stems.filter(x => !socSeen.has(x));
-  if (!c.length) { g.stems.forEach(x => socSeen.delete(x)); c = g.stems.slice(); }
-  if (subj) { const b = c.filter(x => x.includes('___')); if (b.length && Math.random() < 0.85) c = b; }
-  const st = c[Math.floor(Math.random() * c.length)]; socSeen.add(st); return st;
+function socPick(g, subj, kind = socKindNow) {
+  const fit = g.stems.filter(x => socFits(x, kind)), all = fit.length ? fit : g.stems.filter(x => !SOC_TAG[x] && !/\{(author2?|doc|thread)\}/.test(x));
+  let c = all.filter(x => !socSeen.has(x));
+  if (!c.length) { all.forEach(x => socSeen.delete(x)); c = all.slice(); }
+  // with a selection, questions that name it; without one, questions that stand on their own
+  const b = c.filter(x => x.includes('___') === !!subj); if (b.length && Math.random() < 0.85) c = b;
+  // a question about your own project, about one deal in three, when there is one to ask
+  const proj = c.filter(x => /\{(author2?|doc|thread)\}/.test(x)); if (proj.length && Math.random() < 0.3) c = proj; else if (proj.length < c.length) c = c.filter(x => !proj.includes(x));
+  const st = c[Math.floor(Math.random() * c.length)]; socSeen.add(st); return socTokens(st);
 }
 function socShuffle() {
   const subj = $('#socAbout').value.trim(), want = $('#socKind').value;
-  socKindNow = socKindOf(subj, socRange);
+  socKindNow = socKindOf(subj, socRange); SOCX = socContext(subj);
   if (want !== 'auto') { const g = socData().find(x => x.id === want); socDeal = [0, 1, 2].map(() => ({ g, s: socPick(g, subj) })); }
   else {
     const pool = socPool(socKindNow), used = new Set(); socDeal = [];
@@ -9486,7 +9656,8 @@ function socShuffle() {
   }
   socRender();
 }
-const socQ = subj => (subj && socKindNow === 'claim' ? `“${subj}”` : subj);
+// a claim goes in quotation marks; a long one is cut to its opening words, so the question still reads as one
+const socQ = subj => { if (!subj || socKindNow !== 'claim') return subj; const w = subj.split(/\s+/); return w.length > 9 ? `“${w.slice(0, 7).join(' ').replace(/[,;:]$/, '')}…”` : `“${subj}”`; };
 function socText(stem, subj) { let i = 0; subj = socQ(subj); return stem.replace(/___/g, () => (i++ === 0 && subj ? subj : '___')); }
 function socRender() {
   const subj = $('#socAbout').value.trim();
@@ -9510,6 +9681,7 @@ function openSocrates(opts = {}) {
 }
 function socUse(i) {
   const d = socDeal[i]; if (!d) return;
+  PREFS.socUsed = PREFS.socUsed || {}; PREFS.socUsed[d.g.id] = (PREFS.socUsed[d.g.id] || 0) + 1; if (!POPOUT) savePrefs();
   const t = socText(d.s, $('#socAbout').value.trim()), r = socRange;
   $('#socDlg').close();
   if (r) { editor.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(r); openQuestionLink(false); } else openQuestionLink(true);

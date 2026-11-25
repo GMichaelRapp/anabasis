@@ -46,7 +46,9 @@
 
 %syn belief = think believe feel suspect guess reckon assume
 %syn sure = sure certain confident convinced positive
-%syn hedge = maybe perhaps probably possibly might likely unlikely apparently reportedly allegedly
+%syn hedge = maybe perhaps possibly might
+%syn report = probably likely unlikely apparently reportedly allegedly supposedly
+%syn critic = advisor adviser supervisor editor reviewer reviewers referee committee professor tutor agent publisher examiner
 %syn stuck = stuck blocked lost overwhelmed frustrated tired exhausted drowning
 %syn cause = caused causes cause led leads drove triggered produced
 %syn proof = prove proves proved proof evidence shows showed demonstrates confirms
@@ -124,11 +126,18 @@
 - How certain, exactly: likely, very likely, almost certain?
 - What makes it {2}?
 
-@ [hedge] | 5
+@ [hedge] | 4
 > * [hedge] *
+- What’s pulling you toward it, and what’s holding you back?
+- What would turn that “{2}” into a yes or a no?
+- If you had to bet, which way would you bet?
+- Try it without the “{2}”. Does it still sound right?
+
+@ [report] | 5
+> * [report] *
+- “{2}” is carrying a lot of weight there. According to whom?
 - How likely, exactly? “Likely”, “roughly even” or “unlikely”?
-- “{2}” is carrying a lot of weight there. What’s underneath it?
-- If you had to bet, which way would you bet, and why?
+- Who says so first? Is everyone else repeating them?
 - What would you need to see to stop saying “{2}”?
 
 @ because | 6
@@ -245,6 +254,61 @@
 - Where does the number come from, originally?
 - Compared with what? Is it big or small?
 - Who counted, how, and why did they want the number?
+
+@ working | 4
+> * i am working on *
+- Where did you leave off with {2.}?
+- What does {2.} need most today: more research, or more writing?
+- What’s the hardest part of {2.} right now?
+~ How is {2.} coming along?
+> * working on *
+- Where did you leave off?
+- What does it need most today: more research, or more writing?
+
+@ writing | 3
+> * i am writing *
+- Who is {2.} for, and what should they come away knowing?
+- What’s the part of {2.} you’re putting off?
+~ How is {2.} coming along?
+
+@ [critic] | 6
+> * my [critic] *
+- Do you agree with your {2}? Which part of it stings?
+- If your {2} is right, what’s the first thing you’d change?
+- What would you say back to your {2}, if you thought they were wrong?
+~ Earlier you mentioned what your {2} thinks. Have you decided what to do about it?
+> * [critic] *
+- Do you agree with them?
+- What did they see that you didn’t?
+
+@ found discovered turned | 6
+> * i found *
+- What did it change? Does it confirm what you expected, or surprise you?
+- Where exactly? Note the page before it gets away from you. (Say found: and I’ll log it.)
+- Good. Who else would want to know?
+> * turned out *
+- Did you expect that?
+- What does it rule out?
+> *
+- What did you find?
+
+@ trust distrust doubt suspicious | 5
+> * do not trust *
+- What would they have had to gain by getting it wrong?
+- Is it the person you doubt, or this particular claim?
+- What would you need to see to trust it?
+> * i doubt *
+- What makes you doubt it: the evidence, or a hunch?
+- What would settle it, one way or the other?
+> *
+- Trust on what, exactly? People are reliable on some things and not on others.
+
+@ contradict contradicts contradicted disagree disagrees conflict conflicting inconsistent differ | 8
+> *
+- Where exactly do they part ways: on the facts, the numbers, or what they make of them?
+- Which of them was closer to the events? Which had less reason to bend it?
+- Is it a real contradiction, or are they counting different things?
+- Could they both be right about different times or places?
 
 @ compare compared similar different | 3
 > *
