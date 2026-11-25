@@ -1722,6 +1722,38 @@ body.focus .tip-card{display:none}
   #printRoot{display:block!important}
 }
 
+/* The Oracle (2.2) */
+.orc-open svg,.orc-badge svg,.orc-ic svg{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.orc-open svg{width:16px;height:16px}
+.orc{display:flex;flex-direction:column;height:100%;min-height:0}
+.orc-head{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.orc-head .orc-t{display:flex;flex-direction:column;min-width:0;flex:1}
+.orc-head button{flex:0 0 auto}
+.orc-head b{font:700 18px/1.2 var(--display,Georgia,serif)}
+.orc-badge{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:2px solid var(--accent);color:var(--accent);flex:0 0 auto}
+.orc-badge svg{width:20px;height:20px}
+.orc-log{flex:1;min-height:0;overflow:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+.orc-m{display:flex;gap:8px;max-width:92%}
+.orc-m.you{align-self:flex-end}
+.orc-m.you .orc-b{background:var(--accent-soft);border-color:transparent}
+.orc-ic{flex:0 0 auto;width:24px;height:24px;color:var(--accent);margin-top:4px}
+.orc-ic svg{width:22px;height:22px}
+.orc-b{background:var(--page);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14.5px;line-height:1.5;color:var(--page-ink);min-width:0;overflow-wrap:anywhere}
+.orc-b p{margin:0}
+.orc-b p + p,.orc-b ul + p,.orc-b ol + p,.orc-b p + ul,.orc-b p + ol,.orc-b p + blockquote{margin-top:8px}
+.orc-b ul,.orc-b ol{margin:6px 0 0;padding-left:18px}
+.orc-b li + li{margin-top:5px}
+.orc-b button.small{min-height:24px;padding:1px 8px;font-size:12.5px;margin-left:2px}
+.orc-k{font-size:12px;font-weight:700;color:var(--muted)}
+.orc-del{font:italic 500 15px/1.4 var(--display,Georgia,serif);color:var(--muted)}
+.orc-q{font:italic 500 15.5px/1.5 var(--display,Georgia,serif)}
+.orc-proj{font-size:13.5px;color:var(--muted)}
+.orc-nudge{border-left:3px solid var(--sun,#B5841F);padding-left:8px}
+.orc-max{margin:8px 0 0;padding:8px 12px;border-left:3px solid var(--sun,#B5841F);background:color-mix(in srgb,var(--sun,#B5841F) 8%,transparent)}
+.orc-max p:first-child{font:italic 500 19px/1.3 var(--display,Georgia,serif)}
+.orc-chips{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px 0;border-top:1px solid var(--line)}
+.orc-form{display:flex;gap:8px;padding:8px 12px 12px;align-items:flex-end}
+.orc-form textarea{flex:1;resize:none;min-height:44px;max-height:160px;font:inherit}
 /* Socrates (2.1) */
 .soc-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
@@ -1843,7 +1875,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
     <section class="pane" data-pane="research" id="researchPane">
       <div class="pane-head">
         <div class="row"><button id="btnDesk" class="primary-soft" style="flex:1" title="Read threads through, check claims, see evidence and what’s due"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H4z"/><path d="M8 20h8M12 16v4"/><path d="M8 12l2.5-3 2 2 3.5-4"/></svg> Research desk</button></div>
-        <div class="row"><button id="btnAbout" style="flex:1" title="Everything you have on one name or term, across the project">Everything about…</button></div>
+        <div class="row"><button id="btnAbout" style="flex:1" title="Everything you have on one name or term, across the project">Everything about…</button><button id="btnOracle" class="orc-open" style="flex:1" title="Talk your research through, beside the writing. No AI: it asks, and answers from your notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg> The Oracle</button></div>
         <label class="inline small rs-show"><input type="checkbox" id="rmShow" checked> Show marks in the draft</label>
       </div>
       <div class="ol-scroll">
@@ -1852,7 +1884,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
         <h6>Claims in this document <span class="badge" id="rsClaimCount"></span></h6><div class="small muted ol-sum" id="rsClaimSum"></div><ul class="outline" id="rsClaims"></ul>
         <h6>Due for review <span class="badge" id="rsKeyCount"></span></h6><ul class="outline" id="rsKeys"></ul>
         <h6>Open questions <span class="h6-acts"><button class="ghost small hl soc-btn" id="rsSoc" aria-label="Ask Socrates" title="Ask Socrates: questions to start from"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg></button><button class="ghost small hl" id="rsNewQ">+ Question</button></span></h6><ul class="outline" id="rsQs"></ul>
-        <p class="small muted rs-tip">Select a passage, then use <b>Mark</b> in the toolbar, or press <kbd>Ctrl/Cmd+Alt+G</kbd> then <kbd>T</kbd> thread, <kbd>C</kbd> claim, <kbd>R</kbd> review, <kbd>Q</kbd> question, <kbd>S</kbd> Socrates.</p>
+        <p class="small muted rs-tip">Select a passage, then use <b>Mark</b> in the toolbar, or press <kbd>Ctrl/Cmd+Alt+G</kbd> then <kbd>T</kbd> thread, <kbd>C</kbd> claim, <kbd>R</kbd> review, <kbd>Q</kbd> question, <kbd>S</kbd> Socrates, <kbd>O</kbd> Oracle.</p>
       </div>
     </section>
     <section class="pane" data-pane="notes">
@@ -1935,6 +1967,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
         <button data-m="rv" role="menuitem"><span class="mk-i mk-rv" aria-hidden="true">⚑</span>Key for review… <kbd>R</kbd></button>
         <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
         <button data-m="soc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg></span>Ask Socrates… <kbd>S</kbd></button>
+        <button data-m="orc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg></span>Consult the Oracle… <kbd>O</kbd></button>
         <hr>
         <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
       </div>
@@ -2068,7 +2101,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
 
   <aside class="split hidden" id="split" aria-label="Beside the writing">
     <div class="sp-resize" id="spResize" role="separator" aria-orientation="vertical" aria-label="Resize the side panel" aria-valuemin="20" aria-valuemax="72" aria-valuenow="42" tabindex="0" title="Drag to resize"></div>
-    <div class="sp-head"><nav class="sp-tabs" id="spTabs" role="tablist" aria-label="Show beside the writing"><button role="tab" data-sv="notes">Notes</button><button role="tab" data-sv="sources">Sources</button><button role="tab" data-sv="desk">Research desk</button><button role="tab" data-sv="doc">A document</button></nav>
+    <div class="sp-head"><nav class="sp-tabs" id="spTabs" role="tablist" aria-label="Show beside the writing"><button role="tab" data-sv="notes">Notes</button><button role="tab" data-sv="sources">Sources</button><button role="tab" data-sv="desk">Research desk</button><button role="tab" data-sv="doc">A document</button><button role="tab" data-sv="oracle">The Oracle</button></nav>
       <b class="sp-ptitle" id="spPTitle"></b><span class="spacer"></span><button class="ghost icon" id="spSwap" title="Swap sides (Ctrl+Shift+\\)" aria-label="Swap sides">⇄</button><button class="ghost icon" id="spMax" title="Wide: hide the writing for now" aria-label="Wide" aria-pressed="false">⤢</button><button class="ghost icon" id="spPop" title="Open in a window of its own (for a second screen)" aria-label="Open in a new window">↗</button><button class="ghost icon" id="spClose" title="Close (Ctrl+\\)" aria-label="Close the side panel">✕</button></div>
     <div class="sp-body" id="spBody"></div>
   </aside>
@@ -2854,7 +2887,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
       <li><b>The toolbar</b> holds what you do while writing: style, bold and lists, <b>Cite</b>, footnote, flag, margin note, Suggest, <b>Mark</b> and Find. <b>Insert</b> (the plus) holds everything that goes into the page: figures, charts, maps, timelines, tables, equations, cross-references, index entries and the lists of figures and abbreviations.</li>
       <li><b>Export</b> is grouped by what you’re doing: <i>share and print</i> (Word, PDF, web page, e-book, Substack); <i>review, co-write and submit</i> (send a copy, take changes back, the reviewer PDF, manuscript format, compile); <i>other formats</i> (Markdown, Pandoc, LaTeX, sources); and <i>the project file</i> (save as, the plain-file archive, checkpoints, lock, GitHub backup).</li>
       <li><b>Sources → Tools</b> holds the source audit, link check and permissions log.</li>
-      <li><b>Socrates</b>, the owl beside <b>+ Question</b> in the Research tab, offers questions to start from.</li>
+      <li><b>Socrates</b>, the owl beside <b>+ Question</b> in the Research tab, offers questions to start from. <b>The Oracle</b>, also in the Research tab, talks your research through beside the writing.</li>
       <li>Anything else: <b>Search</b> (<kbd>Ctrl</kbd>+<kbd>K</kbd>) finds every command by name.</li>
     </ul>
     <h4>Writing</h4>
@@ -2976,6 +3009,7 @@ h6 .h6-acts{display:inline-flex;gap:2px;margin-left:auto}
       <li><b>Claims</b> (<kbd>C</kbd>) go into a claims register. Anabasis finds the citations inside a claim or right after it, and warns when a claim has no source, rests only on sources rated D–E or 4–5, or was edited after you marked it supported. Set each claim to not checked, supported, needs a source, contested or cut. The <b>fact-check sheet</b> prints the register as a checklist with full citations and the page of each one, and fills in who checked each supported claim and when (your name comes from Settings). <b>As a document</b> puts the same sheet in the project. The CSV opens in any spreadsheet.</li>
       <li><b>Review keys</b> (<kbd>R</kbd>) mark a passage to come back to, with a reason and a due date. Due keys show in the Research tab and on Project home. Snooze one a week or tick it done on the research desk.</li>
       <li><b>Questions</b> (<kbd>Q</kbd>) link passages to an open research question. Questions are shared with Plan. Record what you’ve found and attach notes on the research desk.</li>
+      <li><b>The Oracle</b> (Research tab, or the <b>The Oracle</b> tab beside the writing) is a conversation partner in the manner of ELIZA, the MIT chatbot of the 1960s. It has no AI and nothing goes online: it turns what you say into questions from a script of keywords and patterns, remembers a few things you said, and answers from your own project. Ask <i>what have I written about…</i>, <i>how many claims need a source?</i>, <i>which sources are rated D or E?</i>, <i>what’s open?</i>, <i>what’s due?</i>, <i>any TKs?</i> or <i>how far am I from my word goal?</i> Say <i>note: …</i>, <i>question: …</i>, <i>hypothesis: …</i>, <i>log: …</i> or <i>next step: …</i> (or <i>save that as a question</i>) and it files it, with Undo. <i>Argue the other side</i> makes it push back on a claim until you say <i>stop</i>. <i>Check in</i> starts the day with what’s waiting, and the first visit each day does it for you; <i>done for today</i> logs what you did and signs off with a maxim from Delphi. Select a passage and choose <b>Mark → Consult the Oracle</b> (<kbd>O</kbd>) to have it read back with questions. Conversations are forgotten unless you press <b>Save to journal</b>.</li>
       <li><b>Socrates</b> (the owl beside <b>+ Question</b>, or <b>Mark</b> then <kbd>S</kbd>) offers questions to start from when you’re not sure what to ask: three at a time, from 342 in 19 kinds (meaning, evidence, assumptions, alternatives, implications, perspectives, sources, causation, time, numbers, comparison, counterfactuals, intelligence analysis, journalism, the shape of the argument, the reader, your own blind spots, the question itself, and being stuck). Select a word, a claim, a name or a number first and the questions are about it; the kind of writing you’re doing leans the choice. <b>Shuffle</b> deals three more, <b>Another like this</b> swaps one, and <b>Use this question</b> makes it an open question linked to the passage, ready to edit. Socrates is a deck of good questions, not AI: nothing leaves your computer.</li>
       <li>The <b>evidence grid</b> lays your claims against the sources they cite, with each source’s rating in the cell, so single-source and weakly sourced claims stand out. <b>Everything about…</b> gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names &amp; spellings, and can make a dossier document from the results.</li>
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>

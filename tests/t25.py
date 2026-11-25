@@ -65,7 +65,8 @@ VIEWS = [
     ('send a copy', "$('#srcMoreMenu').classList.remove('open'); openSendCopy();"),
     ('take changes back', "$('#scDlg').close(); TB = { T: JSON.parse(JSON.stringify(P)), send: null, name: 'x.json', who: 'Dana' }; TB.T.docs[0].html = TB.T.docs[0].html.replace(/<p>/, '<p>Changed. '); $('#tkWho').value = 'Dana'; tbPrepare(); $('#tkDlg').showModal();"),
     ('socrates', "$('#tkDlg').close(); openSocrates({ about: 'the blockade caused the famine' });"),
-    ('newer-version notice', "$('#socDlg').close(); $('#tkDlg').close(); $('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
+    ('the oracle', "$('#socDlg').close(); splitOpen('oracle'); orcTurn('what have I written about Xenophon?'); orcTurn('note: check the figures'); orcTurn('I am not sure about it');"),
+    ('newer-version notice', "splitClose(); $('#socDlg').close(); $('#tkDlg').close(); $('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
     async with async_playwright() as pw:

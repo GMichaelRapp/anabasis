@@ -1,0 +1,291 @@
+# The Oracle's script: how it answers when you talk to it.
+# It works the way Joseph Weizenbaum's ELIZA did (MIT, 1964-66): no understanding, only keywords and
+# sentence patterns. The highest-ranked keyword in what you type picks a group; the first pattern in that
+# group that fits picks the replies, used in turn so it doesn't repeat itself.
+#
+#   %sub word = words        rewritten before matching (contractions and shorthand)
+#   %syn name = w1 w2 ...    a set of words, written [name] in keywords and patterns
+#   @ key key2 [set] | rank  a group: any of these words calls it; higher ranks win
+#   > pattern                * matches any run of words, [set] one word from the set, other words literally
+#   - reply                  {1} {2}... are the pieces the pattern matched, turned around (my -> your);
+#                            {2.} keeps only the opening noun phrase ("my source says X" -> "your source")
+#   ~ memory                 kept when the pattern matches, and raised later when the talk runs dry
+# Replies that need a piece the pattern left empty are skipped. "@ none" answers when nothing matches.
+
+%sub don't = do not
+%sub dont = do not
+%sub doesn't = does not
+%sub didn't = did not
+%sub can't = cannot
+%sub cant = cannot
+%sub couldn't = could not
+%sub won't = will not
+%sub wouldn't = would not
+%sub shouldn't = should not
+%sub isn't = is not
+%sub aren't = are not
+%sub wasn't = was not
+%sub weren't = were not
+%sub haven't = have not
+%sub hasn't = has not
+%sub i'm = i am
+%sub im = i am
+%sub i've = i have
+%sub i'd = i would
+%sub i'll = i will
+%sub it's = it is
+%sub that's = that is
+%sub there's = there is
+%sub they're = they are
+%sub we're = we are
+%sub you're = you are
+%sub what's = what is
+%sub let's = let us
+%sub dunno = do not know
+%sub idk = i do not know
+
+%syn belief = think believe feel suspect guess reckon assume
+%syn sure = sure certain confident convinced positive
+%syn hedge = maybe perhaps probably possibly might likely unlikely apparently reportedly allegedly
+%syn stuck = stuck blocked lost overwhelmed frustrated tired exhausted drowning
+%syn cause = caused causes cause led leads drove triggered produced
+%syn proof = prove proves proved proof evidence shows showed demonstrates confirms
+%syn src = source sources document documents archive archives record records report reports interview interviews
+%syn all = always never everyone nobody everybody everything nothing
+%syn must = should must ought need
+%syn want = want wish hope
+%syn big = important significant crucial central major
+%syn wrong = wrong mistaken mistake error false
+%syn draft = chapter draft paragraph section essay article book piece
+%syn arg = argue argument thesis claim hypothesis theory
+%syn num = number numbers figure figures percent percentage count data statistic statistics estimate
+%syn time = deadline late behind
+%syn hi = hello hi hey greetings morning afternoon evening
+
+@ [hi] | 0
+> *
+- Hello. What are you working on?
+- Good to see you. Where did you leave off?
+
+@ sorry apologies | 1
+> *
+- No need to apologise. What were you trying to say?
+- Never mind that. Where were we?
+
+@ yes yeah yep | 1
+> *
+- You seem sure. What makes you sure?
+- All right. What follows from that?
+- And if someone asked you to show it, what would you point to?
+
+@ no nope | 1
+> *
+- Why not?
+- What would have to change for the answer to be yes?
+- Are you saying no to the idea, or to the evidence for it?
+
+@ know | 6
+> * i do not know *
+- What would you need to find out to know {2}?
+- What do you know for certain, even if it’s small?
+- Who would know? Could you ask them?
+- What’s the first place you’d look?
+> * how do i know *
+- Fair question. What’s your best evidence for {2}?
+- What would someone who doubts {2} ask you to show them?
+> * i know *
+- How do you know {2}?
+- Is that something you found, or something you worked out?
+- Who else knows {2}, and how did they find out?
+> *
+- What exactly do you know here, and what are you inferring?
+
+@ [stuck] | 8
+> * i am [stuck] *
+- What’s the smallest thing you could find out in the next hour?
+- When did this last feel like it was going well? What were you doing then?
+- Is it the research that’s stuck, or the writing? They need different fixes.
+- What would you tell a student who brought you this problem?
+> * [stuck] *
+- Say what you know for certain, even if it’s short. We’ll go from there.
+- What’s the next small step, not the whole thing?
+
+@ [sure] | 6
+> * i am not [sure] *
+- What would make you {2}?
+- What’s the part you are {2} of?
+- What would you need to see to decide?
+> * i am [sure] *
+- What would it take to make you less {2}?
+- How {2}? Would you stake the chapter on it?
+- Being {2} is a feeling. What’s the evidence?
+~ Earlier you said you were {2} {3}. Is that still true?
+> * [sure] *
+- How certain, exactly: likely, very likely, almost certain?
+- What makes it {2}?
+
+@ [hedge] | 5
+> * [hedge] *
+- How likely, exactly? “Likely”, “roughly even” or “unlikely”?
+- “{2}” is carrying a lot of weight there. What’s underneath it?
+- If you had to bet, which way would you bet, and why?
+- What would you need to see to stop saying “{2}”?
+
+@ because | 6
+> * because *
+- “{2}”: is that the real reason, or the first one you found?
+- If it weren’t so that {2}, would the rest still follow?
+- What else, besides that, could explain it?
+- Who would give a different reason?
+> *
+- What’s the reason?
+
+@ why | 5
+> * why do i *
+- Why do you think you {2}?
+> * why *
+- What answers have you considered so far?
+- Who has tried to answer that before you, and where did they stop?
+- What would a good answer look like?
+- Does the evidence tell you why, or only what happened?
+
+@ [cause] | 6
+> * [cause] *
+- What’s the mechanism? How, step by step, did one lead to the other?
+- Could something else have produced {3}?
+- Was {1} necessary for it, or just present at the time?
+- Which came first, and are you sure of the order?
+
+@ [proof] | 7
+> * [proof] *
+- What exactly is the evidence, and where did you find it?
+- Does it show {3}, or is that your reading of it?
+- What would count as evidence against {3}?
+- How many independent sources say so?
+> *
+- What would the evidence look like?
+
+@ [src] | 7
+> * [src] *
+- Who made it, and why?
+- Was its author in a position to know?
+- What does it leave out that its author would have known?
+- Do other sources, with no contact with it, agree?
+- How long after the events was it written?
+
+@ [all] | 5
+> * [all] *
+- “{2}”? Can you think of an exception?
+- Really {2}? What’s the one case that doesn’t fit?
+- Is it {2}, or usually?
+
+@ [belief] | 4
+> * i [belief] *
+- What makes you {2} {3}?
+- Is that what you {2}, or what the sources say?
+- If you’re right that {3}, what else should you expect to find?
+- What would change your mind?
+~ Earlier you said you {2} {3}. Has anything changed that?
+> *
+- Is that a belief or a finding?
+
+@ [must] | 4
+> * i [must] *
+- What happens if you don’t?
+- Why {2} you {3}? Who says so?
+- What’s stopping you?
+> * they [must] *
+- Why {2} they {3}? Is that your view, or theirs?
+
+@ [want] | 4
+> * i [want] *
+- Why do you {2} {3}?
+- What’s the first step toward it?
+- What’s in the way?
+
+@ [big] | 4
+> * [big] *
+- Important to whom?
+- Why does it matter? Say it in one sentence.
+- If a reader forgot everything else, would they need to remember this?
+
+@ [wrong] | 5
+> * i was [wrong] *
+- Good: being wrong is a finding. What do you think now?
+- What told you?
+> * [wrong] *
+- What would right look like?
+- How did you find out?
+- Is it wrong, or just unproven?
+
+@ [time] | 6
+> *
+- How much time do you actually have, and how much does the next step need?
+- What could you cut, or hand in rough, and still keep the argument?
+- Is the deadline real, or one you set yourself?
+
+@ [draft] | 3
+> * my [draft] *
+- What is your {2} trying to say, in one sentence?
+- What’s the strongest thing in your {2}, and what’s the weakest?
+~ Let’s go back to your {2}. Where does it stand?
+> *
+- What is it trying to say, in one sentence?
+- Where would a reader stop and ask “how do you know?”
+- What’s the strongest thing in it, and what’s the weakest?
+
+@ [arg] | 5
+> *
+- What’s the strongest objection, and how would you answer it?
+- What would prove it wrong?
+- In one sentence a stranger could repeat, what is it?
+
+@ [num] | 5
+> *
+- Where does the number come from, originally?
+- Compared with what? Is it big or small?
+- Who counted, how, and why did they want the number?
+
+@ compare compared similar different | 3
+> *
+- Where does the comparison break down?
+- What’s the closest case, and how did it turn out differently?
+
+@ they them | 3
+> * they *
+- Who exactly do you mean by “they”?
+- Do they all agree, or is “they” hiding an argument?
+- How would they tell it?
+
+@ cannot | 5
+> * i cannot *
+- What would it take for you to {2}?
+- Have you tried, or are you assuming you can’t?
+- Who could {2}, if you can’t?
+
+@ am | 3
+> * i am *
+- How long have you been {2}?
+- Does being {2} change how you read the evidence?
+
+@ my | 2
+> * my *
+- Tell me more about your {2.}.
+- Why does your {2.} matter here?
+~ Earlier you mentioned your {2.}. Does it bear on this?
+~ Let’s go back to your {2.}. Where does it stand?
+
+@ you | 2
+> * are you *
+- Would it matter if I were {2}? I only read your words and notes back to you.
+> * you *
+- We were talking about your work, not me. Where were we?
+- I’m a mirror with a good memory for your notes. What do you think?
+
+@ none
+- Go on.
+- Say more about that.
+- What makes you say that?
+- And what follows from that?
+- How does that bear on the question you’re asking?
+- What would you need to find out next?

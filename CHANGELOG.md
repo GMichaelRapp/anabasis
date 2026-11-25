@@ -4,6 +4,19 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.2.0] — 2026-11-24
+
+### Added
+- **The Oracle**: a conversation partner beside the writing, in the manner of Joseph Weizenbaum’s ELIZA (MIT, 1964–66). No AI and nothing online: a script of ranked keywords and sentence patterns (`data/oracle.txt`, 9 KB) turns what you say into questions, with contractions rewritten, your words turned around (*my* → *your*), replies used in turn so it doesn’t repeat itself, and a short memory of what you said to raise later. Plain words with a Delphic touch. It opens from the Research tab, the split view’s new **The Oracle** tab, or the command palette.
+  - **Answers from your project**: “what have I written about…” counts and quotes your paragraphs, notes and sources, with buttons to open them and **Everything about**; when you mention something you have notes on, it says so.
+  - **Counts and status**: claims that need a source, contested claims, sources rated D–F, the word goal and pace, open questions, review keys due, TKs and flags, next steps, and plain counts.
+  - **Acts on the conversation**: “note: …”, “question: …”, “hypothesis: …”, “log: …”, “next step: …”, “note that …”, or “save that as a question”, each with **Undo**.
+  - **Argues the other side** of a claim, with Socrates’ counter-questions and any notes, contested claims and evidence you filed against it, until you say “stop”.
+  - **Daily check-in**: the first visit each day (or “check in”) lists review keys due, next steps, open questions, TKs and the word pace; “done for today” asks what you did, logs it, and signs off with one of the maxims carved at Delphi, chosen to fit the conversation.
+  - **Consult on a passage**: select text and choose **Mark → Consult the Oracle** (Ctrl/Cmd+Alt+G, then O). It reads the passage back with questions about missing citations, numbers, hedges, absolutes, causal claims, unexplained acronyms and claims you marked.
+  - **Nudges**: after three “not sure”s it points to something concrete (a TK, a review key, a next step, an unused note); when you keep circling a subject it offers everything you have on it.
+  - Conversations are forgotten unless you press **Save to journal**, which files the exchange as a dated entry.
+
 ## [2.1.0] — 2026-11-24
 
 ### Added
@@ -230,6 +243,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[2.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.2.0
 [2.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.1.0
 [2.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.0.0
 [1.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.9.0

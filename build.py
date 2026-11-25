@@ -68,6 +68,7 @@ def build():
              safe(read(VJ / 'd3-geo.min.js')) + '\n/*! topojson-client 3.1.0 | ISC | Mike Bostock */' + safe(read(VJ / 'topojson-client.min.js')) + '</script>\n')
     lazy += '<script type="application/json" id="data-world">' + read(DATA / 'countries-50m.json') + '</script>\n'
     lazy += '<script type="text/plain" id="data-places">' + read(DATA / 'places.txt').replace('<', '&lt;') + '</script>\n'
+    lazy += '<script type="text/plain" id="data-oracle">' + read(DATA / 'oracle.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="text/plain" id="data-socrates">' + read(DATA / 'socrates.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="application/json" id="data-admin1">' + safe(read(DATA / 'admin1.json')) + '</script>\n'
     lazy += '<script type="application/json" id="data-rivers">' + safe(read(DATA / 'rivers.json')) + '</script>\n'

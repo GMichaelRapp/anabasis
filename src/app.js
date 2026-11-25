@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.1.0';
+const APP_VERSION = '2.2.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -2359,7 +2359,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -8601,6 +8601,9 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.2.0': ['The Oracle: talk your research through, beside the writing (Research tab → The Oracle, or Ctrl+K). It works the way ELIZA did in the 1960s: no AI, no internet, just patterns that turn what you say into questions, and a good memory for your own project. Ask “what have I written about Cunaxa?”, “how many claims need a source?”, “what’s due?” or “how far am I from my word goal?”.',
+    'Say “note: …”, “question: …”, “hypothesis: …” or “next step: …” and the Oracle files it. “Argue the other side” makes it push back on a claim, with any notes and contested claims of yours that cut against it. “Check in” starts the day with what’s waiting; “done for today” logs what you did and signs off with a maxim from Delphi.',
+    'Select a passage and choose Mark → Consult the Oracle (or O): it reads the passage back with questions about its sources, numbers, hedges and causes. Conversations are forgotten unless you press Save to journal.'],
   '2.1.0': ['Socrates, beside + Question in the Research tab: not sure what to ask? It offers three questions to start from, out of 342 in 19 kinds (evidence, assumptions, alternatives, sources, causation, numbers, intelligence analysis, journalism, when you’re stuck…). Select a word, a claim, a name or a number first and the questions are about it. Use one and it becomes an open question linked to the passage. Also in Mark (Ctrl+Alt+G, then S).',
     'Export → Archive: the whole project as plain files anyone can open decades from now, without Anabasis: every document as Markdown with its figures, every note as its own file, sources as BibTeX and CSL-JSON, the research memo and the project file, with a README.'],
   '2.0.0': ['Co-writing without a server: Export → Send a copy gives a co-author or editor a copy of the project. When it comes back, Take changes back brings their edits into your draft as suggestions under their name, adds their notes, sources and margin notes, and shows side by side anything you both changed.',
@@ -8999,6 +9002,427 @@ $('#qNew').addEventListener('click', () => {
 $('#qText').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qNew').click(); } });
 $('#qCancel').addEventListener('click', () => { qRange = null; $('#qDlg').close(); });
 
+/* ================================================================
+   The Oracle (2.2): a conversation partner in the manner of ELIZA (Weizenbaum, MIT, 1964-66).
+   It has no understanding and no AI. It matches keywords and sentence patterns from its script
+   (data/oracle.txt), turns your words around into questions, remembers a few things you said,
+   and answers from your own project: notes, sources, claims, questions, the journal. It can also
+   save what you say, argue the other side, check in on your day, read a passage back with
+   questions, and close with a Delphic maxim. Nothing leaves your computer; conversations are kept
+   only if you save one to the journal.
+   ================================================================ */
+const TRIPOD = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg>';
+let ORS = null;
+const ORC = { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, selfTalk: 0, said: 0 };
+function orcScript() {
+  if (ORS) return ORS;
+  const S = { subs: {}, syn: {}, groups: [], none: [] }; let g = null, rule = null;
+  ($('#data-oracle')?.textContent || '').replace(/&lt;/g, '<').split('\n').forEach(l => {
+    l = l.trim(); if (!l || l[0] === '#') return;
+    let m;
+    if ((m = /^%sub\s+(\S+)\s*=\s*(.+)$/.exec(l))) S.subs[m[1]] = m[2].trim();
+    else if ((m = /^%syn\s+(\w+)\s*=\s*(.+)$/.exec(l))) S.syn[m[1]] = new Set(m[2].trim().split(/\s+/));
+    else if (l[0] === '@') {
+      const [keys, rank] = l.slice(1).split('|').map(x => x.trim());
+      g = { keys: keys.split(/\s+/), rank: +rank || 0, rules: [], id: keys }; rule = null;
+      if (keys === 'none') { S.none = g; g.rules.push(rule = { pat: [{ t: '*' }], replies: [], mem: [], id: 'none' }); } else S.groups.push(g);
+    } else if (l[0] === '>' && g) {
+      const pat = l.slice(1).trim().split(/\s+/).map(w => w === '*' ? { t: '*' } : /^\[(\w+)\]$/.test(w) ? { syn: w.slice(1, -1) } : { lit: w.toLowerCase() });
+      g.rules.push(rule = { pat, replies: [], mem: [], id: g.id + '|' + g.rules.length });
+    } else if (l[0] === '-' && rule) rule.replies.push(l.slice(1).trim());
+    else if (l[0] === '~' && rule) rule.mem.push(l.slice(1).trim());
+  });
+  return (ORS = S);
+}
+// words in, with contractions and shorthand rewritten; each keeps its original spelling for echoing
+function orcTok(s) {
+  const S = orcScript(), out = [];
+  (String(s).replace(/[‘’]/g, "'").replace(/[“”]/g, '"').match(/[A-Za-zÀ-ɏ0-9'][\wÀ-ɏ'.,%-]*|[.!?;:]/g) || []).forEach(t => {
+    if (/^[.!?;:]$/.test(t)) { out.push({ w: t, o: t, p: true }); return; }
+    t = t.replace(/[.,;:]+$/, ''); if (!t) return;
+    const low = t.toLowerCase(), sub = S.subs[low];
+    if (sub) sub.split(/\s+/).forEach(w => out.push({ w, o: w })); else out.push({ w: low, o: t });
+  });
+  return out;
+}
+function orcMatch(pat, toks) {
+  const S = orcScript(), caps = [];
+  const go = (pi, ti) => {
+    if (pi === pat.length) return ti === toks.length;
+    const p = pat[pi];
+    if (p.t === '*') { for (let k = ti; k <= toks.length; k++) { caps.push(toks.slice(ti, k)); if (go(pi + 1, k)) return true; caps.pop(); } return false; }
+    if (ti >= toks.length) return false;
+    const ok = p.syn ? (S.syn[p.syn] || new Set()).has(toks[ti].w) : toks[ti].w === p.lit;
+    if (!ok) return false;
+    if (p.syn) caps.push([toks[ti]]);
+    if (go(pi + 1, ti + 1)) return true;
+    if (p.syn) caps.pop();
+    return false;
+  };
+  return go(0, 0) ? caps : null;
+}
+// my -> your, I -> you, you -> me/I: the piece of your sentence, said back to you
+const REFL = { i: 'you', me: 'you', my: 'your', mine: 'yours', myself: 'yourself', we: 'you', us: 'you', our: 'your', ours: 'yours', ourselves: 'yourselves', your: 'my', yours: 'mine', yourself: 'myself' };
+function orcReflect(toks, np) {
+  let t = toks.filter(x => !x.p);
+  if (np) { const stop = /^(is|was|are|were|says|said|say|has|had|have|does|did|do|seems|seemed|shows|showed|will|would|can|could|should|may|might|must|and|but|because|that|which|who|when|if|so|then|to)$/; const k = t.findIndex((x, i) => i > 0 && stop.test(x.w)); if (k > 0) t = t.slice(0, k); }
+  return t.map((x, i) => {
+    const prev = i ? t[i - 1].w : '';
+    if (x.w === 'you') return /^(and|but|that|if|because|when|so)$/.test(prev) || i === 0 ? 'I' : 'me';
+    if (x.w === 'am' && prev === 'i') return 'are';
+    if (x.w === 'are' && prev === 'you') return 'am';
+    if (x.w === 'was' && prev === 'i') return 'were';
+    if (x.w === 'were' && prev === 'you') return 'was';
+    return REFL[x.w] || x.o;
+  }).join(' ').trim();
+}
+const orcCap = s => s ? s[0].toUpperCase() + s.slice(1) : s;
+function orcFill(tpl, caps) {
+  let ok = true;
+  const out = tpl.replace(/\{(\d)(\.?)\}/g, (m, n, np) => { const c = caps[+n - 1]; const v = c ? orcReflect(c, !!np) : ''; if (!v) ok = false; return v; });
+  return ok ? orcCap(out.replace(/\s+([?.,!])/g, '$1').replace(/\s{2,}/g, ' ').trim()) : null;
+}
+// the script's answer: highest-ranked keyword first, its first pattern that fits, replies in turn
+function orcReply(text) {
+  const S = orcScript(), toks = orcTok(text).filter(t => !t.p), words = new Set(toks.map(t => t.w));
+  const hits = S.groups.filter(g => g.keys.some(k => (/^\[(\w+)\]$/.test(k) ? [...(S.syn[k.slice(1, -1)] || [])].some(w => words.has(w)) : words.has(k)))).sort((a, b) => b.rank - a.rank);
+  for (const g of hits) for (const r of g.rules) {
+    const caps = orcMatch(r.pat, toks); if (!caps) continue;
+    const n = r.replies.length; let out = null;
+    for (let k = 0; k < n && !out; k++) { const i = ((ORC.rot[r.id] || 0) + k) % n; out = orcFill(r.replies[i], caps); if (out) ORC.rot[r.id] = i + 1; }
+    r.mem.forEach(m => { const f = orcFill(m, caps); if (f && !ORC.mem.includes(f)) { ORC.mem.push(f); if (ORC.mem.length > 5) ORC.mem.shift(); } });
+    if (out) return { text: out, group: g.id };
+  }
+  return null;
+}
+const ORC_STOP = new Set('about above after again against also although among another because been before being between both cannot could does doing down during each either enough every from further have having here into itself just more most much must neither never other otherwise over perhaps quite rather really same should since some such than that their them then there these they thing things this those though through under until very want were what when where whether which while whom whose will with within without would your yours chapter draft today maybe probably think believe know feel source sources evidence write writing still about really'.split(' '));
+// what the conversation is about: a quoted phrase, a known name, a capitalised name, or the longest content word
+function orcTopic(text) {
+  const q = /["“]([^"”]{2,60})["”]/.exec(text); if (q) return q[1].trim();
+  const low = text.toLowerCase();
+  const ent = (P.entities || []).map(e => [e.name, ...(e.variants || [])]).flat().filter(n => n && n.length > 2).sort((a, b) => b.length - a.length).find(n => new RegExp('\\b' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i').test(text));
+  if (ent) return ent;
+  const MONTHS = /^(January|February|March|April|May|June|July|August|September|October|November|December|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Today|Yesterday|Tomorrow)$/;
+  const caps = [...text.matchAll(/(?:^|[^.!?]\s)((?:[A-Z][\wÀ-ɏ'-]+)(?:\s+(?:of|the|de|al|von|van|[A-Z][\wÀ-ɏ'-]+))*)/g)].map(m => m[1]).filter(w => !/^(I|I'm|I've|The|A|An|And|But|So|It|This|That|What|Why|How|When|Where|Who|Which|My|We|They|He|She|Yes|No|Ok|Okay|Oracle)$/.test(w) && !MONTHS.test(w));
+  if (caps.length) return caps.sort((a, b) => b.length - a.length)[0];
+  const w = (low.match(/[a-zÀ-ɏ][a-zÀ-ɏ'-]{4,}/g) || []).filter(x => !ORC_STOP.has(x)).sort((a, b) => b.length - a.length)[0];
+  return w || '';
+}
+/* ---------- talking ---------- */
+function orcAct(fn) { ORC.acts.push(fn); return ORC.acts.length - 1; }
+function orcBtn(label, fn, cls = '') { return `<button class="small ${cls}" data-oa="${orcAct(fn)}">${label}</button>`; }
+function orcPush(who, html, text) { ORC.log.push({ who, html, text: text || htmlToText(html), at: nowISO() }); orcRender(); }
+function orcSay(html) { orcPush('oracle', html); }
+function orcRender() {
+  const L = $('#orcLog'); if (!L) return;
+  L.innerHTML = ORC.log.map(m => m.who === 'you' ? `<div class="orc-m you"><div class="orc-b">${m.html}</div></div>` : `<div class="orc-m or"><span class="orc-ic" aria-hidden="true">${TRIPOD}</span><div class="orc-b"><span class="sr-only">The Oracle: </span>${m.html}</div></div>`).join('');
+  L.scrollTop = L.scrollHeight;
+  $('#orcSave') && ($('#orcSave').disabled = ORC.log.filter(m => m.who === 'you').length === 0);
+}
+function orcGreet() {
+  ORC.greeted = true;
+  const first = (PREFS.orcDay || '') !== todayISO();
+  if (first) { PREFS.orcDay = todayISO(); if (!POPOUT) savePrefs(); orcCheckin(true); return; }
+  orcSay(`<p class="orc-del">The oracle has read your notes, not your mind.</p><p>What are you working on? Ask what you’ve written about something, say <b>check in</b>, or just think out loud. <b>help</b> lists what I can do.</p>`);
+}
+function orcHelp() {
+  orcSay(`<p>I turn what you say into questions, and I answer from your own project. I have no AI and don’t know anything you haven’t written down.</p><ul>
+    <li><b>What have I written about</b> <i>Cunaxa</i>? (or <b>tell me about</b>, <b>find</b>)</li>
+    <li><b>Check in</b>: what’s due, what’s open, your next steps. Say <b>done for today</b> to log what you did.</li>
+    <li><b>Argue the other side</b> (of something you just said, or after a colon). <b>Stop</b> to end it.</li>
+    <li><b>Note:</b> …, <b>Question:</b> …, <b>Hypothesis:</b> …, <b>Log:</b> …, or <b>save that as a note</b> (or question, hypothesis, journal entry).</li>
+    <li>Counts: <b>how many claims need a source?</b> <b>which sources are rated D or E?</b> <b>how far from my word goal?</b> <b>what’s open?</b> <b>what’s due?</b> <b>any TKs?</b> <b>next steps?</b></li>
+    <li>Select a passage in the draft and choose <b>Mark → Consult the Oracle</b> (or <kbd>O</kbd>) to have it read back to you with questions.</li></ul>`);
+}
+/* ---------- what's in the project ---------- */
+function orcAbout(term) {
+  term = String(term || '').trim().replace(/[?.!]+$/, ''); if (!term) { orcSay('<p>What should I look for?</p>'); return; }
+  const r = aboutSearch(term);
+  const tot = r ? r.paras.length + r.notes.length + r.sources.length + r.marks.length + r.questions.length + r.journal.length + r.threads.length : 0;
+  ORC.echoed[term.toLowerCase()] = ORC.said;
+  if (!tot) { orcSay(`<p>You haven’t written anything about <b>${esc(term)}</b> yet: nothing in your drafts, notes, sources or journal. Is that a gap in the research, or another word for something you have? If it goes by other spellings, add them in <b>Names &amp; spellings</b>.</p>`); return; }
+  const parts = [[r.paras.length, 'paragraph', 'paragraphs'], [r.notes.length, 'note', 'notes'], [r.sources.length, 'source', 'sources'], [r.marks.length, 'marked passage', 'marked passages'], [r.questions.length, 'question', 'questions'], [r.journal.length, 'journal entry', 'journal entries']].filter(x => x[0]).map(x => `${x[0]} ${x[0] === 1 ? x[1] : x[2]}`);
+  const list = parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts[parts.length - 1] : parts[0];
+  const ex = [];
+  r.notes.slice(0, 2).forEach(n => ex.push(`<li><span class="orc-k">Note</span> <b>${esc(noteTitle(n))}</b>: ${hiText(rmNorm(n.body), r.re, 160)} ${orcBtn('Open', () => openNote(n.id))}</li>`));
+  r.paras.slice(0, 1).forEach(x => ex.push(`<li><span class="orc-k">${esc(x.d.title || 'Untitled')}</span> ${hiText(x.tx, r.re, 160)} ${orcBtn('Go', () => jumpTo(x.d.id, x.at))}</li>`));
+  r.sources.slice(0, 1).forEach(s => ex.push(`<li><span class="orc-k">Source</span> ${hiText(citeFull(s.id), r.re, 200)}</li>`));
+  const ask = ['Which of these do you trust most, and why?', 'Do they agree with each other?', 'What’s missing from this?', 'Which of them is first-hand?'];
+  orcSay(`<p>On <b>${esc(term)}</b> you have ${list}.</p><ul class="orc-ex">${ex.join('')}</ul><p>${ask[ORC.said % ask.length]} ${orcBtn('Everything about ' + esc(term), () => openDesk('about', term), 'primary-soft')}</p>`);
+}
+const orcPl = (n, a, b) => `${nf(n)} ${n === 1 ? a : b}`;
+function orcDue() { return rmAll('rv').map(p => ({ p, r: P.reviewKeys.find(r => r.id === p.pid) })).filter(x => x.r && !x.r.done && x.r.due && daysUntil(x.r.due) <= 0); }
+function orcNext() { return (jr().log || []).filter(e => e.kind === 'next' && !e.done); }
+function orcStatus(kind) {
+  if (kind === 'need') {
+    const rows = claimRows(), need = rows.filter(x => x.c.status === 'need' || (x.c.status !== 'cut' && x.iss.some(i => /source/i.test(i))));
+    if (!rows.length) return orcSay('<p>You haven’t marked any claims yet. Select a sentence and choose <b>Mark → Claim to check</b>, and I can keep count.</p>');
+    orcSay(`<p>${need.length ? `${orcPl(need.length, 'claim needs', 'claims need')} a source` : 'Every claim you’ve marked has a source'}, of ${orcPl(rows.length, 'claim', 'claims')} marked.</p>${need.length ? `<ul class="orc-ex">${need.slice(0, 4).map(x => `<li>${esc(x.p.text.slice(0, 140))}${x.p.text.length > 140 ? '…' : ''} ${orcBtn('Go', () => rmGo(x.p))}</li>`).join('')}</ul><p>Which of these could you source today?</p>` : ''}`);
+  } else if (kind === 'contested') {
+    const rows = claimRows().filter(x => x.c.status === 'disp');
+    orcSay(rows.length ? `<p>${orcPl(rows.length, 'claim is', 'claims are')} marked contested.</p><ul class="orc-ex">${rows.slice(0, 4).map(x => `<li>${esc(x.p.text.slice(0, 140))} ${orcBtn('Go', () => rmGo(x.p))}</li>`).join('')}</ul><p>What would settle the first one?</p>` : '<p>No claims are marked contested.</p>');
+  } else if (kind === 'weak') {
+    const weak = P.sources.filter(s => /^[DEF]/i.test((s.osint && s.osint.rating) || ''));
+    const rated = P.sources.filter(s => s.osint && s.osint.rating).length;
+    orcSay(weak.length ? `<p>${orcPl(weak.length, 'source is', 'sources are')} rated D, E or F, of ${rated} rated:</p><ul class="orc-ex">${weak.slice(0, 5).map(s => `<li><b>${esc(s.osint.rating)}</b> ${esc(htmlToText(citeFull(s.id)).slice(0, 160))}</li>`).join('')}</ul><p>Is anything resting on these alone?</p>` : `<p>${rated ? `None of your ${rated} rated sources is rated D or below.` : 'None of your sources has a reliability rating yet. Rate them in each source’s details.'}</p>`);
+  } else if (kind === 'goal') {
+    const pc = paceData();
+    if (!pc.target) return orcSay(`<p>You have ${orcPl(pc.words, 'word', 'words')} in the main text, and ${orcPl(pc.today, 'word', 'words')} written today. There’s no word target yet; set one on <b>Project home</b>.</p>`);
+    orcSay(`<p>${orcPl(pc.words, 'word', 'words')} of ${nf(pc.target)}: ${pc.left ? `${orcPl(pc.left, 'word', 'words')} to go` : 'target reached'}. Today: ${orcPl(pc.today, 'word', 'words')}${pc.need ? `; you need about ${nf(pc.need)} a day ${pc.daysLeft !== null && pc.daysLeft >= 0 ? `for ${orcPl(pc.daysLeft, 'day', 'days')}` : ''}` : ''}.</p><p>${pc.state === 'behind' ? 'You’re behind the pace. What could you cut, or write rough?' : pc.state === 'late' ? 'The deadline has passed. Is it real, or one you can move?' : pc.state === 'done' ? 'Time to revise. What’s the weakest chapter?' : 'What will you write next?'}</p>`);
+  } else if (kind === 'open') {
+    const qs = qItems().filter(i => i.status !== 'answered');
+    orcSay(qs.length ? `<p>${orcPl(qs.length, 'question is', 'questions are')} still open:</p><ul class="orc-ex">${qs.slice(0, 5).map(i => `<li>${esc(i.title || 'Untitled')} ${orcBtn('Open', () => openDesk('questions', i.id))}</li>`).join('')}</ul><p>Which is closest to an answer?</p>` : `<p>No open questions. Is that true, or are they just not written down? ${orcBtn('Ask Socrates', () => openSocrates({ fresh: true }))}</p>`);
+  } else if (kind === 'due') {
+    const d = orcDue();
+    orcSay(d.length ? `<p>${orcPl(d.length, 'review key is', 'review keys are')} due:</p><ul class="orc-ex">${d.slice(0, 5).map(x => `<li><b>${esc(x.r.reason)}</b> ${esc(fmtDue(x.r.due))}: ${esc(x.p.text.slice(0, 100))} ${orcBtn('Go', () => rmGo(x.p))}</li>`).join('')}</ul>` : '<p>Nothing is due for review.</p>');
+  } else if (kind === 'tk') {
+    const f = looseEnds().flags;
+    orcSay(f.length ? `<p>${orcPl(f.length, 'gap is', 'gaps are')} flagged (TKs and flags):</p><ul class="orc-ex">${f.slice(0, 5).map(x => `<li><span class="orc-k">${esc(x.d.title || 'Untitled')}</span> ${esc(x.snip)} ${orcBtn('Go', () => jumpTo(x.d.id, x.at))}</li>`).join('')}</ul><p>Which could you fill in under an hour?</p>` : '<p>No TKs or flags in your drafts.</p>');
+  } else if (kind === 'next') {
+    const n = orcNext();
+    orcSay(n.length ? `<p>Your next steps, from the journal:</p><ul class="orc-ex">${n.slice(0, 6).map(e => `<li>${esc(e.text)}</li>`).join('')}</ul><p>Which one today?</p>` : '<p>The journal has no next steps waiting. What’s yours? Say <b>next step:</b> and I’ll log it.</p>');
+  }
+}
+function orcCount(what) {
+  const m = { notes: [P.notes.length, 'note', 'notes'], sources: [P.sources.length, 'source', 'sources'], documents: [binderOrder().length, 'document', 'documents'], docs: [binderOrder().length, 'document', 'documents'], claims: [rmAll('cl').length, 'marked claim', 'marked claims'], threads: [P.threads.length, 'thread', 'threads'], questions: [qItems().length, 'question', 'questions'], hypotheses: [jr().hypotheses.length, 'hypothesis', 'hypotheses'] }[what];
+  if (m) orcSay(`<p>You have ${orcPl(m[0], m[1], m[2])}.</p>`);
+}
+/* ---------- doing things ---------- */
+const ORC_KIND = { note: 'note', notes: 'note', question: 'question', hypothesis: 'hypothesis', journal: 'did', 'journal entry': 'did', log: 'did', 'log entry': 'did', 'next step': 'next', idea: 'idea', found: 'found', 'dead end': 'dead', decided: 'decided', decision: 'decided' };
+function orcSave(kind, text) {
+  text = String(text || '').trim().replace(/^["“'‘]|["”'’]$/g, '').trim();
+  if (!text) { orcSay('<p>What should I save? Say it after a colon, like <b>note: the harvest failed in 1916</b>.</p>'); return; }
+  const k = ORC_KIND[kind] || 'did'; let undo, label, open;
+  if (k === 'note') { const n = Object.assign(newNote(), { title: firstLine(text).slice(0, 70), body: text, kind: 'idea', tags: ['oracle'] }); P.notes.push(n); renderNoteList(); label = 'a note'; open = () => openNote(n.id); undo = () => { P.notes = P.notes.filter(x => x.id !== n.id); renderNoteList(); }; }
+  else if (k === 'question') { const it = plNewItem('', null, { type: 'question', title: text, status: 'open' }); label = 'an open question'; open = () => openDesk('questions', it.id); undo = () => { P.plan.items = PLI().filter(x => x.id !== it.id); }; }
+  else if (k === 'hypothesis') { const h = { id: uid('h'), text, rationale: '', status: 'untested', questionId: '', links: [], history: [], created: nowISO(), modified: nowISO() }; jr().hypotheses.push(h); label = 'a hypothesis'; open = () => openDesk('journal'); undo = () => { jr().hypotheses = jr().hypotheses.filter(x => x.id !== h.id); }; }
+  else { const e = jLog(k, text, { tags: ['oracle'] }); label = `a journal entry (${(LOG_K[k] || k).toLowerCase()})`; open = () => openDesk('journal'); undo = () => { jr().log = jr().log.filter(x => x.id !== e.id); }; }
+  markDirty(); rmRefresh(); renderResearch();
+  orcSay(`<p>Saved as ${label}: “${esc(text.slice(0, 200))}”.</p><p>${orcBtn('Open', open)} ${orcBtn('Undo', () => { undo(); markDirty(); rmRefresh(); renderResearch(); orcSay('<p>Undone.</p>'); })}</p>`);
+}
+/* ---------- arguing the other side ---------- */
+const ORC_DEV = [
+  c => `Suppose that’s so. Does it show ${c}, or only something next to it?`,
+  () => 'A sceptic would say that’s your reading, not your source’s. What does the source actually say, word for word?',
+  () => 'That’s one piece of evidence. What’s the piece that fits worst?',
+  () => 'Who would disagree with you, and what’s the best thing they could say?',
+  () => 'If you’d found the opposite in the archive, would you have believed it as quickly?',
+  () => 'What would have to be true for you to be wrong?'];
+// Socrates' stems are written in the writer's own voice; the Oracle asks them of you
+function orcStem(st, subj) {
+  st = st.replace(/\bAm I\b/g, 'Are you').replace(/\bI am\b/g, 'you are').replace(/\bI’m\b/g, 'you’re').replace(/\bI’ve\b/g, 'you’ve').replace(/\bI’d\b/g, 'you’d').replace(/\bI\b/g, 'you').replace(/\bmyself\b/g, 'yourself').replace(/\bmy\b/g, 'your').replace(/\bMy\b/g, 'Your').replace(/\bme\b/g, 'you').replace(/\bmine\b/g, 'yours')
+    .replace(/\bhave you\b(?= (read|tested|dismissed|looked|tried|put))/g, 'have you').replace(/\bwould you say\b/g, 'would you say');
+  let i = 0; return orcCap(st.replace(/___/g, () => (i++ === 0 && subj ? subj : '___')));
+}
+function orcCounter(claim) {
+  const G = socData(), pick = ['alternatives', 'assumptions', 'evidence', 'causation'].map(id => G.find(g => g.id === id)).filter(Boolean);
+  const g = pick[ORC.rounds % pick.length];
+  return orcStem(socPick(g, claim), `“${claim}”`);
+}
+function orcAgainst(claim) {
+  const out = [], terms = [...new Set([orcTopic(claim), ...(claim.match(/\b[A-Z][\wÀ-ɏ'-]{3,}/g) || [])])].filter(Boolean).slice(0, 3);
+  const contra = /\b(but|however|although|though|yet|contrary|contradict|disput|doubt|unlikely|no evidence|not clear|uncertain|against|exaggerat|myth|wrong)\w*/i;
+  terms.forEach(t => {
+    const r = aboutSearch(t); if (!r) return;
+    r.notes.filter(n => contra.test(n.body)).slice(0, 2).forEach(n => out.push(`<li><span class="orc-k">Your note</span> <b>${esc(noteTitle(n))}</b>: ${hiText(rmNorm(n.body), r.re, 160)} ${orcBtn('Open', () => openNote(n.id))}</li>`));
+  });
+  const words = new Set((claim.toLowerCase().match(/[a-z]{5,}/g) || []).filter(w => !ORC_STOP.has(w)));
+  claimRows().filter(x => (x.c.status === 'disp' || x.c.status === 'need') && [...words].some(w => x.p.text.toLowerCase().includes(w))).slice(0, 2)
+    .forEach(x => out.push(`<li><span class="orc-k">${x.c.status === 'disp' ? 'Contested claim' : 'Claim without a source'}</span> ${esc(x.p.text.slice(0, 140))} ${orcBtn('Go', () => rmGo(x.p))}</li>`));
+  (jr().hypotheses || []).filter(h => [...words].some(w => (h.text || '').toLowerCase().includes(w)) && h.links.some(l => l.stance === 'against')).slice(0, 1)
+    .forEach(h => out.push(`<li><span class="orc-k">Hypothesis</span> ${esc(h.text)}: you’ve filed ${orcPl(h.links.filter(l => l.stance === 'against').length, 'piece', 'pieces')} of evidence against it. ${orcBtn('Open', () => openDesk('journal'))}</li>`));
+  return out.slice(0, 4);
+}
+function orcDevil(claim) {
+  claim = String(claim || '').trim().replace(/^["“]|["”]$/g, '').replace(/[.!]+$/, '');
+  if (!claim) { orcSay('<p>Argue against what? Say it after a colon: <b>argue the other side: the blockade caused the famine</b>.</p>'); return; }
+  ORC.mode = 'devil'; ORC.claim = claim; ORC.rounds = 0;
+  const ag = orcAgainst(claim);
+  orcSay(`<p>All right, I’ll take the other side of “${esc(claim)}”.</p><p>${esc(orcCounter(claim))}</p>${ag.length ? `<p>And from your own files:</p><ul class="orc-ex">${ag.join('')}</ul>` : ''}<p>Your move. Say <b>stop</b> when you’ve had enough.</p>`);
+}
+function orcDevilTurn(text) {
+  ORC.rounds++;
+  const c = `“${ORC.claim}”`, a = ORC_DEV[ORC.rounds % ORC_DEV.length](c);
+  const echo = orcReply(text);
+  orcSay(`<p>${esc(a)}</p><p>${esc(ORC.rounds % 2 ? orcCounter(ORC.claim) : (echo ? echo.text : orcCounter(ORC.claim)))}</p>`);
+}
+function orcDevilEnd() {
+  const n = ORC.rounds; ORC.mode = ''; ORC.rounds = 0;
+  orcSay(`<p>Fair enough. ${n ? `That was ${orcPl(n, 'round', 'rounds')}.` : ''} What held up, and what do you need to check? Say <b>note:</b> or <b>question:</b> and I’ll keep it.</p>`);
+}
+/* ---------- the day ---------- */
+function orcCheckin(auto) {
+  ORC.checkin = true; ORC.logged = false;
+  const d = orcDue(), qs = qItems().filter(i => i.status !== 'answered'), nx = orcNext(), pc = paceData();
+  let tk = []; try { tk = looseEnds().flags; } catch (e) {}
+  const day = new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+  const items = [];
+  if (d.length) items.push(`<li>${orcPl(d.length, 'review key is', 'review keys are')} due: <b>${esc(d[0].r.reason)}</b>, “${esc(d[0].p.text.slice(0, 80))}” ${orcBtn('Go', () => rmGo(d[0].p))}</li>`);
+  if (nx.length) items.push(`<li>Next ${nx.length === 1 ? 'step' : 'steps'} from the journal: ${nx.slice(0, 3).map(e => `<b>${esc(e.text.slice(0, 90))}</b>`).join('; ')}</li>`);
+  if (qs.length) items.push(`<li>${orcPl(qs.length, 'question is', 'questions are')} open, among them “${esc((qs[0].title || 'Untitled').slice(0, 90))}”.</li>`);
+  if (tk.length) items.push(`<li>${orcPl(tk.length, 'TK or flag', 'TKs and flags')} in your drafts. ${orcBtn('First one', () => jumpTo(tk[0].d.id, tk[0].at))}</li>`);
+  if (pc.target) items.push(`<li>${orcPl(pc.words, 'word', 'words')} of ${nf(pc.target)}${pc.need ? `, about ${nf(pc.need)} a day to finish on time` : ''}.</li>`);
+  orcSay(`<p class="orc-del">${auto ? 'The oracle is listening. ' : ''}${esc(day)}.</p>${items.length ? `<ul class="orc-ex">${items.join('')}</ul>` : '<p>Nothing is due and nothing is waiting.</p>'}<p>What are you working on today?${auto ? ' (Say <b>help</b> to see what I can do.)' : ''}</p>`);
+}
+const ORC_MAXIMS = {
+  self: ['Γνῶθι σεαυτόν', 'Know thyself', 'Carved at the temple of Apollo at Delphi. Socrates made it the start of every inquiry.'],
+  excess: ['Μηδὲν ἄγαν', 'Nothing in excess', 'Also carved at Delphi. Stop while the work is still good.'],
+  pledge: ['Ἐγγύα, πάρα δ’ ἄτη', 'Make a pledge, and ruin is near', 'The third saying at Delphi. Be careful what you stake your name on.'] };
+function orcSignoff() {
+  const k = ORC.certainty >= 2 ? 'pledge' : (ORC.said >= 14 || /\b(tired|exhausted|late|hours|all day|too much|overwhelmed)\b/i.test(ORC.log.filter(m => m.who === 'you').map(m => m.text).join(' '))) ? 'excess' : 'self';
+  const [g, e, note] = ORC_MAXIMS[k];
+  ORC.await = '';
+  orcSay(`<p>Until next time.</p><blockquote class="orc-max"><p lang="grc">${g}</p><p><b>${e}.</b> <span class="muted">${note}</span></p></blockquote>${ORC.log.filter(m => m.who === 'you').length > 1 ? `<p>${orcBtn('Save this conversation to the journal', orcSaveJournal)}</p>` : ''}`);
+}
+/* ---------- nudges ---------- */
+function orcNudge() {
+  const opts = [];
+  try { const f = looseEnds().flags[0]; if (f) opts.push(`A gap you could fill: <b>${esc(f.d.title || 'Untitled')}</b>, “${esc(f.snip)}” ${orcBtn('Go', () => jumpTo(f.d.id, f.at))}`); } catch (e) {}
+  const d = orcDue()[0]; if (d) opts.push(`A review key that’s due: <b>${esc(d.r.reason)}</b> ${orcBtn('Go', () => rmGo(d.p))}`);
+  const nx = orcNext()[0]; if (nx) opts.push(`A next step you set yourself: <b>${esc(nx.text.slice(0, 100))}</b>`);
+  const n = inboxNotes()[0]; if (n) opts.push(`A note you haven’t used yet: <b>${esc(noteTitle(n))}</b> ${orcBtn('Open', () => openNote(n.id))}`);
+  return opts.length ? `<p class="orc-nudge">You’ve said you’re not sure ${ORC.unsure} times now. Maybe come at it from somewhere concrete. ${opts[ORC.unsure % opts.length]}</p>` : `<p class="orc-nudge">You’ve said you’re not sure ${ORC.unsure} times. ${orcBtn('Ask Socrates for a way in', () => openSocrates({ fresh: true }))}</p>`;
+}
+/* ---------- reading a passage back ---------- */
+function oracleConsult(range) {
+  if (!range) { const s = getSelection(); if (s.rangeCount && !s.isCollapsed && editor.contains(s.anchorNode)) range = s.getRangeAt(0).cloneRange(); else if (savedRange && !savedRange.collapsed && editor.contains(savedRange.startContainer)) range = savedRange.cloneRange(); }
+  if (!range || !rmNorm(range.toString())) { toast('Select a passage in the draft first, then consult the Oracle.'); return; }
+  const frag = range.cloneContents(), box = document.createElement('div'); box.append(frag);
+  const cites = $$('.cite', box).length + $$('.fn', box).length;
+  $$('.cite,.fn,.flag,.cmt-pt,.ix-a', box).forEach(x => x.remove());
+  const text = rmNorm(box.textContent);
+  if (!SPLIT.on || SPLIT.view !== 'oracle') splitOpen('oracle');
+  if (!ORC.greeted) ORC.greeted = true;
+  orcPush('you', `<p class="orc-q">${esc(text.length > 400 ? text.slice(0, 400) + '…' : text)}</p>`, 'Consult on: ' + text);
+  const qs = [], sents = text.split(/(?<=[.!?])\s+(?=[A-Z“"])/).filter(s => s.split(/\s+/).length >= 6);
+  if (!cites && sents.length) qs.push(`Nothing here is cited. Where does “${esc(sents[0].slice(0, 120))}” come from?`);
+  const num = text.match(/\b\d[\d,.]*\s*(?:%|per ?cent|percent|million|billion|thousand|men|troops|soldiers|people|km|kilometres|kilometers|miles|tons?|tonnes|dead|killed)?/);
+  if (num && !/^\d{1,2}$/.test(num[0].trim())) qs.push(`You give “${esc(num[0].trim())}”. Who counted, how, and compared with what?`);
+  const hed = text.match(/\b(almost certainly|very likely|likely|probably|possibly|perhaps|may have|might have|could have|apparently|reportedly|allegedly|seems|appears)\b/i);
+  if (hed) qs.push(`“${esc(hed[0])}”: how likely, exactly? Would a reader take it the way you mean it?`);
+  const abs = text.match(/\b(always|never|everyone|no one|nobody|all of|none of|clearly|obviously|undoubtedly|certainly|of course)\b/i);
+  if (abs) qs.push(`“${esc(abs[0])}”: is that true of every case, and clear to a reader who doubts you?`);
+  const cau = text.match(/\b(because|caused|causes|led to|leads to|resulted in|due to|drove|triggered|therefore|thus|as a result)\b/i);
+  if (cau) qs.push(`You claim a cause (“${esc(cau[0])}”). What’s the mechanism, and what else could explain it?`);
+  const acr = [...new Set(text.match(/\b[A-Z]{2,6}s?\b/g) || [])].filter(a => !/^(I|II|III|IV|VI|VII|VIII|IX|XI|XII|USA|US|UK|BCE|CE|AD|BC|OK|TK)$/.test(a));
+  if (acr.length) qs.push(`Will a reader know what ${acr.slice(0, 2).map(a => `“${esc(a)}”`).join(' and ')} ${acr.length > 1 ? 'mean' : 'means'} by this point?`);
+  const marked = claimRows().filter(x => (x.c.status === 'need' || x.c.status === 'disp') && text.includes(x.p.text.slice(0, 40)));
+  if (marked.length) qs.push(`You marked part of this as ${marked[0].c.status === 'disp' ? 'contested' : 'needing a source'}. Has that changed?`);
+  if (qs.length < 3 && sents.length) { const g = socData().find(x => x.id === (cites ? 'implications' : 'evidence')); if (g) qs.push(esc(orcStem(socPick(g, 'x'), 'this'))); }
+  ORC.last = text;
+  orcSay(qs.length ? `<p>Reading it back to you:</p><ol class="orc-ex">${qs.slice(0, 5).map(q => `<li>${q}</li>`).join('')}</ol><p>Which do you want to take on first? Say <b>question: …</b> to keep one.</p>` : '<p>It reads cleanly to me: cited, no loose numbers, no hedges. What’s the weakest word in it?</p>');
+  ORC.said++;
+}
+/* ---------- one turn ---------- */
+const ORC_RE = {
+  help: /^(help|\?|what can you do|how does this work|commands|what do you do)\b/i,
+  checkin: /^(check[\s-]?in|daily check|good morning|morning|let'?s (start|begin)|start( the day)?|what'?s (on )?(for )?today)\b/i,
+  bye: /\b(bye|goodbye|good night|goodnight|that'?s all|that'?s it for (now|today)|done for (today|the day|now|tonight)|i'?m done|signing off|see you|call it a day|calling it a day)\b/i,
+  about: /^(?:what|which)\s+(?:have|did|do)\s+i\s+(?:got|have|written|write|wrote|said|say|noted|note|found|find|collected|know)\s+(?:about|on|regarding|for)\s+(.+)$|^(?:what do i (?:know|have)|tell me|show me|remind me|find|search(?: for)?|look up|everything|anything)\s+(?:about|on|for)?\s*(.+)$/i,
+  need: /\bclaims?\b.*\b(need|needs|lack|lacking|without|missing|no)\b.*\b(sources?|citations?)\b|\bunsourced\b|\buncited claims?\b/i,
+  contested: /\b(contested|disputed)\b/i,
+  weak: /\b(weak|unreliable|low[- ]rated)\s+sources?\b|\bsources?\b.*\brated\b.*\b(d|e|f|low)\b/i,
+  goal: /\b(word|words)\b.*\b(goal|target|count|today|so far|pace)\b|\bhow (far|close)\b.*\b(goal|target|finish|done)\b|\bhow many words\b|\bam i (on track|behind)\b/i,
+  open: /\b(open|unanswered)\s+questions?\b|\bwhat'?s (still )?open\b/i,
+  due: /\b(what'?s|anything|what is)\s+due\b|\breview keys?\b|\boverdue\b/i,
+  tk: /\btks?\b|\bflags?\b.*\bdrafts?\b|\bgaps?\b.*\bdrafts?\b/i,
+  next: /\bnext steps?\b|\bwhat'?s next\b|\bto-?do\b/i,
+  count: /\bhow many\s+(notes|sources|documents|docs|claims|threads|questions|hypotheses)\b/i,
+  devil: /\b(devil'?s advocate|argue (the other side|against)|other side|push back|play (the )?sceptic|play (the )?skeptic|poke holes|convince me i'?m wrong|attack (this|my|that))\b/i,
+  stop: /^(stop|enough|ok(ay)?,? stop|you win|i give up|truce|that'?s enough|thanks?,? (that'?s )?enough|end it)\b/i,
+  saveShort: /^(note|question|hypothesis|journal|log|next step|idea|found|dead end|decided|decision)\s*[:\-–]\s*(.+)$/i,
+  saveLong: /^(?:please\s+)?(?:save|keep|file|add|make|log|record|put|turn|write)\b(.*?)\b(?:as|to|into|in|a)?\s*(?:a|an|the|my)?\s*(note|question|hypothesis|journal entry|journal|log entry|log|next step|idea|dead end)\b\s*[:\-–]?\s*(.*)$/i,
+  noteThat: /^(?:note|log|remember|record) that\s+(.+)$/i,
+  unsure: /\b(i (do not|don'?t) know|not sure|no idea|unsure|stuck|lost|confused|can'?t (figure|work) (it )?out|dunno|idk)\b/i,
+  sure: /\b(certain|sure|definitely|undoubtedly|proves?|obviously|clearly)\b/i,
+  selfx: /\b(i (think|believe|feel|want|wish|hope)|my (view|bias|instinct|gut))\b/i };
+function orcTurn(raw) {
+  const text = String(raw || '').trim(); if (!text) return;
+  orcPush('you', `<p>${esc(text)}</p>`, text);
+  ORC.said++; ORC.acts.length > 400 && (ORC.acts = ORC.acts.slice(-200));
+  if (ORC_RE.sure.test(text)) ORC.certainty++;
+  let m;
+  if (ORC.await === 'log') {
+    ORC.await = ''; ORC.logged = true;
+    if (!/^(nothing|skip|no|not much|none)\b/i.test(text)) { jLog('did', text, { tags: ['oracle'] }); markDirty(); renderResearch(); orcSay(`<p>Logged in today’s journal: “${esc(text.slice(0, 160))}”.</p>`); }
+    orcSignoff(); return;
+  }
+  if (ORC_RE.help.test(text)) return orcHelp();
+  if (ORC.mode === 'devil' && ORC_RE.stop.test(text)) return orcDevilEnd();
+  if (ORC_RE.bye.test(text)) {
+    if (ORC.mode === 'devil') { ORC.mode = ''; }
+    if (ORC.checkin && !ORC.logged && ORC.log.filter(x => x.who === 'you').length > 1) { ORC.await = 'log'; orcSay('<p>Before you go: what did you get done today? I’ll put it in the journal. (Say <b>skip</b> to leave it.)</p>'); return; }
+    return orcSignoff();
+  }
+  if (ORC_RE.checkin.test(text)) return orcCheckin(false);
+  if ((m = ORC_RE.saveShort.exec(text))) return orcSave(m[1].toLowerCase(), m[2]);
+  if ((m = ORC_RE.noteThat.exec(text))) return orcSave(/^log/i.test(text) ? 'journal' : 'note', m[1]);
+  if ((m = ORC_RE.saveLong.exec(text))) {
+    const tail = m[3].trim(), pre = m[1].trim();
+    const t = tail || (/^(that|this|it|what i (just )?said)?$/i.test(pre) ? ORC.last : pre.replace(/^(that|this|it)\s+/i, ''));
+    return orcSave(m[2].toLowerCase(), t);
+  }
+  if (ORC_RE.devil.test(text)) {
+    const c = (/[:\-–]\s*(.+)$/.exec(text) || [])[1] || (/\bagainst\s+(?:the (?:idea|claim) that\s+)?(.{8,})$/i.exec(text) || [])[1] || ORC.last;
+    return orcDevil(c);
+  }
+  if (ORC_RE.need.test(text)) return orcStatus('need');
+  if (ORC_RE.weak.test(text)) return orcStatus('weak');
+  if (ORC_RE.contested.test(text)) return orcStatus('contested');
+  if (ORC_RE.goal.test(text)) return orcStatus('goal');
+  if (ORC_RE.open.test(text)) return orcStatus('open');
+  if (ORC_RE.due.test(text)) return orcStatus('due');
+  if (ORC_RE.next.test(text)) return orcStatus('next');
+  if (ORC_RE.tk.test(text)) return orcStatus('tk');
+  if ((m = ORC_RE.count.exec(text))) return orcCount(m[1].toLowerCase());
+  if ((m = ORC_RE.about.exec(text))) return orcAbout((m[1] || m[2] || '').replace(/^(the|my)\s+/i, ''));
+  // a statement: argue it, or reflect it, and bring in the project where it helps
+  if (ORC.mode === 'devil') { ORC.last = text; return orcDevilTurn(text); }
+  const unsure = ORC_RE.unsure.test(text); if (unsure) ORC.unsure++;
+  const topic = orcTopic(text);
+  if (topic) ORC.topics[topic.toLowerCase()] = (ORC.topics[topic.toLowerCase()] || 0) + 1;
+  const r = orcReply(text);
+  let html = '';
+  if (r) html = `<p>${esc(r.text)}</p>`;
+  else if (ORC.mem.length && ORC.said % 3 === 0) html = `<p>${esc(ORC.mem.shift())}</p>`;
+  else if (topic && Math.random() < 0.6) { const G = socData().filter(g => g.suits.some(x => ['term', 'event', 'person'].includes(x))), g = G[Math.floor(Math.random() * G.length)]; html = `<p>${esc(orcStem(socPick(g, topic), topic))}</p>`; }
+  else { const n = orcScript().none.rules[0].replies; html = `<p>${esc(n[(ORC.rot.none = ((ORC.rot.none || 0) + 1)) % n.length])}</p>`; }
+  // the project: what you have on this, once in a while
+  if (topic && topic.length > 2 && (ORC.echoed[topic.toLowerCase()] === undefined || ORC.said - ORC.echoed[topic.toLowerCase()] > 8)) {
+    const a = aboutSearch(topic), n = a ? a.notes.length + a.sources.length + a.paras.length : 0;
+    if (n) { ORC.echoed[topic.toLowerCase()] = ORC.said; html += `<p class="orc-proj">You have ${[[a.notes.length, 'note', 'notes'], [a.sources.length, 'source', 'sources'], [a.paras.length, 'paragraph', 'paragraphs']].filter(x => x[0]).map(x => orcPl(x[0], x[1], x[2])).join(', ')} on <b>${esc(topic)}</b>. ${orcBtn('Show me', () => orcAbout(topic))}</p>`; }
+  }
+  // circling and being stuck
+  if (unsure && ORC.unsure >= 3 && ORC.unsure % 3 === 0) html += orcNudge();
+  else if (topic && ORC.topics[topic.toLowerCase()] === 4) html += `<p class="orc-nudge">We keep coming back to <b>${esc(topic)}</b>. ${orcBtn('Everything about ' + esc(topic), () => openDesk('about', topic))} or <b>argue the other side</b> of what you think about it?</p>`;
+  ORC.last = text;
+  orcSay(html);
+}
+function orcSaveJournal() {
+  const lines = ORC.log.map(m => `${m.who === 'you' ? 'You' : 'Oracle'}: ${m.text.replace(/\s+/g, ' ').trim()}`).join('\n');
+  if (!ORC.log.some(m => m.who === 'you')) { toast('Say something to the Oracle first.'); return; }
+  jLog('did', 'Talked it through with the Oracle.\n\n' + lines, { tags: ['oracle'] }); markDirty(); renderResearch();
+  toast('Saved the conversation to today’s journal.');
+}
+function orcNew() { Object.assign(ORC, { log: [], mem: [], rot: {}, mode: '', claim: '', rounds: 0, last: '', unsure: 0, topics: {}, echoed: {}, checkin: false, logged: false, await: '', acts: [], greeted: false, certainty: 0, said: 0 }); orcGreet(); }
+function orcMount(body) {
+  body.innerHTML = `<div class="orc">
+    <div class="orc-head"><span class="orc-badge" aria-hidden="true">${TRIPOD}</span><div class="orc-t"><b>The Oracle</b><span class="small muted">Questions from your own words and notes. No AI: it reflects, it doesn’t think.</span></div><button class="small" id="orcSave" title="Save this conversation to today’s journal">Save to journal</button><button class="small ghost" id="orcNew">New</button></div>
+    <div class="orc-log" id="orcLog" role="log" aria-live="polite" aria-label="Conversation with the Oracle" tabindex="0"></div>
+    <div class="orc-chips" role="group" aria-label="Quick prompts"><button class="small" data-oq="check in">Check in</button><button class="small" data-oq="what's open?">What’s open?</button><button class="small" data-oq="what's due?">What’s due?</button><button class="small" data-oq="argue the other side">Argue the other side</button><button class="small" data-oq="help">Help</button></div>
+    <form class="orc-form" id="orcForm"><label class="sr-only" for="orcIn">Talk to the Oracle</label><textarea id="orcIn" rows="2" placeholder="Think out loud, or ask what you’ve written about something"></textarea><button class="primary" id="orcSend">Ask</button></form></div>`;
+  if (!ORC.greeted) orcGreet(); else orcRender();
+}
+function openOracle() { if (!SPLIT.on || SPLIT.view !== 'oracle') splitOpen('oracle'); else splitFocus(); setTimeout(() => $('#orcIn')?.focus(), 60); }
+$('#spBody').addEventListener('submit', e => { if (e.target.id !== 'orcForm') return; e.preventDefault(); const t = $('#orcIn'); const v = t.value; t.value = ''; orcTurn(v); t.focus(); });
+$('#spBody').addEventListener('keydown', e => { if (e.target.id === 'orcIn' && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#orcForm').requestSubmit(); } });
+$('#spBody').addEventListener('click', e => {
+  const a = e.target.closest('[data-oa]'); if (a) { const fn = ORC.acts[+a.dataset.oa]; if (fn) fn(); return; }
+  const q = e.target.closest('[data-oq]'); if (q) { orcTurn(q.dataset.oq); $('#orcIn')?.focus(); return; }
+  if (e.target.id === 'orcSave') orcSaveJournal();
+  if (e.target.id === 'orcNew') orcNew();
+});
+
 /* ---------- Socrates (2.1): question stems to start from ----------
    342 unfinished questions in 19 kinds (data/socrates.txt). Socrates deals three from different
    kinds, suited to what is selected (a term, a claim, a name, a number, a citation) and to the kind of
@@ -9105,6 +9529,7 @@ $('#socShuffle').addEventListener('click', () => socShuffle());
 $('#socClose').addEventListener('click', () => { socRange = null; $('#socDlg').close(); });
 $('#qSoc').addEventListener('click', () => { const r = qRange; qRange = null; $('#qDlg').close(); openSocrates({ range: r, fresh: !r }); });
 $('#rsSoc').addEventListener('click', () => openSocrates());
+$('#btnOracle').addEventListener('click', () => openOracle());
 
 function removeMark(k, pid, quiet) {
   const did = rmOp(`remove a ${(RM_KINDS[k] || 'mark').toLowerCase()}`, () => removeMarkNow(k, pid));
@@ -9202,6 +9627,7 @@ document.addEventListener('click', e => { if (!e.target.closest('#btnMark,#markM
 function rmDo(a) {
   if (a === 'th') openThreadPick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
   if (a === 'soc') openSocrates();
+  if (a === 'orc') oracleConsult();
   if (a === 'desk') openDesk(); if (a === 'tab') { switchTab('research'); document.body.classList.add('side-open'); }
 }
 $('#markMenu').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.m; if (!a) return; $('#markMenu').classList.remove('open'); rmDo(a); });
@@ -9209,7 +9635,7 @@ document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
   if ($('#markMenu').classList.contains('open') && !mod && !e.altKey) {
-    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', s: 'soc', d: 'desk' }[e.key.toLowerCase()];
+    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', s: 'soc', o: 'orc', d: 'desk' }[e.key.toLowerCase()];
     if (m) { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); rmDo(m); }
     else if (e.key === 'Escape') { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); }
   }
@@ -11395,7 +11821,7 @@ $('#tbcCancel').addEventListener('click', () => $('#tbcDlg').close());
    window of its own, kept in step with this one.
    ================================================================ */
 const SPLIT = { on: false, view: '', moved: null, stub: null, home: null, docId: '' };
-const SV = [['notes', 'Notes'], ['sources', 'Sources'], ['desk', 'Research desk'], ['doc', 'A document']];
+const SV = [['notes', 'Notes'], ['sources', 'Sources'], ['desk', 'Research desk'], ['doc', 'A document'], ['oracle', 'The Oracle']];
 let deskInSplit = false;
 function splitOpen(view, opt = {}) {
   view = SV.some(v => v[0] === view) ? view : (PREFS.splitView || 'notes');
@@ -11420,11 +11846,13 @@ function splitOpen(view, opt = {}) {
   } else if (view === 'desk') {
     const d = $('#desk'); SPLIT.home = document.createComment('desk home'); d.before(SPLIT.home); body.append(d); SPLIT.moved = d;
     deskInSplit = true; document.body.classList.remove('desk-on'); openDesk(opt.dv || PREFS.deskView || 'claims');
+  } else if (view === 'oracle') {
+    orcMount(body);
   } else if (view === 'doc') {
     SPLIT.docId = opt.docId || SPLIT.docId || (binderOrder().find(d => d.id !== curDocId) || binderOrder()[0] || {}).id || '';
     splitDocRender();
   }
-  $('#spPop').classList.toggle('hidden', POPOUT);
+  $('#spPop').classList.toggle('hidden', POPOUT || view === 'oracle');
   if (!POPOUT) { pbLayoutAll(); spAria(); }
   if (opt.focus !== false) splitFocus();
 }
@@ -11455,7 +11883,7 @@ function splitToggle() {
   if (matchMedia('(max-width: 860px)').matches) { document.body.classList.toggle('split-hide'); if (document.body.classList.contains('split-hide')) editor.focus(); else splitFocus(); return; }
   splitClose();
 }
-function splitFocus() { setTimeout(() => { const t = $('#spBody input[type=search], #spBody .sp-docscroll, #spBody [tabindex], #spBody button'); if (t) t.focus(); }, 30); }
+function splitFocus() { setTimeout(() => { const t = $('#orcIn') || $('#spBody input[type=search], #spBody .sp-docscroll, #spBody [tabindex], #spBody button'); if (t) t.focus(); }, 30); }
 function splitSwap() { PREFS.splitSide = PREFS.splitSide === 'left' ? 'right' : 'left'; savePrefs(); document.body.classList.toggle('split-left', PREFS.splitSide === 'left'); }
 $('#spTabs').addEventListener('click', e => { const b = e.target.closest('[data-sv]'); if (b) splitOpen(b.dataset.sv); });
 $('#spSwap').addEventListener('click', splitSwap);
