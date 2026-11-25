@@ -1,0 +1,384 @@
+# Socrates: question stems for researchers working alone.
+# "@ id | Group name | suits" starts a group; "suits" lists the selections it fits best
+# (term, claim, number, source, person, event, none). Each following line is one stem.
+# ___ is a blank: the first is filled with the selection, any second one is left for the writer.
+
+@ clarify | Clarifying meaning and terms | term event none
+What exactly do I mean by ___?
+How would I explain ___ to someone who has never heard of it, in two sentences?
+What is the difference between ___ and ___?
+Is ___ one thing, or several things sharing a name?
+Where does ___ begin and end? What is just outside it?
+What would count as an example of ___? What looks like one but isn’t?
+What is the strongest example of ___? The weakest that still counts?
+How did the people at the time use the word ___? How do I use it?
+Has the meaning of ___ changed since my sources were written?
+Who coined ___, and what did they want it to do?
+Is ___ a description, a judgment, or both?
+What would I lose if I stopped using the word ___ and described the thing plainly?
+What does ___ mean in this field that it doesn’t mean in ordinary speech?
+Am I using ___ the same way in every chapter?
+What is the opposite of ___? Is there one?
+What scale is ___ on: a person, a unit, a city, a state, a region, an era?
+When I say ___ “caused”, “shaped” or “drove” ___, what do I actually claim happened?
+Which of my terms would a hostile reviewer ask me to define first?
+What is the point of this paragraph, in one sentence?
+What question is ___ an answer to?
+
+@ evidence | Evidence and how we know | claim number source none
+How do I know ___?
+What is the single best piece of evidence for ___?
+What is the best evidence against ___?
+Which source, exactly, says ___? Have I read it myself, or only someone quoting it?
+Is ___ something a source saw, heard about, worked out, or assumed?
+How many independent sources support ___? Do they all trace back to one?
+What evidence would I expect to find if ___ were true? Have I looked for it?
+What evidence would I expect to find if ___ were false? Have I looked for that?
+What evidence is missing that should exist? Why might it be missing?
+Is the absence of evidence for ___ meaningful here, or just a gap in the record?
+Would this evidence convince someone who starts out doubting ___?
+Am I quoting ___ in a way the author would recognise?
+Does the evidence support the claim as I’ve worded it, or a weaker one?
+Which of my claims rests on a single source?
+What is the date of the evidence, and does it fit the date of the event?
+Is this evidence direct, or am I inferring ___ from it?
+Could the same evidence support a different conclusion?
+How much of ___ is documented, and how much is my reconstruction?
+What would it take to change my mind about ___?
+Where is the original: the document, the dataset, the recording, the photograph?
+Has anyone tried to check ___ before me? What did they find?
+Is this a fact, a widely repeated claim, or a figure that has hardened by being repeated?
+If my best source on ___ turned out to be wrong, what would still stand?
+
+@ assumptions | Assumptions | claim event none
+What has to be true for ___ to hold?
+What am I taking for granted about ___?
+Which of my assumptions, if wrong, would bring down the whole argument?
+Which assumption have I never tested because it seems obvious?
+Am I assuming ___ acted rationally? Rational by whose lights?
+Am I assuming ___ knew what I know now?
+Am I assuming the people involved wanted what they said they wanted?
+Am I assuming the official account of ___ is the accurate one? Or that it is a lie?
+Am I assuming that what was planned is what happened?
+Am I assuming the record is complete?
+Am I assuming ___ was unusual? Compared with what?
+Am I assuming ___ will continue, because it has so far?
+Am I assuming a single actor where there were many, or many where there was one?
+What does my field assume about ___ that a neighbouring field would question?
+What assumptions did my best source bring to ___?
+What would someone from ___ (another country, era, party, profession) find strange in my framing?
+Which assumptions have I inherited from the first book I read on this?
+If I listed my assumptions in order of confidence, which is at the bottom?
+What would change if I assumed the opposite of ___ for a page?
+What assumption am I making about my reader?
+
+@ alternatives | Alternatives and competing explanations | claim event none
+What else could explain ___?
+What is the most boring explanation for ___?
+What is the explanation my strongest critic would give?
+If I had to argue the opposite of ___, what would I say first?
+Could ___ be coincidence? How would I tell?
+Could ___ be the result of incompetence rather than design? Or design rather than incompetence?
+Could the cause run the other way: does ___ cause ___?
+Could a third thing explain both ___ and ___?
+Which explanation fits all the evidence, not just the vivid pieces?
+Which piece of evidence fits my explanation badly? What explains it better?
+What evidence would tell these explanations apart?
+Which explanations have I dismissed without testing? Why?
+How have other writers explained ___? Where do they disagree, and why?
+What would someone who was there say happened?
+What explanation would have seemed obvious at the time?
+Is there a structural explanation (money, geography, institutions) for what I’ve put down to individuals?
+Is there an individual explanation for what I’ve put down to structures?
+If two explanations are both partly true, how much does each explain?
+What explanation would I be embarrassed to have missed?
+
+@ implications | Implications and consequences | claim event none
+If ___ is right, what else must be true?
+If ___ is right, what should I expect to find in sources I haven’t read yet?
+What follows from ___ that I haven’t said out loud?
+Who would be affected if ___ were true? How?
+What would happen next if ___ continued?
+What are the second-order effects of ___, the consequences of the consequences?
+What did ___ make possible that wasn’t possible before? What did it rule out?
+Who gained from ___, and who paid for it?
+What were the unintended consequences of ___?
+If ___ is true, does it contradict anything I wrote in an earlier chapter?
+Does ___ hold only in this case, or does it generalise? How far?
+What would change in how people act if they believed ___?
+What does ___ mean for policy, practice or the next decision someone faces?
+What prediction does my argument make that could be checked later?
+If I’m wrong about ___, what is the cost, and who bears it?
+So what? Why should anyone care that ___?
+
+@ perspectives | Perspectives, actors and stakeholders | person event none
+How would ___ describe what happened?
+What did ___ want? What did they fear?
+What did ___ know at the time, and what couldn’t they know?
+What options did ___ actually have? Which did they think they had?
+Whose voice is missing from my account of ___?
+Who appears in my sources only as a number, a crowd or a victim?
+Who kept the records, and who was recorded?
+How did ___ look from the other side: the adversary, the target, the rival?
+How did ordinary people experience ___, as opposed to leaders?
+How did ___ look from the capital, and how from the provinces or the front?
+What would a participant object to in my account?
+Who would be angry to read this, and would they have a point?
+Who had the power to decide ___, and who only had to live with it?
+Which actor am I treating as a single mind when it was a committee, a faction or a bureaucracy?
+Within ___, who disagreed, and who won the argument?
+What did ___ say in public, and what in private?
+How have descendants, successors or later governments remembered ___?
+Whose interests does the standard story of ___ serve?
+If I swapped the names of the two sides, would I judge the actions the same way?
+
+@ sources | Sources and provenance | source none
+Who made ___, when, where, and for whom?
+Why was ___ written, recorded or kept? What was it for?
+Was the author of ___ in a position to know? First-hand, second-hand, or further?
+How long after the event was ___ written? What happened in between?
+What did the author of ___ stand to gain or lose?
+Who was the intended audience, and how might that have shaped what was said?
+What does ___ leave out that its author would certainly have known?
+Is ___ the original, a copy, a translation, an excerpt or a summary? Who made the change?
+Has ___ been edited, redacted, censored or selectively released? By whom?
+How did ___ survive when other records didn’t?
+Can ___ be authenticated? What would a forgery or a fake look like here?
+What else did this author write, and how reliable has it proved?
+Does ___ agree with sources that had no contact with it?
+Where ___ and ___ disagree, which is more likely right, and why?
+Is this source primary, secondary or tertiary for the claim I’m using it for?
+Is the figure I’m citing the source’s own, or one it borrowed?
+What is the earliest appearance of ___ that I can find?
+How has this source been read by others? Am I reading it against the grain or with it?
+If ___ is a web page, has it changed since I read it? Is there an archived copy?
+If ___ is an image or video, where and when was it really taken?
+What would the source’s critics say about its reliability?
+How much weight can this source bear: colour, corroboration, or the whole claim?
+
+@ causation | Causation | event claim
+Why did ___ happen when it did, and not earlier or later?
+Why did ___ happen here, and not somewhere else that looked similar?
+What were the long-term conditions, the medium-term pressures and the trigger for ___?
+Was ___ necessary for ___ to happen? Was it enough on its own?
+What would have had to be different for ___ not to happen?
+Which causes were deliberate choices, and which were circumstances?
+Which cause matters most? How would I measure that?
+Am I mistaking the sequence of events for a chain of causes?
+Am I mistaking a correlation between ___ and ___ for cause and effect?
+What is the mechanism: how, step by step, did ___ produce ___?
+Who could have stopped ___, and why didn’t they?
+What role did chance, weather, illness, timing or error play?
+What role did ideas, beliefs or misperceptions play, beyond interests?
+Were there feedback loops, where ___ made itself more likely?
+Did ___ have one cause, or is the honest answer “several, tangled”?
+Is my explanation the cause of ___, or the justification people gave for it?
+Would the same causes produce the same result elsewhere? Have they?
+
+@ time | Time, chronology and change | event term
+What happened before ___, and what came right after?
+Am I sure of the order? Which dates are firm, and which are estimates?
+What changed, and what stayed the same, between ___ and ___?
+When did ___ start? Is that when it became visible, or when it began?
+When did people realise ___ was happening? How long after it began?
+Was the change sudden, gradual, or sudden after a long build-up?
+What was the turning point, and was it seen as one at the time?
+Which was faster, the event or the reaction to it?
+Am I reading later knowledge back into ___?
+How did ___ look a week, a year and a decade later?
+What else was happening at the same time that people were paying attention to?
+Which timescale explains ___ best: hours, years, generations, centuries?
+What does the timeline look like if I put the evidence in date order, not the order I found it?
+Is there a gap in the timeline? What happened in it?
+Was ___ the beginning of something, the end of something, or the middle?
+Is the story of decline or progress I’m telling about ___ supported, or is it a shape I like?
+
+@ numbers | Numbers, data and measurement | number
+Where does the figure ___ come from, originally?
+Who counted ___, how, and why did they want the number?
+What exactly is being counted? What is left out of the count?
+Is ___ big or small? Compared with what?
+What is ___ per person, per year, per unit, or as a share of the whole?
+Is this a count, an estimate, a projection or a guess repeated until it looked like a count?
+What is the range or margin of error around ___?
+Did the definition or the way of counting change over the period I’m comparing?
+Is the change in ___ real, or an artefact of how it was measured?
+Am I comparing like with like: same units, same years, same population, same currency, adjusted for inflation?
+What would the trend look like if I started the chart at a different year?
+Is the average hiding a wide spread? What do the median and the extremes say?
+Is there an outlier driving ___? What happens without it?
+Could the pattern in ___ be chance?
+Who is missing from the data, and how would including them change it?
+Does the number pass a sanity check: is it physically, economically, logistically possible?
+Do two sources give different figures for ___? Why?
+What number would surprise me? What number would contradict my argument?
+Does the inventory (what exists) tell the story, or does the activity (what is used, and how often)?
+Is this the right measure for my question, or just the one that was available?
+
+@ comparison | Comparison, analogy and context | term event person
+What is ___ like? Where does the comparison break down?
+Has ___ happened before? What happened then?
+What are the closest cases to ___, and how did they turn out differently?
+How does ___ compare with ___ on the measure that matters most?
+Is ___ typical of its time and place, or an exception?
+What did contemporaries compare ___ to? What does that tell me about them?
+Am I using an analogy to explain, or to persuade? Would it survive a sceptic?
+What does the analogy to ___ hide?
+What is the right comparison group for ___: neighbours, rivals, peers, predecessors?
+What larger story is ___ a part of?
+What smaller story, close to the ground, would show ___ best?
+What was going on in the economy, the law, the technology and the culture around ___?
+How would ___ look in another country’s history books?
+Is my case the most dramatic one rather than the most representative? Does that matter?
+
+@ counterfactual | Counterfactuals and contingency | event person
+What if ___ had not happened?
+What if ___ had decided the other way?
+What was the smallest change that would have produced a different outcome?
+Which outcomes were genuinely possible at the time, and which only look possible now?
+Was ___ inevitable, likely, or a close call?
+Where was the point of no return?
+If ___ had been removed from the story, would someone else have done the same?
+What did people at the time expect to happen? Why were they wrong, or right?
+Which near-miss is the story forgetting?
+Does my counterfactual change one thing, or quietly change several?
+
+@ intel | Intelligence analysis: hypotheses, indicators, deception, confidence | claim event person
+What are all the plausible hypotheses for ___, including the ones I don’t like?
+Which evidence is consistent with every hypothesis, and so tells me nothing?
+Which single piece of evidence most clearly separates the hypotheses?
+Which hypothesis has the least evidence against it, rather than the most for it?
+What would ___ be doing now if hypothesis A were true? If hypothesis B were?
+What is the key assumption under my leading hypothesis, and how could I test it?
+What would I see first if ___ were about to happen?
+Which indicators of ___ are present, which are absent, and which can’t I see?
+What would change my assessment of ___ tomorrow?
+What is the signal, and what is the noise, in ___?
+What has ___ done in the past in similar circumstances?
+What are ___’s capabilities, and what are its intentions? Am I confusing the two?
+Could ___ be deliberately misleading? Who would benefit if I believed it?
+Does ___ have the motive, the opportunity and the means to deceive?
+Is the evidence for ___ too convenient, too complete, too timely?
+What is ___ hiding, and what are they showing me so I look away?
+Has a source that was reliable before become a channel for someone else?
+How likely is ___: remote, unlikely, roughly even, likely, very likely, almost certain?
+How confident am I in the judgment, as distinct from how likely the event is?
+What would move my confidence on ___ up or down?
+Am I using “may”, “could” or “possibly” to avoid committing to a judgment?
+What is the bottom line in one sentence, for a reader with one minute?
+What don’t we know about ___, and does it matter to the judgment?
+If this assessment is wrong, how is it most likely to be wrong?
+What would a red team say about ___?
+What would I tell a decision-maker to watch for next?
+
+@ journalism | Journalism and investigation: money, power, people | person claim event
+Who benefits from ___? Who pays?
+Where did the money for ___ come from, and where did it go?
+Who owns ___, on paper and in fact?
+Who signed off on ___? Whose name is on the document?
+Who has the power to stop ___, and why haven’t they?
+What rules, laws or contracts govern ___? Were they followed?
+Who is ___ connected to: family, business partners, former employers, donors?
+What documents must exist if ___ is true? Who holds them?
+What public records cover ___: courts, company registries, property, procurement, shipping, flight logs?
+What has ___ said before, on the record, that I can compare with now?
+What can be seen from open sources: satellite imagery, social media, archived web pages?
+What can be confirmed by a second, independent source?
+Who else was in the room?
+Who has left the organisation, and what would they say now?
+Who knows the most about ___ and has the least reason to lie?
+Who would be hurt if this were published? Is that harm justified?
+Have I put every serious allegation to the person it concerns, with time to reply?
+What is the strongest case ___ would make for themselves?
+Is my source’s account first-hand? What could they not have seen?
+What is new here, and what has already been reported?
+Why now? Why is this the moment the story matters?
+What is the one fact that, if wrong, kills the story?
+What is the human story inside the documents?
+What will the response be, and is it already answered in the piece?
+What would a libel lawyer underline?
+
+@ argument | Argument and the shape of the piece | none claim
+What is my argument, in one sentence a stranger could repeat?
+What is the question this piece answers? Does the first page ask it?
+What does this chapter add that the last one didn’t?
+Which section could I cut without the reader noticing?
+Where does the argument depend on a step I haven’t shown?
+What is the strongest objection, and where do I answer it?
+Have I answered the objection, or just mentioned it?
+Is ___ evidence, illustration or decoration?
+Am I telling the story in the order it happened, or the order that explains it best? Which does this piece need?
+Where would a reader stop and ask “how do you know?”
+Where would a reader stop and ask “so what?”
+What is the best scene, quote or detail I have, and is it in the right place?
+Is the ending a conclusion, or a summary?
+What do I claim in the introduction that the body never delivers?
+What did I learn while writing that the opening doesn’t know yet?
+Which claims are mine, and which am I borrowing? Is that clear to the reader?
+How certain does the prose sound, and is that how certain I am?
+If I had to defend this piece in a room of experts, which page would I dread?
+
+@ reader | The reader | none term
+Who is this for, exactly? What do they already know?
+What does my reader believe about ___ before they start?
+What does my reader need to know first, to follow ___?
+Where will my reader get lost? Where will they get bored?
+What will my reader remember a week later?
+What question will my reader ask that I haven’t answered?
+Would a specialist find this too simple, or a newcomer too dense? Which reader matters more here?
+What term, acronym or name is my reader meeting for the first time on this page?
+What would my reader do differently after reading this?
+If my reader only reads the first paragraph, what do they take away?
+If my reader is sceptical of my politics, my discipline or me, where do I lose them?
+What does my reader care about that I’ve been ignoring?
+
+@ yourself | Yourself: bias, motive and blind spots | none claim person
+What did I believe about ___ before I started? Has it changed?
+What do I want to be true about ___? Why?
+Which evidence did I accept quickly because it agreed with me?
+Which evidence did I scrutinise hardest? Would I scrutinise the other side’s as hard?
+Am I anchored on the first number, source or story I found?
+Am I seeing a pattern because it is there, or because I’ve been looking for it for months?
+What would I say about ___ if a rival had written it?
+Who do I admire in this story, and has that softened my judgment?
+Who do I dislike, and has that sharpened it unfairly?
+What part of this research am I avoiding? Why?
+Am I writing for the evidence or for an audience I want to please?
+What have I been certain of in the past that turned out wrong? Does this feel the same?
+What would I need to see to admit I’m wrong about ___?
+Am I stuck because the evidence is unclear, or because I don’t like what it says?
+What do I know about ___ only from people who agree with each other?
+Is my expertise helping here, or making me miss something a beginner would see?
+
+@ question | Questions about the question | none claim
+Is ___ the right question, or the one that was easiest to ask?
+What would I need to know to answer it? Can that be known at all?
+Is this question too big? What smaller question sits inside it?
+Is this question too small? What larger question is it part of?
+Why does this question matter, and to whom?
+Who else has asked it, and what did they conclude?
+What question are my sources answering? Is it the same as mine?
+Is my question built on a premise I haven’t checked?
+Is this a question of fact, of interpretation, of value, or of prediction?
+What answer am I expecting? What answer would surprise me?
+Is there a better question I’m avoiding because the answer might be uncomfortable?
+If I answered this perfectly, what would I do with the answer?
+What would a historian, an economist, a soldier or a lawyer ask instead?
+
+@ stuck | When you are stuck | none term person
+What do I know for certain about ___? Write it down, even if it’s short.
+What is the very next thing I could find out in under an hour?
+Which source have I been meaning to read and haven’t?
+Who would know? Who could I write to today?
+What would I search for if I’d never heard of ___ before?
+What other names, spellings or translations might ___ appear under?
+Which archive, database or library haven’t I tried?
+What did the footnotes of my best secondary source point to that I haven’t followed?
+What would I do if I had to file something on ___ tomorrow?
+Can I work on a different part of the piece and come back to this?
+Am I stuck on the research, or on the writing? They need different fixes.
+What would I tell a student who brought me this problem?
+If I explain ___ out loud to an empty room, where do I trip?
+What if the gap is the finding: what does it mean that ___ can’t be found?
+Is it time to narrow the question, or to stop and write what I have?
+What is the smallest true thing I can say about ___ right now?

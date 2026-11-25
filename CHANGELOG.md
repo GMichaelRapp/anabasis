@@ -4,6 +4,15 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.1.0] — 2026-11-24
+
+### Added
+- **Socrates**, beside **+ Question** in the Research tab (and **Mark → Ask Socrates**, Ctrl/Cmd+Alt+G then S, the question dialog, the research desk and the command palette): questions to start from when you’re working alone and not sure what to ask. It deals three at a time from 342 question stems in 19 kinds: meaning, evidence, assumptions, alternatives, implications, perspectives, sources and provenance, causation, time, numbers, comparison, counterfactuals, intelligence analysis, journalism, the argument, the reader, your own blind spots, questions about the question, and being stuck. Select a word, a claim, a name, a number or a citation first and the questions are about it, with a claim set in quotation marks; the kind of writing chosen for the project leans the deal (an intelligence brief toward analysis, an investigation toward journalism). **Shuffle**, **Another like this** and a picker for one kind; **Use this question** opens it in the question dialog, linked to the passage, with any remaining blank selected to type over. No AI and nothing online: the stems are 23 KB of text in the file.
+- **Export → Archive**: the whole project as plain files in one zip, readable decades from now without Anabasis. Every document as Markdown in its own folder with its figures, Pandoc-style citations and footnotes; every note as its own Markdown file with its title, kind, tags and source key at the top; the sources as BibTeX and CSL-JSON with the same keys; the research memo; the project file; and a README saying what is where and how to turn a document into Word with Pandoc.
+
+### Changed
+- The README and quick start point to the hosted copy at zerohistory.net/anabasis. The old address keeps working.
+
 ## [2.0.0] — 2026-11-24
 
 The release to hand to people who have never heard of Anabasis: co-writing without a server, an interface organized around what it has become, and a promise that the file format holds.
@@ -221,6 +230,7 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[2.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.1.0
 [2.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.0.0
 [1.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.9.0
 [1.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v1.8.0

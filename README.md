@@ -46,6 +46,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, and a web clipper captures from other tabs.
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
+- **Socrates** offers questions to start from when you're working alone: 342 question stems in 19 kinds (evidence, assumptions, alternatives, sources, causation, numbers, intelligence analysis, journalism, being stuck and more), dealt three at a time and filled in with whatever you've selected. Use one and it becomes an open question linked to the passage. No AI; it all stays on your computer.
 - Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
 - A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click. A weekly review shows what moved and what’s next, and method templates get the design started.
 - Data dashboards: bring in a CSV, lay out headline numbers, charts, maps, timelines, searchable tables, text, images and video, each crediting its source, and export the whole thing as one web page. Put any number, table or chart from the data into your writing, and update them all when the data changes.
@@ -68,6 +69,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - PDF with real footnotes, Word (.docx), ePub, HTML, Markdown and a Substack-ready post, plus a promo kit with a social thread, subtitle and quote cards.
 - Video-script mode with run time, an A/V table and a teleprompter.
 - Text size, typeface and line spacing for the screen, separate from what you export; what’s new after each update; and Send feedback in Help.
+- **Archive**: the whole project as plain files (Markdown, BibTeX, CSL-JSON, images, the project file and a README), readable without Anabasis for as long as there are computers.
 - Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
 
 | | |

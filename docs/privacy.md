@@ -51,3 +51,7 @@ A project file is data, but a crafted one could try to smuggle in code. Anabasis
 ## Co-writing
 
 Send a copy and Take changes back work entirely through files you pass along yourself, by email, a shared drive or a USB stick. Nothing goes through a server. The project keeps a record of the last five copies you sent (the text as it was when you sent it, the collaborator's name and your note) so it can tell their changes from yours; the copy you send carries only who it's from, who it's for and the note. A returned file is cleaned like any other file from someone else before anything in it reaches the page.
+
+## Socrates and the archive
+
+Socrates is a list of question stems built into the file. It reads only what you've selected and suggests questions on the spot, without AI and without going online, and it keeps nothing about what you asked. The archive export is put together in your browser and saved straight to your computer.

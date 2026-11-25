@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.0.0';
+const APP_VERSION = '2.1.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -2101,6 +2101,7 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'docxms') openMsf(doc);
   if (x === 'review') exportPagedPDF(doc, { review: true });
   if (x === 'send') openSendCopy();
+  if (x === 'archive') exportArchive();
   if (x === 'takeback') openTakeBack();
   if (x === 'ms') openManuscript();
   if (x === 'html') { const go = () => download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html'); if (mathPending(doc)) mathLoad().then(go); else go(); }
@@ -2358,7 +2359,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -8600,6 +8601,8 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.1.0': ['Socrates, beside + Question in the Research tab: not sure what to ask? It offers three questions to start from, out of 342 in 19 kinds (evidence, assumptions, alternatives, sources, causation, numbers, intelligence analysis, journalism, when you’re stuck…). Select a word, a claim, a name or a number first and the questions are about it. Use one and it becomes an open question linked to the passage. Also in Mark (Ctrl+Alt+G, then S).',
+    'Export → Archive: the whole project as plain files anyone can open decades from now, without Anabasis: every document as Markdown with its figures, every note as its own file, sources as BibTeX and CSL-JSON, the research memo and the project file, with a README.'],
   '2.0.0': ['Co-writing without a server: Export → Send a copy gives a co-author or editor a copy of the project. When it comes back, Take changes back brings their edits into your draft as suggestions under their name, adds their notes, sources and margin notes, and shows side by side anything you both changed.',
     'Everything that goes into the page now lives in one Insert menu (the plus in the toolbar): figures, charts, maps, timelines, tables, equations, cross-references, index entries and lists.',
     'Export is grouped by what you’re doing: share and print, review and submit, other formats, and the project file. In Sources, Tools holds the source audit, link check and permissions log.',
@@ -8996,6 +8999,113 @@ $('#qNew').addEventListener('click', () => {
 $('#qText').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#qNew').click(); } });
 $('#qCancel').addEventListener('click', () => { qRange = null; $('#qDlg').close(); });
 
+/* ---------- Socrates (2.1): question stems to start from ----------
+   342 unfinished questions in 19 kinds (data/socrates.txt). Socrates deals three from different
+   kinds, suited to what is selected (a term, a claim, a name, a number, a citation) and to the kind of
+   writing, and fills the first blank with the selection. No AI and nothing online: it is a deck of
+   good questions, dealt with some care. "Use this question" hands it to the question dialog, linked
+   to the passage when there is one. */
+let SOC = null, socRange = null, socDeal = [], socKindNow = 'none';
+const socSeen = new Set();
+const OWL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg>';
+function socData() {
+  if (SOC) return SOC;
+  const groups = []; let g = null;
+  ($('#data-socrates')?.textContent || '').split('\n').forEach(l => {
+    l = l.trim(); if (!l || l[0] === '#') return;
+    if (l[0] === '@') { const [id, label, suits] = l.slice(1).split('|').map(x => x.trim()); g = { id, label, suits: (suits || 'none').split(/\s+/), stems: [] }; groups.push(g); }
+    else if (g) g.stems.push(l.replace(/&lt;/g, '<'));
+  });
+  return (SOC = groups);
+}
+// the selection, tidied into something that reads well inside a question
+const SOC_LOWER = /^(The|A|An|This|That|These|Those|It|There|Most|Many|Some|Our|We|They|He|She|His|Her|Its|Their|Every|Each|No|All)\b/;
+function socSubject(t) {
+  t = rmNorm(String(t || '')).replace(/^[\s"“”‘’'(\[]+|[\s"“”‘’')\].,;:!?]+$/g, '');
+  if (SOC_LOWER.test(t) && !/^[A-Z]{2}/.test(t)) t = t[0].toLowerCase() + t.slice(1);
+  if (t.length > 140) t = t.slice(0, 140).replace(/\s+\S*$/, '') + '…';
+  return t;
+}
+function socKindOf(text, range) {
+  if (!text) return 'none';
+  const n = range && range.commonAncestorContainer, el = n && (n.nodeType === 1 ? n : n.parentElement);
+  if (el && el.closest && el.closest('.cite')) return 'source';
+  const words = text.split(/\s+/).length, low = text.toLowerCase();
+  if (/\d/.test(text) && words <= 10) return 'number';
+  const ent = (P.entities || []).find(e => [e.name, ...(e.variants || [])].some(v => String(v).toLowerCase() === low));
+  if (ent) return ent.kind === 'person' || ent.kind === 'org' ? 'person' : 'term';
+  if (words <= 4 && text.split(/\s+/).every(w => /^[A-ZÀ-ɏ]/.test(w))) return 'name';
+  return words <= 5 ? 'term' : 'claim';
+}
+// which kinds of question suit this selection and this kind of writing
+function socPool(kind) {
+  const G = socData(), suits = kind === 'name' ? ['person', 'event'] : [kind];
+  let pool = G.filter(g => g.suits.some(x => suits.includes(x)));
+  if (!pool.length) pool = G.filter(g => g.suits.includes('none'));
+  const tk = tipKind(), extra = { brief: ['intel'], whitepaper: ['intel', 'evidence'], investigation: ['journalism'], narrative: ['journalism', 'perspectives'], article: ['journalism', 'argument'], series: ['argument', 'reader'], thesis: ['causation', 'sources'], book: ['causation', 'argument'], proposal: ['reader', 'argument'], script: ['reader'] }[tk] || [];
+  extra.forEach(id => { const g = G.find(x => x.id === id); if (g && (kind === 'none' || g.suits.some(x => suits.includes(x)))) pool.push(g, g); });
+  return pool;
+}
+function socPick(g, subj) {
+  let c = g.stems.filter(x => !socSeen.has(x));
+  if (!c.length) { g.stems.forEach(x => socSeen.delete(x)); c = g.stems.slice(); }
+  if (subj) { const b = c.filter(x => x.includes('___')); if (b.length && Math.random() < 0.85) c = b; }
+  const st = c[Math.floor(Math.random() * c.length)]; socSeen.add(st); return st;
+}
+function socShuffle() {
+  const subj = $('#socAbout').value.trim(), want = $('#socKind').value;
+  socKindNow = socKindOf(subj, socRange);
+  if (want !== 'auto') { const g = socData().find(x => x.id === want); socDeal = [0, 1, 2].map(() => ({ g, s: socPick(g, subj) })); }
+  else {
+    const pool = socPool(socKindNow), used = new Set(); socDeal = [];
+    for (let i = 0; i < 40 && socDeal.length < 3; i++) { const g = pool[Math.floor(Math.random() * pool.length)]; if (used.has(g.id)) continue; used.add(g.id); socDeal.push({ g, s: socPick(g, subj) }); }
+  }
+  socRender();
+}
+const socQ = subj => (subj && socKindNow === 'claim' ? `“${subj}”` : subj);
+function socText(stem, subj) { let i = 0; subj = socQ(subj); return stem.replace(/___/g, () => (i++ === 0 && subj ? subj : '___')); }
+function socRender() {
+  const subj = $('#socAbout').value.trim();
+  const sq = socQ(subj), fill = st => { let i = 0; return esc(st).replace(/___/g, () => (i++ === 0 && sq ? `<mark>${esc(sq)}</mark>` : '<span class="soc-blank" aria-label="blank">___</span>')); };
+  $('#socCards').innerHTML = socDeal.map((d, i) => `<li><span class="soc-g">${esc(d.g.label)}</span><p class="soc-q">${fill(d.s)}</p><div class="soc-acts"><button class="small primary-soft" data-soc-use="${i}">Use this question</button><button class="small ghost" data-soc-more="${i}">Another like this</button></div></li>`).join('');
+  const K = { none: 'a mix of kinds', term: 'questions for a term', claim: 'questions for a claim', number: 'questions for a number', source: 'questions for a source', name: 'questions for a name', person: 'questions for a person or group' };
+  $('#socFoot').textContent = `${socData().reduce((n, g) => n + g.stems.length, 0)} questions in ${socData().length} kinds. ${$('#socKind').value === 'auto' ? 'Showing ' + K[socKindNow] + (tipKind() !== 'general' ? `, leaning toward a ${(TIPS[tipKind()] || {}).label?.toLowerCase() || 'project like this'}` : '') + '.' : ''} Socrates asks; the answers are yours.`;
+}
+function openSocrates(opts = {}) {
+  const G = socData(); if (!G.length) { toast('Socrates’ questions are missing from this copy of Anabasis.'); return; }
+  let r = opts.range || null;
+  if (!r && !opts.fresh) { const sel = getSelection(); if (sel.rangeCount && !sel.isCollapsed && editor.contains(sel.anchorNode)) r = sel.getRangeAt(0).cloneRange(); else if (savedRange && !savedRange.collapsed && editor.contains(savedRange.startContainer)) r = savedRange.cloneRange(); }
+  if (r && !rmNorm(r.toString())) r = null;
+  socRange = r;
+  const k = $('#socKind');
+  if (!k.options.length) k.innerHTML = `<option value="auto">Suited to what you selected</option>` + G.map(g => `<option value="${esc(g.id)}">${esc(g.label)}</option>`).join('');
+  k.value = 'auto';
+  $('#socAbout').value = opts.about != null ? opts.about : (r ? socSubject(r.toString()) : '');
+  socShuffle();
+  if (!$('#socDlg').open) $('#socDlg').showModal();
+}
+function socUse(i) {
+  const d = socDeal[i]; if (!d) return;
+  const t = socText(d.s, $('#socAbout').value.trim()), r = socRange;
+  $('#socDlg').close();
+  if (r) { editor.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(r); openQuestionLink(false); } else openQuestionLink(true);
+  $('#qText').value = t;
+  setTimeout(() => { const q = $('#qText'), b = q.value.indexOf('___'); q.focus(); if (b >= 0) q.setSelectionRange(b, b + 3); else q.setSelectionRange(q.value.length, q.value.length); }, 45);
+}
+$('#socCards').addEventListener('click', e => {
+  const u = e.target.closest('[data-soc-use]'), m = e.target.closest('[data-soc-more]');
+  if (u) socUse(+u.dataset.socUse);
+  if (m) { const d = socDeal[+m.dataset.socMore]; d.s = socPick(d.g, $('#socAbout').value.trim()); socRender(); $(`[data-soc-more="${m.dataset.socMore}"]`)?.focus(); }
+});
+$('#socAbout').addEventListener('input', () => { socKindNow = socKindOf($('#socAbout').value.trim(), socRange); socRender(); });
+$('#socAbout').addEventListener('change', () => socShuffle());
+$('#socAbout').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); socShuffle(); } });
+$('#socKind').addEventListener('change', () => socShuffle());
+$('#socShuffle').addEventListener('click', () => socShuffle());
+$('#socClose').addEventListener('click', () => { socRange = null; $('#socDlg').close(); });
+$('#qSoc').addEventListener('click', () => { const r = qRange; qRange = null; $('#qDlg').close(); openSocrates({ range: r, fresh: !r }); });
+$('#rsSoc').addEventListener('click', () => openSocrates());
+
 function removeMark(k, pid, quiet) {
   const did = rmOp(`remove a ${(RM_KINDS[k] || 'mark').toLowerCase()}`, () => removeMarkNow(k, pid));
   if (!quiet && !rmOpDepth) rmUndoToast(`Removed the ${(RM_KINDS[k] || 'mark').toLowerCase()}.`);
@@ -9091,6 +9201,7 @@ $('#btnMark').addEventListener('click', e => { e.stopPropagation(); if ($('#mark
 document.addEventListener('click', e => { if (!e.target.closest('#btnMark,#markMenu,#tbMore')) $('#markMenu').classList.remove('open'); });
 function rmDo(a) {
   if (a === 'th') openThreadPick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
+  if (a === 'soc') openSocrates();
   if (a === 'desk') openDesk(); if (a === 'tab') { switchTab('research'); document.body.classList.add('side-open'); }
 }
 $('#markMenu').addEventListener('click', e => { const a = e.target.closest('button')?.dataset.m; if (!a) return; $('#markMenu').classList.remove('open'); rmDo(a); });
@@ -9098,7 +9209,7 @@ document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
   if ($('#markMenu').classList.contains('open') && !mod && !e.altKey) {
-    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', d: 'desk' }[e.key.toLowerCase()];
+    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', s: 'soc', d: 'desk' }[e.key.toLowerCase()];
     if (m) { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); rmDo(m); }
     else if (e.key === 'Escape') { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); }
   }
@@ -9147,7 +9258,7 @@ function renderResearch() {
   // questions
   const qs = qItems().filter(i => i.status !== 'answered');
   $('#rsQs').innerHTML = qs.length ? qs.slice(0, 10).map(i => { const n = all.filter(p => p.k === 'q' && p.ref === i.id).length; return `<li data-j="${J(() => openDesk('questions', i.id))}"><span><b class="q-mk">?</b> ${esc(i.title || 'Untitled question')}</span><em>${n || ''}</em></li>`; }).join('')
-    : '<li class="muted small none">No open questions. Add one, then link passages and notes that bear on it.</li>';
+    : `<li class="muted small none">No open questions yet. Not sure what to ask? <button class="link-btn" data-j="${J(() => openSocrates())}">Ask Socrates</button> for a start.</li>`;
   const JR = P.journal, lastE = JR.log.reduce((a, e) => (e.date > a ? e.date : a), ''), hs = JR.hypotheses;
   $('#rsJournal').innerHTML = `<button class="small primary-soft" id="rsToday">＋ Today’s entry</button><button class="small" id="rsJOpen">Journal</button><button class="small" id="rsWeek">This week</button>`
     + `<p class="small muted">${JR.log.length ? `${JR.log.length} entr${JR.log.length === 1 ? 'y' : 'ies'}, last ${esc(relDay(lastE))}` : 'No entries yet.'}${hs.length ? ` · ${hs.length} hypothes${hs.length === 1 ? 'is' : 'es'}: ${Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]).map(([k, n]) => `${n} ${H_ST[k].toLowerCase()}`).join(', ')}` : ''}${(n => n ? ` · ${n} next step${n === 1 ? '' : 's'} to do` : '')(JR.log.filter(e => e.kind === 'next' && !e.done).length)}</p>`;
@@ -9812,7 +9923,7 @@ function deskQuestions() {
   const all = rmAll('q'), it = plItem(deskSel);
   const list = qs.map(i => `<li class="${i.id === deskSel ? 'on' : ''} ${i.status === 'answered' ? 'done' : ''}" data-j="${DJ(() => { deskSel = i.id; renderDesk(); })}"><b class="q-mk">?</b><span class="t">${esc(i.title || 'Untitled question')}</span><em>${all.filter(p => p.ref === i.id).length || ''}</em></li>`).join('');
   let main;
-  if (!it) main = `<div class="desk-empty"><p><b>Keep your open questions where you can see them.</b></p><p>Write down what you still need to find out. Link passages in your drafts to a question (<b>Mark → Question</b>) and attach notes, then record the answer when you have it. Questions are shared with <b>Plan</b> and appear among the loose ends on Project home.</p><button class="primary" data-j="${DJ(() => openQuestionLink(true))}">+ New question</button></div>`;
+  if (!it) main = `<div class="desk-empty"><p><b>Keep your open questions where you can see them.</b></p><p>Write down what you still need to find out. Link passages in your drafts to a question (<b>Mark → Question</b>) and attach notes, then record the answer when you have it. Questions are shared with <b>Plan</b> and appear among the loose ends on Project home.</p><div class="row" style="justify-content:center"><button class="primary" data-j="${DJ(() => openQuestionLink(true))}">+ New question</button><button class="soc-btn" data-j="${DJ(() => { closeDesk(); openSocrates({ fresh: true }); })}">${OWL} Ask Socrates</button></div></div>`;
   else {
     const ps = all.filter(p => p.ref === it.id), notes = it.notes.map(id => P.notes.find(n => n.id === id)).filter(Boolean);
     main = `<input id="qTitle" class="q-title" value="${esc(it.title)}" aria-label="Question">
@@ -9822,7 +9933,7 @@ function deskQuestions() {
       <h6>Notes <span class="badge">${notes.length || ''}</span></h6>${notes.length ? `<ul class="desk-list">${notes.map(n => `<li data-j="${DJ(() => openNote(n.id))}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><em>${esc(n.kind || '')}</em></li>`).join('')}</ul>` : ''}
       <div class="row"><select id="qAddNote" aria-label="Attach a note"><option value="">Attach a note…</option>${P.notes.filter(n => !it.notes.includes(n.id)).slice(0, 400).map(n => `<option value="${esc(n.id)}">${esc((noteTitle(n) || 'Untitled note').slice(0, 70))}</option>`).join('')}</select></div>`;
   }
-  $('#deskTools').innerHTML = `<button data-j="${DJ(() => openQuestionLink(true))}">+ New question</button>`;
+  $('#deskTools').innerHTML = `<button data-j="${DJ(() => openQuestionLink(true))}">+ New question</button><button class="soc-btn" data-j="${DJ(() => { closeDesk(); openSocrates({ fresh: true }); })}" title="Not sure what to ask? Questions to start from">${OWL} Ask Socrates</button>`;
   $('#deskBody').innerHTML = `<div class="desk-split"><aside class="desk-side"><h6>Questions</h6><ul class="desk-list">${list || '<li class="muted small">None yet</li>'}</ul></aside><div class="desk-main">${main}</div></div>`;
   if (it) {
     $('#qTitle').addEventListener('change', e => { it.title = e.target.value.trim(); markDirty(); rmRefresh(); });
@@ -10151,7 +10262,7 @@ function searchesCSV() {
 }
 
 /* ---------- the journal as a document: research memo, methods appendix ---------- */
-function journalDoc(kind) {
+function journalHTML(kind) {
   const J = jr(), D = J.design, P2 = t => jParas(t).map(p => `<p>${esc(p).replace(/\n/g, '<br>')}</p>`).join('');
   const sect = (h, t) => (String(t || '').trim() ? `<h2>${h}</h2>${P2(t)}` : '');
   const searches = J.searches.length ? `<h2>Search log</h2><figure class="tbl"><figcaption>Searches carried out for this project</figcaption><table><thead><tr><th>Date</th><th>Where</th><th>Terms</th><th>Results</th><th>Kept</th></tr></thead><tbody>${J.searches.slice().sort((a, b) => a.date.localeCompare(b.date)).map(s => `<tr><td>${esc(s.date)}</td><td>${esc(s.where)}</td><td>${esc(s.terms)}${s.filters ? ` <i>(${esc(s.filters)})</i>` : ''}</td><td>${esc(s.results)}</td><td>${esc(s.kept)}</td></tr>`).join('')}</tbody></table></figure>` : '';
@@ -10169,7 +10280,11 @@ function journalDoc(kind) {
       + ((n => n.length ? `<h2>Next steps</h2><ul>${n.map(e => `<li>${esc(e.text.replace(/\s+/g, ' '))}</li>`).join('')}</ul>` : '')(J.log.filter(e => e.kind === 'next' && !e.done)))
       + (recent.length ? `<h2>Log, last 30 days</h2><ul>${recent.map(e => `<li><b>${esc(e.date)}</b> · ${esc(LOG_K[e.kind] || e.kind)}: ${esc(e.text.replace(/\s+/g, ' '))}</li>`).join('')}</ul>` : '');
   }
-  if (!/<h2>/.test(html)) { toast('Fill in some of the journal first.'); return; }
+  return /<h2>/.test(html) ? html : '';
+}
+function journalDoc(kind) {
+  const html = journalHTML(kind);
+  if (!html) { toast('Fill in some of the journal first.'); return; }
   const d = newDoc(kind === 'appendix' ? 'Appendix: Methods and Sources' : `Research memo (${todayISO()})`, html);
   if (kind === 'appendix') d.role = 'back';
   closeDesk(); addDoc(d);
@@ -10188,7 +10303,7 @@ COMMANDS.push(
   ['Journal: make a research memo', () => journalDoc('memo')], ['Journal: make a methods appendix', () => journalDoc('appendix')],
   ['Open an example project: thesis chapter', () => openStarter('thesis')], ['Open an example project: long-form article', () => openStarter('article')], ['Open an example project: white paper', () => openStarter('whitepaper')],
   ['Open an example project: book proposal', () => openStarter('proposal')], ['Open an example project: investigative piece', () => openStarter('investigation')],
-  ['Export: Pandoc / Quarto package', () => exportPandoc()], ['Export: LaTeX package', () => exportLatex()], ['Export sources as BibTeX, RIS or CSL-JSON…', () => openRefExport()],
+  ['Export: archive of the whole project as plain files (Markdown, BibTeX, images)', () => exportArchive()], ['Export: Pandoc / Quarto package', () => exportPandoc()], ['Export: LaTeX package', () => exportLatex()], ['Export sources as BibTeX, RIS or CSL-JSON…', () => openRefExport()],
   ['Listen: read the draft aloud from the cursor', () => ttsStart(true)], ['Suggest mode: track my changes', () => toggleSuggest()], ['Accept every suggestion', () => sgDoAll(true)], ['Reject every suggestion', () => sgDoAll(false)],
   ['Research desk: threads, claims, evidence, review', () => openDesk()], ['Mark the selection as a claim', () => markClaim()], ['Add the selection to a thread…', () => openThreadPick()],
   ['Key the selection for review…', () => openReviewKey()], ['Link the selection to a research question…', () => openQuestionLink()], ['New research question', () => openQuestionLink(true)],
@@ -10998,6 +11113,65 @@ function exportPandoc(doc = curDoc()) {
   images.forEach(f => files.push({ name: `${name}/${f.name}`, data: f.data }));
   download(name + ' - pandoc.zip', zipStore(files), 'application/zip');
   toast(`Pandoc package: text, ${sources.length} source${sources.length === 1 ? '' : 's'}${images.length ? `, ${images.length} image${images.length === 1 ? '' : 's'}` : ''}.`);
+}
+/* ---------- Archive (2.1): the whole project as plain files anyone can open, decades from now ----------
+   Every document as Markdown (Pandoc citations, footnotes, figures beside it), every note as its own
+   Markdown file, the sources as BibTeX and CSL-JSON, the research memo, the project file itself, and a
+   README saying what is where. Stored in an ordinary zip; nothing here needs Anabasis to read. */
+function exportArchive() {
+  syncEditor();
+  const root = fileSafe(P.title || 'Anabasis project') + ' archive', files = [], y = v => JSON.stringify(String(v));
+  const td = () => addMathRules(addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' })));
+  const uniq = (set, n) => { let k = n, i = 2; while (set.has(k.toLowerCase())) k = `${n} (${i++})`; set.add(k.toLowerCase()); return k; };
+  const docNames = new Set(), docs = binderOrder(), extra = P.docs.filter(d => !docs.includes(d)), all = [...docs, ...extra];
+  const index = [];
+  all.forEach((doc, i) => {
+    const { x, tmp, images, keys } = scholarParts(doc);
+    let md = td().turndown(tmp.innerHTML);
+    md = md.replace(/ZZC(\d+)ZZ/g, (m, j) => pandocCite(x.cites[+j], keys)).replace(/ZZF(\d+)ZZ/g, (m, j) => `^[${x.fns[+j].replace(/[\[\]]/g, '\\$&')}]`);
+    const name = uniq(docNames, `${String(i + 1).padStart(2, '0')} ${fileSafe(doc.title || 'Untitled')}`);
+    const front = ['---', `title: ${y(doc.title || 'Untitled')}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', P.sources.length ? 'bibliography: ../../references.bib' : '', `modified: ${y(doc.modified || '')}`, '---', ''].filter(l => l !== '').join('\n');
+    files.push({ name: `${root}/documents/${name}/${name}.md`, data: front + '\n\n' + md.replace(/\n{3,}/g, '\n\n') + '\n' });
+    images.forEach(f => files.push({ name: `${root}/documents/${name}/${f.name}`, data: f.data }));
+    index.push(`  documents/${name}/`);
+  });
+  const keys = citeKeys(P.sources), noteNames = new Set();
+  P.notes.slice().sort((a, b) => a.created.localeCompare(b.created)).forEach(n => {
+    const t = n.title || firstLine(n.body) || 'Untitled note', s = n.sourceId && P.sources.find(x => x.id === n.sourceId);
+    const front = ['---', `title: ${y(t)}`, `kind: ${y(n.kind || '')}`, n.tags.length ? `tags: [${n.tags.map(y).join(', ')}]` : '', s ? `source: ${y('@' + keys.get(s.id) + (n.locator ? ', ' + n.locator : ''))}` : '', n.date ? `date: ${y(n.date)}` : '', `created: ${y(n.created)}`, '---', ''].filter(l => l !== '').join('\n');
+    const cite = s ? `\n\n> Source: ${htmlToText(previewCluster(curDoc()?.style || DEFAULT_STYLE, [Object.assign({ id: s.id }, n.locator ? { locator: n.locator, label: n.label } : {})]))}` : '';
+    files.push({ name: `${root}/notes/${uniq(noteNames, fileSafe(t).slice(0, 80) || 'note')}.md`, data: `${front}\n\n${n.body.trim()}${cite}\n` });
+  });
+  if (P.sources.length) {
+    files.push({ name: `${root}/references.bib`, data: toBibTeX(P.sources) });
+    files.push({ name: `${root}/references.json`, data: toCSLJSON(P.sources) });
+  }
+  const memo = journalHTML('memo');
+  if (memo) files.push({ name: `${root}/research memo.md`, data: td().turndown(memo).replace(/\n{3,}/g, '\n\n') + '\n' });
+  files.push({ name: `${root}/project/${fileSafe(P.title || 'project')}.json`, data: projectJSON() });
+  const when = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  files.push({ name: `${root}/README.txt`, data: `${P.title || 'Untitled project'}: an archive made by Anabasis ${APP_VERSION} on ${when}
+
+Everything in this project, as ordinary files that any computer can open without Anabasis.
+
+  documents/        ${all.length} document${all.length === 1 ? '' : 's'} as Markdown, each in its own folder with its figures.
+                    Citations are written [@key, p. 12] and footnotes ^[like this], the Pandoc style:
+${index.join('\n')}
+  notes/            ${P.notes.length} note${P.notes.length === 1 ? '' : 's'}, one Markdown file each (title, tags and source at the top).
+${P.sources.length ? `  references.bib    the ${P.sources.length} source${P.sources.length === 1 ? '' : 's'} as BibTeX, for LaTeX, Zotero and most reference managers.
+  references.json   the same sources as CSL-JSON, the format Zotero and Pandoc read natively.
+` : ''}${memo ? '  research memo.md  the research journal: questions, hypotheses, methods and recent log.\n' : ''}  project/          the project file. Open it in Anabasis (Open, in the top bar) to carry on working.
+
+Markdown is plain text, so any text editor shows it. Typora, Obsidian, iA Writer or a Markdown
+preview make it look like a document. To turn a document into Word or PDF with its citations
+formatted, install Pandoc (pandoc.org) and run, inside that document's folder:
+
+  pandoc "NAME.md" --citeproc -o "NAME.docx"
+
+Anabasis: https://zerohistory.net/anabasis/
+` });
+  download(root + '.zip', zipStore(files), 'application/zip');
+  toast(`Archive: ${all.length} document${all.length === 1 ? '' : 's'}, ${P.notes.length} note${P.notes.length === 1 ? '' : 's'}, ${P.sources.length} source${P.sources.length === 1 ? '' : 's'} and the project file, as plain files.`);
 }
 /* HTML of the page, as LaTeX */
 function htmlToLatex(root, x, keys) {
