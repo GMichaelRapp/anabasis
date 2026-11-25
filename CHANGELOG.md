@@ -4,6 +4,13 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+### Added
+- **A wiki** with in-depth pages on getting started, saving and privacy, citations, sources, notes and the board, reading PDFs, the research journal, Socrates, the Oracle, checking the draft and exporting. The pages live in `docs/wiki/` and a workflow (`wiki.yml`) publishes them to the GitHub wiki on every push. `tools/guide/wiki_shots.py` remakes their screenshots from the thesis example, and a new test suite (t45) checks the links, the pictures, the sidebar and that every section of Help has a page or is on the list still to write.
+- **Proofread in the toolbar's ⋯ menu**, as well as F7 and the command search.
+
+### Fixed
+- Help said Proofread was under "Tools" and the abstract under "Document setup"; they're in the toolbar's ⋯ menu and Page setup.
+
 ## [2.5.1] — 2026-11-25
 
 ### Added

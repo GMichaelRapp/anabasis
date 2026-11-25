@@ -1,0 +1,1 @@
+Anabasis is published by [Zero History](https://zerohistory.net/) under the AGPL 3.0. These pages live in [`docs/wiki/`](https://github.com/gmichaelrapp/anabasis/tree/main/docs/wiki) in the main repository; corrections are welcome as pull requests.

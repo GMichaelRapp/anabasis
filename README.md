@@ -87,6 +87,8 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 
 **New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in twelve illustrated steps.
 
+For more depth on any feature, see the **[wiki](https://github.com/gmichaelrapp/anabasis/wiki)**: citations and sources, notes and the board, reading PDFs, the research journal, Socrates and the Oracle, the checks, and every export.
+
 1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
 2. Open it in your browser. A short tour and a sample project show you around.
 3. Choose **Save** to keep your project as a `.json` file. Keep that file somewhere backed up, such as a synced folder.

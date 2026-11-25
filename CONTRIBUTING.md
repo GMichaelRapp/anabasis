@@ -46,6 +46,7 @@ Before you open a pull request:
 - If you change what a project file holds, follow [Changing the format](docs/file-format.md#changing-the-format).
 - If the change is user-visible, add a line to `CHANGELOG.md` under **Unreleased**, and update Help in `src/shell.html` if it explains the feature.
 - If the change alters a screen shown in the [quick start](docs/quick-start.md), regenerate its screenshots with `python tools/guide/quickstart.py` (after `python build.py`).
+- The [wiki](https://github.com/gmichaelrapp/anabasis/wiki) is written in `docs/wiki/` and published by the `wiki.yml` workflow, so edit the files there, not the wiki itself. Regenerate its screenshots with `python tools/guide/wiki_shots.py`. A new section in Help needs a wiki page, or a place on the list still to write in `tests/t45.py`.
 - Interface screenshots in the README come from `python tools/guide/screenshots.py`.
 - New toolbar, document-bar or top-bar buttons need `data-pri` (higher moves into the ⋯ menu sooner) and `data-label` (their name in that menu); toolbar buttons also need `data-tb`, so they can be hidden in Customize toolbar. Check the layout at 390 px wide as well as on a desktop.
 - Interface text: plain verbs, sentence case, and a button says what it does (“Save checkpoint”, not “Submit”).

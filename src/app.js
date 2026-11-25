@@ -8920,7 +8920,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
 const WHATS_NEW = {
   '2.5.1': ['The research journal has prompts for each stage of the research process, from first idea to peer feedback: topic, first results, narrowed topic, research question, keywords, leads, notes on a source (the citation goes in, in your document’s style), working title, thesis, outline, Draft 0 and peer feedback. Each sets the kind of entry and tags it, and the row of stages shows which you’ve written about. Open the journal’s Log, or press Today’s entry.'],
   '2.5.0': ['Proofread (F7, or in Tools) catches what the browser’s spell checker misses or doesn’t explain: about 400 common misspellings, mixed-up words in the places they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”), “a” and “an” by sound, doubled words, spacing, capitals after a full stop, and brackets or quotation marks that never close. Fix one, fix all spellings, or ignore a word for the whole project.',
-    'Abstract and keywords (Export, or Document setup): build an abstract a part at a time, shaped for a research article, an essay or chapter, or a report; fill the parts from your own sentences; watch the word limit; and pick keywords from the names and terms this document uses most. They go under the title in Word, PDF, the web page, ePub, Markdown, Pandoc and LaTeX.',
+    'Abstract and keywords (Export, or Page setup): build an abstract a part at a time, shaped for a research article, an essay or chapter, or a report; fill the parts from your own sentences; watch the word limit; and pick keywords from the names and terms this document uses most. They go under the title in Word, PDF, the web page, ePub, Markdown, Pandoc and LaTeX.',
     'Read and take notes: in the PDF reader, press Take notes. The PDF fills the screen with a note pad beside it; select a passage to quote it in the pad, add your comment, and save. Notes go to the PDF’s source with the page filled in as you scroll.'],
   '2.4.0': ['Socrates can examine a claim with you, the Socratic way: say what its key phrase means, meet a passage from your own notes that pushes against it, mend it, answer one last question, and keep the before and after in your journal. Press Examine a claim in Socrates, or say “examine:” to the Oracle.',
     'The Oracle understands more of what you say: word endings, a typo or two, “not” (“I don’t agree with Lee” is disagreement), and long messages, which it answers at their most telling sentence. It points out notes and sources close to what you’re saying, and paragraphs on your topic with no citation yet.',
@@ -12586,6 +12586,7 @@ const TB_PB = pbar($('#toolbar'), $('#tbMoreWrap'), $('#tbMore'), {
       <button role="menuitemcheckbox" data-x="tw" aria-checked="${v.tw}">${TB_ICON.tw}<span>Typewriter scrolling</span></button>
       <button role="menuitemcheckbox" data-x="dim" aria-checked="${v.dim}">${TB_ICON.dim}<span>Dim other paragraphs</span></button>
       <button role="menuitemcheckbox" data-x="marks" aria-checked="${!PREFS.marksOff}">${TB_ICON.marks}<span>Show research marks</span></button>
+      <hr><button role="menuitem" data-x="proof">${TB_ICON.proof}<span>Proofread</span><kbd>F7</kbd></button>
       <hr><button role="menuitem" data-x="custom">${TB_ICON.custom}<span>Customize toolbar…</span></button>
       <button role="menuitem" data-x="keys">${TB_ICON.keys}<span>Keyboard shortcuts</span><kbd>?</kbd></button>`;
   },
@@ -12593,6 +12594,7 @@ const TB_PB = pbar($('#toolbar'), $('#tbMoreWrap'), $('#tbMore'), {
     if (x === 'tw') { PREFS.twAlways = !writingView().tw; if (PREFS.twAlways) PREFS.typewriter = true; savePrefs(); applyWritingView(); toast(PREFS.twAlways ? 'Typewriter scrolling on: the line you’re writing stays near the middle.' : 'Typewriter scrolling off (still on in focus mode).'); }
     if (x === 'dim') { PREFS.dimAlways = !writingView().dim; if (PREFS.dimAlways) PREFS.dimOthers = true; savePrefs(); applyWritingView(); }
     if (x === 'marks') { PREFS.marksOff = !PREFS.marksOff; savePrefs(); rmStyle(); renderResearch(); }
+    if (x === 'proof') openProofread();
     if (x === 'custom') openTbCustom();
     if (x === 'keys') openKeys();
   },
@@ -12601,6 +12603,7 @@ const TB_ICON = {
   tw: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16M4 19h16M4 12h11"/><path d="m18 9.5 2.5 2.5-2.5 2.5"/></svg>',
   dim: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 18h16" opacity=".35"/><path d="M4 12h16"/></svg>',
   marks: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg>',
+  proof: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16 7.5 6h1L12 16M5.3 12.5h5.4"/><path d="m13 15 3 3 5-7"/></svg>',
   custom: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>',
   keys: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
 };

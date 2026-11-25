@@ -58,6 +58,9 @@ async def main():
         ig = await pg.evaluate("() => ({ list: P.proofIgnore, left: pfList.map(f => f.word) })")
         check('Ignore keeps a word out of Proofread for the whole project', 'wether' in ig['list'] and ig['left'] == ['Teh'], ig)
         await pg.click('#proofClose')
+        await pg.click('#btnTbMore'); await pg.click('#tbMore [data-x=proof]'); await pg.wait_for_timeout(200)
+        check('Proofread is in the toolbar’s ⋯ menu too', await pg.evaluate("() => $('#proofDlg').open"))
+        await pg.click('#proofClose')
         await pg.evaluate("() => { editor.children[2].remove(); syncEditor(); }")
 
         # ---- Abstract and keywords
