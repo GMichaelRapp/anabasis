@@ -13,7 +13,7 @@ on:
 
 permissions:
   contents: write
-  actions: write   # to start the Pages workflow after publishing
+  actions: write   # to start the Pages and zerohistory.net workflows after publishing
 
 jobs:
   release:
@@ -56,7 +56,9 @@ jobs:
           gh release create "$TAG" dist/anabasis.html dist/SHA256SUMS.txt \
             --target "$GITHUB_SHA" --title "Anabasis ${TAG#v}" --notes-file dist/notes.md
       - name: Update the hosted copy
-        # A release made with the workflow's own token doesn't trigger other workflows, so start Pages directly.
+        # A release made with the workflow's own token doesn't trigger other workflows, so start Pages and zerohistory.net directly.
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run pages.yml --ref main
+        run: |
+          gh workflow run pages.yml --ref main
+          gh workflow run site.yml --ref main
