@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.4.0';
+const APP_VERSION = '2.5.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -130,6 +130,9 @@ const todayISOof = iso => { const d = iso && !isNaN(new Date(iso)) ? new Date(is
 function normalize(p) {
   p = migrateProject(p);
   if (p && Array.isArray(p.docs)) p.docs = p.docs.filter(x => x && typeof x === 'object').map(x => Object.assign(x, { html: scrubHTML(asStr(x.html)), title: asStr(x.title), snapshots: Array.isArray(x.snapshots) ? x.snapshots.filter(v => v && typeof v === 'object').map(v => Object.assign(v, { html: scrubHTML(asStr(v.html)), name: asStr(v.name) })) : [] }));
+  // an abstract (2.5): text, keywords and settings, whatever a damaged or hand-edited file holds
+  if (p && Array.isArray(p.docs)) p.docs.forEach(x => { const a = x.meta && x.meta.abstract; if (!a) return; if (typeof a !== 'object') { delete x.meta.abstract; return; }
+    x.meta.abstract = { shape: ABS_SHAPES[a.shape] ? a.shape : 'humanities', parts: a.parts && typeof a.parts === 'object' ? Object.fromEntries(Object.entries(a.parts).map(([k, v]) => [k, asStr(v)])) : {}, text: asStr(a.text), keywords: Array.isArray(a.keywords) ? a.keywords.map(asStr).filter(Boolean).slice(0, 30) : [], limit: Math.max(0, parseInt(a.limit, 10) || 0), include: a.include !== false, auto: !!a.auto }; });
   if (p && Array.isArray(p.notes)) p.notes = p.notes.filter(x => x && typeof x === 'object');
   if (p && Array.isArray(p.sources)) p.sources = p.sources.filter(x => x && typeof x === 'object' && x.id).map(x => Object.assign(x, { csl: x.csl && typeof x.csl === 'object' ? x.csl : {} }));
   if (p) p.title = asStr(p.title) || 'Untitled project';
@@ -1064,6 +1067,7 @@ $('#fnOk').addEventListener('click', () => {
 /* ---------------- document list / doc bar ---------------- */
 $('#docStyle').innerHTML = styleOptions();
 $('#docStyle').addEventListener('change', e => { const d = curDoc(); d.style = e.target.value; applyLayout($('#page'), d); renderRefs(true); markDirty(); });
+$('#suAbstract').addEventListener('click', () => openAbstract());
 $('#docTitle').addEventListener('input', e => { const d = curDoc(); d.title = e.target.value; d.modified = nowISO(); $('#titleBlock').innerHTML = titleBlockHTML(d); renderDocList(); markDirty(); });
 $('#projTitle').addEventListener('input', e => { P.title = e.target.value; markDirty(); });
 function relTime(iso) {
@@ -2019,7 +2023,7 @@ function buildExport(doc, mode = 'html', opt = {}) {
       else { cites.push({ items: markerItems(m), note: m.dataset.cnote || '' }); m.replaceWith(document.createTextNode(`ZZC${cites.length - 1}ZZ`)); }
     });
     $$('p', tmp).forEach(p => { if (!p.textContent.trim() && !p.querySelector('img')) p.remove(); });
-    return { body: tmp.innerHTML, cites, fns, title: titleBlockHTML(doc), figs };
+    return { body: tmp.innerHTML, cites, fns, title: titleBlockHTML(doc), figs, abstract: doc.meta.abstract && absOn(doc) ? doc.meta.abstract : null };
   }
   let index = '';
   if (doc.layout.index && mode !== 'md') index = buildIndex(tmp, mode); else $$('.ixm', tmp).forEach(m => m.remove());
@@ -2042,7 +2046,7 @@ function buildExport(doc, mode = 'html', opt = {}) {
   });
   $$('p', tmp).forEach(p => { if (!p.textContent.trim() && !p.querySelector('img,a.ix-a')) p.remove(); });
   lastSig = ''; renderRefs(true); // restore the open document's citation state
-  return { body: tmp.innerHTML, out, title: titleBlockHTML(doc), index, figs, mg, marginalia: marginaliaHTML(mg, mode) };
+  return { body: tmp.innerHTML, out, title: titleBlockHTML(doc) + abstractHTML(doc), index, figs, mg, marginalia: marginaliaHTML(mg, mode) };
 }
 function exportStandaloneHTML(doc) {
   const x = buildExport(doc, 'html'), cs = docClassAndStyle(doc);
@@ -2065,6 +2069,7 @@ function exportMarkdown(doc) {
   const x = buildExport(doc, 'md');
   const td = addMathRules(addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' })));
   let md = `# ${doc.title}\n\n` + [doc.meta.subtitle, doc.meta.author, doc.meta.date].filter(Boolean).map(s => `*${s}*`).join('  \n') + '\n\n';
+  if (absOn(doc)) { const a = doc.meta.abstract; md += `**Abstract.** ${a.text.trim()}\n\n` + (a.keywords.length ? `*Keywords:* ${a.keywords.join('; ')}\n\n` : ''); }
   md += td.turndown(x.body).replace(/@@FN(\d+)@@/g, '[^$1]');
   if (x.out.notes.length) md += '\n\n' + x.out.notes.map(n => `[^${n.n}]: ${td.turndown(n.html).replace(/\n+/g, ' ')}`).join('\n');
   if (x.out.bib) md += `\n\n## ${x.out.heading}\n\n` + x.out.bib.entries.map(e => td.turndown(e).trim()).join('\n\n');
@@ -2102,6 +2107,7 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'review') exportPagedPDF(doc, { review: true });
   if (x === 'send') openSendCopy();
   if (x === 'archive') exportArchive();
+  if (x === 'abstract') openAbstract();
   if (x === 'takeback') openTakeBack();
   if (x === 'ms') openManuscript();
   if (x === 'html') { const go = () => download(fileSafe(doc.title) + '.html', exportStandaloneHTML(doc), 'text/html'); if (mathPending(doc)) mathLoad().then(go); else go(); }
@@ -2360,7 +2366,7 @@ const COMMANDS = [
   ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
   ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
-  ['Find and replace in all documents', () => openFindAll()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
+  ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
 ];
@@ -2576,9 +2582,15 @@ async function exportDocx(doc, opt = {}) {
   const children = [];
   if (ms) children.push(...msTitlePage(doc, ms, { font, size, W: ctxBody.textW }));
   else if (x.title) {
-    const tb = document.createElement('div'); tb.innerHTML = x.title;
+    const tb = document.createElement('div'); tb.innerHTML = x.title; const ab = tb.querySelector('.abstract'); if (ab) ab.remove();
     $$('p', tb).forEach((p, i) => children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: i ? 0 : 120, line: 276 }, children: [new D.TextRun({ text: p.textContent, bold: i === 0, size: i === 0 ? size + 8 : size, font })] })));
     children.push(new D.Paragraph({ spacing: { after: 240 }, children: [] }));
+    if (ab) {
+      const ind = { left: 720, right: 720 }, t = ab.querySelector('.ab-t'), k = ab.querySelector('.ab-kw');
+      children.push(new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: { after: 120 }, children: [new D.TextRun({ text: 'Abstract', bold: true, font, size })] }));
+      if (t) children.push(new D.Paragraph({ alignment: D.AlignmentType.JUSTIFIED, indent: ind, spacing: { after: 120, line: 276 }, children: [new D.TextRun({ text: t.textContent, font, size })] }));
+      if (k) children.push(new D.Paragraph({ indent: ind, spacing: { after: 360, line: 276 }, children: [new D.TextRun({ text: 'Keywords: ', italics: true, font, size }), new D.TextRun({ text: k.textContent.replace(/^Keywords:\s*/, ''), font, size })] }));
+    }
   }
   children.push(...htmlToDocx(x.body, ctxBody, { indent: !!L.indent }));
   if (x.out.bib) {
@@ -3613,7 +3625,7 @@ async function exportEpub(doc) {
   const ixPage = x.index ? x.index.replace(/href="#(ix\d+)"/g, (m, id) => `href="${ixFile[id] || files[0].file}#${id}"`).replace(/<section class="end-sec index">/, '<section epub:type="index">').replace(/<h2 class="end-h">/, '<h1>').replace(/<\/h2>/, '</h1>') : '';
   const bibPage = x.out.bib ? `<section epub:type="bibliography"><h1>${esc(x.out.heading)}</h1><div class="csl-bib${x.out.bib.hanging ? ' hanging' : ''}">${x.out.bib.entries.join('')}</div></section>` : '';
   const m = doc.meta, uuid = 'urn:uuid:' + ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, c => (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
-  const titlePage = `<section epub:type="titlepage" class="titlepage"><h1>${esc(doc.title)}</h1>${m.subtitle ? `<p class="sub">${esc(m.subtitle)}</p>` : ''}${m.author ? `<p class="author">${esc(m.author)}</p>` : ''}</section>`;
+  const titlePage = `<section epub:type="titlepage" class="titlepage"><h1>${esc(doc.title)}</h1>${m.subtitle ? `<p class="sub">${esc(m.subtitle)}</p>` : ''}${m.author ? `<p class="author">${esc(m.author)}</p>` : ''}${abstractHTML(doc)}</section>`;
   const all = [{ id: 'title', file: 'title.xhtml', title: doc.title, html: titlePage }, ...files];
   if (notesPage) all.push({ id: 'notes', file: 'notes.xhtml', title: 'Notes', html: notesPage, raw: true });
   if (bibPage) all.push({ id: 'bib', file: 'bib.xhtml', title: x.out.heading, html: bibPage, raw: true });
@@ -3743,6 +3755,247 @@ function unlinkedQuotes() {
   return out;
 }
 
+/* ---------- Abstract and keywords (2.5) ----------
+   A form that builds an abstract a part at a time (the parts depend on the kind of piece), suggests sentences
+   for the parts from the draft, counts words against a limit, and suggests keywords from what makes this
+   document different from the rest of the project. Kept with the document; placed under the title in exports. */
+const ABS_SHAPES = {
+  research: ['Research article', [['background', 'Background', 'What is known already, and what isn’t.'], ['aim', 'Aim', 'What this piece sets out to do or answer.'], ['method', 'Method', 'Your sources, data or approach.'], ['results', 'Findings', 'What you found; the key figure, if there is one.'], ['conclusion', 'Conclusion', 'What it means, and for whom.']]],
+  humanities: ['Essay or chapter', [['context', 'Context', 'The conversation this joins.'], ['question', 'Question', 'The question or problem.'], ['argument', 'Argument', 'Your answer, in one sentence.'], ['evidence', 'Evidence', 'What it rests on: texts, archives, cases.'], ['contribution', 'Contribution', 'What changes if you are right.']]],
+  report: ['Report, brief or white paper', [['purpose', 'Purpose', 'Why this was written, and for whom.'], ['scope', 'Scope', 'What it covers, and what it doesn’t.'], ['findings', 'Findings', 'The main findings, most important first.'], ['recommendations', 'Recommendations', 'What the reader should do.']]],
+  free: ['Write it whole', []] };
+const absOf = d => { const D = { shape: 'humanities', parts: {}, text: '', keywords: [], limit: 250, include: true, auto: true }; if (!d.meta.abstract) d.meta.abstract = D; else Object.keys(D).forEach(k => { if (d.meta.abstract[k] === undefined) d.meta.abstract[k] = D[k]; }); return d.meta.abstract; };
+// sentences in the draft that sound like each part
+const ABS_CUES = {
+  background: /\b(historians|scholars|studies|it is (often|usually|commonly)|has long been|traditionally|most accounts|the literature|previous (work|research))\b/i,
+  context: /\b(historians|scholars|studies|it is (often|usually|commonly)|has long been|traditionally|most accounts|the literature|debate)\b/i,
+  aim: /\bthis (paper|article|chapter|essay|study|report|brief|piece) (argues|asks|examines|explores|shows|considers|investigates|sets out|traces)\b|\bI (argue|ask|examine|show|contend|propose)\b/i,
+  question: /\?$|\b(the question|asks (whether|how|why)|why did|how did)\b/i,
+  argument: /\b(argues?|contend|my claim|is better (read|understood) as|this chapter argues|I argue)\b/i,
+  purpose: /\bthis (paper|report|brief|study) (aims|sets out|examines|assesses)\b|\b(purpose|in order to)\b/i,
+  method: /\b(drawing on|based on|using|I (read|compare|analy[sz]e|draw on|use)|through (an? )?(analysis|reading|comparison)|archiv\w+|interviews?|data(set)?s?|survey)\b/i,
+  scope: /\b(covers?|scope|focus(es)? on|between \d{3,4} and \d{3,4}|limited to)\b/i,
+  results: /\b(shows?|showed|found|finds|reveals?|suggests?|demonstrates?|indicates?)\b|\d+ ?%/i,
+  findings: /\b(shows?|showed|found|finds|reveals?|suggests?|demonstrates?|indicates?)\b|\d+ ?%/i,
+  evidence: /\b(Xenophon|according to|records?|letters?|accounts?|archives?|sources?|testimony|documents?)\b/i,
+  conclusion: /\b(in conclusion|ultimately|therefore|thus|this matters|implications?|in short)\b/i,
+  contribution: /\b(this matters|implications?|reframes?|changes how|contributes?|we should)\b/i,
+  recommendations: /\b(should|recommend\w*|must|ought to|we propose)\b/i };
+function absSentences(d) {
+  const t = document.createElement('div'); t.innerHTML = d.html || '';
+  $$('.cite,.fn,.flag,.cmt-pt,.ix-a,sup', t).forEach(x => x.remove());
+  const paras = [...t.children].filter(el => !/^(H[1-6]|FIGURE|TABLE|PRE|HR)$/.test(el.tagName)).map(el => rmNorm(el.textContent)).filter(x => x.length > 40);
+  return paras.map((p, pi) => (p.match(/[^.!?]+[.!?]+["”’)]*|[^.!?]+$/g) || [p]).map(s => ({ s: s.trim(), pi, last: pi === paras.length - 1 }))).flat().filter(x => x.s.split(/\s+/).length >= 6 && x.s.split(/\s+/).length <= 45);
+}
+function absSuggest(d) {
+  const a = absOf(d), S = absSentences(d), used = new Set(Object.values(a.parts).filter(Boolean)); let n = 0;
+  ABS_SHAPES[a.shape][1].forEach(([k]) => {
+    if ((a.parts[k] || '').trim()) return;
+    let c = S.filter(x => !used.has(x.s) && ABS_CUES[k] && ABS_CUES[k].test(x.s));
+    if (/conclusion|contribution/.test(k)) c = c.sort((x, y) => y.pi - x.pi).concat(S.filter(x => x.last && !used.has(x.s)));
+    if (/background|context/.test(k) && !c.length) c = S.filter(x => x.pi === 0 && !used.has(x.s));
+    const pick = c[0]; if (pick) { a.parts[k] = pick.s; used.add(pick.s); n++; }
+  });
+  return n;
+}
+const absJoin = a => ABS_SHAPES[a.shape][1].map(([k]) => (a.parts[k] || '').trim()).filter(Boolean).map(s => /[.!?”’)]$/.test(s) ? s : s + '.').join(' ');
+// keywords: words and two-word phrases common in this document and rarer elsewhere in the project, plus its names
+function absKeywords(d) {
+  // everyday words that are never keywords, however often they appear
+  const STOPS = new Set([...ZX_STOP, ...ORC_STOP, ...('chapter paper article section figure table note notes page pages also however many much make made first second third like well within upon ' +
+    'again against almost along already always among around away back became become began behind below best better case certain change clear come course days different does done during early else end enough even ever example fact far few find following form found gave general give given going good great group half hand hard high important including instead kind known large last later least less life little long main matter near need next nothing number often once open order others part people place point possible present real right says second seem seemed seems several shall short show side small something sometimes soon sure take taken thing three thus times together took toward turn turned turns used went whole work world year years yet stressing more most less read reads').split(' ')]);
+  const paraOf = html => { const t = document.createElement('div'); t.innerHTML = html || ''; $$('.cite,.fn,.flag,sup', t).forEach(x => x.remove()); return [...t.children].map(el => rmNorm(el.textContent)).filter(x => x.length > 20); };
+  const all = [], mine = paraOf(d.html); binderOrder().forEach(x => paraOf(x.html).forEach(p => all.push(p)));
+  const grams = p => { const w = (p.match(/[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ'’-]+/g) || []).map(x => x.replace(/['’]s$/, '')), out = []; w.forEach((x, i) => { const l = x.toLowerCase(); if (l.length > 3 && !STOPS.has(l)) out.push(l); const y = w[i + 1]; if (y && l.length > 2 && y.length > 2 && !STOPS.has(l) && !STOPS.has(y.toLowerCase())) out.push(l + ' ' + y.toLowerCase()); }); return out; };
+  const df = new Map(); all.forEach(p => new Set(grams(p)).forEach(g => df.set(g, (df.get(g) || 0) + 1)));
+  const tf = new Map(), surface = new Map(); mine.forEach(p => { (p.match(/[A-Za-zÀ-ɏ][A-Za-zÀ-ɏ'’-]+(?: [A-Za-zÀ-ɏ][A-Za-zÀ-ɏ'’-]+)?/g) || []); grams(p).forEach(g => tf.set(g, (tf.get(g) || 0) + 1)); });
+  const N = Math.max(all.length, 1), score = new Map();
+  tf.forEach((f, g) => { if (f < 2) return; if (!g.includes(' ') && (g.length < 5 || /(ed|ly|ing|ious)$/.test(g))) return; score.set(g, f * Math.log(1 + N / (df.get(g) || 1)) * (g.includes(' ') ? 2 : 1)); });
+  // names: people, places and terms you've recorded, and threads, when this document uses them
+  const text = mine.join(' ').toLowerCase();
+  (P.entities || []).forEach(e => { if (e.name && text.includes(e.name.toLowerCase())) score.set(e.name.toLowerCase(), (score.get(e.name.toLowerCase()) || 0) + 6); });
+  // your sources' authors this document names twice or more, and the threads it is marked with
+  P.sources.forEach(x => { const f = socAuthor(x); if (f && f.length > 2) { const n = (mine.join(' ').match(new RegExp(`\\b${f.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'g')) || []).length; if (n >= 2) { surface.set(f.toLowerCase(), f); score.set(f.toLowerCase(), (score.get(f.toLowerCase()) || 0) + n * 1.5); } } });
+  P.threads.forEach(t => { if (t.name && (d.html || '').includes(`data-ref="${t.id}"`)) { const l = t.name.toLowerCase(); surface.set(l, t.name); score.set(l, (score.get(l) || 0) + 4); } });
+  // a capitalised name used twice or more is a likely keyword too
+  const caps = new Map(); mine.forEach(p => (p.match(/(?<=[a-z,;]\s)[A-Z][a-zà-ɏ]+(?:\s[A-Z][a-zà-ɏ]+)?/g) || []).forEach(c => caps.set(c, (caps.get(c) || 0) + 1)));
+  caps.forEach((n, c) => { if (n >= 2) { const l = c.toLowerCase(); surface.set(l, c); score.set(l, (score.get(l) || 0) + n * 1.5); } });
+  const ranked = [...score.entries()].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  const out = []; for (const g of ranked) { if (out.some(o => o.includes(g) || g.includes(o))) continue; out.push(g); if (out.length >= 12) break; }
+  return out.map(g => surface.get(g) || (P.entities || []).find(e => e.name.toLowerCase() === g)?.name || g);
+}
+function abstractHTML(doc) {
+  const a = doc.meta && doc.meta.abstract; if (!a || !a.include || !((a.text || '').trim() || (a.keywords || []).length)) return '';
+  return `<section class="abstract"><p class="ab-h">Abstract</p>${a.text.trim() ? `<p class="ab-t">${esc(a.text.trim())}</p>` : ''}${a.keywords.length ? `<p class="ab-kw"><i>Keywords:</i> ${esc(a.keywords.join('; '))}</p>` : ''}</section>`;
+}
+const absOn = doc => !!abstractHTML(doc);
+/* the dialog */
+let absDoc = null;
+function openAbstract(d = curDoc()) {
+  if (!d) return; syncEditor(); absDoc = d; const a = absOf(d);
+  $('#absFor').textContent = d.title || 'Untitled';
+  $('#absShape').innerHTML = Object.entries(ABS_SHAPES).map(([k, v]) => `<option value="${k}" ${k === a.shape ? 'selected' : ''}>${esc(v[0])}</option>`).join('');
+  $('#absLimit').value = String(a.limit); $('#absInclude').checked = a.include;
+  absRenderParts(); $('#absText').value = a.text; absCount(); absRenderKw(); $('#absKwPick').innerHTML = '';
+  if (!$('#absDlg').open) $('#absDlg').showModal();
+}
+function absRenderParts() {
+  const a = absOf(absDoc), parts = ABS_SHAPES[a.shape][1];
+  $('#absParts').innerHTML = parts.length ? parts.map(([k, l, h]) => `<div class="abs-part"><label for="absP-${k}">${esc(l)}</label><textarea id="absP-${k}" data-abs="${k}" rows="2" placeholder="${esc(h)}">${esc(a.parts[k] || '')}</textarea></div>`).join('') : '<p class="tip">Write the abstract in the box below.</p>';
+  $('#absSuggest').hidden = !parts.length; $('#absJoin').hidden = !parts.length;
+}
+function absCount() {
+  const a = absOf(absDoc), n = wc(a.text || ''), L = +a.limit;
+  $('#absCount').textContent = L ? `${n} of ${L} words` : `${n} words`; $('#absCount').classList.toggle('over', !!L && n > L);
+}
+function absRenderKw() {
+  const a = absOf(absDoc);
+  $('#absKw').innerHTML = a.keywords.map((k, i) => `<span class="kw-chip">${esc(k)}<button class="small ghost" data-kw-del="${i}" aria-label="Remove ${esc(k)}">×</button></span>`).join('') || '<span class="small muted">No keywords yet.</span>';
+}
+const absSave = () => { absDoc.modified = nowISO(); markDirty(); };
+$('#absParts').addEventListener('input', e => { const k = e.target.dataset.abs; if (!k) return; const a = absOf(absDoc); a.parts[k] = e.target.value; if (a.auto) { a.text = absJoin(a); $('#absText').value = a.text; absCount(); } absSave(); });
+$('#absText').addEventListener('input', e => { const a = absOf(absDoc); a.text = e.target.value; a.auto = !a.text.trim(); absCount(); absSave(); });
+$('#absShape').addEventListener('change', e => { const a = absOf(absDoc); a.shape = e.target.value; absRenderParts(); if (a.auto) { a.text = absJoin(a); $('#absText').value = a.text; absCount(); } absSave(); });
+$('#absLimit').addEventListener('change', e => { absOf(absDoc).limit = +e.target.value; absCount(); absSave(); });
+$('#absInclude').addEventListener('change', e => { absOf(absDoc).include = e.target.checked; absSave(); });
+$('#absSuggest').addEventListener('click', () => { const n = absSuggest(absDoc), a = absOf(absDoc); absRenderParts(); if (a.auto) { a.text = absJoin(a); $('#absText').value = a.text; absCount(); } absSave(); toast(n ? `Filled ${orcPl(n, 'part', 'parts')} with sentences from the draft. Rewrite them as a summary.` : 'No sentences in the draft fit the empty parts. Write them in your own words.'); });
+$('#absJoin').addEventListener('click', () => { const a = absOf(absDoc); a.text = absJoin(a); a.auto = true; $('#absText').value = a.text; absCount(); absSave(); });
+const absAddKw = k => { k = k.trim().replace(/[;,]+$/, ''); const a = absOf(absDoc); if (k && !a.keywords.some(x => x.toLowerCase() === k.toLowerCase())) { a.keywords.push(k); absRenderKw(); absSave(); } };
+$('#absKwIn').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ',' || e.key === ';') { e.preventDefault(); absAddKw(e.target.value); e.target.value = ''; } });
+$('#absKw').addEventListener('click', e => { const b = e.target.closest('[data-kw-del]'); if (!b) return; absOf(absDoc).keywords.splice(+b.dataset.kwDel, 1); absRenderKw(); absSave(); });
+$('#absKwSug').addEventListener('click', () => { const have = new Set(absOf(absDoc).keywords.map(x => x.toLowerCase())), k = absKeywords(absDoc).filter(x => !have.has(x.toLowerCase())); $('#absKwPick').innerHTML = k.length ? k.map(x => `<button class="small" data-kw-add="${esc(x)}">+ ${esc(x)}</button>`).join('') : '<span class="small muted">Write a little more first: keywords come from words this document uses often.</span>'; });
+$('#absKwPick').addEventListener('click', e => { const b = e.target.closest('[data-kw-add]'); if (!b) return; absAddKw(b.dataset.kwAdd); b.remove(); });
+$('#absCopy').addEventListener('click', () => { const a = absOf(absDoc); navigator.clipboard?.writeText(`Abstract\n\n${a.text.trim()}${a.keywords.length ? `\n\nKeywords: ${a.keywords.join('; ')}` : ''}`).then(() => toast('Copied the abstract and keywords.'), () => toast('Couldn’t copy here.')); });
+$('#absDone').addEventListener('click', () => $('#absDlg').close());
+/* ---------- Proofread (2.5): the errors a browser's spell checker misses or doesn't explain ----------
+   Not a grammar engine and nothing online: a list of common misspellings (data/proofread.txt), a handful of
+   mixed-up words in the places they're almost always wrong ("would of", "more then", "your welcome"),
+   a/an, doubled words, spacing and capitals after a full stop. Each finding can be fixed, shown or ignored. */
+let PF = null, pfList = [], pfIgnore = new Set();
+function pfData() {
+  if (PF) return PF;
+  const words = new Map(), phrases = []; let sec = '';
+  ($('#data-proof')?.textContent || '').replace(/&lt;/g, '<').split('\n').forEach(l => {
+    l = l.trim(); if (!l || l[0] === '#') return; if (l[0] === '@') { sec = l.slice(1); return; }
+    const m = /^(.+?)\s*=>\s*(.+)$/.exec(l); if (!m) return;
+    if (sec === 'words') words.set(m[1].toLowerCase(), m[2]); else phrases.push([m[1].toLowerCase(), m[2]]);
+  });
+  return (PF = { words, phrases });
+}
+const pfCase = (orig, fix) => /^[A-Z]/.test(orig) && !/^[A-Z]/.test(fix) ? fix[0].toUpperCase() + fix.slice(1) : fix;
+const PF_VOWEL_A = /^(uni(?!n)|use|usu|uti|ure|uro|eu|ewe|one\b|once|u-|ufo|uk\b|us\b)/i, PF_SILENT_H = /^(honest|honor|honour|hour|heir)/i;
+const PF_ABBR = /\b(e\.g|i\.e|etc|cf|vs|al|p|pp|vol|vols|no|nos|fig|figs|ch|chs|ed|eds|trans|Mr|Mrs|Ms|Dr|St|Prof|Gen|Col|Capt|Lt|Sgt|Jr|Sr|ca|c|approx|Inc|Ltd|Co|Corp|U\.S|U\.K|a\.m|p\.m)\.$/i;
+// the checks, over one paragraph's text; each finding: where it is, how long, what's wrong, what to put instead
+function pfScan(t) {
+  const D = pfData(), out = [], add = (at, len, kind, msg, fix) => { if (!out.some(x => at < x.at + x.len && x.at < at + len)) out.push({ at, len, kind, msg, fix }); };
+  let m;
+  // phrases first, so "could of" is one finding, not two
+  const low = t.toLowerCase();
+  D.phrases.forEach(([w, r]) => { let i = low.indexOf(w); while (i >= 0) { if ((i === 0 || !/[\w]/.test(low[i - 1])) && !/[\w]/.test(low[i + w.length] || '')) add(i, w.length, 'Phrase', `“${t.slice(i, i + w.length)}” is usually written “${r}”.`, pfCase(t.slice(i, i + w.length), r)); i = low.indexOf(w, i + 1); } });
+  const WR = /[A-Za-z][A-Za-z']*/g;
+  while ((m = WR.exec(t))) {
+    const w = m[0], lw = w.toLowerCase();
+    if (pfIgnore.has(lw)) continue;
+    const r = D.words.get(lw);
+    if (r) add(m.index, w.length, 'Spelling', `“${w}” → “${pfCase(w, r)}”`, pfCase(w, r));
+    else if (w === 'calvary' && /\b(horse|charge|troop|regiment|division|squadron|mounted|infantry|scout)/i.test(t)) add(m.index, w.length, 'Word', '“calvary” (the hill) or “cavalry” (horse soldiers)?', 'cavalry');
+    else if (w === 'i' && /\s/.test(t[m.index - 1] || ' ') && /^[\s,.;:!?’']/.test(t[m.index + 1] || ' ') && !/^\.[a-z]/i.test(t.slice(m.index + 1, m.index + 3))) add(m.index, 1, 'Capital', '“i” on its own is “I”.', 'I');
+  }
+  // the same word twice
+  const DUP = /\b([A-Za-z]+)\s+\1\b/gi;
+  while ((m = DUP.exec(t))) if (!/^(had|that|is|do|bye|so|very|no|many|ha|there|far|blah|knock|again)$/i.test(m[1])) add(m.index, m[0].length, 'Repeated', `“${m[1]}” twice in a row.`, m[1]);
+  // a and an, by the sound of the next word
+  const AN = /\b(a|an|A|An)\s+([A-Za-z][\w’'-]*)/g;
+  while ((m = AN.exec(t))) {
+    const art = m[1].toLowerCase(), nx = m[2]; let want;
+    if (/^[A-Z]{2,}s?$/.test(nx)) want = /^[AEFHILMNORSX]/.test(nx) ? 'an' : 'a';
+    else if (/^[aeiou]/i.test(nx)) want = PF_VOWEL_A.test(nx) ? 'a' : 'an';
+    else want = PF_SILENT_H.test(nx) ? 'an' : 'a';
+    if (want !== art && !(art === 'a' && /^(historic|hotel|herb)/i.test(nx))) add(m.index, m[1].length, 'A or an', `“${m[1]} ${nx}” → “${pfCase(m[1], want)} ${nx}”`, pfCase(m[1], want));
+  }
+  // words mixed up in the places they're almost always wrong
+  const MIX = [
+    [/\b(more|less|better|worse|rather|other|greater|fewer|larger|smaller|higher|lower|faster|slower|older|younger|stronger|weaker|further|longer|shorter)\s+(then)\b/gi, 2, 'than', 'After a comparison it’s “than”.'],
+    [/\b(it's|it’s)\s+(own)\b/gi, 1, 'its', '“It’s” means “it is”; the possessive is “its”.'],
+    [/\b(its)\s+(a|an|the|been|not|going|very|so|too|just|also|only|still|clear|true|likely|possible|important|hard|easy|worth)\b/gi, 1, "it’s", '“Its” is possessive; “it is” is “it’s”.'],
+    [/\b(your)\s+(welcome|going|not|being|doing|making|getting|kidding|sure|probably|still|also|just|really|very|so|correct|mistaken)\b/gi, 1, "you’re", '“Your” is possessive; “you are” is “you’re”.'],
+    [/\b(their)\s+(is|are|was|were|will be|has been|have been|seems|seem)\b/gi, 1, 'there', '“Their” is possessive; here it’s “there”.'],
+    [/\b(there)\s+(own)\b/gi, 1, 'their', '“There” is a place; the possessive is “their”.'],
+    [/\b(to|will|could|would|might|may|not|never)\s+(loose)\b/gi, 2, 'lose', '“Loose” is not tight; to misplace or be beaten is to “lose”.'],
+    [/\b(an|the|no|any|little|great|positive|negative|significant|lasting|major|profound)\s+(affect)\s+(on|of|upon)\b/gi, 2, 'effect', 'The noun is usually “effect”; “affect” is the verb.'],
+    [/\b(who's|who’s)\s+(own|book|work|account|army|side|fault|idea|name|role|view|views|argument|claim|evidence)\b/gi, 1, 'whose', '“Who’s” means “who is”; the possessive is “whose”.'],
+    [/\b(alot)\b/gi, 1, 'a lot', '“A lot” is two words.']];
+  MIX.forEach(([re, g, fix, msg]) => { re.lastIndex = 0; while ((m = re.exec(t))) { const off = m.index + (g === 1 ? 0 : m[0].indexOf(m[g], m[1].length)); add(off, m[g].length, 'Word', msg, pfCase(m[g], fix)); } });
+  // spacing and punctuation
+  const SP = [[/ +([,.;:!?])(?!\d)/g, 'Spacing', 'A space before punctuation.', m => m[1]],
+    [/([,;])(?=[A-Za-z])/g, 'Spacing', 'No space after the comma.', m => m[1] + ' '],
+    [/([a-z]{2})\.(?=[A-Z][a-z])/g, 'Spacing', 'No space after the full stop.', m => m[1] + '. '],
+    [/(\S)  +(?=\S)/g, 'Spacing', 'Two spaces between words.', m => m[1] + ' '],
+    [/([,;:])\1+/g, 'Punctuation', 'Doubled punctuation.', m => m[1]],
+    [/([^.])\.\.(?!\.)/g, 'Punctuation', 'Two full stops.', m => m[1] + '.']];
+  SP.forEach(([re, kind, msg, f]) => { re.lastIndex = 0; while ((m = re.exec(t))) add(m.index, m[0].length, kind, msg, f(m)); });
+  // a capital after a full stop, unless the full stop ends an abbreviation
+  const CAP = /([.!?])(["”’)]?)\s+([a-z])/g;
+  while ((m = CAP.exec(t))) { const before = t.slice(Math.max(0, m.index - 12), m.index + 1); if (m[1] === '.' && (PF_ABBR.test(before) || /\b[A-Za-z]\.$/.test(before) || /\.\.\.$/.test(before))) continue; const at = m.index + m[0].length - 1; add(at, 1, 'Capital', 'A sentence starts with a capital.', m[3].toUpperCase()); }
+  // brackets and quotation marks that don't close
+  const open = (t.match(/\(/g) || []).length, close = (t.match(/\)/g) || []).length;
+  if (open !== close) { const i = open > close ? t.lastIndexOf('(') : t.lastIndexOf(')'); add(i, 1, 'Unclosed', open > close ? 'A bracket opens and never closes.' : 'A bracket closes that never opened.', null); }
+  const oq = (t.match(/“/g) || []).length, cq = (t.match(/”/g) || []).length;
+  if (oq !== cq) { const i = oq > cq ? t.lastIndexOf('“') : t.lastIndexOf('”'); add(i, 1, 'Unclosed', oq > cq ? 'A quotation opens and never closes.' : 'A quotation closes that never opened.', null); }
+  return out.sort((a, b) => a.at - b.at);
+}
+// the text of one paragraph, without citations, notes, maths or flags, and where each character lives
+function pfText(el) {
+  const map = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.cite,.fn,sup,code,pre,.math,mjx-container,.flag,.ixm,.cmt-pt,.ix-a,.eq,[contenteditable="false"]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
+  let t = '', n; while ((n = w.nextNode())) { map.push({ n, at: t.length }); t += n.data; }
+  return { t: t.replace(/ /g, ' '), map };
+}
+function pfRange(map, at, len) {
+  // the end of a word belongs to the text node it's in, not to the start of the next one (so a fix stays inside italics)
+  const pos = (i, end) => { let k = map.length - 1; while (k > 0 && (end ? map[k].at >= i : map[k].at > i)) k--; return { n: map[k].n, o: Math.min(i - map[k].at, map[k].n.data.length) }; };
+  const a = pos(at), b = len ? pos(at + len, true) : a, r = document.createRange(); r.setStart(a.n, a.o); r.setEnd(b.n, b.o); return r;
+}
+function proofScanDoc() {
+  syncEditor(); pfIgnore = new Set((P.proofIgnore || []).map(x => x.toLowerCase()));
+  pfList = [];
+  [...editor.children].forEach((el, bi) => {
+    if (el.matches('figure,table,pre,.eq,hr') || !el.textContent.trim()) return;
+    const { t, map } = pfText(el); if (!t.trim()) return;
+    pfScan(t).forEach(f => pfList.push(Object.assign(f, { bi, el, map, ctx: t, word: t.slice(f.at, f.at + f.len) })));
+  });
+  return pfList;
+}
+function openProofread() {
+  if (!curDoc()) return;
+  proofScanDoc(); proofRender(); if (!$('#proofDlg').open) $('#proofDlg').showModal();
+}
+function proofRender() {
+  const kinds = {}; pfList.forEach(f => kinds[f.kind] = (kinds[f.kind] || 0) + 1);
+  $('#proofSum').innerHTML = pfList.length ? `${orcPl(pfList.length, 'thing', 'things')} to look at in <b>${esc(curDoc().title || 'this document')}</b>: ${Object.entries(kinds).map(([k, n]) => `${n} ${esc(k.toLowerCase())}`).join(', ')}.` : `Nothing found in <b>${esc(curDoc().title || 'this document')}</b>. The browser’s own spell checker still underlines unknown words as you type.`;
+  $('#proofFixAll').hidden = !pfList.some(f => f.kind === 'Spelling' && f.fix);
+  $('#proofList').innerHTML = pfList.slice(0, 300).map((f, i) => {
+    const a = Math.max(0, f.at - 50), b = Math.min(f.ctx.length, f.at + f.len + 50);
+    const ctx = `${a ? '…' : ''}${esc(f.ctx.slice(a, f.at))}<mark>${esc(f.word) || '&nbsp;'}</mark>${esc(f.ctx.slice(f.at + f.len, b))}${b < f.ctx.length ? '…' : ''}`;
+    return `<li><span class="pf-k">${esc(f.kind)}</span><p class="pf-ctx">${ctx}</p><p class="pf-msg">${esc(f.msg)}</p><div class="pf-acts">${f.fix != null ? `<button class="small primary-soft" data-pf-fix="${i}">Fix${f.fix.trim() && f.fix !== f.word ? `: ${esc(f.fix.trim())}` : ''}</button>` : ''}<button class="small" data-pf-go="${i}">Show</button>${/^(Spelling|Word)$/.test(f.kind) && /^[A-Za-z']+$/.test(f.word) ? `<button class="small ghost" data-pf-ign="${i}">Ignore “${esc(f.word)}”</button>` : ''}</div></li>`;
+  }).join('');
+}
+function proofFix(i, quiet) {
+  const f = pfList[i]; if (!f || f.fix == null) return false;
+  if (!document.contains(f.el)) return false;
+  const { t, map } = pfText(f.el); if (t.slice(f.at, f.at + f.len) !== f.word) return false;
+  const r = pfRange(map, f.at, f.len); r.deleteContents(); r.insertNode(document.createTextNode(f.fix)); f.el.normalize();
+  if (!quiet) { syncEditor(); markDirty(); proofScanDoc(); proofRender(); }
+  return true;
+}
+$('#proofList').addEventListener('click', e => {
+  const fx = e.target.closest('[data-pf-fix]'), go = e.target.closest('[data-pf-go]'), ig = e.target.closest('[data-pf-ign]');
+  if (fx) { const i = +fx.dataset.pfFix; proofFix(i); $(`[data-pf-fix="${Math.min(i, pfList.length - 1)}"]`)?.focus(); }
+  if (go) { const f = pfList[+go.dataset.pfGo]; $('#proofDlg').close(); const { map } = pfText(f.el); const r = pfRange(map, f.at, f.len); f.el.scrollIntoView({ block: 'center' }); editor.focus({ preventScroll: true }); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+  if (ig) { const w = pfList[+ig.dataset.pfIgn].word.toLowerCase(); P.proofIgnore = [...new Set([...(P.proofIgnore || []), w])]; markDirty(); proofScanDoc(); proofRender(); toast(`“${w}” won’t be flagged again in this project.`); }
+});
+$('#proofFixAll').addEventListener('click', () => { let n = 0; for (let i = pfList.length - 1; i >= 0; i--) if (pfList[i].kind === 'Spelling' && pfList[i].fix && proofFix(i, true)) n++; syncEditor(); markDirty(); proofScanDoc(); proofRender(); toast(`Fixed ${orcPl(n, 'spelling', 'spellings')}.`); });
+$('#proofAgain').addEventListener('click', () => { proofScanDoc(); proofRender(); });
+$('#proofClose').addEventListener('click', () => $('#proofDlg').close());
 /* ---------- names & spellings ---------- */
 function nameIssues() {
   const issues = [];
@@ -4251,7 +4504,7 @@ function setZoom(z) {
 $('#rdZoomIn').addEventListener('click', () => setZoom(R.scale * 1.15));
 $('#rdZoomOut').addEventListener('click', () => setZoom(R.scale / 1.15));
 $('#rdFit').addEventListener('click', () => { PREFS.readerZoom = 0; if (R.doc) setZoom(($('#rdPages').clientWidth - 28) / R.base.w); PREFS.readerZoom = 0; savePrefs(); });
-$('#rdClose').addEventListener('click', () => { showReader(false); $('#rdSelBar').classList.add('hidden'); });
+$('#rdClose').addEventListener('click', () => { if (rrOn) rrToggle(false); showReader(false); $('#rdSelBar').classList.add('hidden'); });
 $('#rdOpen').addEventListener('click', () => $('#filePdf').click());
 $('#filePdf').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openPdfFile(f, R.pendingSource || ''); R.pendingSource = ''; });
 $('#rdOffset').addEventListener('change', () => { const s = P.sources.find(x => x.id === R.sourceId); if (s) { s.pdfOffset = parseInt($('#rdOffset').value, 10) || 0; markDirty(); } updateSelBar(); });
@@ -4328,6 +4581,14 @@ $('#rdSelBar').addEventListener('mousedown', e => e.preventDefault());
 $('#rdSelBar').addEventListener('click', async e => {
   const k = e.target.closest('button')?.dataset.k; if (!k) return;
   const s = readerSelection(); if (!s) return;
+  if (rrOn) {
+    const t = $('#rrText'), cur = t.value.trim();
+    t.value = (cur ? cur + '\n\n' : '') + (k === 'quote' ? `“${s.text}”` : s.text);
+    $('#rrKind').value = k; $('#rrPage').value = s.page; $('#rrPage').dataset.manual = '1';
+    getSelection().removeAllRanges(); updateSelBar(); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
+    toast(k === 'quote' ? 'Quote added to the note pad. Add your comment, then save.' : 'Passage added to the note pad. Rewrite it in your own words.');
+    return;
+  }
   if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, { name: R.name, buf: R.buf }).catch(() => {}); }
   const n = newNote(); n.kind = k; n.sourceId = R.sourceId; n.locator = s.page; n.label = 'page';
   n.body = s.text; n.title = s.text.split(/\s+/).slice(0, 7).join(' ') + (wc(s.text) > 7 ? '…' : '');
@@ -4335,6 +4596,62 @@ $('#rdSelBar').addEventListener('click', async e => {
   getSelection().removeAllRanges(); updateSelBar();
   if (k === 'paraphrase') { openNote(n.id, true); toast('Paraphrase started from the passage. Rewrite it in your own words.'); }
   else toast(`Quote note saved (p. ${s.page}).`);
+});
+/* ---------- Read and take notes (2.5): the PDF on one side, a note pad on the other ----------
+   The writing steps aside; the reader widens; notes go to the PDF's source with the page filled in as you
+   scroll. Selecting a passage puts it in the pad as a quote, to comment on before saving. */
+let rrOn = false, rrEditing = '';
+function rrSource() { return P.sources.find(x => x.id === R.sourceId) || null; }
+// the page the reader is on, as printed in the book (offset applied), and back
+const rrPrinted = () => R.doc ? printedPage(currentPage()) : '';
+function rrPdfPage(printed) { const s = rrSource(), n = parseInt(printed, 10); if (!n) return 0; return n + (s && s.pdfOffset ? +s.pdfOffset : 0); }
+function rrToggle(on = !rrOn) {
+  if (on && !R.doc) { toast('Open a PDF first.'); return; }
+  rrOn = on; document.body.classList.toggle('rr-on', on); $('#rrPane').classList.toggle('hidden', !on);
+  $('#rdNotes').setAttribute('aria-pressed', on); $('#rdNotes').textContent = on ? 'Back to writing' : 'Take notes';
+  if (on) { $('.panel')?.classList.remove('open'); rrRender(); $('#rrPage').value = rrPrinted(); delete $('#rrPage').dataset.manual; setTimeout(() => { if (PREFS.readerZoom === 0 || !PREFS.readerZoom) $('#rdFit').click(); $('#rrText').focus(); }, 60); }
+  else { setTimeout(() => { if (R.doc && !PREFS.readerZoom) $('#rdFit').click(); }, 60); editor.focus({ preventScroll: true }); }
+}
+function rrRender() {
+  const s = rrSource(), l = s ? sourceLabel(s) : null;
+  $('#rrFor').innerHTML = s ? `on <i>${esc(l.title.slice(0, 70))}</i>` : `on ${esc(R.name || 'this PDF')} <span class="muted">(saving a note links it to a new source)</span>`;
+  const mine = s ? P.notes.filter(n => n.sourceId === s.id) : [];
+  const num = n => parseInt(String(n.locator || '').replace(/[^\d].*$/, ''), 10) || 1e9;
+  mine.sort((a, b) => num(a) - num(b) || String(a.created).localeCompare(String(b.created)));
+  $('#rrList').innerHTML = mine.length ? mine.map(n => `<li data-rr="${n.id}"><div class="rr-meta"><span class="rr-k">${esc((KINDS.find(k => k[0] === n.kind) || [, 'Note'])[1])}</span>${n.locator ? `<button class="small ghost" data-rr-go="${esc(n.locator)}" title="Go to this page in the PDF">p. ${esc(n.locator)}</button>` : ''}<button class="small ghost" data-rr-open="${n.id}" title="Open the full note">Open</button></div>${rrEditing === n.id
+      ? `<textarea class="rr-edit" data-rr-edit="${n.id}" rows="4" aria-label="Edit note">${esc(n.body)}</textarea>`
+      : `<p class="rr-body" data-rr-ed="${n.id}" tabindex="0" title="Click to edit">${n.kind === 'quote' ? '“' + esc(n.body.slice(0, 600)) + '”' : esc(n.body.slice(0, 600))}${n.body.length > 600 ? '…' : ''}</p>`}</li>`).join('')
+    : `<li class="rr-none">${s ? 'No notes on this source yet.' : 'Your notes on this PDF will appear here.'}</li>`;
+  $('#rrCount').textContent = mine.length ? orcPl(mine.length, 'note', 'notes') : '';
+}
+async function rrSaveNote() {
+  const body = $('#rrText').value.trim(); if (!body) { $('#rrText').focus(); return; }
+  if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, { name: R.name, buf: R.buf }).catch(() => {}); }
+  const n = newNote(); n.kind = $('#rrKind').value; n.sourceId = R.sourceId; n.locator = $('#rrPage').value.trim(); n.label = 'page';
+  n.body = body.replace(/^[“"](.*)[”"]$/s, n.kind === 'quote' ? '$1' : '$&');
+  n.title = n.body.split(/\s+/).slice(0, 7).join(' ') + (wc(n.body) > 7 ? '…' : '');
+  n.tags = $('#rrTags').value.split(',').map(x => x.trim()).filter(Boolean);
+  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty();
+  $('#rrText').value = ''; $('#rrKind').value = 'idea';
+  rrRender(); toast(`Note saved${n.locator ? ` (p. ${n.locator})` : ''}.`); $('#rrText').focus();
+}
+$('#rdNotes').addEventListener('click', () => rrToggle());
+$('#rrDone').addEventListener('click', () => rrToggle(false));
+$('#rrForm').addEventListener('submit', e => { e.preventDefault(); rrSaveNote(); });
+$('#rrText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); rrSaveNote(); } });
+$('#rrPage').addEventListener('input', e => { e.target.dataset.manual = '1'; });
+$('#rdPages').addEventListener('scroll', debounce(() => { if (rrOn && R.doc && !$('#rrPage').dataset.manual) $('#rrPage').value = rrPrinted(); }, 120));
+$('#rrList').addEventListener('click', e => {
+  const go = e.target.closest('[data-rr-go]'), op = e.target.closest('[data-rr-open]'), ed = e.target.closest('[data-rr-ed]');
+  if (go) { const p = rrPdfPage(go.dataset.rrGo); if (p) goPage(p); }
+  if (op) { rrToggle(false); openNote(op.dataset.rrOpen); }
+  if (ed) { rrEditing = ed.dataset.rrEd; rrRender(); const t = $(`[data-rr-edit="${rrEditing}"]`); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
+});
+$('#rrList').addEventListener('keydown', e => { const ed = e.target.closest('[data-rr-ed]'); if (ed && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); ed.click(); } if (e.target.dataset.rrEdit && e.key === 'Escape') { rrEditing = ''; rrRender(); } });
+$('#rrList').addEventListener('focusout', e => {
+  const id = e.target.dataset?.rrEdit; if (!id) return;
+  const n = P.notes.find(x => x.id === id); if (n && n.body !== e.target.value) { n.body = e.target.value; n.modified = nowISO(); markDirty(); renderNoteList(); }
+  rrEditing = ''; setTimeout(rrRender, 0);
 });
 /* find in PDF */
 function markFind(div, q) {
@@ -8601,6 +8918,9 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.5.0': ['Proofread (F7, or in Tools) catches what the browser’s spell checker misses or doesn’t explain: about 400 common misspellings, mixed-up words in the places they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”), “a” and “an” by sound, doubled words, spacing, capitals after a full stop, and brackets or quotation marks that never close. Fix one, fix all spellings, or ignore a word for the whole project.',
+    'Abstract and keywords (Export, or Document setup): build an abstract a part at a time, shaped for a research article, an essay or chapter, or a report; fill the parts from your own sentences; watch the word limit; and pick keywords from the names and terms this document uses most. They go under the title in Word, PDF, the web page, ePub, Markdown, Pandoc and LaTeX.',
+    'Read and take notes: in the PDF reader, press Take notes. The PDF fills the screen with a note pad beside it; select a passage to quote it in the pad, add your comment, and save. Notes go to the PDF’s source with the page filled in as you scroll.'],
   '2.4.0': ['Socrates can examine a claim with you, the Socratic way: say what its key phrase means, meet a passage from your own notes that pushes against it, mend it, answer one last question, and keep the before and after in your journal. Press Examine a claim in Socrates, or say “examine:” to the Oracle.',
     'The Oracle understands more of what you say: word endings, a typo or two, “not” (“I don’t agree with Lee” is disagreement), and long messages, which it answers at their most telling sentence. It points out notes and sources close to what you’re saying, and paragraphs on your topic with no citation yet.',
     'If you saved yesterday’s conversation to the journal, the Oracle picks up where you left off (“You said you couldn’t decide how to open the chapter. Have you decided?”). Both speak with more variety, and Socrates in his own voice. Still no AI, nothing online, and about 30 KB in all.'],
@@ -11972,7 +12292,7 @@ function exportPandoc(doc = curDoc()) {
   md = md.replace(/ZZC(\d+)ZZ/g, (m, i) => pandocCite(x.cites[+i], keys)).replace(/ZZF(\d+)ZZ/g, (m, i) => `^[${x.fns[+i].replace(/[\[\]]/g, '\\$&')}]`);
   const style = STYLES[doc.style] && !STYLES[doc.style].custom ? doc.style : '';
   const y = v => JSON.stringify(String(v));
-  const front = ['---', `title: ${y(doc.title)}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', sources.length ? 'bibliography: references.bib' : '', style && sources.length ? `csl: ${style}.csl` : '', sources.length && STYLES[doc.style] && STYLES[doc.style].bib ? `reference-section-title: ${y(STYLES[doc.style].bib)}` : '', 'link-citations: true', '---', ''].filter(s => s !== '').join('\n');
+  const front = ['---', `title: ${y(doc.title)}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', ...(absOn(doc) ? [`abstract: ${y(doc.meta.abstract.text.trim())}`, doc.meta.abstract.keywords.length ? `keywords: [${doc.meta.abstract.keywords.map(y).join(', ')}]` : ''] : []), sources.length ? 'bibliography: references.bib' : '', style && sources.length ? `csl: ${style}.csl` : '', sources.length && STYLES[doc.style] && STYLES[doc.style].bib ? `reference-section-title: ${y(STYLES[doc.style].bib)}` : '', 'link-citations: true', '---', ''].filter(s => s !== '').join('\n');
   const name = fileSafe(doc.title);
   const readme = `${doc.title}: Pandoc / Quarto package from Anabasis ${APP_VERSION}\n\n  ${name}.md         the text, citations as [@key, p. 12]\n  references.bib       the ${sources.length} source${sources.length === 1 ? '' : 's'} it cites (BibLaTeX)\n${style ? `  ${style}.csl   the citation style the document uses\n` : ''}${images.length ? '  figures/             its images\n' : ''}\nTo make a Word file or PDF:\n\n  pandoc "${name}.md" --citeproc -o "${name}.docx"\n  pandoc "${name}.md" --citeproc -o "${name}.pdf"\n\nQuarto renders the .md file as it is (quarto render "${name}.md").\n`;
   const files = [{ name: `${name}/${name}.md`, data: front + '\n' + md.replace(/\n{3,}/g, '\n\n') + '\n' }, { name: `${name}/README.txt`, data: readme }];
@@ -11998,7 +12318,7 @@ function exportArchive() {
     let md = td().turndown(tmp.innerHTML);
     md = md.replace(/ZZC(\d+)ZZ/g, (m, j) => pandocCite(x.cites[+j], keys)).replace(/ZZF(\d+)ZZ/g, (m, j) => `^[${x.fns[+j].replace(/[\[\]]/g, '\\$&')}]`);
     const name = uniq(docNames, `${String(i + 1).padStart(2, '0')} ${fileSafe(doc.title || 'Untitled')}`);
-    const front = ['---', `title: ${y(doc.title || 'Untitled')}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', P.sources.length ? 'bibliography: ../../references.bib' : '', `modified: ${y(doc.modified || '')}`, '---', ''].filter(l => l !== '').join('\n');
+    const front = ['---', `title: ${y(doc.title || 'Untitled')}`, doc.meta.subtitle ? `subtitle: ${y(doc.meta.subtitle)}` : '', doc.meta.author ? `author: ${y(doc.meta.author)}` : '', doc.meta.date ? `date: ${y(doc.meta.date)}` : '', ...(absOn(doc) ? [`abstract: ${y(doc.meta.abstract.text.trim())}`, doc.meta.abstract.keywords.length ? `keywords: [${doc.meta.abstract.keywords.map(y).join(', ')}]` : ''] : []), P.sources.length ? 'bibliography: ../../references.bib' : '', `modified: ${y(doc.modified || '')}`, '---', ''].filter(l => l !== '').join('\n');
     files.push({ name: `${root}/documents/${name}/${name}.md`, data: front + '\n\n' + md.replace(/\n{3,}/g, '\n\n') + '\n' });
     images.forEach(f => files.push({ name: `${root}/documents/${name}/${f.name}`, data: f.data }));
     index.push(`  documents/${name}/`);
@@ -12119,7 +12439,7 @@ ${L.spacing === '2' ? '\\usepackage[doublespacing]{setspace}\n' : L.spacing === 
 
 \\begin{document}
 \\maketitle
-${body.trim()}
+${absOn(doc) ? `\\begin{abstract}\n${texEsc(doc.meta.abstract.text.trim())}${doc.meta.abstract.keywords.length ? `\n\n\\noindent\\textit{Keywords:} ${texEsc(doc.meta.abstract.keywords.join('; '))}` : ''}\n\\end{abstract}\n` : ''}${body.trim()}
 ${sources.length ? `\n\\printbibliography${STYLES[doc.style] && STYLES[doc.style].bib ? `[title={${texEsc(STYLES[doc.style].bib)}}]` : ''}\n` : ''}
 \\end{document}
 `;
@@ -12347,6 +12667,7 @@ $('#spResize').addEventListener('keydown', e => { if (!/^Arrow(Left|Right)$/.tes
 document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey; if (document.querySelector('dialog[open]')) return;
   if (mod && (e.key === '\\' || e.code === 'Backslash')) { e.preventDefault(); if (e.shiftKey) { if (SPLIT.on) splitSwap(); } else splitToggle(); }
+  if (e.key === 'F7' && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); openProofread(); return; }
   if (e.key === 'F6' && SPLIT.on && !POPOUT) { e.preventDefault(); if ($('#split').contains(document.activeElement)) editor.focus(); else splitFocus(); }
 });
 // keep a document shown beside the writing up to date when it's the one being edited

@@ -16,6 +16,10 @@
 .docbody .title-block{text-align:center;margin-bottom:.35in;line-height:1.4}
 .docbody .title-block .tb-title{font-size:1.5em;font-weight:700;margin:0 0 .3em;text-indent:0}
 .docbody .title-block p{margin:0;text-indent:0}
+.abstract{max-width:5.2in;margin:.25in auto .35in;text-align:justify;font-size:.95em;line-height:1.45}
+.abstract p{margin:0;text-indent:0}
+.abstract .ab-h{text-align:center;font-weight:700;margin-bottom:.4em}
+.abstract .ab-kw{margin-top:.6em;text-align:left}
 .docbody .end-h{font-size:1em;text-align:center;font-weight:700;margin:1.4em 0 .7em;font-style:normal}
 .docbody .notes p.note{text-indent:.5in;margin:0 0 .55em;line-height:1.35}
 .docbody .csl-bib .csl-entry{margin:0 0 .55em;line-height:1.35}

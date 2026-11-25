@@ -48,6 +48,7 @@ SUITES = {
     't41': 'co-writing: send a copy, a collaborator edits it, take changes back as suggestions, conflicts, a second round',
     't42': 'Socrates: question stems for the selection and the kind of writing, into the question dialog; the archive export of the whole project as plain files',
     't43': 'the Oracle: an ELIZA-style script, answers from the project, counts, saving, arguing the other side, check-in, consulting on a passage, nudges, no network',
+    't44': 'Proofread (misspellings, mixed-up words, a and an, spacing), the abstract and keywords in every export, reading a PDF with a note pad beside it',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

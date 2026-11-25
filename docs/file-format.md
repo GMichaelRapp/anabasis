@@ -63,7 +63,8 @@ Unknown fields are kept when Anabasis saves, so add-ons and future versions can 
   "id": "d_…", "title": "Chapter 1", "html": "<h1>…</h1><p>…</p>",
   "style": "chicago-notes-bibliography",
   "partId": "", "order": 0, "role": "body", "status": "", "target": 0,
-  "meta": { "author": "", "subtitle": "", "date": "", "showTitleBlock": false },
+  "meta": { "author": "", "subtitle": "", "date": "", "showTitleBlock": false,
+            "abstract": { "shape": "humanities", "parts": {}, "text": "", "keywords": [], "limit": 250, "include": true, "auto": true } },
   "layout": { "font": "book", "size": "12", "spacing": "2", "paper": "letter", "pdfNotes": "foot", "marginalia": "page" },
   "snapshots": [ { "id": "…", "name": "Draft 2", "kind": "draft", "note": "", "date": "…", "html": "…" } ],
   "comments": [ { "id": "…", "text": "…" } ]

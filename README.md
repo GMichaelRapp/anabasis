@@ -43,7 +43,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 
 **Research**
 - Five example projects to learn from or build on: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece.
-- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, and a web clipper captures from other tabs.
+- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, or with **Take notes** fills the screen with a note pad beside it (quotes from the PDF, pages filled in), and a web clipper captures from other tabs.
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
 - **The Oracle**, a conversation partner beside the writing in the manner of ELIZA, the 1960s MIT chatbot: no AI, nothing online. It turns what you say into questions, answers from your own notes and sources ("what have I written about…", "how many claims need a source?"), files notes, questions and journal entries as you talk, argues the other side of a claim, checks in on your day, and reads a selected passage back to you with questions. It keeps track of the conversation: a “yes” or a “hmm” is answered against what it just asked, it notices when you're tired or repeating yourself, and it knows your sources' authors by name. It understands word endings, small typos and negation, answers long messages at their most telling sentence, points out related notes and sources (a word-weighted search of your project, built in the browser), and picks up from your last conversation if you saved it to the journal.
@@ -62,6 +62,8 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Timelines from dated notes, and relationship maps of the people, places and organizations in your text.
 
 **Check the draft**
+- **Proofread** (F7): about 400 common misspellings, mixed-up words ("would of", "more then", "your welcome"), *a* and *an* by sound, doubled words, spacing and capitals, with fix, fix all and ignore. Offline, and no grammar engine.
+- **Abstract and keywords**: build an abstract a part at a time (research article, essay or chapter, report), with sentences suggested from the draft, a word limit, and keywords from the names and terms the document uses most; they go under the title in every export.
 - Undefined or late-defined acronyms, vague estimative language (against the ICD 203 scale), and paragraphs resting on a single source or only on weak ones.
 - House style: numbers, dates, the serial comma, US or U.S., dashes, quotes and your preferred spellings. Accessibility: alt text, heading order, table headers and link text.
 - Find and replace across every document. Drafts you can compare side by side, and checkpoints of the whole project.
