@@ -4,6 +4,18 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-11-25
+
+### Added
+- **Examine a claim** (Socrates): the Socratic method as a short dialogue. Socrates finds the phrase your claim turns on (one your project uses, or what the claim says after its verb) and asks what you mean by it; sets a passage from your own drafts or notes against it (one close in words with a turn of contrast in it, found by the project search below); asks you to mend the claim; asks one last question that suits a claim; and shows the before and after, with **Save to the journal** (an idea entry tagged socrates, linked to the note it was tested against), **Copy the claim** and **Examine another**. Say **examine:** and a claim to the Oracle to start one there.
+- **A search of your project by weight of words** (BM25), used by both: paragraphs, notes and sources, words weighted by how rare they are in the project, with word endings removed. It is built in the browser when needed and thrown away; nothing is saved.
+- The Oracle points out a note or source close to what you’re saying, at most every few turns, and when you name a topic says how many paragraphs about it have no citation yet, with a button to the first.
+- **Picking up where you left off.** If you saved a conversation with the Oracle to the journal on an earlier day, it opens with what you were deciding, stuck on or meaning to do (“You said: ‘I can’t decide how to open the chapter.’ Have you decided?”), or the topic. It reads only saved journal entries.
+
+### Changed
+- The Oracle understands more phrasing: word endings (contradiction, contradicting, contradicts), one-letter typos in the words it knows (“frustated”), unless your own project uses the word as typed; “not”, “never” and “don’t” before a feeling or before agreeing; and long messages, answered at their most telling sentence, with the next most telling kept to come back to.
+- Both speak with more variety: a line in the Oracle’s script can offer choices as {one|two|three}, and Socrates now says a line of his own above the questions, ironic and suited to what you selected, and speaks in his own voice in the dialogue.
+
 ## [2.3.0] — 2026-11-25
 
 ### Changed

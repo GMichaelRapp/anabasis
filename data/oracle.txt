@@ -347,9 +347,11 @@
 - I’m a mirror with a good memory for your notes. What do you think?
 
 @ none
-- Go on.
-- Say more about that.
-- What makes you say that?
-- And what follows from that?
-- How does that bear on the question you’re asking?
-- What would you need to find out next?
+- {Go on.|Keep going.|And then?}
+- {Say more about that.|Tell me more.|Go on: what else?}
+- {What makes you say that?|What makes you think so?|Where does that come from?}
+- {And what follows from that?|So what follows?|If that’s so, what comes next?}
+- {How does that bear on the question you’re asking?|What does that have to do with your question?}
+- {What would you need to find out next?|What’s the next thing you need to know?}
+- {Is that something you know, or something you suspect?|Do you know that, or believe it?}
+- {Who would disagree with you?|Who would say otherwise?}
