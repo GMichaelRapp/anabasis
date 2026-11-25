@@ -10,20 +10,22 @@ Anabasis is a word processor for research writing that runs as a single web page
 ## Writing with sources
 
 - **[Citations and styles](Citations-and-Styles)**: citing as you write, locators and note text, the 55 styles, and changing style at any time.
-- **[Sources](Sources)**: adding sources by DOI, ISBN or web address, importing from Zotero and BibTeX, source types and ratings, and the source audit.
+- **[Sources](Sources)**: adding sources by DOI, ISBN or web address, importing from Zotero and BibTeX, source types and ratings, the reading list, the source audit, retractions, duplicates and evidence fingerprints.
 - **[Notes and the board](Notes-and-the-Board)**: quote, paraphrase, summary and idea notes, linking notes to each other, and sorting them on the board before you draft.
-- **[Reading PDFs](Reading-PDFs)**: the PDF reader, quote and paraphrase notes with page numbers, and Take notes, which puts the PDF and a note pad side by side.
+- **[Reading PDFs](Reading-PDFs)**: the PDF reader, quote and paraphrase notes with page numbers and highlights, and Take notes, which puts the PDF and a note pad side by side.
+- **[Archive photos](Archive-Photos)**: photos from an archive visit, filed by box and folder, transcribed, and turned into notes that cite where each document came from.
 
 ## Thinking it through
 
-- **[The research journal](Research-Journal)**: research design, hypotheses, the dated log, the search log, and the twelve research-process prompts.
+- **[The research journal](Research-Journal)**: research design, hypotheses, the dated log, the search log, the twelve research-process prompts, and the research guide: stage guides, checklists, method guides and a glossary.
+- **[Literature grid and codes](Literature-Grid-and-Codes)**: your sources against your questions and themes, and qualitative coding with a codebook.
 - **[Socrates](Socrates)**: a deck of 364 questions to start from, and Examine a claim, a short walk through the Socratic method.
 - **[The Oracle](The-Oracle)**: a conversation partner in the manner of ELIZA that answers from your own project. No AI; nothing goes online.
 
 ## Finishing
 
-- **[Checking the draft](Checking-the-Draft)**: Proofread, house style, corroboration, acronyms, estimative language, accessibility, and flags left to resolve.
-- **[Exporting](Exporting)**: Word, PDF, web page, e-book, Substack, Markdown, Pandoc and LaTeX, plus the abstract and keywords.
+- **[Checking the draft](Checking-the-Draft)**: close to your notes, Proofread, house style, corroboration, acronyms, estimative language, accessibility, and flags left to resolve.
+- **[Exporting](Exporting)**: Word, PDF, web page, e-book, Substack, Markdown, Pandoc and LaTeX, plus the abstract and keywords, and pseudonyms.
 
 ## Where else to look
 

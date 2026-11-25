@@ -71,6 +71,7 @@ def build():
     lazy += '<script type="text/plain" id="data-oracle">' + read(DATA / 'oracle.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="text/plain" id="data-socrates">' + read(DATA / 'socrates.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="text/plain" id="data-proof">' + read(DATA / 'proofread.txt').replace('<', '&lt;') + '</script>\n'
+    lazy += '<script type="text/plain" id="data-guide">' + read(DATA / 'guide.txt').replace('<', '&lt;') + '</script>\n'
     lazy += '<script type="application/json" id="data-admin1">' + safe(read(DATA / 'admin1.json')) + '</script>\n'
     lazy += '<script type="application/json" id="data-rivers">' + safe(read(DATA / 'rivers.json')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-math">/*! MathJax 3.2.2 | Apache-2.0 | (c) The MathJax Consortium | mathjax.org */' + safe(read(VJ / 'mathjax-tex-svg-full.js')) + '</script>\n'

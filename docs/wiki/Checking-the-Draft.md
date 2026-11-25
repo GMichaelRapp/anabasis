@@ -18,6 +18,18 @@ While drafting, leave a flag wherever something's missing rather than stopping t
 
 **Outline → Paragraphs without a citation** lists paragraphs of 40 words or more with no citation in them. Tick **highlight** to mark them in the text. Not every paragraph needs a source, but in research writing it's a quick way to find the ones that should have one.
 
+## Close to your notes
+
+**Outline → Close to your notes** finds sentences in the draft that repeat a note's wording without quotation marks: seven or more words in a row from a quote note, or nine from a paraphrase or summary note. It's the most common way copied wording ends up reading as your own, often by accident, from notes taken quickly months ago.
+
+![Close to your notes: a sentence that repeats a quotation's wording, with Add quotation marks and Compare](images/close-to-notes.png)
+
+- **Add quotation marks** puts the passage in quotation marks and, if the paragraph doesn't already cite the note's source, adds the citation with the note's page.
+- **Compare** shows your sentence and the note side by side, with the shared words marked, so you can rewrite the sentence in your own words instead.
+- **Open note** shows the note. If a "paraphrase" note turns out to be the source's own words, change it to a quote note.
+
+Words already inside quotation marks are never flagged, and nor are your own **idea** notes. The check runs in the page, against your own notes; nothing is sent anywhere.
+
 ## Proofread
 
 Press **F7**, or choose **Proofread** in the toolbar's **⋯** menu or the command search (**Ctrl+K**). Proofread checks the document you're in for the mistakes a browser's spell checker misses:
@@ -60,6 +72,8 @@ and shows the document's reading grade level. Use it on a second draft, when the
 **Names & spellings** (Docs tab, or **Outline → Names & spellings**) keeps a list of people, organizations, places and terms with their preferred spelling and the variants to watch for. Variants in the draft (*Kiev*, *Prigozin*) are highlighted and fixable in one click. Anabasis also suggests near-duplicate spellings it finds in the project, such as two spellings of the same name in different chapters.
 
 The names list also feeds the index, the relationship map and **Everything about…** on the research desk.
+
+People named in the draft whose **consent** is recorded as pending, declined or withdrawn are flagged here too, with whether exports will use their pseudonym. See [Exporting](Exporting#pseudonyms).
 
 ## Acronyms
 
@@ -105,9 +119,9 @@ For a piece where every factual statement has to stand up, mark claims as you go
 
 ## Before you send a draft out
 
-A last pass, in about ten minutes:
+A last pass, in about ten minutes. The research guide in the journal has a fuller **Before you submit** checklist you can tick off, saved with the project.
 
-1. **Outline → To resolve** is empty.
+1. **Outline → To resolve** is empty, and **Close to your notes** finds nothing.
 2. **Proofread** (F7) finds nothing you haven't ignored on purpose.
 3. **Corroboration** has no single-source paragraph you can't defend.
 4. **House style → Fix all** for the rules you use.

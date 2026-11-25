@@ -9,9 +9,11 @@
 - [Sources](Sources)
 - [Notes and the board](Notes-and-the-Board)
 - [Reading PDFs](Reading-PDFs)
+- [Archive photos](Archive-Photos)
 
 **Thinking it through**
 - [The research journal](Research-Journal)
+- [Literature grid and codes](Literature-Grid-and-Codes)
 - [Socrates](Socrates)
 - [The Oracle](The-Oracle)
 

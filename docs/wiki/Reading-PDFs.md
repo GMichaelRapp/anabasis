@@ -44,6 +44,14 @@ Select a passage in the PDF, then choose:
 
 The note is linked to the PDF's source, so it carries its citation into the draft. See [Notes and the board](Notes-and-the-Board).
 
+### Highlights stay in the PDF
+
+A quote or paraphrase note made from the reader leaves a **highlight** where the passage is on the page: yellow for quotes, blue for paraphrases and summaries. A small marker in the right margin opens the note (in Take notes, it finds the note in the list beside the pad).
+
+![A highlighted passage in the PDF reader, with its marker in the margin](images/pdf-highlight.png)
+
+The highlights are kept with the notes, in the project file, so they come back whenever you open the PDF again, on this computer or another. Delete the note and its highlight goes with it.
+
 ### Page offset: when the PDF's page numbers aren't the printed ones
 
 A PDF's own page count often differs from the numbers printed on the pages. A book's first page of text may be the PDF's page 15, after the cover and front matter. Set **Page offset** to the difference (here, 14) and quote notes get the printed page number, which is the one your citation needs.

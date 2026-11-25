@@ -387,6 +387,22 @@ ins{background:#d1fae5;color:#065f46;text-decoration:none} del{background:#fee2e
 .ver-list li{display:flex;gap:6px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line2)}
 .ver-list li > span{flex:1}
 .ent{display:grid;grid-template-columns:1.2fr 110px 1.6fr 1.2fr auto;gap:6px;margin-bottom:6px}
+.ent2{grid-column:1/-1;display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:6px;padding:0 0 8px 14px;border-bottom:1px dashed var(--line)}.ent2 label{margin:0;display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+.rd-b,.rc-b{font-size:11px;padding:0 6px;border-radius:999px;border:1px solid var(--line);line-height:16px}.rd-toread{background:var(--check-bg);border-color:transparent;color:var(--check-ink)}.rd-reading{background:var(--ok-bg);border-color:transparent;color:var(--ok-ink)}
+.rc-b{background:var(--warn-bg);border-color:transparent;color:var(--warn-ink)}.rc-b.rc-bad{background:var(--bad-bg);color:var(--bad-ink);font-weight:700}.rc-row-bad td{background:color-mix(in srgb,var(--bad-bg) 55%,transparent)}
+.src-prio{margin-top:26px}.src-ev{margin-top:12px;border-top:1px solid var(--line);padding-top:8px}.src-ev summary{font-weight:600;cursor:pointer}
+.ev-row{border:1px solid var(--line);border-radius:6px;padding:6px 8px;margin:6px 0}.ev-row>div:first-child{display:flex;gap:6px;align-items:baseline}.ev-row>div:first-child button{margin-left:auto}
+.ev-h{display:block;font-size:11px;word-break:break-all;margin:3px 0 5px;color:var(--muted)}.ev-row input{font-size:12.5px}.ev-row .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:5px}
+.dup{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:10px}.dup-why{font-weight:600;color:var(--muted);margin-bottom:4px}.dup-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px}.dup-s{font-size:13px}
+.gd-tabs{margin:6px 0 12px}.gd p{max-width:72ch}
+.gd-stage{border:1px solid var(--line);border-radius:8px;padding:6px 12px;margin-bottom:6px;background:var(--panel)}.gd-stage summary{cursor:pointer;font-weight:600;display:flex;gap:8px;align-items:center}
+.gd-stage[open]{padding-bottom:10px}.gd-stage p{margin:8px 0;line-height:1.5}.gd-n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--hair,var(--line));font-size:12px}
+.gd-done{color:var(--accent)}.gd-ex{border-left:3px solid var(--line);padding-left:10px;color:var(--muted)}
+.gd-check{margin-bottom:16px}.gd-check h4{margin:0 0 2px;display:flex;gap:8px;align-items:baseline}.gd-check ul{list-style:none;padding:0;margin:6px 0}.gd-check li label{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:4px 0;line-height:1.4}
+.gd-mnav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}.gd-mnav .on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.gd-method{max-width:74ch}.gd-method h5{margin:14px 0 4px;font-size:14px}.gd-method ul{margin:4px 0 8px;padding-left:20px}.gd-method li{margin:3px 0;line-height:1.45}
+#gdQ{max-width:320px;margin-bottom:8px}.gd-terms{max-width:74ch}.gd-terms dt{font-weight:700;margin-top:10px}.gd-terms dd{margin:2px 0 0;line-height:1.5}
+.ps-on{display:flex;gap:6px;align-items:flex-start;margin-top:10px}
 .ent select{padding:5px 4px}
 .sug{list-style:none;padding:0;margin:0}
 .sug li{display:flex;gap:6px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line2);font-size:13px}
@@ -442,6 +458,33 @@ table.rec input[type=date]{width:auto;padding:3px 6px} table.rec select{width:au
 .rd-pages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:0}
 .rd-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);flex:none}
 .rd-page canvas{position:absolute;left:0;top:0}
+
+#phDlg{width:min(1400px,97vw);height:94vh;max-height:94vh}#phDlg .dlg{height:100%;max-height:none}
+.ph-bar{display:flex;gap:8px;align-items:center;padding:0 18px 10px}.ph-bar select{max-width:420px}
+.ph-main{flex:1;min-height:0;display:grid;grid-template-columns:170px 1fr 360px;border-top:1px solid var(--line)}
+.ph-strip{list-style:none;margin:0;padding:8px;overflow:auto;border-right:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+.ph-grp{font-size:11px;font-weight:700;color:var(--muted);margin-top:6px}
+.ph-th{display:flex;flex-direction:column;gap:3px;width:100%;padding:4px;border:2px solid transparent;background:none;position:relative;min-height:0}
+.ph-th.on{border-color:var(--accent)}.ph-th img{width:100%;height:96px;object-fit:cover;background:var(--line2);border-radius:4px}.ph-th span{font-size:11.5px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.ph-done{position:absolute;top:6px;right:6px;background:var(--accent);color:var(--accent-ink);font-style:normal;font-size:10px;border-radius:50%;width:16px;height:16px;display:grid;place-items:center}
+.ph-empty,.ph-none{color:var(--muted);font-size:13px;padding:12px}
+.ph-stage{display:flex;flex-direction:column;min-width:0;min-height:0;background:#2b2b2b}
+.ph-tools{display:flex;gap:6px;align-items:center;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line)}
+.ph-view{flex:1;overflow:auto;display:grid;place-items:center;padding:10px}.ph-view .ph-none{color:#ddd;max-width:420px}
+.ph-view img{display:block}.ph-view img.z-fit{max-width:100%;max-height:100%;object-fit:contain}
+.ph-view img.r-90{transform:rotate(90deg)}.ph-view img.r-180{transform:rotate(180deg)}.ph-view img.r-270{transform:rotate(270deg)}
+.ph-side{padding:10px 14px;overflow:auto;border-left:1px solid var(--line)}.ph-side textarea{width:100%;font-family:var(--serif,Georgia);font-size:14px;line-height:1.5}
+.ph-side .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ph-side .grid2{display:grid;grid-template-columns:1fr 1.4fr;gap:6px}.ph-side label{margin-top:6px}
+.ph-notes{list-style:none;margin:0;padding:0}.ph-notes button{text-align:left;width:100%;font-size:12.5px}.ph-meta{margin-top:10px;word-break:break-all}
+@media (max-width:900px){.ph-main{grid-template-columns:1fr;grid-template-rows:auto 45vh auto}.ph-strip{flex-direction:row;border-right:0;border-bottom:1px solid var(--line)}.ph-strip li{flex:none;width:110px}.ph-grp{display:none}}
+.rd-hl-layer{position:absolute;inset:0;pointer-events:none;z-index:1}
+.rd-page .textLayer{z-index:2}
+.rd-hl{position:absolute;background:rgba(224,176,79,.42);mix-blend-mode:multiply;border-radius:2px}
+.rd-hl.k-paraphrase,.rd-hl.k-summary{background:rgba(56,189,248,.3)}
+.rd-pin-layer{position:absolute;inset:0;pointer-events:none;z-index:3}
+.rd-hl-pin{position:absolute;right:6px;width:9px;height:18px;margin-top:-1px;padding:0;min-height:0;border:0;border-radius:5px;background:var(--sun);box-shadow:0 0 0 2px #fff;pointer-events:auto;cursor:pointer}
+.rd-hl-pin.k-paraphrase,.rd-hl-pin.k-summary{background:var(--accent)}
+.rd-hl-pin:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rd-pnum{position:absolute;bottom:-12px;right:0;font:10px var(--ui);color:#ddd}
 .rd-empty{color:#e5e7eb;text-align:center;max-width:340px;margin-top:20%;font-size:13px;line-height:1.5}
 .rd-selbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:var(--shadow);z-index:6;white-space:nowrap}
@@ -615,6 +658,8 @@ body.rel-on .doc-bar,body.rel-on .toolbar,body.rel-on .findbar,body.rel-on .scro
 .ol-acts button{min-height:24px;padding:1px 7px;font-size:12px}
 #acroList li,#estList li{display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
 .est-scale{display:grid!important;grid-template-columns:1fr auto;gap:2px 10px;font-size:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line2)}
+::highlight(cp-close){background:var(--check-bg);text-decoration:underline dotted var(--check-ink);text-underline-offset:3px}
+.px-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.px-cmp{margin:4px 0 10px;padding:6px 10px;border-left:3px solid var(--line);font-size:.92em}.px-cmp mark{background:var(--check-bg);color:var(--check-ink)}
 ::highlight(cp-vague){text-decoration:underline wavy #d97706;text-decoration-thickness:1.5px;text-underline-offset:3px}
 ::highlight(cp-scale){text-decoration:underline solid #2a78d6;text-decoration-thickness:1.5px;text-underline-offset:3px}
 .est-pop{min-width:260px}
@@ -1231,6 +1276,14 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 /* claim and question lines are drawn as backgrounds, not text-decoration, so the editor's own
    Underline and Strikethrough buttons never mistake a mark for formatting */
 #editor .rm[data-k=cl]{background-image:var(--cl-bg,repeating-linear-gradient(90deg,var(--cs) 0 2px,transparent 2px 5px));background-repeat:no-repeat;background-position:var(--cl-pos,0 100%);background-size:100% var(--cl-h,2px);padding-bottom:3px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+#editor .rm[data-k=cd]{background:color-mix(in srgb,var(--c,#2A9D8F) 12%,transparent);border-bottom:2px solid color-mix(in srgb,var(--c,#2A9D8F) 80%,transparent)}
+.mk-i.mk-cd{border-bottom:2px solid #2A9D8F;background:color-mix(in srgb,#2A9D8F 14%,transparent)}
+.n-codes{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin-top:8px}.n-codes-l{font-size:12px;font-weight:600;color:var(--muted)}.n-codes select{width:auto;font-size:12px;padding:2px 6px}
+.cd-chip{display:inline-flex;align-items:center;gap:2px;font-size:12px;padding:1px 2px 1px 8px;border-radius:10px;background:color-mix(in srgb,var(--c) 16%,transparent);border:1px solid color-mix(in srgb,var(--c) 60%,transparent)}.cd-chip button{padding:0 5px;min-height:0;font-size:11px}
+.cd-h{margin:16px 0 6px;font-size:14px}.cd-mx td.cd-n{text-align:center;background:color-mix(in srgb,var(--accent) calc(var(--a) * 40%),transparent)}
+.cd-co{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}.cd-co li{display:flex;gap:6px;align-items:center}
+.cd-list{padding-left:20px}.cd-list li{margin-bottom:10px}.cd-list blockquote{margin:3px 0;padding:6px 10px;border-left:3px solid var(--line);cursor:pointer}.cd-list blockquote:hover{background:var(--hover,rgba(0,0,0,.03))}
+#cdDefEdit{width:100%;margin:6px 0 10px}
 #editor .rm[data-k=rv]{border-bottom:2px dashed color-mix(in srgb,var(--rv) 80%,transparent);padding-bottom:1px}
 #editor .rm[data-k=q]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 3 Q2 0 4 2 T8 1' fill='none' stroke='%232F6FAE' stroke-width='1.2'/%3E%3C/svg%3E");background-repeat:repeat-x;background-position:0 100%;background-size:8px 4px;padding-bottom:4px;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 :root[data-theme="dark"] #editor .rm[data-k=q]{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='4' viewBox='0 0 8 4'%3E%3Cpath d='M0 3 Q2 0 4 2 T8 1' fill='none' stroke='%238DB8E8' stroke-width='1.2'/%3E%3C/svg%3E")}
@@ -1320,6 +1373,18 @@ body.desk-on .doc-bar,body.desk-on .toolbar,body.desk-on .findbar,body.desk-on .
 .rt{display:inline-block;font:600 11px/1 var(--ui,system-ui);padding:2px 4px;border-radius:3px;background:var(--line2)}
 .rt-strong{background:color-mix(in srgb,var(--cl-ok) 22%,transparent)}.rt-fair{background:color-mix(in srgb,var(--cl-need) 22%,transparent)}.rt-weak{background:color-mix(in srgb,var(--cl-disp) 24%,transparent)}
 .eg-sum{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.lg-wrap{max-height:calc(100vh - 230px)}.lg{border-collapse:separate;border-spacing:0}
+.lg th.lg-src{min-width:190px;max-width:220px;position:sticky;left:0;z-index:2;background:var(--panel);text-align:left;vertical-align:top}
+.lg th.lg-src a{font-weight:600;display:block}.lg th.lg-src span{display:block;line-height:1.3;margin-top:2px}
+.lg thead th{position:sticky;top:0;z-index:3;background:var(--panel)}.lg thead th.lg-src{z-index:4}
+.lg-h{min-width:220px;vertical-align:bottom}.lg-hd{display:flex;align-items:center;gap:4px}
+.lg-colname{flex:1;min-width:0;font-weight:600;border:1px solid transparent;background:transparent;padding:3px 5px}.lg-colname:hover,.lg-colname:focus{border-color:var(--line);background:var(--bg)}
+.lg-acts{display:flex}.lg-acts button{padding:2px 5px;min-height:0}
+.lg td{vertical-align:top;padding:6px;border-top:1px solid var(--hair,var(--line))}
+.lg-cell{width:100%;min-height:64px;resize:vertical;font:inherit;font-size:13px;line-height:1.4}
+.lg-notes{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}.lg-note{font-size:11.5px;padding:2px 7px;min-height:0;border-radius:10px;border:1px solid var(--line);background:var(--bg)}
+.lg-note.k-quote{border-color:var(--sun)}.lg-note.k-paraphrase,.lg-note.k-summary{border-color:var(--accent)}
+.lg-tip{margin:0 0 8px}
 .eg-sum div{background:var(--panel);border:1px solid var(--line);padding:8px 14px;min-width:110px;display:flex;flex-direction:column}
 .eg-sum b{font:700 22px/1.1 var(--display,Georgia)}.eg-sum span{font-size:12px;color:var(--muted)}
 .eg-sum .bad b{color:var(--cl-disp)}
@@ -1854,6 +1919,41 @@ body.rr-on #rdNotes{display:none}
 .soc-q mark{background:color-mix(in srgb,var(--sun,#B5841F) 22%,transparent);color:inherit;border-radius:3px;padding:0 2px}
 .soc-blank{display:inline-block;min-width:3em;border-bottom:2px solid var(--muted);color:transparent;line-height:1}
 .soc-acts{display:flex;gap:6px;flex-wrap:wrap}
+
+/* ================================================================
+   2.6 polish: one rhythm for the sidebar tabs, desk tabs, cards and dialogs, so features added over
+   many versions sit together. Overrides only; nothing here changes what anything does.
+   ================================================================ */
+/* sidebar tabs: label under the icon, counts as a small pill on the icon, never crowding the next tab */
+:root .tabs button{position:relative;min-width:0;padding:8px 0 7px;font-size:12px}
+:root .tabs .tab-l{display:block;white-space:nowrap;overflow:hidden;text-overflow:clip}
+:root .tabs .count{position:absolute;top:4px;left:calc(50% + 9px);margin:0;font-size:10px;line-height:15px;min-width:15px;height:15px;padding:0 4px;border-radius:999px;background:var(--line2);color:var(--muted);font-weight:700;text-align:center}
+:root .tabs .count:empty{display:none}
+:root .tabs .count.badge{background:var(--sun);color:#1A1405}
+/* research desk tabs: one row that scrolls, rather than wrapping into two */
+:root .desk-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;max-width:100%;mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
+:root .desk-tabs button{flex:none;white-space:nowrap}
+/* project home: the goal fields have room */
+:root .hm-goal{grid-template-columns:1fr 1fr}
+:root .hm-goal > div:first-child{grid-column:1/-1}
+/* dialogs: the same header, body and footer everywhere */
+:root dialog .dlg > h3{margin:0;padding:18px 22px 12px;border-bottom:1px solid var(--line2)}
+:root dialog .dlg > .body{padding:14px 22px 18px}
+:root dialog .dlg > footer{display:flex;gap:8px;align-items:center;padding:12px 22px;border-top:1px solid var(--line2);background:color-mix(in srgb,var(--panel) 70%,var(--bg))}
+:root dialog .dlg > footer .primary{order:2}
+/* section headings in the side panes */
+:root .ol-scroll h6,:root .pane h6{font-size:var(--fs-3);letter-spacing:0}
+:root .ol-scroll h6 .hl,:root .pane h6 .hl{font-size:var(--fs-1)}
+/* chips, badges and pills share a shape */
+:root .chip,:root .stype,:root .badge{border-radius:999px}
+/* small buttons line up with inputs beside them */
+:root button.small{min-height:26px;padding:2px 9px}
+:root .row > button,:root .row > input,:root .row > select{min-height:var(--ctl)}
+/* tables in dialogs and the desk */
+:root table.audit th,:root table.eg th{font-weight:700;color:var(--muted);font-size:var(--fs-1)}
+/* focus is always visible and always the same */
+:root :focus-visible{outline:2px solid var(--sun);outline-offset:2px}
+:root .tabs button:focus-visible,:root .desk-tabs button:focus-visible{outline-offset:-2px}
 </style>
 <style id="pageRule"></style>
 </head>
@@ -1942,6 +2042,7 @@ body.rr-on #rdNotes{display:none}
         <h6>Acronyms <span class="badge" id="acroCount"></span> <button class="ghost small hl" id="btnAcro">Manage…</button></h6><ul class="outline" id="acroList"></ul>
         <h6>Estimative language <span class="badge" id="estCount"></span> <label class="hl"><input type="checkbox" id="estToggle"> check</label></h6><ul class="outline" id="estList"></ul>
         <h6>Corroboration <span class="badge" id="corCount"></span> <label class="hl"><input type="checkbox" id="corToggle"> check</label></h6><ul class="outline" id="corList"></ul>
+        <h6>Close to your notes <span class="badge" id="pxCount"></span> <label class="hl"><input type="checkbox" id="pxToggle"> check</label></h6><ul class="outline" id="pxList"></ul>
         <h6>House style <span class="badge" id="hsCount"></span> <button class="ghost small hl" id="btnHouse">Rules…</button></h6><ul class="outline" id="hsList"></ul>
         <h6>Accessibility <span class="badge" id="a11yCount"></span></h6><ul class="outline" id="a11yList"></ul>
         <h6>Margin notes <span class="badge" id="cmtCount"></span></h6><ul class="outline" id="cmtList"></ul>
@@ -1960,7 +2061,7 @@ body.rr-on #rdNotes{display:none}
         <h6>Claims in this document <span class="badge" id="rsClaimCount"></span></h6><div class="small muted ol-sum" id="rsClaimSum"></div><ul class="outline" id="rsClaims"></ul>
         <h6>Due for review <span class="badge" id="rsKeyCount"></span></h6><ul class="outline" id="rsKeys"></ul>
         <h6>Open questions <span class="h6-acts"><button class="ghost small hl soc-btn" id="rsSoc" aria-label="Ask Socrates" title="Ask Socrates: questions to start from"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg></button><button class="ghost small hl" id="rsNewQ">+ Question</button></span></h6><ul class="outline" id="rsQs"></ul>
-        <p class="small muted rs-tip">Select a passage, then use <b>Mark</b> in the toolbar, or press <kbd>Ctrl/Cmd+Alt+G</kbd> then <kbd>T</kbd> thread, <kbd>C</kbd> claim, <kbd>R</kbd> review, <kbd>Q</kbd> question, <kbd>S</kbd> Socrates, <kbd>O</kbd> Oracle.</p>
+        <p class="small muted rs-tip">Select a passage, then use <b>Mark</b> in the toolbar, or press <kbd>Ctrl/Cmd+Alt+G</kbd> then <kbd>T</kbd> thread, <kbd>K</kbd> code, <kbd>C</kbd> claim, <kbd>R</kbd> review, <kbd>Q</kbd> question, <kbd>S</kbd> Socrates, <kbd>O</kbd> Oracle.</p>
       </div>
     </section>
     <section class="pane" data-pane="notes">
@@ -1977,7 +2078,7 @@ body.rr-on #rdNotes{display:none}
         <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
-        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -2039,6 +2140,7 @@ body.rr-on #rdNotes{display:none}
       <div class="menu pb-more" id="tbMoreWrap"><button id="btnTbMore" class="icon" aria-label="More tools and view options" title="More tools and view options" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg></button><div class="menu-pop pb-pop" id="tbMore" role="menu"></div></div>
       <div class="menu-pop mark-pop" id="markMenu" role="menu">
         <button data-m="th" role="menuitem"><span class="mk-i mk-th" aria-hidden="true"></span>Highlight in a thread… <kbd>T</kbd></button>
+        <button data-m="cd" role="menuitem"><span class="mk-i mk-cd" aria-hidden="true"></span>Code passage… <kbd>K</kbd></button>
         <button data-m="cl" role="menuitem"><span class="mk-i mk-cl" aria-hidden="true"></span>Claim to check <kbd>C</kbd></button>
         <button data-m="rv" role="menuitem"><span class="mk-i mk-rv" aria-hidden="true">⚑</span>Key for review… <kbd>R</kbd></button>
         <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
@@ -2075,7 +2177,7 @@ body.rr-on #rdNotes{display:none}
       <div class="board-bar">
         <button id="deskBack" class="ghost">← Back to draft</button>
         <b class="rel-head">Research desk</b>
-        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="lit">Literature grid</button><button role="tab" data-dv="codes">Codes</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
         <div class="spacer"></div>
         <span id="deskTools" class="desk-tools"></span>
       </div>
@@ -2324,6 +2426,17 @@ body.rr-on #rdNotes{display:none}
   <footer><button id="thCancel">Cancel</button></footer>
 </div></dialog>
 
+<dialog id="cdDlg"><div class="dlg">
+  <h3>Code this passage</h3>
+  <div class="body">
+    <div class="th-picks" id="cdPickList"></div>
+    <label for="cdName">New code</label>
+    <div class="row"><input id="cdName" placeholder="e.g. Supply shortage, Distrust of officials"><button id="cdNew" class="primary">Create &amp; code</button></div>
+    <label for="cdDef">Definition <span class="muted">(optional: when to use it, and when not)</span></label><input id="cdDef">
+    <div class="tip">Codes label ideas, themes and patterns in your material, so you can gather every passage on one and see how often each turns up. Read them on the research desk under <b>Codes</b>.</div>
+  </div>
+  <footer><button id="cdCancel">Cancel</button></footer>
+</div></dialog>
 <dialog id="rvDlg"><div class="dlg">
   <h3 id="rvTitle">Key this passage for review</h3>
   <div class="body">
@@ -2349,6 +2462,46 @@ body.rr-on #rdNotes{display:none}
     <label class="check"><input type="checkbox" id="absInclude"> Include the abstract and keywords in exports (Word, PDF, web page, ePub, Markdown, Pandoc, LaTeX)</label>
   </div>
   <footer><button id="absCopy">Copy</button><button class="primary" id="absDone" style="margin-left:auto">Done</button></footer>
+</div></dialog>
+<dialog id="phDlg" class="ph" aria-labelledby="phTitle"><div class="dlg">
+  <h3 id="phTitle">Archive photos</h3>
+  <div class="ph-bar"><select id="phSrc" aria-label="Collection"></select><button id="phAdd" class="primary">Add photos…</button><input type="file" id="phFile" accept="image/*" multiple hidden><span class="small muted" id="phCount" aria-live="polite"></span></div>
+  <div class="ph-main">
+    <ol class="ph-strip" id="phStrip" aria-label="Photos"></ol>
+    <div class="ph-stage"><div class="ph-tools"><button id="phPrev" aria-label="Previous photo">‹</button><span id="phPos" class="small"></span><button id="phNext" aria-label="Next photo">›</button><button id="phZoom">Actual size</button><button id="phRot">Rotate</button></div><div class="ph-view" id="phView"></div></div>
+    <div class="ph-side" id="phSide">
+      <div class="grid3"><div><label for="ph_box">Box</label><input id="ph_box"></div><div><label for="ph_folder">Folder</label><input id="ph_folder"></div><div><label for="ph_item">Item or page</label><input id="ph_item"></div></div>
+      <div class="grid2"><div><label for="ph_date">Date of the document</label><input id="ph_date" placeholder="e.g. 3 May 1680"></div><div><label for="ph_caption">What it is</label><input id="ph_caption" placeholder="e.g. Letter, Otermín to the viceroy"></div></div>
+      <label for="phText">Transcription</label><textarea id="phText" rows="9" spellcheck="true" placeholder="Type what the document says. Mark doubtful readings [?] and gaps […]."></textarea>
+      <div class="row"><button id="phQuote" title="Save the words you've selected in the transcription as a quote note">Quote note</button><button id="phIdea">Note on this</button><button id="phDel" class="ghost danger" style="margin-left:auto">Remove</button></div>
+      <h6>Notes from this photo</h6><ul class="ph-notes" id="phNotes"></ul>
+      <p class="small muted ph-meta" id="phMeta"></p>
+    </div>
+  </div>
+  <footer><span class="small muted">Photos are kept in this browser, like PDFs; the transcriptions and notes are in the project file. New photos take the box and folder of the one you’re on. ← → move between photos.</span><button id="phClose" style="margin-left:auto">Close</button></footer>
+</div></dialog>
+<dialog id="rcDlg" class="wide" aria-labelledby="rcTitle"><div class="dlg">
+  <h3 id="rcTitle">Check for retractions</h3>
+  <div class="body">
+    <p class="small">Asks Crossref whether each source with a DOI has been retracted, withdrawn or corrected, or has an expression of concern. Crossref includes the Retraction Watch database. Only the DOIs are sent, one at a time, and only when you choose <b>Check</b>. A work with no notice isn’t guaranteed sound: this finds what publishers and Retraction Watch have recorded.</p>
+    <div class="row"><button id="rcRun" class="primary">Check</button></div>
+    <p id="rcSum" class="small" role="status"></p>
+    <div id="rcBody"></div>
+  </div>
+  <footer><button id="rcClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="dupDlg" class="wide" aria-labelledby="dupTitle"><div class="dlg">
+  <h3 id="dupTitle">Duplicate sources</h3>
+  <div class="body">
+    <p class="small">Sources that look like the same work: the same DOI, ISBN or web address, or the same title, author and year. Merging keeps the record you choose, fills its empty details from the other, and moves every citation, note, photo and grid cell across.</p>
+    <div id="dupBody"></div>
+  </div>
+  <footer><button id="dupClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="infoDlg" aria-labelledby="infoTitle"><div class="dlg info">
+  <h3 id="infoTitle"></h3>
+  <div class="body" id="infoBody"></div>
+  <footer><button id="infoOk" class="primary" style="margin-left:auto">Close</button></footer>
 </div></dialog>
 <dialog id="proofDlg" aria-labelledby="proofTitle"><div class="dlg proof">
   <h3 id="proofTitle">Proofread</h3>
@@ -2449,6 +2602,7 @@ body.rr-on #rdNotes{display:none}
     <p class="small muted" style="margin-top:0">List the people, organizations, places and terms you write about with their preferred spelling. Any variant you list is flagged in the draft (Outline → Names), with one-click fixes.</p>
     <div id="namesList"></div>
     <button id="namesAdd" class="small">+ Add a name</button>
+    <label class="inline small ps-on"><input type="checkbox" id="pseudoOn"> Use pseudonyms in exports: every form of a name with a pseudonym is replaced in Word, PDF, web, e-book, Markdown, Substack and the other exports. The project keeps the real names.</label>
     <h4 style="margin:16px 0 4px">Possible inconsistent spellings</h4>
     <p class="small muted" style="margin-top:0">Capitalized words across your documents and notes that differ by a letter or two.</p>
     <ul class="sug" id="namesSug"></ul>
@@ -2683,10 +2837,10 @@ body.rr-on #rdNotes{display:none}
   </div>
   <footer><button id="pwFresh" class="ghost danger hidden">Forgot it? Start without this copy</button><button id="pwCancel">Cancel</button><button id="pwOk" class="primary">Unlock</button></footer>
 </div></dialog>
-<dialog id="lkDlg"><div class="dlg">
+<dialog id="lockDlg"><div class="dlg">
   <h3>This project is locked</h3>
   <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p></div>
-  <footer><button id="lkRemove" class="danger">Remove lock</button><button id="lkChange">Change password</button><button id="lkClose" class="primary">Done</button></footer>
+  <footer><button id="lockRemove" class="danger">Remove lock</button><button id="lockChange">Change password</button><button id="lockClose" class="primary">Done</button></footer>
 </div></dialog>
 <!-- chart -->
 <dialog id="chDlg" class="xwide"><div class="dlg">
@@ -2999,7 +3153,7 @@ body.rr-on #rdNotes{display:none}
     <blockquote class="help-epigraph" lang="en"><p><span lang="grc">θάλαττα θάλαττα</span></p><p>Presently they could hear the soldiers shouting and passing on the joyful word, “The sea! the sea!”</p><footer>Xenophon, <cite>Anabasis</cite> IV.7, translated by H. G. Dakyns</footer></blockquote>
     <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><button id="helpFeedback">Send feedback</button><button id="helpNew" class="ghost">What’s new</button><button id="helpUpd" class="ghost">Check for a newer version</button></div>
     <h4>Your privacy</h4>
-    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
+    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), checking sources for retractions (Crossref, which receives only the DOIs), checking links (the Internet Archive), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
     <h4>Where things are</h4>
     <ul class="help-map">
@@ -3052,7 +3206,7 @@ body.rr-on #rdNotes{display:none}
     <h4>Nonfiction tools</h4>
     <ul>
       <li><b>Quote check.</b> Quotes inserted from quote notes stay linked to the note. If the wording in the draft drifts from your note, Outline → Quotes flags it. Compare shows the difference, and you can restore the original or update the note. Ellipses (…) and [bracketed changes] count as legitimate edits. Long quotations typed or pasted without a note are listed as unlinked.</li>
-      <li><b>Names &amp; spellings.</b> Keep a list of people, organizations, places and terms with their preferred spelling. Variants (Kiev, Prigozin) are highlighted in the draft and fixable in one click. Anabasis also suggests near-duplicate spellings it finds.</li>
+      <li><b>Names &amp; spellings.</b> Keep a list of people, organizations, places and terms with their preferred spelling. Variants (Kiev, Prigozin) are highlighted in the draft and fixable in one click. Anabasis also suggests near-duplicate spellings it finds. People and organizations can also have a <b>pseudonym</b>, with other forms of the name to replace (a surname, a nickname): with <b>Use pseudonyms in exports</b> ticked, every export uses the pseudonym while the project keeps the real name. Record each person’s <b>consent</b> too; anyone named in the draft whose consent is pending, declined or withdrawn is flagged in the Outline.</li>
       <li><b>Source audit</b> (Sources tab → Tools). Citations and share per source, a warning when one chapter leans on a single source, quoted words per source for permissions, sources missing details, and sources you haven’t used.</li>
       <li><b>Timeline.</b> Give notes an <i>event date</i> (when it happened), then set the board to Timeline to see them in order. Templates → Chronology turns them into a document.</li>
       <li><b>Comments.</b> Select text and click 💬. Comments are listed under Outline and travel to Word as real margin comments. They’re left out of PDF, ePub and other exports.</li>
@@ -3135,6 +3289,19 @@ body.rr-on #rdNotes{display:none}
       <li>Untick <b>Show marks in the draft</b> in the Research tab to write without the highlights. Hide one thread with its ● button.</li>
       <li>Marking and unmarking can be undone with <kbd>⌘/Ctrl Z</kbd> (or <b>Undo</b> in the message that appears), as long as you haven’t changed the text since. Deleting a whole thread or question undoes in one step.</li>
     </ul>
+    <h4>Literature grid &amp; codes</h4>
+    <ul>
+      <li>The <b>literature grid</b> (research desk) sets your sources against what you’re reading for: five columns to start (main argument, evidence and method, key findings, limits and gaps, how you’ll use it), which you can rename, reorder, remove or add to, and any of your research questions as a column. Write a line or two in each cell; notes on the source tagged with a column’s name, or linked to its research question, show beneath. <b>Make a document</b> turns it into a table with each source cited; <b>Download CSV</b> for a spreadsheet.</li>
+      <li><b>Codes</b> are for qualitative coding of interviews, field notes and documents. Select a passage and choose <b>Mark → Code passage…</b> (<kbd>K</kbd>), or add codes to a note (useful for transcript excerpts and quotes from PDFs and archive photos). Give each code a definition saying when to use it.</li>
+      <li>On the research desk, <b>Codes</b> lists every passage and note under a code, counts each code by document and source, and shows which codes turn up together on a note or in a paragraph. Export the codebook as Markdown, the coded excerpts as CSV, or make a document of codes and excerpts.</li>
+    </ul>
+    <h4>Archive photos</h4>
+    <ul>
+      <li>For a day in an archive: open <b>Photos…</b> on a source, or <b>Sources → Tools → Archive photos</b>, choose or make a collection (a source for the collection you’re reading), and <b>Add photos…</b> (or drop them on the viewer).</li>
+      <li>File each photo by <b>box</b>, <b>folder</b> and <b>item</b>, and note the document’s date and what it is. New photos take the box and folder of the photo you’re on, so a run of pictures from one folder is filed in one go. <kbd>←</kbd> <kbd>→</kbd> move between photos.</li>
+      <li>Type a <b>transcription</b> beside the image. Select words in it and choose <b>Quote note</b>: the note cites the collection, with the box, folder and item as its locator.</li>
+      <li>Photos are kept in this browser (like PDFs), resized to 2,400 pixels; the transcriptions, notes and a SHA-256 fingerprint of each original file are in the project file. On another computer, add the photos again to see them.</li>
+    </ul>
     <h4>Settings for the screen</h4>
     <ul>
       <li><b>Text size, typeface and line spacing</b> for the writing page are in Settings. They change only what you see: PDF, Word and print follow Page setup. Line spacing is <b>Comfortable</b> on screen unless you choose <b>As in Page setup</b>, so a double-spaced manuscript doesn’t read double-spaced while you write.</li>
@@ -3156,6 +3323,7 @@ body.rr-on #rdNotes{display:none}
       <li>A <b>Next step</b> log entry is a to-do: tick it when it’s done. Open next steps show in This week, the Research tab and the research memo.</li>
       <li><b>Start from a method</b>, at the top of the research design, fills empty fields with prompts for archival research, interviews, open-source investigation, document analysis, case studies, data analysis, a literature review or investigative reporting. Replace the [brackets]. Add a second method for mixed methods.</li>
       <li><b>Everything about…</b> searches the journal too, and deleting a hypothesis, entry or search can be undone.</li>
+      <li>The <b>Research guide</b> (in the journal, or <b>How each stage works</b> above the log) explains each stage of a project: what to do, an example, what to watch for, and how to tell when it’s done, with <b>Write about this</b> to start a log entry. <b>Checklists</b> cover verifying sources, quotes and numbers, ethics and consent, data and backups, open-source verification, and the last pass before you submit; ticks are saved with the project. <b>Methods</b> has a short practical guide to each method in Start from a method, and the <b>Glossary</b> defines about sixty research terms.</li>
     </ul>
     <h4>Co-writing and review</h4>
     <ul>
@@ -3188,6 +3356,7 @@ body.rr-on #rdNotes{display:none}
     <p><b>Proofread</b> (<kbd>F7</kbd>, or the toolbar’s ⋯ menu) catches about 400 common misspellings, mixed-up words where they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”, “an affect on”), “a” and “an” by the sound of the next word, doubled words, spacing around punctuation, capitals after a full stop, and brackets or quotation marks left open. <b>Fix</b> one, <b>Fix all spellings</b>, or <b>Ignore</b> a word for the whole project. The browser’s own spell checker still underlines unknown words as you type.</p>
     <p><b>Abstract and keywords</b> (Export menu, or Page setup) builds an abstract a part at a time, shaped for a research article, an essay or chapter, or a report. <b>Suggest from the draft</b> fills empty parts with your own sentences to rewrite; the count shows the word limit; <b>Suggest keywords</b> offers the names and terms this document uses more than the rest of the project. With <b>Include</b> on, they go under the title in every export.</p>
     <ul>
+      <li><b>Close to your notes</b> (Outline tab) finds sentences that repeat seven or more words of a quote note, or nine of a paraphrase or summary note, without quotation marks: copied wording that would read as your own. <b>Add quotation marks</b> quotes it and cites the note’s source; <b>Compare</b> shows the two side by side. Your own idea notes are never flagged, and nothing leaves your computer.</li>
       <li><b>Corroboration</b> (Outline tab) lists paragraphs that rest on one source, or only on sources rated D–E or 4–5 in the Admiralty scale, and shows which sources carry the most citations. It warns when one source carries more than a third of them.</li>
       <li><b>House style</b> (Outline tab → Rules…) checks numbers, percent, US or U.S., the serial comma, date order, em dashes, curly quotes, ellipses, double spaces and your preferred spellings (Kyiv, not Kiev). Each rule has a Fix all button. Rules are saved with the project.</li>
       <li><b>Accessibility</b> (Outline tab) flags figures without alt text, headings that skip a level, tables without a header row, and links that say “here” or show a bare address. Exporting to HTML, ePub or Word reminds you if anything is left.</li>
@@ -3250,6 +3419,7 @@ body.rr-on #rdNotes{display:none}
       <li><b>Take notes</b> (in the reader’s top bar) sets the writing aside: the PDF on the left, a note pad on the right. Write a note and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>; select a passage in the PDF and click <b>Quote note</b> to put it in the pad, then add your comment. Notes go to the PDF’s source, with the page filled in as you scroll. Click a note in the list to edit it, or its page to go there. <b>Back to writing</b> returns.</li>
       <li><b>Read a PDF</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
       <li>Select a passage, then click <b>Quote note</b> (saved with the page number) or <b>Paraphrase note</b> (opens so you can rewrite it). If the PDF’s page numbers differ from the printed ones, set the <b>page offset</b> (PDF page 15 = printed 1 → 14). PDFs with built-in page labels are handled automatically.</li>
+      <li>Quote and paraphrase notes made in the reader leave a <b>highlight</b> on the PDF, yellow for quotes and blue for paraphrases, with a marker in the margin that opens the note (or finds it in the note pad). The highlights are kept with the notes, so they come back whenever you open the PDF.</li>
       <li>Link the PDF to a source with the menu at the top, or choose <i>New source from this PDF</i>. That uses the PDF’s DOI when it has one, otherwise its title, author and date. Linked PDFs are kept in this browser so they reopen from the source, but they’re never put in your project file.</li>
     </ul>
     <h4>Index</h4>
@@ -3286,6 +3456,10 @@ body.rr-on #rdNotes{display:none}
       <li>Enter details by hand, or quick-add by DOI (via doi.org / Crossref) or ISBN (via Open Library). Lookups need an internet connection. Everything else works offline.</li>
       <li>Type titles the way they should print. CSL styles can’t reliably convert title case to APA’s sentence case.</li>
       <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here. Sources export back out the same way.</li>
+      <li><b>Reading list.</b> Set a source’s <b>Reading</b> to To read, Reading or Read, and tick <b>Read this first</b> for the ones that matter most. Chips at the top of the Sources tab filter the list, and Project home shows what’s waiting.</li>
+      <li><b>Check for retractions</b> (Sources → Tools) asks Crossref, which includes the Retraction Watch database, whether any source with a DOI has been retracted, withdrawn or corrected, or has an expression of concern. Only the DOIs are sent, and only when you choose Check. Retracted sources are marked in the list and on Project home.</li>
+      <li><b>Find duplicates</b> (Sources → Tools) finds the same work added twice, by DOI, ISBN, web address, or title, author and year. Merging keeps the record you choose, fills its empty details from the other, and moves every citation, note, photo and grid cell across.</li>
+      <li><b>Evidence files</b> (at the foot of a source): <b>Fingerprint a file…</b> records a SHA-256 fingerprint of a screenshot, video, download or document, worked out in the browser, with when and where you captured it. The file stays where it is. <b>Check a file against these…</b> tells you later whether a copy is byte for byte the same. PDFs linked to a source are fingerprinted automatically.</li>
       <li><b>Source type</b>: mark a source <b>primary</b> (made at the time or by those involved: documents, records, interviews, data), <b>secondary</b> (analysis of primary sources) or <b>tertiary</b> (summaries: encyclopedias, textbooks). Its notes take the same type unless you set their own. Filter notes and sources by type with the chips at the top of each list, and turn on <b>Group by source type</b> in Page setup to split the bibliography into primary, secondary and tertiary sources.</li>
     </ul>
     <h4>Saving &amp; exporting</h4>

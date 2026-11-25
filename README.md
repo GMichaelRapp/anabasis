@@ -54,6 +54,11 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Charts for nonfiction: columns, bars, lines, areas, small multiples, dot plots, scatter and bubble, histograms, heatmaps, and shaded maps of countries, US states or regions.
 - Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
 - Sources marked primary, secondary or tertiary, with notes that inherit the type and a bibliography that can be grouped by it.
+- **A research guide** in the journal: what each stage of a project is for and how to tell when it's done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary.
+- **A literature grid** that sets your sources against your questions and themes, and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
+- **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image, and make quote notes that cite the box and folder.
+- A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
+- Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
 - Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
 
 **Figures**
@@ -64,6 +69,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 **Check the draft**
 - **Proofread** (F7): about 400 common misspellings, mixed-up words ("would of", "more then", "your welcome"), *a* and *an* by sound, doubled words, spacing and capitals, with fix, fix all and ignore. Offline, and no grammar engine.
 - **Abstract and keywords**: build an abstract a part at a time (research article, essay or chapter, report), with sentences suggested from the draft, a word limit, and keywords from the names and terms the document uses most; they go under the title in every export.
+- **Close to your notes**: sentences that repeat a note's wording without quotation marks, fixed in one click. Quotes taken from a PDF stay highlighted in it.
 - Undefined or late-defined acronyms, vague estimative language (against the ICD 203 scale), and paragraphs resting on a single source or only on weak ones.
 - House style: numbers, dates, the serial comma, US or U.S., dashes, quotes and your preferred spellings. Accessibility: alt text, heading order, table headers and link text.
 - Find and replace across every document. Drafts you can compare side by side, and checkpoints of the whole project.
@@ -113,7 +119,7 @@ On phones and tablets the layout adapts: the sidebar becomes a drawer, toolbar b
 
 ## Your data
 
-Your project lives in two places: the `.json` file you save, and a working copy in your browser so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to look up a source or back up to GitHub. [More about privacy](docs/privacy.md).
+Your project lives in two places: the `.json` file you save, and a working copy in your browser so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: to look up a source, check links or retractions, or back up to GitHub. [More about privacy](docs/privacy.md).
 
 The project file is plain JSON, documented in [docs/file-format.md](docs/file-format.md), so your work is never locked in.
 

@@ -4,7 +4,7 @@ Open it with **Journal** on the research desk, or **＋ Today's entry** in the R
 
 ![The research journal: the research-process prompts above the log, with entries tagged by stage](images/journal.png)
 
-The journal has four parts: the **research design**, **hypotheses**, the **log** and the **search log**.
+The journal has four parts: the **research design**, **hypotheses**, the **log** and the **search log**. Beside them is the **research guide**, with stage guides, checklists, method guides and a glossary.
 
 ## The research design
 
@@ -87,6 +87,19 @@ The prompts follow the order most research goes in, and they work well as a chec
 10. **Peer feedback.** Record who read it, what they said, and what you'll do about it.
 
 The stages aren't a rule: skip some, go back to others, write about a stage more than once.
+
+## The research guide
+
+**Research guide**, the last section of the journal, is for anyone finding their way through a project for the first time, and for anyone who'd rather not skip a step. It has four parts.
+
+![The research guide: each stage of a research project, with what to do, an example, what to watch for and when it's done](images/research-guide.png)
+
+- **Stages.** For each of the twelve research-process stages: what to do, a short example, what to watch for, and how to tell when it's done. **Write about this** starts a log entry with the stage's prompt. **How each stage works**, above the log, opens it.
+- **Checklists.** Lists to work through at the right moment: *verifying sources*, *quotes, numbers and names*, *ethics, consent and safety*, *data, files and backups*, *before you submit*, and *open-source verification*. Ticks are saved with the project, and the journal shows how many items are left on the lists you've started.
+- **Methods.** A short, practical guide to each of the eight methods in **Start from a method**: archival research, interviews, open-source investigation, document and content analysis, case studies, data analysis, literature reviews and investigative reporting. Each covers what to do before, during and after, what to watch for, and where Anabasis helps. **Add this method's prompts to the research design** fills in the design.
+- **Glossary.** About sixty research terms in plain words, from *abstract* to *Wayback Machine*, with cross-references. Search it from the box at the top.
+
+The guide is built into Anabasis and works offline.
 
 ## The search log
 

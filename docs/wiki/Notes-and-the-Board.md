@@ -26,6 +26,10 @@ Open the **Notes** tab and choose **+ New**. There are quicker ways too:
 - **Pile**: which pile it sits in on the board.
 - **Card color** and **Pin**, for sorting by eye. Pinned notes stay at the top of the list.
 
+### Codes
+
+**＋ Code…** under a note's title attaches codes from your codebook, for qualitative coding of interview excerpts and other material that lives in notes. See [Literature grid and codes](Literature-Grid-and-Codes).
+
 ### Links between notes
 
 Write `[[Another note]]`, using the other note's title, to link to it. Links and backlinks show under each note, so you can follow an idea through the notes that touch it. Clicking a link to a note that doesn't exist yet offers to create it.

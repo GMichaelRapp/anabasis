@@ -7,6 +7,8 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **Your project file.** Save writes the whole project (documents, notes, sources, images and settings) to one `.json` file wherever you choose. This is the real copy. Back it up the way you back up anything else.
 - **Your browser.** As you type, Anabasis keeps a working copy in your browser’s own storage (IndexedDB, with localStorage as a fallback), so a closed tab or a crash doesn’t lose anything. It stays on your computer. Clearing your browser’s site data removes it. **Start fresh** in the app erases it too.
 - **Checkpoints** of the whole project are kept in the same browser storage. Download a checkpoint to keep it anywhere else.
+- **PDFs and archive photos** you open are kept in the same browser storage, not in the project file. Photos are resized to 2,400 pixels. The project file keeps their transcriptions, the notes made from them, and a SHA-256 fingerprint of each original file.
+- **Evidence fingerprints** are worked out in the browser from the file you choose. The file itself is never stored or sent anywhere.
 - **Preferences**, such as theme and check settings, are kept in localStorage. So are the name and contact details you give for Word’s manuscript format, which never go into the project file.
 
 - **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.
@@ -23,10 +25,11 @@ Only when you ask it to, and only to these addresses:
 | Add a source by ISBN | openlibrary.org | the ISBN |
 | Add a source by web address | en.wikipedia.org (its citation service) | the address |
 | Check links (Sources tab) | archive.org (the Wayback Machine’s availability service) | the web addresses of your sources, one at a time |
+| Check for retractions (Sources tab → Tools) | api.crossref.org | the DOIs of your sources, one at a time |
 | Back up to GitHub, or open a backup | api.github.com | your project file and your access token, sent to a repository you choose |
 | Check for a newer version (Help, or the weekly check you can switch on in Settings) | api.github.com | nothing but the request for the latest release number |
 
-The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web.
+The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web. Proofread, Close to your notes, Socrates, the Oracle, the research guide and coding all run inside the page.
 
 ## Dashboards you export
 

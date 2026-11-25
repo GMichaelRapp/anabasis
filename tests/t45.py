@@ -16,6 +16,7 @@ COVER = {
     'Listening to the draft': 'Checking-the-Draft', 'Saving': 'Projects-and-Saving', 'Saving & exporting': 'Exporting',
     'Copies for reviewers and submission': 'Exporting', 'Substack, imports, autosave & locking': 'Exporting', 'Project home': 'Getting-Started',
     'Example projects': 'Getting-Started', 'Checkpoints, transcripts & promotion': 'Projects-and-Saving',
+    'Literature grid & codes': 'Literature-Grid-and-Codes', 'Archive photos': 'Archive-Photos',
 }
 # Help sections whose wiki pages are still to be written
 PENDING = {

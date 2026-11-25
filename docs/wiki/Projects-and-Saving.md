@@ -85,7 +85,7 @@ It's the copy to keep for years, or to hand to someone who doesn't use Anabasis.
 - Encryption is AES-256-GCM, with a key made from your password by PBKDF2 (SHA-256, 600,000 iterations).
 - The password is never stored. **There is no way to recover a locked project if you forget the password**, and nobody, including the author, can open it for you.
 - A locked project is backed up to GitHub locked.
-- PDFs you've opened in the reader are kept separately in the browser and aren't locked.
+- PDFs and archive photos are kept separately in the browser and aren't locked.
 
 ## Privacy
 
@@ -97,10 +97,11 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody can 
 | Add a source by ISBN | openlibrary.org | the ISBN |
 | Add a source by web address | Wikipedia's citation service | the address |
 | Check links | the Internet Archive's Wayback Machine | your web sources' addresses, one at a time |
+| Check for retractions | Crossref (api.crossref.org) | your sources' DOIs, one at a time |
 | Back up to GitHub, or open a backup | api.github.com | your project file and token, to the repository you chose |
 | Check for a newer version | api.github.com | only the request for the latest version number |
 
-The page's content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web. Socrates, the Oracle and Proofread run entirely in the page. The full details are in [docs/privacy.md](https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md).
+The page's content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web. Socrates, the Oracle, Proofread, Close to your notes, coding and the research guide run entirely in the page. Evidence fingerprints are worked out in the browser; the files are never stored or sent. The full details are in [docs/privacy.md](https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md).
 
 ## The project file format
 

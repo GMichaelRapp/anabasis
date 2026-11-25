@@ -130,6 +130,20 @@ Type a keyword and press **Enter**, or choose **Suggest keywords**: the names an
 
 With **Include** on, the abstract and keywords go under the title in Word (as their own paragraphs), PDF, web page, ePub and Markdown, in the Pandoc package's front matter, and in LaTeX's `abstract` environment. **Copy** copies them to paste into a journal's submission form.
 
+## Pseudonyms
+
+When people you interviewed or write about asked not to be named, keep their real names in your project and let the exports change them.
+
+1. In **Names & spellings** (Docs tab, or **Outline → Names & spellings → Manage…**), add the person with their real name.
+2. Give them a **Pseudonym**, and list **Other forms to replace**: a surname on its own, a first name, a nickname.
+3. Make sure **Use pseudonyms in exports** is ticked.
+
+Every export (Word, PDF, web page, e-book, Markdown, Pandoc, LaTeX, Substack, copy formatted text) then uses the pseudonym for every form of the name, including in footnotes, captions and alt text. The draft, your notes and the project file keep the real names.
+
+Record each person's **consent** in the same row: given, asked and not yet answered, declined, withdrawn, or not needed for a public figure. Anyone named in a draft whose consent is pending, declined or withdrawn is flagged in the Outline, so it's checked before the piece goes out.
+
+A pseudonym replaces a name, not the details around it. Someone can still be recognized from their job, town or story; read the draft for those too.
+
 ## Accessibility reminders
 
 Exporting to a web page, an e-book or Word reminds you if the **Accessibility** check found anything: figures without alt text, skipped heading levels, tables without a header row, or vague link text. See [Checking the draft](Checking-the-Draft).

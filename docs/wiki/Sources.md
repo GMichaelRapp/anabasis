@@ -66,6 +66,10 @@ Ratings feed the checks. Corroboration warns about paragraphs that rest only on 
 
 The **Annotation** field holds what the source is, what it argues and how you use it. **Export → Annotated bibliography** turns these into a new document, and the annotated bibliography styles print them under each entry.
 
+### The reading list
+
+Set a source's **Reading** to *To read*, *Reading* or *Read*, and tick **Read this first** for the ones that matter most. The chips at the top of the Sources tab filter the list to what's waiting, with the read-first sources at the top, and **Project home** lists them under *To read*. Mark a source *Read* and it leaves the list.
+
 ## Working from a source
 
 The buttons at the foot of a source:
@@ -77,7 +81,7 @@ The buttons at the foot of a source:
 
 ## Checking your sources
 
-**Tools** at the top of the Sources tab holds three checks.
+**Tools** at the top of the Sources tab holds the checks below, and [Archive photos](Archive-Photos).
 
 ### Source audit
 
@@ -100,9 +104,36 @@ The source audit shows:
 - **Save now** asks the Wayback Machine to save a page today.
 - **Fill in accessed dates** uses the day you added each source.
 
+### Check for retractions
+
+**Check for retractions** asks Crossref about each source with a DOI. Crossref records retractions, withdrawals, expressions of concern and corrections that publishers issue, and since 2023 it includes the Retraction Watch database too.
+
+- Each source shows what Crossref holds: *No notices*, or the kind of notice with its date and a link to read it.
+- A retracted, withdrawn or questioned source is marked in the Sources list and listed on **Project home**, so it can't slip into a draft unnoticed.
+- Only the DOIs are sent, one at a time, and only when you choose **Check**.
+
+No notice isn't a guarantee: this finds what publishers and Retraction Watch have recorded, for works with a DOI. If a source you rely on is retracted, read the notice. Sometimes the problem is in a part you don't use; either way, it's usually right to say so when you cite it.
+
+### Find duplicates
+
+The same work often comes in twice: once from Zotero and once by DOI, or typed by hand before the PDF turned up. **Find duplicates** lists pairs that look like the same work, because they share a DOI, ISBN or web address, or the same title, author and year.
+
+For each pair, choose **Merge, keep the first** or **keep the second**. The kept record fills its empty details from the other, and every citation, note, archive photo, grid cell and plan link moves across, so nothing points at the record that's gone. **Not the same** tells Anabasis to stop suggesting the pair.
+
 ### Permissions log
 
 The **permissions log** lists every figure and table in the project with its credit line and permission status, and highlights what's still to clear: permission needed, requested or refused, or a picture with nothing set. It adds quotations by source, with word counts. Download it as a spreadsheet, or make it a document to send your editor.
+
+## Evidence files and fingerprints
+
+For investigative and open-source work, it can matter later that a screenshot, a video, a leaked document or a downloaded file is exactly what you captured. **Evidence files**, at the foot of a source, records a **SHA-256 fingerprint** of any file: a 64-character code worked out from its exact contents. Change one byte and the fingerprint changes.
+
+- **Fingerprint a file…** works out the fingerprint in the browser. The file isn't stored or uploaded; it stays wherever it is.
+- Record **when** and **where** you captured it, and **how** (by whom, with what tool).
+- **Check a file against these…** fingerprints a copy and tells you whether it matches any file recorded in the project, byte for byte.
+- A PDF linked to a source is fingerprinted automatically, and so is every [archive photo](Archive-Photos).
+
+Keep the files themselves somewhere safe; the fingerprint proves a copy is unchanged, but it can't bring back a lost file.
 
 ## Taking sources elsewhere
 

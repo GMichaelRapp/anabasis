@@ -174,7 +174,7 @@ async def main(only):
         await close_all()
 
         # PDF reader, then Take notes
-        if want('pdf-reader') or want('take-notes'):
+        if want('pdf-reader') or want('take-notes') or want('pdf-highlight'):
             await pg.evaluate("() => { switchTab('sources'); showReader(true); }"); await pg.wait_for_timeout(400)
             await pg.set_input_files('#filePdf', str(tmp)); await pg.wait_for_timeout(2500)
             await pg.evaluate("""() => { const s = { id: uid('s'), csl: { type: 'article-journal', title: 'Bread on the March: Supply and Choice in the Retreat of the Ten Thousand', author: [{ literal: 'Sample Author' }], 'container-title': 'Sample article for the Anabasis guide', issued: { 'date-parts': [[2026]] }, page: '12-13' }, stype: 'secondary', created: nowISO(), modified: nowISO() };
@@ -188,6 +188,8 @@ async def main(only):
                 const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.dispatchEvent(new Event('selectionchange')); spans[j].dispatchEvent(new MouseEvent('mouseup', { bubbles: true })); }""")
             await pg.wait_for_timeout(600)
             await shot('pdf-reader')
+            await pg.click('#rdSelBar [data-k=quote]'); await pg.wait_for_timeout(600)
+            await shot('pdf-highlight', '#rdPages .rd-page', pad=18)
             await pg.click('#btnSide'); await pg.wait_for_timeout(300)
             await pg.click('#rdNotes'); await pg.wait_for_timeout(700)
             for kind, text in (('idea', 'The halts, not the battles, set the pace. Worth setting against Lee on rations (pp. 45–47).'),
@@ -206,6 +208,72 @@ async def main(only):
             await pg.evaluate("() => rrToggle(false)"); await pg.wait_for_timeout(300)
             await pg.click('#btnSide'); await pg.wait_for_timeout(300)
             await pg.evaluate("() => showReader(false)"); await pg.wait_for_timeout(300)
+            await close_all()
+
+        # Close to your notes: a sentence that repeats the Dakyns quotation without quotation marks
+        if want('close-to-notes'):
+            await pg.evaluate("""() => { const d = P.docs.find(x => /retreat|supply|march/i.test(x.title)) || P.docs[0]; openDoc(d.id);
+                const p = document.createElement('p'); p.id = 'wkPx'; p.textContent = 'At the summit, presently they could hear the soldiers shouting and passing on the joyful word down the column.';
+                const h = editor.querySelectorAll('h2')[0]; editor.insertBefore(p, h || null); onEdit(); switchTab('outline'); $('#sidebar').style.width = '400px'; renderCloseToNotes(); }""")
+            await pg.wait_for_timeout(800)
+            await pg.evaluate("() => { $('#pxList').previousElementSibling.scrollIntoView({ block: 'start' }); $('#wkPx').scrollIntoView({ block: 'center' }); }"); await pg.wait_for_timeout(300)
+            await shot('close-to-notes')
+            await pg.evaluate("() => { $('#wkPx')?.remove(); onEdit(); $('#sidebar').style.width = ''; }")
+            await close_all()
+
+        # Literature grid, with a few cells filled
+        if want('lit-grid'):
+            await pg.evaluate("""() => { const by = re => P.sources.find(s => re.test(s.csl.title || '')); const lee = by(/Greek Army/), eng = by(/Logistics/), wat = by(/Retreat/), bread = by(/Bread on the March/);
+                const g = lgCfg(); g.rows = 'notes'; const c = g.cols, put = (s, i, t) => { if (s) (g.cells[s.id] = g.cells[s.id] || {})[c[i].id] = t; };
+                put(eng, 0, 'Supply, not battle, set the limits of Alexander’s campaigns.'); put(eng, 1, 'Daily needs worked out per man and animal, from comparative data.'); put(eng, 3, 'About Alexander, not Xenophon; assumptions carried over.'); put(eng, 4, 'Ration figures, as a range.');
+                put(lee, 0, 'The army was a mobile community, and its non-combatants shaped what it could do.'); put(lee, 1, 'Close reading of the Anabasis against comparative evidence.'); put(lee, 2, 'Non-combatants were numerous; food was a daily political question.'); put(lee, 4, 'Main secondary source for chapters 2 and 3.');
+                put(wat, 0, 'The assemblies were genuinely deliberative.'); put(wat, 3, 'Little on supply.');
+                if (bread) { put(bread, 0, 'The route through the hills was a search for stored grain.'); put(bread, 2, 'Halts track harvests; speed tracks stores.'); }
+                const n = P.notes.find(x => x.sourceId === (lee || {}).id); if (n && !n.tags.includes('key findings')) n.tags.push('key findings');
+                openDesk('lit'); }""")
+            await pg.wait_for_timeout(700)
+            await shot('lit-grid')
+            await close_all()
+
+        # Codes: a small codebook, a few coded passages and notes, the overview
+        if want('codes'):
+            await pg.evaluate("""() => { P.codes = []; const a = newCode('Supply shortage', '', 'Any mention of the army running short of food or fodder, or fearing it.'), b = newCode('Command', '', 'Who decides, and how: generals, assemblies, votes.'), c = newCode('Terrain', '', 'Mountains, rivers, snow and roads, where they shape movement.');
+                const d = P.docs.find(x => /retreat|supply|march/i.test(x.title)) || P.docs[0]; openDoc(d.id);
+                const paras = [...editor.querySelectorAll('p')].filter(x => [...x.childNodes].some(n => n.nodeType === 3 && n.data.length > 40));
+                const code = (p, id, len) => { const t = [...p.childNodes].find(n => n.nodeType === 3 && n.data.length > 40); const r = document.createRange(); r.setStart(t, 0); r.setEnd(t, Math.min(len, t.data.length)); rmApply(r, 'cd', { ref: id }); };
+                if (paras[0]) code(paras[0], a.id, 40); if (paras[1]) code(paras[1], b.id, 30); if (paras[2]) code(paras[2], a.id, 35); if (paras[3]) code(paras[3], c.id, 30);
+                P.notes.filter(n => n.sourceId).forEach((n, i) => { n.codes = [[a.id], [a.id, c.id], [b.id], [a.id, b.id], [c.id]][i % 5]; });
+                syncEditor(); rmDirty(); rmStyle(); openDesk('codes', '__over'); }""")
+            await pg.wait_for_timeout(800)
+            await shot('codes')
+            await close_all()
+
+        # Archive photos: three pages of a made-up letter, drawn by the browser for this guide
+        if want('archive-photos'):
+            files = await pg.evaluate("""async () => { const lines = [['Santa Fe, 21 August', 'Most excellent Lord,', 'I write in haste from the villa, where we', 'have held out these nine days against the', 'rebels, who have cut the acequia and the', 'roads to the south. Our stores of maize'], ['are near spent and the horses without', 'fodder. With the advice of the cabildo I', 'have resolved to leave the villa and march', 'down the river to join the people at', 'La Isleta, taking what grain remains', 'and the sacred vessels of the church.'], ['May God keep Your Excellency many years.', '', '', '', '', '']];
+                const out = []; for (let k = 0; k < 3; k++) { const c = document.createElement('canvas'); c.width = 1500; c.height = 2000; const g = c.getContext('2d');
+                  const grd = g.createLinearGradient(0, 0, 1500, 2000); grd.addColorStop(0, '#efe3c6'); grd.addColorStop(1, '#e2cfa3'); g.fillStyle = grd; g.fillRect(0, 0, 1500, 2000);
+                  g.fillStyle = 'rgba(120,90,40,.08)'; for (let i = 0; i < 40; i++) { g.beginPath(); g.arc(Math.random() * 1500, Math.random() * 2000, 20 + Math.random() * 120, 0, 7); g.fill(); }
+                  g.fillStyle = '#3b2a17'; g.font = 'italic 64px Georgia, serif'; lines[k].forEach((t, i) => g.fillText(t, 150 + (i === 0 && k === 0 ? 500 : 0), 260 + i * 150));
+                  if (k === 2) { g.font = 'italic 70px Georgia, serif'; g.fillText('The Governor', 760, 560); }
+                  const b = await new Promise(r => c.toBlob(r, 'image/jpeg', .85)); out.push(Array.from(new Uint8Array(await b.arrayBuffer()))); } return out; }""")
+            tmpd = pathlib.Path(tempfile.mkdtemp()); paths = []
+            for i, f in enumerate(files):
+                pth = tmpd / f'IMG_{4211 + i}.jpg'; pth.write_bytes(bytes(f)); paths.append(str(pth))
+            await pg.evaluate("""() => { const src = { id: uid('s'), csl: { type: 'manuscript', title: 'Papers of a provincial governor (sample)', archive: 'Sample archive for this guide' }, stype: 'primary', created: nowISO(), modified: nowISO() }; src.csl.id = src.id; P.sources.push(src); renderSourceList(); openPhotos(src.id); }""")
+            await pg.set_input_files('#phFile', paths[:1]); await pg.wait_for_function("() => phList().length === 1", timeout=15000); await pg.wait_for_timeout(500)
+            await pg.fill('#ph_box', '3'); await pg.fill('#ph_folder', '12'); await pg.fill('#ph_item', '1'); await pg.wait_for_timeout(1000)
+            await pg.set_input_files('#phFile', paths[1:]); await pg.wait_for_function("() => phList().length === 3", timeout=20000); await pg.wait_for_timeout(500)
+            await pg.evaluate("() => { const l = phList(); l[1].item = '2'; l[2].item = '3'; PH.cur = l[0].id; l[0].date = '21 August 1680'; l[0].caption = 'Letter, the governor to the viceroy (sample)'; l[0].text = 'Santa Fe, 21 August\\n\\nMost excellent Lord,\\nI write in haste from the villa, where we have held out these nine days against the rebels, who have cut the acequia and the roads to the south. Our stores of maize'; phRender(); }")
+            await pg.wait_for_timeout(1200)
+            await shot('archive-photos', '#phDlg .dlg', pad=0)
+            await pg.click('#phClose'); await close_all()
+
+        # The research guide, on the stages
+        if want('research-guide'):
+            await pg.evaluate("() => { PREFS.gdStage = 'research question'; openGuide('stages'); }"); await pg.wait_for_timeout(700)
+            await pg.evaluate("() => $('[data-gdstage=\"research question\"]')?.scrollIntoView({ block: 'start' })"); await pg.wait_for_timeout(300)
+            await shot('research-guide')
             await close_all()
 
         # Research journal, open on the log with the prompts

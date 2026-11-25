@@ -1,0 +1,505 @@
+The research guide in the journal (2.6). Plain text, read by the app when the guide is first opened.
+
+Blocks start with a line “@@ kind key | Title”. Kinds:
+  stage   one per research-process prompt (the key matches the prompt’s tag). Lines start
+          with “Do:”, “Example:”, “Watch for:” or “Done when:”; text runs on until the next of these.
+  check   a due-diligence checklist. First line under it is the purpose; each item is “- key: text”.
+          Item keys are kept in the project file when ticked, so don’t rename them.
+  method  a short guide to one method (the key matches “Start from a method”). “## ” starts a
+          subheading, “- ” a bullet; other lines are paragraphs.
+  term    a glossary entry: the definition, then optionally “See: other term, another”.
+Lines starting with “//” are comments.
+
+// ---------------------------------------------------------------- stages
+
+@@ stage topic | Topic
+Do: Write down what you’re curious about and why it matters to you, before you search. A few sentences is enough: the subject, what puzzles you about it, and who else might care.
+Example: “How did ten thousand Greek soldiers feed themselves on the march home from Persia? Histories credit courage and leadership, but nobody seems to say where the bread came from.”
+Watch for: Topics that are really a field (“the Cold War”), or that already contain their answer (“why sanctions failed”). Curiosity is a better start than a conclusion.
+Done when: You can say what you want to find out in a sentence, and you’ve noted why it matters to you. This is the entry to come back to when the project loses its shape.
+
+@@ stage initial results | First results
+Do: Spend an hour or two searching broadly: a library catalog, a database, a good encyclopedia article and its bibliography. Note what comes up again and again, what surprised you, and which names, events and sources everyone cites.
+Example: “Three books keep coming up: Lee 2007, Waterfield 2006 and Engels 1978. Engels is about Alexander, not Xenophon, but everyone cites his ration figures.”
+Watch for: Stopping at the first page of results, or reading deeply before you know the shape of the field. Log your searches in the search log as you go, so you don’t repeat them.
+Done when: You know the handful of sources everyone starts from, and you’ve noted at least one thing that surprised you.
+
+@@ stage narrowed topic | Narrowed topic
+Do: Cut the topic down to the part one piece of writing can cover. Narrow by time, place, people, kind of evidence or question. Write down what you’re leaving out, too.
+Example: “Not the whole retreat: the march through the Carduchian mountains and Armenia, where the army had no market and had to forage.”
+Watch for: Narrowing to something with no sources. Check that the evidence exists before you commit.
+Done when: You can name what’s in and what’s out, and you know where the evidence for what’s in will come from.
+
+@@ stage research question | Research question
+Do: Write the one question this piece will answer. A good research question is open (not yes or no), answerable with evidence you can get, and worth answering for someone besides you. Add it to the research design too.
+Example: “How did the need for food shape the route and pace of the retreat through the mountains?”
+Watch for: Questions that are really several questions, questions nobody could answer with the evidence that survives, and questions whose answer you’ve already decided.
+Done when: The question fits in a sentence, you could recognize an answer, and you know roughly what evidence would give one.
+
+@@ stage keywords | Keywords
+Do: Record the words and phrases you searched with, where, and which worked. Include synonyms, older terms, other spellings and the technical vocabulary of the field. The search log is the place for the details.
+Example: “‘Xenophon logistics’ found little. ‘Ten Thousand’ plus ‘supply’ or ‘foraging’ worked better; ‘sitos’ (grain) found the specialist literature.”
+Watch for: Searching only in today’s vocabulary. Sources from other periods, places and disciplines use other words.
+Done when: You have a list of terms that find the material, and a record of the ones that didn’t.
+
+@@ stage leads | Leads and trends
+Do: Write down the threads worth following and the patterns you’re starting to see, before they feel obvious. Note who disagrees with whom, and about what.
+Example: “Lee and Waterfield disagree about how democratic the army assemblies were. Most of the arguments Xenophon records are about food. Worth a thread.”
+Watch for: Following every lead at once. Rank them, and note which ones you’re putting aside and why.
+Done when: You have two or three leads you mean to follow, and you’ve made threads or questions for them.
+
+@@ stage source notes | Notes on a source
+Do: For each source that matters, write what it says, how it helps answer your question, and how far you trust it. Who wrote it, when, for whom, and on what evidence? Pair this with notes taken in the PDF reader.
+Example: “Lee 2007, ch. 2. Reconstructs daily needs from comparative data. Helps with numbers; relies heavily on Engels’s assumptions, which I should check.”
+Watch for: Summaries with no judgment. The point of this entry is what the source is worth to you, not just what it says.
+Done when: You could explain to someone in two minutes what this source contributes, and where it’s weak.
+
+@@ stage title | Working title
+Do: Write a title that hooks a reader and tells them what the piece is about. A colon often helps: a phrase that catches the eye, then a plain statement of the subject.
+Example: “An Army That Had to Eat: Supply and Choice in the Retreat of the Ten Thousand”
+Watch for: Titles that are clever but say nothing, and titles that promise more than the piece delivers.
+Done when: Someone who reads only the title would know what the piece covers, and might want to read it.
+
+@@ stage thesis | Thesis
+Do: Write your answer to the research question in one or two sentences. A thesis makes a claim someone could disagree with, and says why it matters.
+Example: “The retreat is better read as a long negotiation with hunger than as a running battle: the need for grain set the army’s route, its pace and many of its political choices.”
+Watch for: A thesis that only restates the topic (“this paper discusses supply”) or that no reasonable person would dispute. Run it through Socrates’ Examine a claim.
+Done when: Your thesis is a claim, the evidence you have can support it, and you can name the strongest objection to it.
+
+@@ stage outline | Outline
+Do: Sketch the shape of the argument: an introduction (hook, context, thesis), three or four main points each with its evidence, and a conclusion that says so what, and who cares. For anything longer, build it in the Plan.
+Example: “1. The usual story: courage and command. 2. What an army needed each day. 3. The route through the mountains, read as a search for grain. 4. Assemblies that argued about food. 5. What changes when supply comes first.”
+Watch for: Outlines that list topics rather than points. Each heading should be a claim you could defend.
+Done when: Every main point supports the thesis, and you know which evidence goes where.
+
+@@ stage draft 0 | Draft 0
+Do: Write a skeleton draft quickly, from start to finish, without stopping to polish. Leave TK flags for missing facts and cite? flags for missing sources. Then note what you learned by writing it.
+Example: “Got a rough draft of 2,500 words in two sittings. The mountain section is strong; the assemblies section is thin and may belong in another chapter.”
+Watch for: Rewriting the first page ten times. A finished rough draft teaches you more than a perfect opening.
+Done when: There’s a draft from beginning to end, and you’ve written down what you’d do differently in the next one.
+
+@@ stage peer feedback | Peer feedback
+Do: Give the draft to a reader, ideally one who knows the subject and one who doesn’t. Record who read it, what they said, and what you’ll change and keep. Send a copy for review from the Export menu to collect their changes.
+Example: “Read by M. (historian) and J. (no background). M.: the ration figures need a range, not a number. J.: lost in the Armenian section; needs a map.”
+Watch for: Defending the draft instead of listening. Write the feedback down first; decide what to do about it later.
+Done when: You have a list of changes you’ll make, and of suggestions you’ve decided not to take, with why.
+
+// ---------------------------------------------------------------- checklists
+
+@@ check sources | Verifying sources
+Before you rely on a source, and again before you publish.
+- author: I know who made it, what they know, and what they stood to gain.
+- date: I know when it was made, and how long after the events it describes.
+- original: I’ve gone back to the original wherever I could, rather than a quotation of it.
+- evidence: I know what evidence the source itself rests on.
+- corroborate: Every important claim has at least two independent sources, or I say that it rests on one.
+- rated: Sources are rated for reliability and credibility (Sources → OSINT Style Guide details).
+- retractions: Sources with a DOI have been checked for retractions and corrections (Sources → Tools).
+- archived: Web sources have an archived copy (Sources → Tools → Check links).
+- tertiary: No important claim rests only on an encyclopedia, a textbook or another summary.
+
+@@ check quotes | Quotes, numbers and names
+Before a draft goes out.
+- quotes: Every quotation has been checked word for word against its source (Outline → Quotes).
+- context: No quotation is used in a sense its author didn’t mean.
+- paraphrase: Paraphrases are in my own words, and still cited (Outline → Close to your notes).
+- numbers: Every number has a source, a date and a unit, and I know what it measures.
+- math: Percentages, totals and comparisons have been worked out again from the raw figures.
+- names: Names, titles and spellings are checked and consistent (Names & spellings).
+- dates: Dates are checked, including the day of the week if I give one.
+- images: Every image and chart has a source and a credit line, and permission if it needs one.
+
+@@ check ethics | Ethics, consent and safety
+Before you start interviewing or collecting, and again before you publish.
+- approval: I know whether this work needs approval from an ethics board or editor, and have it if so.
+- consent: Everyone I interviewed agreed to it, knew how it would be used, and their consent is recorded (Names & spellings).
+- anonymity: People who asked not to be named can’t be identified, including from details (pseudonyms in exports).
+- harm: I’ve thought about who could be harmed by publication, and how.
+- vulnerable: Extra care is taken with minors, people at risk, and people who can’t easily refuse.
+- legal: Anything that could be defamatory, private or confidential has had a legal or editorial read.
+- data: Personal data is stored securely and kept only as long as needed.
+- reply: People I make serious claims about have had a fair chance to respond.
+
+@@ check data | Data, files and backups
+Once at the start, then every week or two.
+- saved: The project file is saved somewhere backed up (a synced folder or GitHub).
+- copy: There is a second copy somewhere else (GitHub backup, a checkpoint download, or the archive).
+- lock: Sensitive projects are locked with a password, and the password is somewhere safe.
+- pdfs: PDFs and archive photos are kept in a folder of their own; they live in the browser, not the project file.
+- fingerprints: Files that may be questioned later (screenshots, leaks, video) have SHA-256 fingerprints recorded.
+- searches: Searches are logged, so the research can be repeated.
+- raw: Raw data is kept unchanged, and every cleaning step is written down.
+- archive: The plain-file archive has been exported at least once (Export → Archive).
+
+@@ check submit | Before you submit
+The last pass before a piece goes to an editor, a journal or a teacher.
+- question: The piece answers the question it sets, and the conclusion says so.
+- flags: No TK, cite? or check flags are left (Outline → To resolve).
+- uncited: Every paragraph that needs a source has one (Outline → Paragraphs without a citation).
+- style: The citation style is the one asked for, and the bibliography is complete (Sources → Tools → Source audit).
+- proofread: Proofread finds nothing I haven’t ignored on purpose (F7).
+- limits: Limitations are stated honestly, and claims are hedged as far as the evidence requires.
+- abstract: The abstract and keywords are written, if they’re asked for.
+- format: Length, format and file type match the requirements.
+- draft: A draft is saved and named for where it’s going (Drafts), so I can compare what comes back.
+
+@@ check osint | Open-source verification
+For each image, video, post or document found online.
+- first: I found the earliest copy I could, and who first posted it.
+- account: I checked the account that posted it: its age, history and connections.
+- geolocate: Where it shows a place, I matched it to satellite or street imagery.
+- chronolocate: I checked the time against shadows, weather, events and metadata.
+- edited: I looked for signs of editing, cropping or reuse (reverse image search).
+- captured: I saved a copy, recorded its fingerprint, and noted when and where I captured it.
+- confidence: My confidence is stated in words a reader can weigh (Outline → Estimative language).
+
+// ---------------------------------------------------------------- methods
+
+@@ method archival | Archival research
+Archives hold the records that were made at the time: letters, minutes, reports, ledgers, photographs. They rarely say what you want them to say directly, and most of the work is finding the right files and reading them patiently.
+## Before you go
+- Read the finding aid (the archive’s guide to a collection) and note the series, boxes and folders you want. Many archives put finding aids online.
+- Email the archivist. Ask what’s available, what’s restricted, whether you need to book, and whether photography is allowed.
+- Make a source in Anabasis for each collection you’ll use, with the archive’s name and location.
+## While you’re there
+- Photograph every page you might need, and the folder label, before you read closely. Time in the reading room is short; reading can happen later.
+- Add photos in Archive photos as you go, filed by box and folder. New photos take the box and folder of the one you’re on.
+- Keep a log of what you looked at and found nothing in. Dead ends save you a second trip.
+## Afterwards
+- Transcribe what matters beside the photo, marking doubtful readings [?] and gaps […].
+- Make quote notes from the transcription; the box and folder become the locator.
+- Read documents in date order, and ask who made each one, for whom, and what it leaves out.
+## Watch for
+- Archives keep what institutions chose to keep. Ask whose voices are missing.
+- Copies, drafts and translations differ from originals. Note which you saw.
+
+@@ method interviews | Interviews and oral history
+Interviews give you what documents can’t: how people understood events, and details nobody wrote down. They’re also shaped by memory, hindsight and what the person wants you to believe.
+## Before
+- Decide who you need to speak to and why. Aim for range: people who disagree, insiders and outsiders.
+- Prepare a short list of open questions, and the facts you want to check.
+- Get consent: explain what the interview is for, how it will be used, and whether the person will be named. Record it in Names & spellings.
+## During
+- Record, with permission, and take notes too. Note the time when something important is said.
+- Ask open questions (“What happened next?”), then follow up on specifics: names, dates, numbers, documents.
+- Ask how they know: were they there, or did they hear it?
+## After
+- Import the transcript or captions with Transcript… on the source; turn the key lines into quote notes with timestamps.
+- Code the transcripts (Mark → Code passage) to see themes across interviews.
+- Check every factual claim against documents or other interviews before you rely on it.
+## Watch for
+- Memory drifts, and people retell events in the light of what came after. Weigh accounts by how close the person was, and how long ago.
+- Protect people who asked not to be named, including from details that would identify them. Use pseudonyms in exports.
+
+@@ method osint | Open-source investigation
+Open-source investigation builds a picture from public material: social media, satellite imagery, company registries, court records, flight and ship tracking, archived web pages. The craft is in verification.
+## Collecting
+- Save everything as you find it: pages change and posts are deleted. Use Check links to ask the Wayback Machine for saved copies, or save a page now.
+- Record a fingerprint (SHA-256) of every screenshot, video and download, with when and where you captured it.
+- Log your searches, including the platforms and tools you used.
+## Verifying
+- Find the earliest copy and the first person to post it.
+- Geolocate: match buildings, roads and skylines to satellite or street-level imagery.
+- Chronolocate: check shadows, weather, and events visible in the image.
+- Check the account that posted it, and look for signs of editing or reuse.
+## Reporting
+- Rate each source (reliability A to F, credibility 1 to 6), and say how confident you are in each judgment, using estimative language a reader can weigh.
+- Show your working: what you checked, and how. The OSINT Style Guide citations hold archive links and access notes.
+## Watch for
+- Deliberate deception. The more a piece of evidence tells you exactly what you hoped to find, the harder to check it.
+- Harm to the people in the material. Blur or leave out what isn’t needed.
+
+@@ method docs | Document and content analysis
+Content analysis reads a set of documents (speeches, articles, posts, reports) systematically, to see what they say, how often, and how that changes.
+## Setting up
+- Define the corpus: which documents, from when, chosen by what rule. Write the rule down, so someone else could rebuild the set.
+- Decide on your codes before you start, from your question and a first reading, and write a definition for each.
+## Coding
+- Read each document and code passages (Mark → Code passage). Add codes as you go if you must, then go back and recode earlier documents.
+- Keep the codebook’s definitions up to date, with examples of what does and doesn’t count.
+- If you can, have someone else code a sample and compare. Where you disagree, sharpen the definitions.
+## Analysis
+- The Codes view on the research desk counts each code by document and source, and shows which codes turn up together.
+- Read the excerpts under each code side by side. The counts say where to look; the passages say what it means.
+## Watch for
+- Counting words isn’t the same as understanding them. Irony, quotation and negation all fool a count.
+- A corpus chosen to make a point will make it.
+
+@@ method cases | Case studies and comparison
+A case study looks closely at one instance (an event, an organization, a policy) to explain how and why something happened. Comparing a few cases shows what made the difference.
+## Choosing cases
+- Choose cases for a reason you can state: alike in most ways but different in the outcome, or different in most ways with the same outcome.
+- Say what each case is a case of.
+## Researching
+- Use the same questions for every case, so the comparison is fair. The literature grid is a good place to set cases against questions.
+- Build a timeline for each case from dated notes (Board → Timeline).
+- Look for the evidence that would show your explanation is wrong, not only the evidence that fits.
+## Writing
+- Explain the mechanism: how one thing led to another, step by step.
+- Say how far your conclusions travel beyond the cases you studied.
+## Watch for
+- Picking cases because they fit the answer you expect.
+- Explaining everything after the fact. Ask what you would have predicted beforehand.
+
+@@ method data | Data analysis
+Data analysis uses numbers to describe, compare or test. Most of the work, and most of the mistakes, are in getting and cleaning the data.
+## Before you start
+- Know where the data comes from, who collected it, how, and what each variable measures.
+- Keep the raw data unchanged. Work on a copy.
+## Cleaning
+- Write down every step: what you removed, recoded or combined, and why. Someone else should be able to repeat it.
+- Look at the data before you analyse it: missing values, odd outliers, units that changed.
+## Analysis
+- Start with simple descriptions (counts, averages, ranges) before anything fancier.
+- Show the uncertainty: ranges, margins of error, sample sizes.
+- Datasets in Anabasis can be charted and kept up to date in the draft; the numbers in the text update when the data does.
+## Watch for
+- Correlation presented as cause.
+- Percentages without the numbers behind them, and changes without a baseline.
+- Choosing the analysis after seeing which one gives the answer you want.
+
+@@ method lit | Literature review
+A literature review maps what’s already known about a question: what’s agreed, what’s disputed, and what nobody has looked at. It’s the foundation for saying what your own work adds.
+## Searching
+- Search several databases with the same terms, and log each search (where, terms, filters, results).
+- Follow citations both ways: the references in a key source, and later work that cites it.
+- Decide what you’ll include and exclude, and write the rules down.
+## Reading
+- For each source, note its question, method, evidence, findings and limits. The literature grid sets sources against these, or against your own questions.
+- Tag notes with the grid’s column names and they appear in the cells.
+## Writing
+- Organize by theme or question, not source by source. “Three studies find X; two find Y, using different data” is a review; a list of summaries isn’t.
+- End with the gap: what remains unknown, and how your work addresses it.
+## Watch for
+- Reviewing only the sources that agree with you.
+- Retracted or corrected work. Check sources with a DOI (Sources → Tools → Check for retractions).
+
+@@ method reporting | Investigative reporting
+Investigative reporting establishes facts someone may want hidden. It rests on documents, on people, and on the discipline of checking every claim before it’s published.
+## Building the story
+- Start from documents where you can: filings, court records, contracts, leaks. Check each one’s authenticity.
+- Map the people and organizations, and how they’re connected (the relationship map).
+- Keep a chronology from dated notes. Gaps in it are questions to ask.
+## Sources
+- Protect confidential sources: think about how you communicate, what you store, and what details would identify them.
+- Record what each source said, when, and on what terms (on the record, on background, off the record).
+## Checking
+- Mark every factual claim and check it (Mark → Claim to check). The claims register and the fact-check sheet list what’s left.
+- Give the people you write about a fair chance to respond, with enough time and detail to do so.
+- Have anything risky read by an editor or lawyer.
+## Watch for
+- A story that’s too good. Ask what would make it wrong, and go and look.
+- Single sources for serious claims.
+
+// ---------------------------------------------------------------- glossary
+
+@@ term abstract | Abstract
+A short summary of a piece of writing, usually 100 to 300 words, giving its question, method, findings and why they matter. Many journals require one.
+See: Keywords
+
+@@ term annotated bibliography | Annotated bibliography
+A list of sources, each followed by a short paragraph on what it is, what it argues, and how it’s useful.
+
+@@ term archive | Archive
+A place that keeps records for the long term, or a collection of records kept together. Archival research reads those records.
+See: Finding aid, Primary source
+
+@@ term bias | Bias
+A tendency to see, choose or present evidence in one direction. Every source has some; good research names it and allows for it.
+See: Confirmation bias, Provenance
+
+@@ term case study | Case study
+A close study of one instance (an event, place, organization or person) to explain how and why something happened.
+
+@@ term chain of custody | Chain of custody
+A record of who has held a piece of evidence, and when, showing it hasn’t been tampered with. A file’s fingerprint helps show a copy is unchanged.
+See: Fingerprint
+
+@@ term chronolocation | Chronolocation
+Working out when a photo or video was taken, from shadows, weather, visible events and other clues.
+See: Geolocation
+
+@@ term citation | Citation
+A reference that tells the reader where a piece of information came from, precisely enough to find it.
+
+@@ term code | Code
+In qualitative research, a short label attached to passages that share an idea, theme or pattern, so they can be gathered and compared.
+See: Codebook, Coding
+
+@@ term codebook | Codebook
+The list of codes in a project, each with a definition saying when to use it and when not, and often an example.
+
+@@ term coding | Coding
+Reading through material and attaching codes to passages. It’s how interviews, documents and field notes are analysed systematically.
+
+@@ term confidence | Confidence level
+In intelligence analysis, how sure you are of a judgment, based on the quality of the evidence (high, moderate, low). It’s separate from likelihood.
+See: Estimative language, Likelihood
+
+@@ term confirmation bias | Confirmation bias
+The habit of noticing and believing evidence that supports what you already think, and discounting evidence that doesn’t.
+
+@@ term consent | Informed consent
+A person’s agreement to take part in research, given freely and with an understanding of what it involves and how what they say will be used.
+
+@@ term corroboration | Corroboration
+Support for a claim from a second, independent source. Two sources that both repeat a third aren’t independent.
+See: Triangulation
+
+@@ term counterfactual | Counterfactual
+A “what if” question about what would have happened if something had been different. Useful for testing claims about causes.
+
+@@ term credibility | Credibility
+How believable a piece of information is, judged by whether it’s confirmed, consistent and plausible. On the Admiralty scale, rated 1 (confirmed) to 6 (truth can’t be judged).
+See: Reliability
+
+@@ term data cleaning | Data cleaning
+Fixing or removing errors, gaps and inconsistencies in a dataset before analysis. Every step should be recorded.
+
+@@ term dead end | Dead end
+A search or line of inquiry that didn’t pay off. Worth recording, so you don’t try it again.
+
+@@ term doi | DOI
+Digital Object Identifier: a permanent ID for a published work, such as 10.1080/01402390.2013.784469. It resolves at doi.org even if the publisher’s web address changes.
+
+@@ term estimative language | Estimative language
+Standard words for likelihood (“unlikely”, “roughly even chance”, “very likely”), each tied to a range of probability, so readers know how sure a judgment is.
+See: Confidence level, Likelihood
+
+@@ term evidence | Evidence
+The information that supports or challenges a claim. Evidence isn’t the same as a source: one source can hold good and bad evidence.
+
+@@ term fact-check | Fact-check
+Checking each factual claim in a piece against its sources before publication.
+
+@@ term finding aid | Finding aid
+An archive’s guide to a collection, listing its series, boxes and folders, often with a short description of each.
+
+@@ term fingerprint | Fingerprint (hash)
+A short code worked out from a file’s exact contents, such as a SHA-256 hash. Change one byte and the fingerprint changes, so matching fingerprints show a copy is unchanged.
+See: Chain of custody
+
+@@ term geolocation | Geolocation
+Working out where a photo or video was taken by matching what it shows to maps, satellite or street-level imagery.
+
+@@ term grey literature | Grey literature
+Material published outside books and journals: reports, working papers, government documents, theses, conference papers.
+
+@@ term historiography | Historiography
+The study of how history has been written: how interpretations of a subject have changed, and why.
+
+@@ term hypothesis | Hypothesis
+A claim you could be wrong about, set out so the evidence can test it.
+
+@@ term keywords | Keywords
+Words and phrases that describe a piece for indexing and search. Journals usually ask for four to six.
+
+@@ term likelihood | Likelihood
+How probable something is, as opposed to how sure you are of the evidence. “Likely” and “high confidence” say different things.
+See: Confidence level
+
+@@ term literature review | Literature review
+A survey of what’s already known about a question, organized by theme, ending with what remains unknown.
+
+@@ term locator | Locator
+The part of a citation that points within a source: a page, chapter, section, timestamp, or box and folder.
+
+@@ term methodology | Methodology
+The reasoning behind your methods: why these methods suit this question, and what they can and can’t show.
+
+@@ term mixed methods | Mixed methods
+Research that combines approaches, such as interviews and data analysis, so each can check the other.
+
+@@ term open source | Open-source information
+Information anyone can get, lawfully: publications, public records, social media, satellite imagery and the like. OSINT is intelligence built from it.
+
+@@ term oral history | Oral history
+Recorded interviews with people about their memories of past events, kept as historical sources.
+
+@@ term paraphrase | Paraphrase
+Someone else’s point put in your own words and sentence structure. It still needs a citation.
+See: Patchwriting, Plagiarism
+
+@@ term patchwriting | Patchwriting
+Copying a source’s sentences with a few words changed. It reads as paraphrase but isn’t; quote the passage, or rewrite it properly.
+See: Paraphrase
+
+@@ term peer review | Peer review
+Evaluation of a piece of work by experts in the field before it’s published.
+
+@@ term plagiarism | Plagiarism
+Presenting someone else’s words or ideas as your own, whether by copying, close paraphrase or leaving out a citation.
+
+@@ term preregistration | Preregistration
+Recording your hypotheses and analysis plan before you collect or look at the data, so the analysis can’t drift toward the answer you want.
+
+@@ term primary source | Primary source
+Material made at the time, or by people directly involved: documents, records, letters, interviews, data, photographs.
+See: Secondary source, Tertiary source
+
+@@ term provenance | Provenance
+Where a source came from and how it reached you: who made it, when, why, and who has held it since.
+
+@@ term pseudonym | Pseudonym
+A made-up name used in place of a real one to protect someone’s identity.
+
+@@ term qualitative | Qualitative research
+Research that works with words, images and observations to understand meanings and experiences, rather than counting.
+
+@@ term quantitative | Quantitative research
+Research that works with numbers: measuring, counting and testing relationships statistically.
+
+@@ term reliability | Reliability
+How far a source can be trusted, based on its record, access and motives. On the Admiralty scale, rated A (highly reliable) to E (unreliable), with F when it can’t be judged.
+See: Credibility
+
+@@ term replication | Replication
+Repeating a study to see whether its results hold. Research that records its searches, data and methods can be replicated.
+
+@@ term research design | Research design
+The plan for a project: the question, the methods, the evidence, the scope and the ethics, written down before you start.
+
+@@ term research question | Research question
+The question a piece of research sets out to answer. Open, answerable with evidence, and worth answering.
+
+@@ term retraction | Retraction
+A notice that a published work should no longer be relied on, because of serious errors or misconduct. Retracted work is usually still online, marked as retracted.
+
+@@ term sample | Sample
+The part of a larger group you actually study. How it was chosen decides what conclusions can travel beyond it.
+
+@@ term saturation | Saturation
+In interviews and coding, the point at which new material stops adding new codes or themes.
+
+@@ term scope | Scope
+What a piece of research covers and what it leaves out: dates, places, people, kinds of evidence.
+
+@@ term secondary source | Secondary source
+Analysis or interpretation of primary sources, such as most books and journal articles.
+See: Primary source
+
+@@ term source criticism | Source criticism
+Evaluating a source: who made it, when, why, for whom, on what evidence, and how it reached you.
+See: Provenance
+
+@@ term synthesis | Synthesis
+Combining several sources into a new understanding, rather than summarizing them one at a time.
+
+@@ term systematic review | Systematic review
+A literature review that follows a set, recorded procedure for searching, including and assessing studies, so it can be repeated.
+
+@@ term tertiary source | Tertiary source
+A summary of secondary sources, such as an encyclopedia or textbook. A good place to start, rarely a place to cite.
+
+@@ term thesis | Thesis
+The central claim a piece of writing argues for. Also a long piece of research written for a degree.
+
+@@ term timestamp | Timestamp
+The point in an audio or video recording where something is said, used as the locator in a citation.
+
+@@ term triangulation | Triangulation
+Checking a finding with different kinds of evidence or methods. If they agree, the finding is stronger.
+See: Corroboration
+
+@@ term wayback machine | Wayback Machine
+The Internet Archive’s collection of saved web pages, used to cite pages that have changed or disappeared.

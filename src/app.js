@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.5.1';
+const APP_VERSION = '2.6.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -117,6 +117,7 @@ function newDoc(title = 'Untitled document', html = '<p><br></p>') {
     meta: { author: '', subtitle: '', date: '', showTitleBlock: false }, snapshots: [], comments: [], role: 'body', status: '', deadline: '',
     layout: { font: 'book', size: '12', spacing: '2', indent: true, paper: 'letter', bib: 'cited', pageNums: true, pdfNotes: 'foot' } };
 }
+const READ_ST = [['', 'Not on the list'], ['toread', 'To read'], ['reading', 'Reading'], ['read', 'Read']], READ_NAME = Object.fromEntries(READ_ST);
 const ST = [['primary', 'Primary'], ['secondary', 'Secondary'], ['tertiary', 'Tertiary']], ST_OK = new Set(ST.map(x => x[0])), ST_NAME = Object.fromEntries(ST);
 function newNote() {
   const order = P && P.notes && P.notes.length ? Math.max(...P.notes.map(n => +n.order || 0)) + 1 : 0;
@@ -143,7 +144,20 @@ function normalize(p) {
   out.sources = Array.isArray(out.sources) ? out.sources : [];
   out.docs = out.docs.map(x => { const b = newDoc(); return Object.assign(b, x, { meta: Object.assign(b.meta, x.meta || {}), layout: Object.assign(b.layout, x.layout || {}) }); })
     .map(x => (STYLES[x.style] ? x : Object.assign(x, { style: DEFAULT_STYLE })));
-  out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }));
+  out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }, x.pdfHl ? { pdfHl: cleanHl(x.pdfHl) } : {}));
+  out.notes.forEach(n => { if (n.pdfHl && !n.pdfHl.length) delete n.pdfHl; });
+  out.sources.forEach(x => { if (!x.photos) return; x.photos = Array.isArray(x.photos) ? x.photos.filter(f => f && f.id).map(f => ({ id: asStr(f.id), name: asStr(f.name), box: asStr(f.box), folder: asStr(f.folder), item: asStr(f.item), date: asStr(f.date), caption: asStr(f.caption), text: asStr(f.text), sha256: /^[0-9a-f]{64}$/.test(f.sha256) ? f.sha256 : '', size: +f.size || 0, taken: asStr(f.taken), added: asStr(f.added), rot: [0, 90, 180, 270].includes(+f.rot) ? +f.rot : 0 })) : []; if (!x.photos.length) delete x.photos; });
+  out.sources.forEach(x => {
+    if (x.evidence) { x.evidence = Array.isArray(x.evidence) ? x.evidence.filter(e => e && /^[0-9a-f]{64}$/.test(e.sha256)).map(e => ({ id: asStr(e.id) || uid('ev'), name: asStr(e.name), size: +e.size || 0, type: asStr(e.type), sha256: e.sha256, modified: asStr(e.modified), added: asStr(e.added), captured: asStr(e.captured), from: asStr(e.from), note: asStr(e.note) })) : []; if (!x.evidence.length) delete x.evidence; }
+    if (x.read && !['toread', 'reading', 'read'].includes(x.read)) delete x.read;
+    if (x.rc && (typeof x.rc !== 'object' || !Array.isArray(x.rc.notices))) delete x.rc;
+    if (x.rc) x.rc.notices = x.rc.notices.filter(n => n && typeof n === 'object').map(n => ({ type: asStr(n.type), doi: asStr(n.doi), date: asStr(n.date), label: asStr(n.label) }));
+  });
+  if (out.notDup && !Array.isArray(out.notDup)) delete out.notDup;
+  out.codes = Array.isArray(out.codes) ? out.codes.filter(c => c && c.id).map(c => ({ id: asStr(c.id), name: asStr(c.name) || 'Code', color: /^#[0-9a-f]{6}$/i.test(c.color) ? c.color : TH_COLORS[0], def: asStr(c.def), parent: asStr(c.parent) })) : [];
+  out.notes.forEach(n => { if (n.codes) { n.codes = Array.isArray(n.codes) ? n.codes.map(asStr).filter(id => out.codes.some(c => c.id === id)) : []; if (!n.codes.length) delete n.codes; } });
+  if (out.litGrid && typeof out.litGrid === 'object') { const g = out.litGrid; g.cols = Array.isArray(g.cols) ? g.cols.filter(c => c && c.id).map(c => ({ id: asStr(c.id), name: asStr(c.name) || 'Column', q: asStr(c.q) })) : [];
+    g.cells = g.cells && typeof g.cells === 'object' ? Object.fromEntries(Object.entries(g.cells).filter(([, r]) => r && typeof r === 'object').map(([k, r]) => [k, Object.fromEntries(Object.entries(r).map(([c, v]) => [c, asStr(v)]))])) : {}; } else delete out.litGrid;
   out.sources = out.sources.filter(x => x && typeof x === 'object').map(x => (x.stype !== undefined && !ST_OK.has(x.stype) ? Object.assign(x, { stype: '' }) : x));
   out.piles = Array.isArray(out.piles) ? out.piles.filter(x => x && x.id).map(x => ({ id: x.id, name: x.name || 'Pile' })) : [];
   const pileIds = new Set(out.piles.map(x => x.id));
@@ -152,7 +166,7 @@ function normalize(p) {
   const partIds = new Set(out.parts.map(x => x.id));
   out.docs.forEach((x, i) => { if (!partIds.has(x.partId)) x.partId = ''; if (typeof x.order !== 'number') x.order = i; x.target = +x.target || 0;
     x.snapshots = Array.isArray(x.snapshots) ? x.snapshots : []; { let k = 0; x.snapshots.forEach(v => { v.kind = v.kind || (/^Before /.test(v.name || '') ? 'safety' : 'draft'); v.note = v.note || ''; }); [...x.snapshots].reverse().forEach(v => { if (v.kind === 'draft') { if (!v.n) v.n = k + 1; k = Math.max(k, v.n); } }); } x.comments = Array.isArray(x.comments) ? x.comments : []; x.role = x.role || 'body'; x.status = x.status || ''; x.deadline = x.deadline || ''; });
-  out.entities = Array.isArray(out.entities) ? out.entities.filter(e => e && e.name).map(e => ({ id: e.id || uid('e'), name: e.name, kind: e.kind || 'person', variants: Array.isArray(e.variants) ? e.variants : [], note: e.note || '' })) : [];
+  out.entities = Array.isArray(out.entities) ? out.entities.filter(e => e && e.name).map(e => ({ id: e.id || uid('e'), name: e.name, kind: e.kind || 'person', variants: Array.isArray(e.variants) ? e.variants : [], note: e.note || '', pseudo: asStr(e.pseudo), aka: Array.isArray(e.aka) ? e.aka.map(asStr).filter(Boolean) : [], consent: ['', 'given', 'pending', 'declined', 'withdrawn', 'public'].includes(e.consent) ? e.consent : '' })) : [];
   out.indexTerms = Array.isArray(out.indexTerms) ? out.indexTerms.filter(t => t && t.term).map(t => ({ id: t.id || uid('x'), term: t.term, sub: t.sub || '', match: Array.isArray(t.match) ? t.match : [], see: t.see || '', seeAlso: t.seeAlso || '' })) : [];
   out.indexOpts = Object.assign({ names: false }, out.indexOpts || {});
   // co-writing: what was sent (kept for comparing) and, on a copy, where it came from
@@ -185,8 +199,10 @@ function normalize(p) {
       log: arr(J.log).map(e => ({ id: String(e.id), date: dayOk(e.date) || todayISOof(e.created), kind: LK.includes(e.kind) ? e.kind : 'did', text: rstr(e.text), tags: (Array.isArray(e.tags) ? e.tags : []).map(rstr).filter(Boolean).slice(0, 12), links: links(e.links), done: e.kind === 'next' && !!e.done, doneAt: e.kind === 'next' && e.done ? rstr(e.doneAt) : '', created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.text),
       searches: arr(J.searches).map(x => ({ id: String(x.id), date: dayOk(x.date) || todayISOof(x.created), where: rstr(x.where), terms: rstr(x.terms), filters: rstr(x.filters), results: num(x.results), kept: num(x.kept), notes: rstr(x.notes), created: rstr(x.created) || nowISO() })),
     };
+    { const c = J.checks; out.journal.checks = c && typeof c === 'object' && !Array.isArray(c) ? Object.fromEntries(Object.entries(c).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [asStr(k), Object.fromEntries(Object.entries(v).map(([i, d]) => [asStr(i), asStr(d)]))])) : {}; }
   }
   out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {},
+    Array.isArray(s.photos) && s.photos.length ? { photos: s.photos } : {}, Array.isArray(s.evidence) && s.evidence.length ? { evidence: s.evidence } : {}, s.read ? { read: s.read } : {}, s.prio ? { prio: 1 } : {}, s.rc ? { rc: s.rc } : {},
     s.lc && typeof s.lc === 'object' ? { lc: Object.fromEntries(['at', 'url', 'ts', 'st', 'err'].filter(k => s.lc[k] != null && s.lc[k] !== '').map(k => [k, k === 'err' ? 1 : String(s.lc[k]).slice(0, 300)]).filter(([k, v]) => k !== 'url' || WB_OK_N.test(v))) } : {}));
   { // datasets and dashboards (1.7)
     const arr = v => (Array.isArray(v) ? v : []), obj = v => v && typeof v === 'object' && !Array.isArray(v), strs = v => arr(v).map(rstr).filter(Boolean);
@@ -709,7 +725,7 @@ function openDoc(id, skipSync = false) {
   if (!$('#findBar').classList.contains('hidden')) runFind();
   $('#scroller').scrollTop = 0; tipCheck();
   document.body.classList.remove('side-open');
-  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
+  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
 function updateWordCount() {
   const clone = editor.cloneNode(true);
@@ -1271,14 +1287,17 @@ function sourceRowHTML(s, uses, nn) {
   const l = sourceLabel(s);
   return `<li data-id="${s.id}" class="${panelState?.kind === 'source' && panelState.id === s.id ? 'on' : ''}"><span class="act"><button data-a="cite" title="Cite at cursor">“ Cite</button></span>
       <div class="t">${esc(l.who || '—')}${l.yr ? ' · ' + esc(l.yr) : ''}</div><div class="s">${esc(l.title)}</div>
-      <div class="meta">${stBadge(s.stype)}<span>${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
+      <div class="meta">${stBadge(s.stype)}${s.read && s.read !== 'read' ? `<span class="rd-b rd-${s.read}">${s.prio ? '★ ' : ''}${READ_NAME[s.read]}</span>` : ''}${rcBadge(s)}<span>${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')}</span>${uses ? `<span>cited ${uses}×</span>` : ''}${nn ? `<span>${nn} note${nn > 1 ? 's' : ''}</span>` : ''}</div></li>`;
 }
 function renderSourceList() {
   const q = $('#qSources').value.toLowerCase().trim();
   const stc = {}; P.sources.forEach(s => { if (s.stype) stc[s.stype] = (stc[s.stype] || 0) + 1; });
-  if (srcSTFilter && !stc[srcSTFilter]) srcSTFilter = '';
-  $('#srcChips').innerHTML = stChips(srcSTFilter, stc);
-  const list = sortedSources().filter(s => (!srcSTFilter || s.stype === srcSTFilter) && (!q || JSON.stringify(s.csl).toLowerCase().includes(q)));
+  if (srcSTFilter && !srcSTFilter.startsWith('rd:') && !stc[srcSTFilter]) srcSTFilter = '';
+  const rdc = {}; P.sources.forEach(s => { if (s.read === 'toread' || s.read === 'reading') rdc[s.read] = (rdc[s.read] || 0) + 1; });
+  if (srcSTFilter && srcSTFilter.startsWith('rd:') && !rdc[srcSTFilter.slice(3)]) srcSTFilter = '';
+  $('#srcChips').innerHTML = stChips(srcSTFilter, stc) + Object.entries(rdc).map(([k, n]) => `<span class="chip stc rdc ${srcSTFilter === 'rd:' + k ? 'on' : ''}" data-st="rd:${k}" role="button" tabindex="0" aria-pressed="${srcSTFilter === 'rd:' + k}">${READ_NAME[k]} <span class="muted">${n}</span></span>`).join('');
+  const list = sortedSources().filter(s => (!srcSTFilter || (srcSTFilter.startsWith('rd:') ? s.read === srcSTFilter.slice(3) : s.stype === srcSTFilter)) && (!q || JSON.stringify(s.csl).toLowerCase().includes(q)))
+    .sort((a, b) => srcSTFilter.startsWith('rd:') ? (b.prio || 0) - (a.prio || 0) : 0);
   const uses = citeCounts(), nn = noteCountsBySource();
   $('#sourceList').innerHTML = list.length ? list.map(s => sourceRowHTML(s, uses.get(s.id) || 0, nn.get(s.id) || 0)).join('')
     : `<div class="empty">${P.sources.length ? 'No sources match.' : 'No sources yet.<br>Add one with <b>+ New</b>, quick-add a DOI or ISBN, or import a Zotero CSL-JSON export.'}</div>`;
@@ -1439,7 +1458,7 @@ function openSource(id, focusTitle = false) {
   $('#panel').classList.remove('hidden');
   $('#panelTitle').textContent = 'Source';
   renderSourcePanel(s);
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
   renderSourceList();
   if (focusTitle) setTimeout(() => $('#panelBody [data-f="title"]')?.focus(), 30);
 }
@@ -1459,6 +1478,7 @@ function renderSourcePanel(s) {
     <div class="lookup"><input id="srcLookup" placeholder="Fill from DOI or ISBN"><button id="srcLookupBtn">Fetch</button></div>
     <div class="grid2" style="grid-template-columns:1fr 150px"><div><label>Type</label><select data-f="type">${TYPES.map(([k, l]) => `<option value="${k}" ${k === type ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div><label for="srcStype" title="Primary: made at the time or by those involved (documents, records, interviews, data). Secondary: analysis of primary sources. Tertiary: summaries of secondary ones (encyclopedias, textbooks).">Source type</label><select id="srcStype"><option value="">Not set</option>${ST.map(([k, l]) => `<option value="${k}" ${s.stype === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    <div class="grid2 src-read" style="grid-template-columns:1fr 1fr"><div><label for="srcRead">Reading</label><select id="srcRead">${READ_ST.map(([k, l]) => `<option value="${k}" ${(s.read || '') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div><div><label class="inline src-prio"><input type="checkbox" id="srcPrio" ${s.prio ? 'checked' : ''}> Read this first</label></div></div>
     <label>People <span class="muted">(order matters)</span></label>
     <div class="people" id="people">${people.map(personRow).join('')}</div>
     <button class="ghost small" id="addPerson">+ Add person</button>
@@ -1466,6 +1486,7 @@ function renderSourcePanel(s) {
     ${fieldOn({ t: ['webpage', 'post-weblog', 'article-newspaper', 'article-magazine'] }, type) ? '<button class="ghost small" id="accToday" style="margin-top:4px">Set accessed date to today</button>' : ''}
     <div class="preview-box" id="srcPreview"></div>
     <label>Annotation <span class="muted">(for an annotated bibliography)</span></label><textarea id="srcAnnot" rows="3" placeholder="What this source is, what it argues, and how you use it.">${esc(s.annotation || '')}</textarea>
+    ${srcFlagsHTML(s)}
     ${osintSectionHTML(s)}
     <details><summary>Advanced: raw CSL-JSON (any CSL variable)</summary><textarea class="raw" id="rawCsl">${esc(JSON.stringify(c, null, 2))}</textarea><button id="applyRaw" style="margin-top:6px">Apply JSON</button></details>
     <div class="tip">Enter titles exactly as they should print. For an organization as author (RAND Corporation, U.S. Army), tick “Org”.</div>`;
@@ -1524,6 +1545,9 @@ $('#panelBody').addEventListener('input', e => {
     if (e.target.id === 'rawCsl' || e.target.id === 'srcLookup') return;
     const s = P.sources.find(x => x.id === panelState.id); if (!s) return;
     if (e.target.id === 'srcAnnot') { s.annotation = e.target.value; s.modified = nowISO(); markDirty(); return; }
+    if (e.target.id === 'srcRead') { if (e.target.value) s.read = e.target.value; else delete s.read; if (s.read === 'read') { delete s.prio; $('#srcPrio').checked = false; } s.modified = nowISO(); refreshSourceRow(s); renderSourceList(); markDirty(); return; }
+    if (e.target.id === 'srcPrio') { if (e.target.checked) { s.prio = 1; if (!s.read) { s.read = 'toread'; $('#srcRead').value = 'toread'; } } else delete s.prio; s.modified = nowISO(); refreshSourceRow(s); markDirty(); return; }
+    if (e.target.id === 'evNote' || e.target.dataset.ev) { const ev = (s.evidence || []).find(x => x.id === e.target.closest('[data-evid]')?.dataset.evid); if (ev) { ev[e.target.dataset.ev] = e.target.value; markDirty(); } return; }
     if (e.target.id === 'srcStype') { s.stype = e.target.value; s.modified = nowISO(); srcVersion++; refreshSourceRow(s); renderNoteList(); renderRefs(true); markDirty(); return; }
     if (e.target.dataset.f === 'type') { s.csl = readSourceForm(s); renderSourcePanel(s); }
     if (e.target.dataset.o === 'type') { s.osint = readOsintForm(); renderSourcePanel(s); }
@@ -1570,6 +1594,7 @@ $('#panelFoot').addEventListener('click', async e => {
     const s = P.sources.find(x => x.id === panelState.id); if (!s) return;
     if (a === 'transcript') { openTranscript(s.id); return; }
     if (a === 'pdf') { readSourcePdf(s.id); return; }
+    if (a === 'photos') { openPhotos(s.id); return; }
     if (a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: s.id }])); toast('Citation inserted. Click it to add a page number.'); }
     if (a === 'note') { const n = newNote(); n.sourceId = s.id; n.kind = 'quote'; P.notes.unshift(n); renderNoteList(); openNote(n.id); switchTab('notes'); markDirty(); }
     if (a === 'del') {
@@ -1817,7 +1842,14 @@ const stBadge = (t, inh) => t ? `<span class="stype st-${t}" title="${ST_NAME[t]
 let noteSTFilter = '', srcSTFilter = '';
 function stChips(cur, counts) { return ST.filter(([k]) => counts[k]).map(([k, l]) => `<span class="chip stc st-${k} ${cur === k ? 'on' : ''}" data-st="${k}" role="button" tabindex="0" aria-pressed="${cur === k}">${l} <span class="muted">${counts[k]}</span></span>`).join(''); }
 function allTags() { const s = new Set(); P.notes.forEach(n => n.tags.forEach(t => s.add(t))); return [...s].sort((a, b) => a.localeCompare(b)); }
+// highlights in a PDF, kept with the note they became: [{ p: PDF page, r: [[x, y, w, h], …] as fractions of the page }]
+function cleanHl(h) {
+  if (!Array.isArray(h)) return [];
+  const f = v => Math.max(0, Math.min(1, +v || 0));
+  return h.filter(x => x && Number.isInteger(+x.p) && +x.p > 0 && Array.isArray(x.r)).slice(0, 40).map(x => ({ p: +x.p, r: x.r.filter(q => Array.isArray(q) && q.length === 4).slice(0, 80).map(q => q.map(v => Math.round(f(v) * 10000) / 10000)) })).filter(x => x.r.length);
+}
 function renderNoteList() {
+  try { if (R.doc) rdHlRefresh(); } catch (e) { /* the reader isn't set up yet */ }
   const q = $('#qNotes').value.toLowerCase().trim();
   const tags = allTags();
   if (noteTagFilter && !tags.includes(noteTagFilter)) noteTagFilter = null;
@@ -1855,6 +1887,7 @@ function openNote(id, focus = false) {
     <label>Title</label><input data-n="title" value="${esc(n.title)}" placeholder="Short handle for this note">
     <div class="grid2"><div><label>Kind</label><select data-n="kind">${KINDS.map(([k, l]) => `<option value="${k}" ${k === n.kind ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div><label>Tags <span class="muted">(comma-separated)</span></label><input data-n="tags" value="${esc(n.tags.join(', '))}" placeholder="chapter 3, proxies"></div></div>
+    <div class="n-codes" id="nCodes">${noteCodesHTML(n)}</div>
     <label style="display:flex;justify-content:space-between;align-items:end">Note <span><button class="ghost small" data-a="mdtoggle" style="padding:1px 6px">Preview</button></span></label>
     <textarea class="note-body" data-n="body" placeholder="Markdown: **bold**, *italic*, - lists, > quotes">${esc(n.body)}</textarea>
     <div class="md-preview hidden" id="mdPreview"></div>
@@ -2015,6 +2048,7 @@ function buildExport(doc, mode = 'html', opt = {}) {
   $$('.rm', tmp).forEach(c => c.replaceWith(...c.childNodes));
   if (mode !== 'docx') { $$('del.sg', tmp).forEach(d => d.remove()); $$('ins.sg', tmp).forEach(d => d.replaceWith(...d.childNodes)); }
   tmp.normalize();
+  if (!opt.realNames) pseudoApply(tmp);
   if (mode === 'scholar') { // citations and text footnotes become placeholders the Pandoc and LaTeX writers fill in
     $$('.ixm', tmp).forEach(m => m.remove());
     const cites = [], fns = [];
@@ -2145,6 +2179,8 @@ function ask(title, msg, okLabel = 'OK', inputValue = null) {
     d.showModal(); setTimeout(() => (inputValue !== null ? inp : $('#askOk')).focus(), 30);
   });
 }
+function infoDialog(title, html) { $('#infoTitle').textContent = title; $('#infoBody').innerHTML = html; $('#infoDlg').showModal(); $('#infoOk').focus(); }
+$('#infoOk').addEventListener('click', () => $('#infoDlg').close());
 let toastT;
 function toast(msg, action) {
   const t = $('#toast'); t.textContent = msg; t.classList.toggle('has-act', !!action);
@@ -2363,10 +2399,10 @@ const COMMANDS = [
   ['Import a Word document (.docx)', () => $('#fileDocx').click()], ['Versions: save or compare', () => openVersions()], ['Export ePub (e-book)', () => exportEpub(curDoc())],
   ['Names & spellings', () => openNames()], ['Source audit', () => openAudit('all')], ['Permissions log: credits and rights for figures, tables and quotations', () => openPerms()], ['Check links: web sources against the Wayback Machine', () => openLinks()], ['Writing record & chapter status', () => openRecord()], ['Revision lens', () => toggleLens()],
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
-  ['Annotated bibliography', () => annotatedBibliography()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
+  ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
   ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
-  ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
+  ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Close to your notes: wording repeated without quotation marks', () => { PREFS.pxOn = true; savePrefs(); switchTab('outline'); renderCloseToNotes(); $('#pxList').scrollIntoView({ block: 'center' }); }], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
 ];
@@ -4009,6 +4045,34 @@ function nameIssues() {
   }));
   return issues;
 }
+// pseudonyms (2.6): a person's or organization's real name, and other forms of it, are replaced in every export
+const pseudoActive = () => P.pseudoOn !== false && (P.entities || []).some(e => e.pseudo && e.pseudo.trim());
+function pseudoPairs() {
+  if (!pseudoActive()) return [];
+  return P.entities.filter(e => e.pseudo && e.pseudo.trim()).flatMap(e => [e.name, ...e.variants, ...(e.aka || [])].map(x => String(x || '').trim()).filter(x => x && x !== e.pseudo.trim()).map(from => ({ from, to: e.pseudo.trim() })))
+    .sort((a, b) => b.from.length - a.from.length); // longest first, so "Maria Lopez" goes before "Lopez"
+}
+function pseudoText(t, pairs = pseudoPairs()) {
+  if (!pairs.length || !t) return t;
+  const re = new RegExp('(^|[^\\p{L}\\p{N}])(' + pairs.map(p => escRe(p.from)).join('|') + ')(?![\\p{L}\\p{N}])', 'gu'), map = new Map(pairs.map(p => [p.from, p.to]));
+  return t.replace(re, (m, pre, name) => pre + (map.get(name) || name));
+}
+function pseudoApply(root) {
+  const pairs = pseudoPairs(); if (!pairs.length) return 0; let n = 0;
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT); const nodes = []; while (w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(tn => { const v = pseudoText(tn.data, pairs); if (v !== tn.data) { tn.data = v; n++; } });
+  $$('[data-text],[data-cnote],img[alt],[title]', root).forEach(el => ['data-text', 'data-cnote', 'alt', 'title'].forEach(a => { if (el.hasAttribute(a)) { const v = pseudoText(el.getAttribute(a), pairs); if (v !== el.getAttribute(a)) { el.setAttribute(a, v); n++; } } }));
+  return n;
+}
+// people named in this document whose consent was declined, withdrawn or is still pending
+function consentIssues() {
+  const ents = (P.entities || []).filter(e => ['pending', 'declined', 'withdrawn'].includes(e.consent)); if (!ents.length) return [];
+  const nodes = textNodesIn(editor), out = [];
+  ents.forEach(e => { const forms = [e.name, ...e.variants, ...(e.aka || [])].filter(Boolean); const re = new RegExp('(^|[^\\p{L}\\p{N}])(' + forms.map(escRe).join('|') + ')(?![\\p{L}\\p{N}])', 'gu'), ranges = [];
+    nodes.forEach(tn => { let m; re.lastIndex = 0; while ((m = re.exec(tn.data))) { const st = m.index + m[1].length; const r = document.createRange(); r.setStart(tn, st); r.setEnd(tn, st + m[2].length); ranges.push(r); } });
+    if (ranges.length) out.push({ e, ranges }); });
+  return out;
+}
 function lev(a, b, max = 3) {
   if (Math.abs(a.length - b.length) > max) return max + 1;
   let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
@@ -4039,18 +4103,22 @@ function spellingSuggestions() {
 function openNames() { renderNames(); $('#namesDlg').showModal(); }
 function renderNames() {
   const kinds = ['person', 'organization', 'place', 'term'];
+  $('#pseudoOn').checked = pseudoActive();
   $('#namesList').innerHTML = P.entities.length ? P.entities.map(e => `<div class="ent" data-e="${e.id}">
       <input data-k="name" value="${esc(e.name)}" placeholder="Preferred spelling"><select data-k="kind">${kinds.map(k => `<option ${k === e.kind ? 'selected' : ''}>${k}</option>`).join('')}</select>
-      <input data-k="variants" value="${esc(e.variants.join(', '))}" placeholder="Spellings to flag (comma-separated)"><input data-k="note" value="${esc(e.note)}" placeholder="Role, title, or note"><button class="ghost danger" data-k="del" title="Remove">✕</button></div>`).join('')
+      <input data-k="variants" value="${esc(e.variants.join(', '))}" placeholder="Spellings to flag (comma-separated)"><input data-k="note" value="${esc(e.note)}" placeholder="Role, title, or note"><button class="ghost danger" data-k="del" title="Remove">✕</button>
+      ${e.kind === 'person' || e.kind === 'organization' || e.pseudo || e.consent ? `<div class="ent2"><label class="small">Pseudonym <input data-k="pseudo" value="${esc(e.pseudo || '')}" placeholder="Name used in exports"></label><label class="small">Other forms to replace <input data-k="aka" value="${esc((e.aka || []).join(', '))}" placeholder="Surname, first name, nickname"></label><label class="small">Consent <select data-k="consent">${[['', 'Not recorded'], ['given', 'Given'], ['pending', 'Asked, no answer yet'], ['declined', 'Declined'], ['withdrawn', 'Withdrawn'], ['public', 'Public figure: not needed']].map(([v, l]) => `<option value="${v}" ${v === (e.consent || '') ? 'selected' : ''}>${l}</option>`).join('')}</select></label></div>` : ''}</div>`).join('')
     : '<div class="muted small" style="padding:8px 0">No names yet. Add the people, organizations and places you write about, with any spellings you want flagged (Kiev → Kyiv, Prigozin → Prigozhin).</div>';
   const sug = spellingSuggestions();
   $('#namesSug').innerHTML = sug.length ? sug.map(s => `<li><span><b>${esc(s.keep)}</b> (${s.nk}) and <b>${esc(s.alt)}</b> (${s.na})</span><button data-keep="${esc(s.keep)}" data-alt="${esc(s.alt)}">Use “${esc(s.keep)}”</button><button class="ghost" data-keep="${esc(s.alt)}" data-alt="${esc(s.keep)}">Use “${esc(s.alt)}”</button></li>`).join('') : '<li class="muted small">No near-duplicate spellings spotted in your documents and notes.</li>';
 }
 $('#namesList').addEventListener('input', e => {
   const row = e.target.closest('.ent'); if (!row) return; const en = P.entities.find(x => x.id === row.dataset.e); const k = e.target.dataset.k;
-  if (k === 'variants') en.variants = e.target.value.split(',').map(x => x.trim()).filter(Boolean); else en[k] = e.target.value;
-  markDirty(); renderOutlineSoon();
+  if (k === 'variants' || k === 'aka') en[k] = e.target.value.split(',').map(x => x.trim()).filter(Boolean); else en[k] = e.target.value;
+  markDirty(); renderOutlineSoon(); if (k === 'kind' || k === 'consent') renderNames();
 });
+$('#namesList').addEventListener('change', e => { if (e.target.matches('select')) e.target.dispatchEvent(new Event('input', { bubbles: true })); });
+$('#pseudoOn').addEventListener('change', e => { P.pseudoOn = e.target.checked; markDirty(); });
 $('#namesList').addEventListener('click', e => { const b = e.target.closest('[data-k=del]'); if (!b) return; P.entities = P.entities.filter(x => x.id !== b.closest('.ent').dataset.e); renderNames(); markDirty(); renderOutline(); });
 $('#namesAdd').addEventListener('click', () => { P.entities.push({ id: uid('e'), name: '', kind: 'person', variants: [], note: '' }); renderNames(); $$('#namesList .ent:last-child input')[0]?.focus(); });
 $('#namesSug').addEventListener('click', e => {
@@ -4084,14 +4152,15 @@ function renderIntegrity() {
   // names
   const ni = nameIssues();
   if (window.CSS && CSS.highlights && window.Highlight) { const all = ni.flatMap(x => x.ranges); if (all.length) CSS.highlights.set('cp-name', new Highlight(...all)); else CSS.highlights.delete('cp-name'); }
-  $('#nameList').innerHTML = ni.map(x => `<li data-j="${push(x.ranges[0].startContainer.parentElement)}"><b class="fk fk-tk">${x.ranges.length}×</b><span>${esc(x.v)} → ${esc(x.e.name)}</span><button class="ghost small" data-fix="${esc(x.v)}" data-to="${esc(x.e.name)}">Fix all</button></li>`).join('')
+  const cs = consentIssues();
+  $('#nameList').innerHTML = cs.map(x => `<li data-j="${push(x.ranges[0].startContainer.parentElement)}"><b class="fk fk-cite">${x.e.consent === 'pending' ? 'asked' : x.e.consent}</b><span>${esc(x.e.name)}: consent ${x.e.consent === 'pending' ? 'not yet given' : x.e.consent}${x.e.pseudo && pseudoActive() ? `, exports use “${esc(x.e.pseudo)}”` : ', named in this document'}</span></li>`).join('') + ni.map(x => `<li data-j="${push(x.ranges[0].startContainer.parentElement)}"><b class="fk fk-tk">${x.ranges.length}×</b><span>${esc(x.v)} → ${esc(x.e.name)}</span><button class="ghost small" data-fix="${esc(x.v)}" data-to="${esc(x.e.name)}">Fix all</button></li>`).join('')
     || `<li class="muted small none">${P.entities.length ? 'No flagged spellings in this document.' : 'Add names and spellings to check.'}</li>`;
   // comments
   const cm = $$('.cmt', editor).map(el => ({ el, c: findComment(el.dataset.cmt) })).filter(x => x.c);
   $('#cmtList').innerHTML = cm.map(x => `<li data-j="${push(x.el)}"><span><b>${esc(x.c.text.slice(0, 60) || '(empty)')}</b> <em class="muted">“${esc(x.el.textContent.slice(0, 30))}”</em></span><button class="ghost small" data-resolve="${x.c.id}">Resolve</button></li>`).join('')
     || '<li class="muted small none">Click ✎ in the toolbar (⌘/Ctrl+Alt+A) to write a note in the margin, anchored to the cursor or a selection.</li>';
   $('#cmtCount').textContent = cm.length || '';
-  $('#qCount').textContent = bad.length || ''; $('#nCount').textContent = ni.length || '';
+  $('#qCount').textContent = bad.length || ''; $('#nCount').textContent = (ni.length + cs.filter(x => !(x.e.pseudo && pseudoActive())).length) || '';
   const ixm = $$('.ixm', editor).length; $('#ixSum').textContent = `${ixm} marked here · ${P.indexTerms.length} term${P.indexTerms.length === 1 ? '' : 's'} indexed everywhere${P.indexOpts.names && P.entities.length ? ' · names list on' : ''}`;
   return bad.length + ni.length;
 }
@@ -4404,6 +4473,144 @@ const pdfStore = {
   keys: () => idbReq('readonly', st => st.getAllKeys()),
 };
 
+/* ---------- Archive photos (2.6): phone photos of documents from an archive visit, filed by box and folder,
+   transcribed beside the image, turned into notes. The images stay in this browser (like PDFs), resized to
+   2400 pixels; the project file keeps where each came from, its transcription and a SHA-256 fingerprint of
+   the original file. ---------- */
+const photoStore = {
+  get: id => idbReq('readonly', st => st.get('photo:' + id)),
+  thumb: id => idbReq('readonly', st => st.get('phth:' + id)),
+  set: (id, val, th) => idbReq('readwrite', st => { st.put(th, 'phth:' + id); return st.put(val, 'photo:' + id); }),
+  del: id => idbReq('readwrite', st => { st.delete('phth:' + id); return st.delete('photo:' + id); }),
+};
+const PH = { src: '', cur: '', url: '', zoom: 'fit', thumbs: {} };
+async function sha256Hex(buf) { const h = await crypto.subtle.digest('SHA-256', buf); return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2, '0')).join(''); }
+async function phResize(file, max) {
+  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  const k = Math.min(1, max / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k); c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height); bmp.close && bmp.close();
+  return c;
+}
+const phSrc = () => P.sources.find(x => x.id === PH.src) || null;
+const phList = () => (phSrc() || {}).photos || [];
+const phCur = () => phList().find(f => f.id === PH.cur) || null;
+const phWhere = f => [f.box && 'box ' + f.box, f.folder && 'folder ' + f.folder, f.item && 'item ' + f.item].filter(Boolean).join(', ');
+function openPhotos(srcId) {
+  if (!P) return;
+  const withPh = P.sources.filter(x => x.photos && x.photos.length);
+  PH.src = srcId || (P.sources.some(x => x.id === PH.src) ? PH.src : withPh[0] ? withPh[0].id : '');
+  PH.cur = phList().some(f => f.id === PH.cur) ? PH.cur : (phList()[0] || {}).id || '';
+  phRender(); $('#phDlg').showModal();
+}
+function phSources() {
+  const list = P.sources.filter(x => (x.photos && x.photos.length) || x.csl.type === 'manuscript' || x.id === PH.src);
+  return `<option value="">${list.length ? 'Choose a collection…' : 'No collection yet'}</option>` + sortedSources().filter(x => list.includes(x)).map(x => `<option value="${x.id}" ${x.id === PH.src ? 'selected' : ''}>${esc(((sourceLabel(x).who ? srcShort(x) + ' · ' : '') + sourceLabel(x).title).slice(0, 80))}${x.photos && x.photos.length ? ` (${x.photos.length})` : ''}</option>`).join('') + '<option value="__new">New collection…</option><option value="__any">Another source…</option>';
+}
+function phRender() {
+  $('#phSrc').innerHTML = phSources();
+  const list = phList(), s = phSrc();
+  $('#phAdd').disabled = !s;
+  // the strip, grouped by box and folder
+  let last = null;
+  $('#phStrip').innerHTML = list.length ? list.map((f, i) => { const g = [f.box && 'Box ' + f.box, f.folder && 'Folder ' + f.folder].filter(Boolean).join(' · ') || 'Not filed'; const head = g !== last ? `<li class="ph-grp">${esc(g)}</li>` : ''; last = g;
+    return head + `<li><button class="ph-th ${f.id === PH.cur ? 'on' : ''}" data-ph="${f.id}" aria-label="Photo ${i + 1}${f.caption ? ': ' + esc(f.caption) : ''}" aria-current="${f.id === PH.cur}"><img alt="" data-phth="${f.id}" ${PH.thumbs[f.id] ? `src="${PH.thumbs[f.id]}"` : ''}><span>${esc(f.item ? 'Item ' + f.item : f.caption || f.name || 'Photo ' + (i + 1)).slice(0, 26)}</span>${f.text.trim() ? '<i class="ph-done" title="Transcribed">✓</i>' : ''}</button></li>`; }).join('')
+    : `<li class="ph-empty">${s ? 'No photos yet. Choose <b>Add photos…</b> to bring in pictures from an archive visit.' : 'Choose a collection above, or make a new one, then add photos.'}</li>`;
+  $$('#phStrip img[data-phth]:not([src])').forEach(async img => { const t = await photoStore.thumb(img.dataset.phth).catch(() => null); if (t) { PH.thumbs[img.dataset.phth] = t; img.src = t; } });
+  $('#phCount').textContent = list.length ? `${list.filter(f => f.text.trim()).length} of ${list.length} transcribed` : '';
+  phShow();
+}
+async function phShow() {
+  const f = phCur(), view = $('#phView'), side = $('#phSide');
+  if (PH.url) { URL.revokeObjectURL(PH.url); PH.url = ''; }
+  if (!f) { view.innerHTML = '<div class="ph-none">No photo selected.</div>'; side.classList.add('hidden'); return; }
+  side.classList.remove('hidden');
+  ['box', 'folder', 'item', 'date', 'caption'].forEach(k => { $('#ph_' + k).value = f[k] || ''; });
+  $('#phText').value = f.text || '';
+  const rec = await photoStore.get(f.id).catch(() => null);
+  if (f.id !== PH.cur) return;
+  if (!rec) view.innerHTML = `<div class="ph-none">This photo isn’t stored in this browser. Photos stay in the browser they were added in; add <b>${esc(f.name || 'the file')}</b> again to see it here. The transcription and notes are safe in the project.</div>`;
+  else { PH.url = URL.createObjectURL(new Blob([rec.buf], { type: rec.type || 'image/jpeg' })); view.innerHTML = `<img id="phImg" src="${PH.url}" alt="${esc(f.caption || 'Archive photo ' + (phWhere(f) || ''))}" class="z-${PH.zoom} r-${f.rot || 0}">`; }
+  const i = phList().indexOf(f);
+  $('#phPos').textContent = `${i + 1} / ${phList().length}`;
+  $('#phMeta').innerHTML = `${f.name ? esc(f.name) + ' · ' : ''}${f.size ? (f.size / 1048576).toFixed(1) + ' MB' : ''}${f.taken ? ' · taken ' + esc(f.taken.slice(0, 10)) : ''}${f.sha256 ? `<br>SHA-256 <code title="${f.sha256}">${f.sha256.slice(0, 16)}…</code> <button class="ghost small" id="phCopyHash">Copy</button>` : ''}`;
+  const ns = P.notes.filter(n => n.photo === f.id);
+  $('#phNotes').innerHTML = ns.length ? ns.map(n => `<li><button class="ghost" data-phn="${n.id}"><b>${esc(KINDS.find(k => k[0] === n.kind)?.[1] || 'Note')}</b> ${esc((n.title || plainMd(n.body)).slice(0, 60))}</button></li>`).join('') : '<li class="muted small">No notes on this photo yet. Select words in the transcription and choose <b>Quote note</b>.</li>';
+}
+function phSave(k, v) { const f = phCur(); if (!f) return; f[k] = v; markDirty(); if (['box', 'folder', 'item', 'caption'].includes(k) || k === 'text') phRenderStripSoon(); }
+const phRenderStripSoon = debounce(() => { const keep = document.activeElement; const id = keep && keep.id; phRender(); if (id && $('#' + id)) { $('#' + id).focus(); } }, 900);
+async function phAddFiles(files) {
+  const s = phSrc(); if (!s) return;
+  files = [...files].filter(f => /^image\//.test(f.type)); if (!files.length) { toast('Choose image files (JPEG, PNG, HEIC where the browser can read it).'); return; }
+  s.photos = s.photos || [];
+  const prev = phCur() || s.photos[s.photos.length - 1] || {};
+  let n = 0, firstId = '';
+  for (const file of files) {
+    try {
+      $('#phCount').textContent = `Adding ${n + 1} of ${files.length}…`;
+      const orig = await file.arrayBuffer(), sha = await sha256Hex(orig);
+      if (s.photos.some(f => f.sha256 === sha)) continue;
+      const big = await phResize(file, 2400), small = await phResize(file, 220);
+      const blob = await new Promise(r => big.toBlob(r, 'image/jpeg', .86));
+      const keepOrig = file.type === 'image/jpeg' && orig.byteLength <= blob.size;
+      const id = uid('ph');
+      await photoStore.set(id, { type: keepOrig ? file.type : 'image/jpeg', buf: keepOrig ? orig : await blob.arrayBuffer() }, small.toDataURL('image/jpeg', .7));
+      s.photos.push({ id, name: file.name, box: prev.box || '', folder: prev.folder || '', item: '', date: '', caption: '', text: '', sha256: sha, size: file.size, taken: file.lastModified ? new Date(file.lastModified).toISOString() : '', added: nowISO(), rot: 0 });
+      if (!firstId) firstId = id; n++;
+    } catch (e) { console.warn(e); toast(`Couldn’t read ${file.name}.`); }
+  }
+  if (firstId) PH.cur = firstId;
+  markDirty(); phRender();
+  toast(n ? `${orcPl(n, 'photo', 'photos')} added, filed under ${phWhere(prev) || 'no box or folder yet'}.` : 'Those photos are already here.');
+}
+function phMove(d) { const l = phList(), i = l.findIndex(f => f.id === PH.cur); if (i < 0) return; const j = Math.max(0, Math.min(l.length - 1, i + d)); if (j !== i) { PH.cur = l[j].id; phRender(); $(`#phStrip [data-ph="${PH.cur}"]`)?.scrollIntoView({ block: 'nearest' }); } }
+function phNote(kind) {
+  const f = phCur(), s = phSrc(); if (!f || !s) return;
+  const t = $('#phText'); let body = t.value.slice(t.selectionStart, t.selectionEnd).trim();
+  if (kind === 'quote' && !body) { toast('Select the words to quote in the transcription first.'); t.focus(); return; }
+  const n = newNote(); n.kind = kind; n.sourceId = s.id; n.photo = f.id; n.body = body;
+  const where = phWhere(f); if (where) { n.locator = where; n.label = 'page'; }
+  if (f.date) n.date = f.date;
+  n.title = kind === 'quote' ? body.split(/\s+/).slice(0, 7).join(' ') + (wc(body) > 7 ? '…' : '') : (f.caption || 'Note on ' + (where || 'a photo'));
+  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); phShow();
+  if (kind === 'quote') toast(`Quote note saved${where ? ' (' + where + ')' : ''}.`); else { $('#phDlg').close(); switchTab('notes'); openNote(n.id, true); }
+}
+$('#phSrc').addEventListener('change', async e => {
+  const v = e.target.value;
+  if (v === '__new') {
+    const name = await ask('New collection', 'Name the collection as you’ll cite it, for example “Papers of Henry Knox”. You can add the archive and its location in the source’s details.', 'Create', '');
+    if (!name) { phRender(); return; }
+    const src = { id: uid('s'), csl: { type: 'manuscript', title: name }, stype: 'primary', created: nowISO(), modified: nowISO() }; src.csl.id = src.id;
+    P.sources.push(src); renderSourceList(); markDirty(); PH.src = src.id; PH.cur = ''; phRender(); $('#phDlg').open || $('#phDlg').showModal(); return;
+  }
+  if (v === '__any') { $('#phSrc').innerHTML = '<option value="">Choose a source…</option>' + sortedSources().map(x => `<option value="${x.id}">${esc((srcShort(x) + ' · ' + sourceLabel(x).title).slice(0, 80))}</option>`).join(''); return; }
+  PH.src = v; PH.cur = (phList()[0] || {}).id || ''; phRender();
+});
+$('#phAdd').addEventListener('click', () => $('#phFile').click());
+$('#phFile').addEventListener('change', e => { phAddFiles(e.target.files); e.target.value = ''; });
+$('#phView').addEventListener('dragover', e => e.preventDefault());
+$('#phView').addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer.files.length) phAddFiles(e.dataTransfer.files); });
+$('#phStrip').addEventListener('click', e => { const b = e.target.closest('[data-ph]'); if (b) { PH.cur = b.dataset.ph; phRender(); } });
+['box', 'folder', 'item', 'date', 'caption'].forEach(k => $('#ph_' + k).addEventListener('input', e => phSave(k, e.target.value.trim())));
+$('#phText').addEventListener('input', debounce(e => phSave('text', e.target.value), 300));
+$('#phPrev').addEventListener('click', () => phMove(-1));
+$('#phNext').addEventListener('click', () => phMove(1));
+$('#phZoom').addEventListener('click', () => { PH.zoom = PH.zoom === 'fit' ? 'full' : 'fit'; $('#phZoom').textContent = PH.zoom === 'fit' ? 'Actual size' : 'Fit'; $('#phImg')?.classList.toggle('z-full', PH.zoom === 'full'); $('#phImg')?.classList.toggle('z-fit', PH.zoom === 'fit'); });
+$('#phRot').addEventListener('click', () => { const f = phCur(); if (!f) return; f.rot = ((f.rot || 0) + 90) % 360; markDirty(); const im = $('#phImg'); if (im) im.className = `z-${PH.zoom} r-${f.rot}`; });
+$('#phQuote').addEventListener('click', () => phNote('quote'));
+$('#phIdea').addEventListener('click', () => phNote('idea'));
+$('#phNotes').addEventListener('click', e => { const b = e.target.closest('[data-phn]'); if (b) { $('#phDlg').close(); switchTab('notes'); openNote(b.dataset.phn); } });
+$('#phMeta').addEventListener('click', e => { if (e.target.id === 'phCopyHash') { const f = phCur(); if (f) navigator.clipboard.writeText(f.sha256).then(() => toast('Fingerprint copied.'), () => {}); } });
+$('#phDel').addEventListener('click', async () => {
+  const f = phCur(), s = phSrc(); if (!f || !s) return;
+  if (!(await ask('Remove photo', `Remove this photo${f.text.trim() ? ' and its transcription' : ''}? Notes made from it are kept.`, 'Remove'))) return;
+  const i = s.photos.indexOf(f); s.photos.splice(i, 1); photoStore.del(f.id).catch(() => {}); delete PH.thumbs[f.id];
+  PH.cur = (s.photos[i] || s.photos[i - 1] || {}).id || ''; if (!s.photos.length) delete s.photos; markDirty(); phRender();
+});
+$('#phClose').addEventListener('click', () => $('#phDlg').close());
+$('#btnPhotos').addEventListener('click', () => openPhotos());
+$('#phDlg').addEventListener('close', () => { if (PH.url) { URL.revokeObjectURL(PH.url); PH.url = ''; } if (panelState && panelState.kind === 'source') openSource(panelState.id); });
+$('#phDlg').addEventListener('keydown', e => { if (e.target.closest('input,textarea,select')) return; if (e.key === 'ArrowRight') { e.preventDefault(); phMove(1); } if (e.key === 'ArrowLeft') { e.preventDefault(); phMove(-1); } });
+
 /* ---------- PDF.js, loaded on first use from the embedded copy ---------- */
 let pdfjs = null;
 async function loadPdfjs() {
@@ -4479,6 +4686,7 @@ async function renderPage(n) {
   if (gen !== R.renderGen) return;
   try { await new pdfjs.TextLayer({ textContentSource: page.streamTextContent(), container: tl, viewport: vp }).render(); } catch (e) { console.warn(e); }
   if (R.findQ) markFind(d, R.findQ);
+  rdHlRefresh(n);
 }
 function pageLabel(n) { return R.labels && R.labels[n - 1] ? R.labels[n - 1] : String(n); }
 function printedPage(n) {
@@ -4512,7 +4720,8 @@ $('#rdSource').addEventListener('change', async e => {
   const v = e.target.value;
   if (v === '__new') { const s = await sourceFromPdf(); if (s) { R.sourceId = s.id; fillReaderSources(); } else e.target.value = ''; }
   else R.sourceId = v;
-  if (R.sourceId && R.buf) { const s = P.sources.find(x => x.id === R.sourceId); s.pdfName = R.name; markDirty(); pdfStore.set(R.sourceId, { name: R.name, buf: R.buf }).then(() => toast('PDF linked to the source and kept in this browser for next time.')).catch(() => toast('Linked. (This browser couldn’t store the PDF itself, so you’ll reopen the file next time.)')); }
+  rdHlRefresh();
+  if (R.sourceId && R.buf) { const s = P.sources.find(x => x.id === R.sourceId); s.pdfName = R.name; evAdd(s, new File([R.buf], R.name || 'document.pdf', { type: 'application/pdf' })).catch(() => {}); markDirty(); pdfStore.set(R.sourceId, { name: R.name, buf: R.buf }).then(() => toast('PDF linked to the source and kept in this browser for next time.')).catch(() => toast('Linked. (This browser couldn’t store the PDF itself, so you’ll reopen the file next time.)')); }
 });
 /* resize handle */
 $('#rdResize').addEventListener('pointerdown', e => {
@@ -4569,8 +4778,46 @@ function readerSelection() {
   if (!text) return null;
   const a = +pg.dataset.n, b = pg2 ? +pg2.dataset.n : a;
   const pa = printedPage(Math.min(a, b)), pb = printedPage(Math.max(a, b));
-  return { text, page: pa === pb ? pa : pa + '–' + pb };
+  return { text, page: pa === pb ? pa : pa + '–' + pb, hl: selectionHl(sel.getRangeAt(0)) };
 }
+function selectionHl(range) {
+  const by = {};
+  [...range.getClientRects()].forEach(q => {
+    if (q.width < 2 || q.height < 2) return;
+    const pd0 = R.pages[0] && R.pages[0].div.getBoundingClientRect(); if (pd0 && q.height > pd0.height * .08) return; // a whole element, not a line of text
+    const pd = R.pages.map(p => p.div).find(d => { const b = d.getBoundingClientRect(); return q.top + q.height / 2 >= b.top && q.top + q.height / 2 <= b.bottom; }); if (!pd) return;
+    const b = pd.getBoundingClientRect(), n = +pd.dataset.n;
+    (by[n] = by[n] || []).push([(q.left - b.left) / b.width, (q.top - b.top) / b.height, q.width / b.width, q.height / b.height]);
+  });
+  // join the pieces of each line, so a line is one highlight
+  return cleanHl(Object.entries(by).map(([p, rs]) => {
+    rs.sort((x, y) => x[1] - y[1] || x[0] - y[0]); const out = [];
+    rs.forEach(q => { const l = out[out.length - 1]; if (l && Math.abs(l[1] - q[1]) < l[3] * .6 && q[0] <= l[0] + l[2] + .02) { const r = Math.max(l[0] + l[2], q[0] + q[2]); l[1] = Math.min(l[1], q[1]); l[3] = Math.max(l[3], q[3]); l[2] = r - l[0]; } else out.push(q.slice()); });
+    return { p: +p, r: out };
+  }));
+}
+// draw the highlights of this source's notes on the pages already rendered, with a marker in the margin to open the note
+function rdHlRefresh(only) {
+  if (!R.doc) return;
+  const notes = R.sourceId ? P.notes.filter(n => n.sourceId === R.sourceId && n.pdfHl) : [];
+  R.pages.forEach((rec, i) => {
+    const n = i + 1; if (only && only !== n) return; if (!rec.done) return;
+    $$('.rd-hl-layer,.rd-pin-layer', rec.div).forEach(e => e.remove());
+    const here = notes.flatMap(note => note.pdfHl.filter(h => h.p === n).map(h => ({ note, h }))); if (!here.length) return;
+    const layer = document.createElement('div'); layer.className = 'rd-hl-layer';
+    layer.innerHTML = here.map(({ note, h }) => h.r.map(q => `<span class="rd-hl k-${esc(note.kind)}" style="left:${q[0] * 100}%;top:${q[1] * 100}%;width:${q[2] * 100}%;height:${q[3] * 100}%"></span>`).join('')).join('');
+    // the markers sit above the text, in the page's right margin, so they can be clicked
+    const pins = document.createElement('div'); pins.className = 'rd-pin-layer';
+    pins.innerHTML = here.map(({ note, h }) => `<button class="rd-hl-pin k-${esc(note.kind)}" data-hl-note="${note.id}" style="top:${h.r[0][1] * 100}%" title="${esc((note.title || 'Note') + ' · open the note')}" aria-label="Open the note: ${esc(note.title || 'Note')}"></button>`).join('');
+    const tl = $('.textLayer', rec.div); rec.div.insertBefore(layer, tl || null); rec.div.appendChild(pins);
+  });
+}
+$('#rdPages').addEventListener('click', e => {
+  const b = e.target.closest('[data-hl-note]'); if (!b) return;
+  const id = b.dataset.hlNote;
+  if (rrOn) { const li = $(`#rrList [data-rr="${id}"]`); if (li) { li.scrollIntoView({ block: 'center', behavior: 'smooth' }); li.classList.remove('flash'); void li.offsetWidth; li.classList.add('flash'); } return; }
+  switchTab('notes'); openNote(id);
+});
 function updateSelBar() {
   const s = readerOpen() && readerSelection();
   $('#rdSelBar').classList.toggle('hidden', !s);
@@ -4585,6 +4832,7 @@ $('#rdSelBar').addEventListener('click', async e => {
     const t = $('#rrText'), cur = t.value.trim();
     t.value = (cur ? cur + '\n\n' : '') + (k === 'quote' ? `“${s.text}”` : s.text);
     $('#rrKind').value = k; $('#rrPage').value = s.page; $('#rrPage').dataset.manual = '1';
+    R.pendingHl = (R.pendingHl || []).concat(s.hl || []);
     getSelection().removeAllRanges(); updateSelBar(); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
     toast(k === 'quote' ? 'Quote added to the note pad. Add your comment, then save.' : 'Passage added to the note pad. Rewrite it in your own words.');
     return;
@@ -4592,7 +4840,8 @@ $('#rdSelBar').addEventListener('click', async e => {
   if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, { name: R.name, buf: R.buf }).catch(() => {}); }
   const n = newNote(); n.kind = k; n.sourceId = R.sourceId; n.locator = s.page; n.label = 'page';
   n.body = s.text; n.title = s.text.split(/\s+/).slice(0, 7).join(' ') + (wc(s.text) > 7 ? '…' : '');
-  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty();
+  if (s.hl && s.hl.length) n.pdfHl = s.hl;
+  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); rdHlRefresh();
   getSelection().removeAllRanges(); updateSelBar();
   if (k === 'paraphrase') { openNote(n.id, true); toast('Paraphrase started from the passage. Rewrite it in your own words.'); }
   else toast(`Quote note saved (p. ${s.page}).`);
@@ -4631,7 +4880,8 @@ async function rrSaveNote() {
   n.body = body.replace(/^[“"](.*)[”"]$/s, n.kind === 'quote' ? '$1' : '$&');
   n.title = n.body.split(/\s+/).slice(0, 7).join(' ') + (wc(n.body) > 7 ? '…' : '');
   n.tags = $('#rrTags').value.split(',').map(x => x.trim()).filter(Boolean);
-  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty();
+  if (R.pendingHl && R.pendingHl.length) n.pdfHl = cleanHl(R.pendingHl); R.pendingHl = [];
+  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); rdHlRefresh();
   $('#rrText').value = ''; $('#rrKind').value = 'idea';
   rrRender(); toast(`Note saved${n.locator ? ` (p. ${n.locator})` : ''}.`); $('#rrText').focus();
 }
@@ -5328,7 +5578,9 @@ function looseEnds() {
   try { missing = auditData('all').missing; } catch (e) {}
   const noteSrc = new Set(P.notes.map(n => n.sourceId).filter(Boolean));
   const pdfs = P.sources.filter(s => s.pdfName && !noteSrc.has(s.id));
-  return { flags, uncited, questions, gaps, missing, pdfs };
+  const toread = P.sources.filter(s => s.read === 'toread' || s.read === 'reading').sort((a, b) => (b.prio || 0) - (a.prio || 0) || (a.read === 'reading' ? -1 : 1));
+  const retracted = P.sources.filter(s => rcWorst(s));
+  return { flags, uncited, questions, gaps, missing, pdfs, toread, retracted };
 }
 function inboxNotes() {
   const linked = new Set(PLI().flatMap(i => i.notes || []));
@@ -5415,7 +5667,7 @@ async function renderHome() {
   const flagLabel = k => (FLAG_KINDS[k] || FLAG_KINDS.tk).label;
 
   const rl = researchLoose();
-  const leTotal = le.flags.length + le.questions.length + le.gaps.length + le.uncited.length + le.missing.length + le.pdfs.length + rl.claims.length;
+  const leTotal = le.flags.length + le.questions.length + le.gaps.length + le.uncited.length + le.missing.length + le.pdfs.length + le.retracted.length + rl.claims.length;
   const looseHTML = leTotal ? [
     groupHTML('hmFlags', 'Flags in drafts (TK, cite?, check)', le.flags, f => `<li data-j="${J(() => jumpTo(f.d.id, f.at))}"><span class="flag flag-${f.kind}">${flagLabel(f.kind)}</span><span class="t">${esc(f.note || f.snip || '(empty paragraph)')}</span><span class="m">${esc(f.d.title || 'Untitled')}</span></li>`, le.flags.length <= 8),
     groupHTML('', 'Claims to check', rl.claims, x => `<li data-j="${J(() => rmGo(x.p))}"><span class="cl-chip st-${x.c.status}">${CL_ST[x.c.status].short}</span><span class="t">${esc(x.p.text.slice(0, 90))}</span><span class="m">${esc(x.iss[0])}</span></li>`),
@@ -5423,6 +5675,8 @@ async function renderHome() {
     groupHTML('', 'Gaps in the argument', le.gaps, x => `<li data-j="${J(() => { PREFS.planView = 'check'; savePrefs(); openPlan(); })}"><span class="pl-type ty-${x.it.type}">${(PT[x.it.type] || PT.section).icon}</span><span class="t">${esc(x.it.title || 'Untitled')}</span><span class="m">${esc(x.msg.replace(/\.$/, ''))}</span></li>`),
     groupHTML('', `Uncited paragraphs (${PREFS.uncitedMin || 40}+ words)`, le.uncited, u => `<li data-j="${J(() => jumpTo(u.d.id, u.at))}"><span class="t">${esc(u.snip)}</span><span class="m">${esc(u.d.title || 'Untitled')}</span></li>`),
     groupHTML('', 'Cited sources missing details', le.missing, s => { const l = sourceLabel(s); return `<li data-j="${J(() => openSource(s.id))}"><span class="t">${esc(l.title || 'Untitled source')}</span><span class="m">${esc([!s.csl.title && 'title', !(s.csl.author || s.csl.editor) && 'author', !s.csl.issued && 'date'].filter(Boolean).join(', ') + ' missing')}</span></li>`; }),
+    groupHTML('bad', 'Sources with a retraction or other notice', le.retracted, s => `<li data-j="${J(() => openSource(s.id))}"><span class="t">${esc(sourceLabel(s).title)}</span><span class="m">${esc(RC_NAME[rcWorst(s)] || 'Notice')}</span></li>`),
+    groupHTML('', 'To read', le.toread, s => `<li data-j="${J(() => openSource(s.id))}"><span class="t">${s.prio ? '★ ' : ''}${esc(sourceLabel(s).title)}</span><span class="m">${esc(READ_NAME[s.read])}${s.pdfName ? ' · PDF' : ''}</span></li>`),
     groupHTML('', 'PDFs with no notes yet', le.pdfs, s => `<li data-j="${J(() => openSource(s.id))}"><span class="t">${esc(sourceLabel(s).title || s.pdfName)}</span><span class="m">${esc(s.pdfName)}</span></li>`),
   ].join('') : '<div class="hm-empty">Nothing outstanding: no flags, open questions, gaps or uncited paragraphs.</div>';
 
@@ -6129,6 +6383,146 @@ $('#pmDoc').addEventListener('click', () => {
 });
 $('#pmClose').addEventListener('click', () => $('#permDlg').close());
 $('#btnPerms').addEventListener('click', openPerms);
+
+/* ================================================================
+   Retractions (2.6): asks Crossref about each source with a DOI. Crossref records retractions,
+   corrections, expressions of concern and withdrawals (including Retraction Watch's database) as
+   updates to the work. Only the DOIs are sent, one at a time, and only when you choose Check.
+   ================================================================ */
+const RC_NAME = { retraction: 'Retracted', withdrawal: 'Withdrawn', removal: 'Removed', 'expression_of_concern': 'Expression of concern', correction: 'Correction', erratum: 'Erratum', corrigendum: 'Corrigendum', addendum: 'Addendum', clarification: 'Clarification' };
+const RC_RANK = ['retraction', 'withdrawal', 'removal', 'expression_of_concern', 'correction', 'erratum', 'corrigendum', 'addendum', 'clarification'];
+const RC_SERIOUS = new Set(['retraction', 'withdrawal', 'removal', 'expression_of_concern']);
+const doiOf = s => String(s.csl.DOI || '').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '');
+function rcWorst(s) { const n = s.rc && Array.isArray(s.rc.notices) ? s.rc.notices.filter(x => RC_SERIOUS.has(x.type)) : []; return n.length ? n.map(x => x.type).sort((a, b) => RC_RANK.indexOf(a) - RC_RANK.indexOf(b))[0] : ''; }
+function rcBadge(s) { const w = rcWorst(s); if (w) return `<span class="rc-b rc-bad" title="Crossref records a notice on this work">${esc(RC_NAME[w])}</span>`; const c = s.rc && (s.rc.notices || []).length; return c ? `<span class="rc-b" title="Crossref records an update to this work">${esc(RC_NAME[s.rc.notices[0].type] || 'Updated')}</span>` : ''; }
+async function crossrefNotices(doi) {
+  const r = await fetch('https://api.crossref.org/works/' + encodeURIComponent(doi), { cache: 'no-store', credentials: 'omit' });
+  if (r.status === 404) return { notices: [], unknown: 1 };
+  if (!r.ok) throw new Error('Crossref answered ' + r.status + '.');
+  const m = ((await r.json()) || {}).message || {};
+  const ups = Array.isArray(m['updated-by']) ? m['updated-by'] : [];
+  const notices = ups.map(u => ({ type: String(u.type || '').toLowerCase().replace(/[\s-]+/g, '_'), doi: String(u.DOI || ''), date: u.updated && u.updated['date-parts'] ? u.updated['date-parts'][0].join('-') : '', label: String(u.label || '') })).filter(x => x.type);
+  // a work that is itself a retraction notice
+  if (String(m.type || '') === 'retraction' || /^retract/i.test(String((m.title || [])[0] || ''))) notices.push({ type: 'notice', doi, date: '', label: 'This DOI is a notice, not the work itself' });
+  return { notices };
+}
+let rcBusy = false;
+function openRetractions() { renderRc(); $('#rcDlg').showModal(); }
+function renderRc() {
+  const ds = P.sources.filter(doiOf), done = ds.filter(s => s.rc && !s.rc.err);
+  $('#rcRun').textContent = rcBusy ? 'Checking…' : `Check ${ds.length} source${ds.length === 1 ? '' : 's'} with a DOI`; $('#rcRun').disabled = rcBusy || !ds.length;
+  $('#rcBody').innerHTML = ds.length ? `<table class="audit"><thead><tr><th>Source</th><th>DOI</th><th>Crossref records</th></tr></thead><tbody>${ds.map(s => { const l = sourceLabel(s), rc = s.rc, w = rcWorst(s);
+    const say = !rc ? '<span class="muted">Not checked</span>' : rc.err ? '<span class="lk-warn">Couldn’t check</span>' : rc.unknown ? '<span class="lk-warn">DOI not found at Crossref</span>' : rc.notices.length ? rc.notices.map(n => `<span class="${RC_SERIOUS.has(n.type) ? 'lk-bad' : 'lk-warn'}">${esc(RC_NAME[n.type] || (n.type === 'notice' ? n.label : n.type))}</span>${n.date ? ' ' + esc(n.date) : ''}${n.doi && n.type !== 'notice' ? ` <a class="small" href="https://doi.org/${esc(n.doi)}" target="_blank" rel="noopener">notice</a>` : ''}`).join('<br>') : '<span class="lk-ok">No notices</span>';
+    return `<tr class="${w ? 'rc-row-bad' : ''}"><td><a href="#" data-src="${s.id}"><b>${esc(l.who || '')}</b>${l.who ? ': ' : ''}${esc(l.title)}</a></td><td class="small">${esc(doiOf(s))}</td><td>${say}${rc && rc.at ? `<div class="muted small">checked ${esc(rc.at)}</div>` : ''}</td></tr>`; }).join('')}</tbody></table>` : '<p class="muted">No sources with a DOI yet. Only works with a DOI can be checked.</p>';
+  const bad = done.filter(rcWorst).length;
+  $('#rcSum').textContent = done.length ? `${done.length} checked: ${bad ? `${bad} with a retraction, withdrawal or expression of concern. Read the notice before relying on ${bad === 1 ? 'it' : 'them'}, and say so if you cite ${bad === 1 ? 'it' : 'them'}.` : 'none retracted or withdrawn.'}` : '';
+}
+$('#rcRun').addEventListener('click', async () => {
+  if (rcBusy) return; rcBusy = true; renderRc();
+  const ds = P.sources.filter(doiOf); let k = 0, fail = 0;
+  for (const s of ds) {
+    k++; $('#rcSum').textContent = `Asking Crossref about ${k} of ${ds.length}…`;
+    try { s.rc = Object.assign(await crossrefNotices(doiOf(s)), { at: todayISO() }); } catch (e) { fail++; s.rc = { at: todayISO(), err: 1, notices: [] }; if (fail >= 3 && fail === k) break; }
+    await new Promise(r => setTimeout(r, 200));
+  }
+  rcBusy = false; markDirty(); renderRc(); renderSourceList();
+  if (fail && fail >= k) toast('Crossref couldn’t be reached from here. Check your connection and try again.');
+});
+$('#rcBody').addEventListener('click', e => { const a = e.target.closest('[data-src]'); if (!a) return; e.preventDefault(); $('#rcDlg').close(); switchTab('sources'); openSource(a.dataset.src); });
+$('#rcClose').addEventListener('click', () => $('#rcDlg').close());
+$('#btnRetract').addEventListener('click', openRetractions);
+
+/* ================================================================
+   Duplicate sources (2.6): the same work imported twice (Zotero and BibTeX, or added by hand and by DOI).
+   Merging keeps the fuller record, fills its gaps from the other, and moves every citation, note,
+   photo and grid cell across.
+   ================================================================ */
+const dupNorm = t => String(t || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/^(the|a|an) /, '').trim();
+function dupPairs() {
+  const S = P.sources, out = [], seen = new Set();
+  const key = s => ({ doi: doiOf(s).toLowerCase(), isbn: String(s.csl.ISBN || '').replace(/[^0-9xX]/g, '').slice(-10), url: String(s.csl.URL || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(), t: dupNorm(s.csl.title), a: dupNorm(((s.csl.author || s.csl.editor || [])[0] || {}).family || ((s.csl.author || [])[0] || {}).literal || ''), y: String(((s.csl.issued || {})['date-parts'] || [[]])[0][0] || '') });
+  const K = S.map(key);
+  const tok = t => new Set(t.split(' ').filter(w => w.length > 2));
+  for (let i = 0; i < S.length; i++) for (let j = i + 1; j < S.length; j++) {
+    const a = K[i], b = K[j]; let why = '';
+    if (a.doi && a.doi === b.doi) why = 'Same DOI';
+    else if (a.isbn && a.isbn.length === 10 && a.isbn === b.isbn && a.t === b.t) why = 'Same ISBN';
+    else if (a.url && a.url === b.url && a.t === b.t) why = 'Same web address';
+    else if (a.t && b.t && (a.y === b.y || !a.y || !b.y) && (a.a === b.a || !a.a || !b.a)) { const x = tok(a.t), y = tok(b.t); const inter = [...x].filter(w => y.has(w)).length, sim = inter / Math.max(1, Math.min(x.size, y.size)); if (a.t === b.t || (sim >= .9 && Math.min(x.size, y.size) >= 3)) why = 'Same title' + (a.a && a.a === b.a ? ' and author' : ''); }
+    if (why && !seen.has(S[i].id + S[j].id)) { seen.add(S[i].id + S[j].id); out.push({ a: S[i], b: S[j], why }); }
+  }
+  return out.filter(p => !(P.notDup || []).includes(p.a.id + '|' + p.b.id));
+}
+const srcFill = s => Object.values(s.csl).filter(v => v && (!Array.isArray(v) || v.length)).length + (s.annotation ? 2 : 0);
+function openDups() { renderDups(); $('#dupDlg').showModal(); }
+function renderDups() {
+  const ps = dupPairs(), uses = citeCounts(), nn = noteCountsBySource();
+  const side = s => { const l = sourceLabel(s); return `<div class="dup-s"><b>${esc(l.who || '—')}</b>${l.yr ? ' · ' + esc(l.yr) : ''}<div>${esc(l.title)}</div><div class="small muted">${esc(SOURCE_TYPE_NAME[s.csl.type] || s.csl.type || '')} · ${srcFill(s)} details · cited ${uses.get(s.id) || 0}× · ${nn.get(s.id) || 0} notes${doiOf(s) ? ' · DOI' : ''}</div></div>`; };
+  $('#dupBody').innerHTML = ps.length ? ps.map((p, i) => `<div class="dup" data-i="${i}"><div class="dup-why small">${esc(p.why)}</div><div class="dup-pair">${side(p.a)}${side(p.b)}</div><div class="row"><button class="primary small" data-keep="a">Merge, keep the first</button><button class="small" data-keep="b">Merge, keep the second</button><button class="ghost small" data-keep="no">Not the same</button></div></div>`).join('')
+    : `<p class="muted">${P.sources.length > 1 ? 'No likely duplicates among your sources.' : 'Nothing to compare yet.'}</p>`;
+  DUPS = ps;
+}
+let DUPS = [];
+function mergeSources(keep, drop) {
+  syncEditor();
+  // fill the kept record's gaps
+  Object.entries(drop.csl).forEach(([k, v]) => { if (k === 'id') return; const cur = keep.csl[k]; if (cur === undefined || cur === '' || (Array.isArray(cur) && !cur.length)) keep.csl[k] = v; });
+  ['annotation', 'stype', 'read', 'prio', 'pdfName', 'pdfOffset'].forEach(k => { if (!keep[k] && drop[k]) keep[k] = drop[k]; });
+  if (drop.osint && !keep.osint) keep.osint = drop.osint;
+  if (drop.photos) keep.photos = (keep.photos || []).concat(drop.photos);
+  if (drop.evidence) keep.evidence = (keep.evidence || []).concat(drop.evidence.filter(e => !(keep.evidence || []).some(x => x.sha256 === e.sha256)));
+  const from = `&quot;id&quot;:&quot;${drop.id}&quot;`, to = `&quot;id&quot;:&quot;${keep.id}&quot;`;
+  P.docs.forEach(d => { if (d.html.includes(from)) { d.html = d.html.split(from).join(to); d.modified = nowISO(); } (d.snapshots || []).forEach(sn => { if (sn.html && sn.html.includes(from)) sn.html = sn.html.split(from).join(to); }); });
+  P.notes.forEach(n => { if (n.sourceId === drop.id) n.sourceId = keep.id; });
+  PLI().forEach(it => { if ((it.sources || []).includes(drop.id)) it.sources = [...new Set(it.sources.map(x => x === drop.id ? keep.id : x))]; });
+  if (P.litGrid && P.litGrid.cells && P.litGrid.cells[drop.id]) { P.litGrid.cells[keep.id] = Object.assign({}, P.litGrid.cells[drop.id], P.litGrid.cells[keep.id] || {}); delete P.litGrid.cells[drop.id]; }
+  if (keep.pdfName === drop.pdfName && drop.pdfName) pdfStore.get(drop.id).then(v => { if (v) pdfStore.get(keep.id).then(k => { if (!k) pdfStore.set(keep.id, v); }); }).catch(() => {});
+  P.sources = P.sources.filter(s => s !== drop);
+  keep.modified = nowISO(); srcVersion++;
+  const d = curDoc(); if (d) { editor.innerHTML = d.html; }
+  markDirty(); renderSourceList(); renderNoteList(); renderRefs(true);
+}
+$('#dupBody').addEventListener('click', e => {
+  const b = e.target.closest('[data-keep]'); if (!b) return; const p = DUPS[+b.closest('.dup').dataset.i]; if (!p) return;
+  if (b.dataset.keep === 'no') { P.notDup = (P.notDup || []).concat(p.a.id + '|' + p.b.id); markDirty(); renderDups(); return; }
+  const keep = b.dataset.keep === 'a' ? p.a : p.b, drop = keep === p.a ? p.b : p.a;
+  mergeSources(keep, drop); renderDups(); toast(`Merged. Every citation and note now points to “${sourceLabel(keep).title.slice(0, 50)}”.`);
+});
+$('#dupClose').addEventListener('click', () => $('#dupDlg').close());
+$('#btnDups').addEventListener('click', openDups);
+
+/* ================================================================
+   Evidence fingerprints (2.6): a SHA-256 hash of a file (a screenshot, a video, a leaked document,
+   the PDF you read), worked out in the browser, with when and where it was captured. The file isn't
+   kept; the fingerprint proves later that a copy is unchanged.
+   ================================================================ */
+function srcFlagsHTML(s) {
+  const ev = s.evidence || [];
+  return `<details class="src-ev" ${ev.length ? 'open' : ''}><summary>Evidence files${ev.length ? ` <span class="muted">(${ev.length})</span>` : ''}</summary>
+    <p class="small muted">Record a SHA-256 fingerprint of a file you captured, such as a screenshot, video, download or the PDF you read, with where and when you got it. The file stays where it is; the fingerprint shows later that a copy hasn’t changed. Nothing is uploaded.</p>
+    ${ev.map(x => `<div class="ev-row" data-evid="${x.id}"><div><b>${esc(x.name)}</b> <span class="muted small">${x.size ? (x.size / 1048576 < .1 ? Math.max(1, Math.round(x.size / 1024)) + ' KB' : (x.size / 1048576).toFixed(1) + ' MB') : ''}${x.modified ? ' · file dated ' + esc(x.modified.slice(0, 10)) : ''} · added ${esc((x.added || '').slice(0, 10))}</span><button class="ghost small" data-a="evdel" title="Remove this fingerprint">✕</button></div>
+      <code class="ev-h" title="SHA-256">${esc(x.sha256)}</code>
+      <div class="grid2"><input data-ev="captured" value="${esc(x.captured || '')}" placeholder="Captured when (e.g. 2026-11-20 14:05 UTC)" aria-label="Captured when"><input data-ev="from" value="${esc(x.from || '')}" placeholder="Captured from (address or place)" aria-label="Captured from"></div>
+      <input data-ev="note" value="${esc(x.note || '')}" placeholder="How it was captured, by whom, and with what" aria-label="How it was captured"></div>`).join('')}
+    <div class="row"><button class="small" data-a="evadd">Fingerprint a file…</button><button class="small" data-a="evcheck" ${ev.length ? '' : 'disabled'}>Check a file against these…</button></div></details>`;
+}
+async function evPick() { return new Promise(res => { const i = document.createElement('input'); i.type = 'file'; i.onchange = () => res(i.files[0] || null); i.click(); }); }
+async function evAdd(s, file, from = '') {
+  const sha = await sha256Hex(await file.arrayBuffer());
+  s.evidence = s.evidence || [];
+  if (s.evidence.some(x => x.sha256 === sha)) return null;
+  const x = { id: uid('ev'), name: file.name || 'file', size: file.size || 0, type: file.type || '', sha256: sha, modified: file.lastModified ? new Date(file.lastModified).toISOString() : '', added: nowISO(), captured: '', from: from || s.csl.URL || '', note: '' };
+  s.evidence.push(x); s.modified = nowISO(); markDirty(); return x;
+}
+document.addEventListener('click', async e => {
+  const b = e.target.closest('#panelBody [data-a="evadd"], #panelBody [data-a="evcheck"], #panelBody [data-a="evdel"]'); if (!b || !panelState || panelState.kind !== 'source') return;
+  const s = P.sources.find(x => x.id === panelState.id); if (!s) return;
+  if (b.dataset.a === 'evdel') { const id = b.closest('[data-evid]').dataset.evid; s.evidence = (s.evidence || []).filter(x => x.id !== id); if (!s.evidence.length) delete s.evidence; markDirty(); openSource(s.id); return; }
+  const f = await evPick(); if (!f) return;
+  if (b.dataset.a === 'evadd') { const x = await evAdd(s, f); openSource(s.id); toast(x ? `Fingerprint recorded: ${x.sha256.slice(0, 12)}…` : 'That file’s fingerprint is already recorded.'); return; }
+  const sha = await sha256Hex(await f.arrayBuffer()), hit = P.sources.flatMap(src => (src.evidence || []).map(x => ({ src, x })).concat((src.photos || []).map(x => ({ src, x: Object.assign({ name: x.name }, x) })))).find(y => y.x.sha256 === sha);
+  infoDialog('Checking a file', hit ? `<p><b class="lk-ok">Matches.</b> <b>${esc(f.name)}</b> is byte for byte the file recorded as <b>${esc(hit.x.name)}</b> on <i>${esc(sourceLabel(hit.src).title)}</i>.</p><p class="small"><code>${sha}</code></p>` : `<p><b class="lk-bad">No match.</b> <b>${esc(f.name)}</b> isn’t any file fingerprinted in this project. If it’s meant to be one of them, it has been changed, re-saved or re-encoded since.</p><p class="small"><code>${sha}</code></p>`);
+});
 
 /* ================================================================
    Link check (1.9.0): each web source against the Internet Archive's Wayback Machine.
@@ -7153,7 +7547,7 @@ async function unlockLoop(env, title, msg, allowFresh) {
 }
 async function openLockSettings() {
   if (LOCK) {
-    const d = $('#lkDlg'); d.showModal(); return;
+    const d = $('#lockDlg'); d.showModal(); return;
   }
   const pass = await askPassword('Lock this project', 'Anyone opening the project file, or this browser’s working copy, will need the password.', { confirm: true });
   if (!pass) return;
@@ -7163,9 +7557,9 @@ async function openLockSettings() {
   if (fileHandle && PREFS.fileAutosave) fileAutosave();
   toast('Locked. Save the project now so the file on disk is locked too.');
 }
-$('#lkChange').addEventListener('click', async () => { $('#lkDlg').close(); const old = LOCK; LOCK = null; const pass = await askPassword('New password', 'Choose a new password for this project.', { confirm: true }); if (!pass) { LOCK = old; return; } const salt = crypto.getRandomValues(new Uint8Array(16)); LOCK = { key: await deriveKey(pass, salt), salt, iter: ITER }; markDirty(); persistLocal(); toast('Password changed. Save the project to update the file.'); });
-$('#lkRemove').addEventListener('click', async () => { $('#lkDlg').close(); if (!(await ask('Remove the lock?', 'The project file and this browser’s copy will be stored as plain text again after the next save.', 'Remove lock'))) return; LOCK = null; document.body.classList.remove('locked'); markDirty(); persistLocal(); toast('Lock removed. Save to write an unlocked file.'); });
-$('#lkClose').addEventListener('click', () => $('#lkDlg').close());
+$('#lockChange').addEventListener('click', async () => { $('#lockDlg').close(); const old = LOCK; LOCK = null; const pass = await askPassword('New password', 'Choose a new password for this project.', { confirm: true }); if (!pass) { LOCK = old; return; } const salt = crypto.getRandomValues(new Uint8Array(16)); LOCK = { key: await deriveKey(pass, salt), salt, iter: ITER }; markDirty(); persistLocal(); toast('Password changed. Save the project to update the file.'); });
+$('#lockRemove').addEventListener('click', async () => { $('#lockDlg').close(); if (!(await ask('Remove the lock?', 'The project file and this browser’s copy will be stored as plain text again after the next save.', 'Remove lock'))) return; LOCK = null; document.body.classList.remove('locked'); markDirty(); persistLocal(); toast('Lock removed. Save to write an unlocked file.'); });
+$('#lockClose').addEventListener('click', () => $('#lockDlg').close());
 $('#lockBadge').addEventListener('click', openLockSettings);
 
 /* ================================================================
@@ -8579,6 +8973,101 @@ $('#corToggle').addEventListener('change', e => { PREFS.corrOn = e.target.checke
 editor.addEventListener('input', debounce(() => { if (!homeOn && !boardOn && !planOn) renderCorroboration(); }, 1000));
 
 /* ================================================================
+   Close to your notes: sentences in the draft that repeat a note's wording without quotation marks
+   ================================================================ */
+const PX_N = 4; // words per shingle
+const pxToks = t => { const out = []; const re = /[\p{L}\p{N}]+(?:['’][\p{L}]+)?/gu; let m; while ((m = re.exec(t))) out.push({ w: m[0].toLowerCase().replace(/’/g, "'"), a: m.index, b: m.index + m[0].length }); return out; };
+let PX_IX = { key: '', map: null };
+function pxIndex() {
+  const notes = P.notes.filter(n => n.kind !== 'idea' && (n.body || '').length > 30);
+  const key = notes.length + ':' + notes.reduce((a, n) => a + (n.modified || '').length + n.body.length, 0) + ':' + notes.map(n => n.id).join('').length;
+  if (PX_IX.key === key && PX_IX.map) return PX_IX.map;
+  const map = new Map();
+  notes.forEach(n => { const w = pxToks(stripWikiLinks(n.body).replace(/^\s*>\s?/gm, '')).map(t => t.w); for (let i = 0; i + PX_N <= w.length; i++) { const g = w.slice(i, i + PX_N).join(' '); let set = map.get(g); if (!set) map.set(g, set = new Set()); set.add(n.id); } });
+  PX_IX = { key, map }; return map;
+}
+// spans of the text that are inside quotation marks, so quoted words are never flagged
+function pxQuoted(text) {
+  const q = []; let open = -1, ch = '';
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (open < 0 && (c === '“' || (c === '"' && (i === 0 || /[\s(\[—–-]/.test(text[i - 1]))))) { open = i; ch = c === '“' ? '”' : '"'; }
+    else if (open >= 0 && c === ch) { q.push([open, i + 1]); open = -1; }
+  }
+  if (open >= 0) q.push([open, text.length]);
+  return q;
+}
+function closeToNotes() {
+  const d = curDoc(); if (!d) return [];
+  const map = pxIndex(); if (!map.size) return [];
+  const byId = Object.fromEntries(P.notes.map(n => [n.id, n])), out = [];
+  $$(':scope > p, :scope > ul > li, :scope > ol > li', editor).forEach(el => {
+    const { text, range } = blockMap(el); if (text.length < 40) return;
+    const quoted = pxQuoted(text), inQ = i => quoted.some(([a, b]) => i >= a && i < b);
+    const tk = pxToks(text).filter(t => !inQ(t.a));
+    // for each note, the longest run of words whose every shingle is in that note
+    const runs = {};
+    for (let i = 0; i + PX_N <= tk.length; i++) {
+      if (tk[i + PX_N - 1].a - tk[i].b > 60) continue; // shingles don't jump across a quotation
+      const ids = map.get(tk.slice(i, i + PX_N).map(t => t.w).join(' ')); if (!ids) continue;
+      ids.forEach(id => { const r = runs[id] || (runs[id] = { cur: null, best: null }); if (r.cur && r.cur.end === i - 1) r.cur.end = i; else r.cur = { start: i, end: i }; if (!r.best || r.cur.end - r.cur.start > r.best.end - r.best.start) r.best = { ...r.cur }; });
+    }
+    Object.entries(runs).forEach(([id, r]) => {
+      const n = byId[id]; if (!n || !r.best) return;
+      const words = r.best.end - r.best.start + PX_N, min = n.kind === 'quote' ? 7 : 9;
+      if (words < min) return;
+      const a = tk[r.best.start].a, b = tk[r.best.end + PX_N - 1].b;
+      out.push({ el, n, words, a, b, text: text.slice(a, b), r: range(a, b), sev: n.kind === 'quote' ? 2 : 1 });
+    });
+  });
+  // one finding per stretch of text: keep the longest
+  out.sort((x, y) => y.words - x.words);
+  return out.filter((x, i) => !out.slice(0, i).some(y => y.el === x.el && y.a < x.b && x.a < y.b));
+}
+let PX = [];
+function renderCloseToNotes() {
+  if (!$('#pxList') || !curDoc()) return;
+  const on = PREFS.pxOn !== false; $('#pxToggle').checked = on;
+  const hl = window.CSS && CSS.highlights && window.Highlight;
+  if (!on) { PX = []; $('#pxCount').textContent = ''; if (hl) CSS.highlights.delete('cp-close'); $('#pxList').innerHTML = '<li class="muted small none">Turn on to find sentences that repeat a note’s wording without quotation marks.</li>'; return; }
+  PX = closeToNotes();
+  if (hl) { if (PX.length) CSS.highlights.set('cp-close', new Highlight(...PX.map(x => x.r).filter(Boolean))); else CSS.highlights.delete('cp-close'); }
+  $('#pxCount').textContent = PX.length || '';
+  $('#pxList').innerHTML = PX.length ? PX.map((x, i) => `<li data-px="${i}"><span><b class="fk ${x.sev === 2 ? 'fk-cite' : 'fk-check'}">${x.words} words</b> ${x.sev === 2 ? 'from the quotation' : 'from your ' + x.n.kind + ' note'} <b>${esc(x.n.title || 'Untitled')}</b>, not in quotation marks<br><span class="muted small">“${esc(x.text.length > 90 ? x.text.slice(0, 90) + '…' : x.text)}”</span><span class="px-acts"><button class="ghost small" data-pxq="${i}">Add quotation marks</button><button class="ghost small" data-pxc="${i}">Compare</button><button class="ghost small" data-pxn="${i}">Open note</button></span></span></li>`).join('')
+    : P.notes.some(n => n.kind !== 'idea') ? '<li class="muted small none">Nothing in this document repeats a note’s wording outside quotation marks.</li>' : '<li class="muted small none">Once you have quote, paraphrase or summary notes, sentences that repeat their wording without quotation marks are listed here.</li>';
+}
+function pxQuote(i) {
+  const x = PX[i]; if (!x || !x.r) return;
+  const r = x.r, n = x.n;
+  const end = r.cloneRange(); end.collapse(false);
+  const hasCite = n.sourceId && $$('.cite', x.el).some(m => markerItems(m).some(it => it.id === n.sourceId));
+  const close = document.createTextNode('”'); end.insertNode(close);
+  if (!hasCite && n.sourceId && P.sources.some(s => s.id === n.sourceId)) {
+    const tmp = document.createElement('span'); tmp.innerHTML = citeHTML([Object.assign({ id: n.sourceId }, n.locator ? { locator: n.locator, label: n.label || 'page' } : {})]);
+    close.after(...tmp.childNodes);
+  }
+  const start = r.cloneRange(); start.collapse(true); start.insertNode(document.createTextNode('“'));
+  x.el.normalize(); onEdit(); renderCloseToNotes(); toast(hasCite || !n.sourceId ? 'Quotation marks added.' : 'Quotation marks and a citation added.');
+}
+function pxCompare(i) {
+  const x = PX[i]; if (!x) return;
+  const body = stripWikiLinks(x.n.body).replace(/^\s*>\s?/gm, '');
+  const want = new Set(); const w = pxToks(x.text).map(t => t.w); for (let k = 0; k + PX_N <= w.length; k++) want.add(w.slice(k, k + PX_N).join(' '));
+  const nt = pxToks(body), mark = new Array(nt.length).fill(false);
+  for (let k = 0; k + PX_N <= nt.length; k++) if (want.has(nt.slice(k, k + PX_N).map(t => t.w).join(' '))) for (let j = k; j < k + PX_N; j++) mark[j] = true;
+  let h = '', at = 0; nt.forEach((t, k) => { h += esc(body.slice(at, t.a)) + (mark[k] ? `<mark>${esc(body.slice(t.a, t.b))}</mark>` : esc(body.slice(t.a, t.b))); at = t.b; }); h += esc(body.slice(at));
+  infoDialog('Compare with your note', `<p class="small muted">In your draft</p><blockquote class="px-cmp">${esc(x.text)}</blockquote><p class="small muted">In the note <b>${esc(x.n.title || 'Untitled')}</b> (${esc(x.n.kind)})</p><blockquote class="px-cmp">${h.replace(/\n/g, '<br>')}</blockquote><p class="small">Put the passage in quotation marks with a citation, or rewrite it in your own words. If the note itself is the source’s wording, it may be worth changing it to a quote note.</p>`);
+}
+$('#pxList').addEventListener('click', e => {
+  const q = e.target.closest('[data-pxq]'); if (q) { pxQuote(+q.dataset.pxq); return; }
+  const c = e.target.closest('[data-pxc]'); if (c) { pxCompare(+c.dataset.pxc); return; }
+  const o = e.target.closest('[data-pxn]'); if (o) { const x = PX[+o.dataset.pxn]; if (x) { switchTab('notes'); openNote(x.n.id); } return; }
+  const li = e.target.closest('[data-px]'); if (!li) return; const x = PX[+li.dataset.px]; if (x && x.r) { const s = getSelection(); s.removeAllRanges(); s.addRange(x.r); x.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+});
+$('#pxToggle').addEventListener('change', e => { PREFS.pxOn = e.target.checked; savePrefs(); renderCloseToNotes(); });
+editor.addEventListener('input', debounce(() => { if (!homeOn && !boardOn && !planOn) renderCloseToNotes(); }, 1200));
+
+/* ================================================================
    House style
    ================================================================ */
 const HS_DEFAULT = () => ({ numbers: 'off', percent: 'off', us: 'off', serial: 'off', dates: 'off', dash: 'off', quotes: true, ellipsis: 'off', doubleSpace: true, prefer: 'Kyiv = Kiev\nKharkiv = Kharkov\nOdesa = Odessa\nLuhansk = Lugansk\nMykolaiv = Nikolaev, Nikolayev\nZaporizhzhia = Zaporozhye, Zaporizhia\nChernihiv = Chernigov\nLviv = Lvov, Lwow\nBelarus = Byelorussia\nUkraine = the Ukraine\nDnipro = Dnepr' });
@@ -8918,8 +9407,13 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.6.0': ['A research guide in the journal: what each stage of a project is for and when it’s done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary of research terms.',
+    'Close to your notes (Outline) finds sentences that repeat a note’s wording without quotation marks, and adds the marks and citation in one click. Quote and paraphrase notes made in the PDF reader now leave a highlight in the PDF, with a marker that opens the note.',
+    'On the research desk: a literature grid that sets your sources against your questions and themes, and Codes, for qualitative coding: a codebook, passages coded with Mark → Code passage (K), codes on notes, counts by source, and codes that turn up together.',
+    'Archive photos (a source’s Photos button, or Sources → Tools): file photos from an archive visit by box and folder, transcribe them beside the image, and make quote notes that cite the box and folder.',
+    'Sources: a reading list with what to read first, a retraction check through Crossref, duplicates found and merged, and SHA-256 fingerprints for evidence files. Names & spellings can hold a pseudonym, used in every export, and a person’s consent.'],
   '2.5.1': ['The research journal has prompts for each stage of the research process, from first idea to peer feedback: topic, first results, narrowed topic, research question, keywords, leads, notes on a source (the citation goes in, in your document’s style), working title, thesis, outline, Draft 0 and peer feedback. Each sets the kind of entry and tags it, and the row of stages shows which you’ve written about. Open the journal’s Log, or press Today’s entry.'],
-  '2.5.0': ['Proofread (F7, or in Tools) catches what the browser’s spell checker misses or doesn’t explain: about 400 common misspellings, mixed-up words in the places they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”), “a” and “an” by sound, doubled words, spacing, capitals after a full stop, and brackets or quotation marks that never close. Fix one, fix all spellings, or ignore a word for the whole project.',
+  '2.5.0': ['Proofread (F7) catches what the browser’s spell checker misses or doesn’t explain: about 400 common misspellings, mixed-up words in the places they’re almost always wrong (“would of”, “more then”, “your welcome”, “to loose”), “a” and “an” by sound, doubled words, spacing, capitals after a full stop, and brackets or quotation marks that never close. Fix one, fix all spellings, or ignore a word for the whole project.',
     'Abstract and keywords (Export, or Page setup): build an abstract a part at a time, shaped for a research article, an essay or chapter, or a report; fill the parts from your own sentences; watch the word limit; and pick keywords from the names and terms this document uses most. They go under the title in Word, PDF, the web page, ePub, Markdown, Pandoc and LaTeX.',
     'Read and take notes: in the PDF reader, press Take notes. The PDF fills the screen with a note pad beside it; select a passage to quote it in the pad, add your comment, and save. Notes go to the PDF’s source with the page filled in as you scroll.'],
   '2.4.0': ['Socrates can examine a claim with you, the Socratic way: say what its key phrase means, meet a passage from your own notes that pushes against it, mend it, answer one last question, and keep the before and after in your journal. Press Examine a claim in Socrates, or say “examine:” to the Oracle.',
@@ -9101,7 +9595,7 @@ linkLabels();
    q (linked to a research question in the plan, data-ref = plan item id).
    Marks live in the saved HTML and are unwrapped in every export.
    ================================================================ */
-const RM_KINDS = { th: 'Thread', cl: 'Claim', rv: 'Review key', q: 'Question' };
+const RM_KINDS = { th: 'Thread', cl: 'Claim', rv: 'Review key', q: 'Question', cd: 'Code' };
 const RM_SKIP = '.cite,.fn,.flag,.cmt-pt,.ix-a,figure,nav,[contenteditable="false"]';
 const RM_BLOCK = 'p,h1,h2,h3,li,blockquote';
 const rmNorm = s => String(s || '').replace(/\s+/g, ' ').trim();
@@ -10349,6 +10843,7 @@ function rmPopRow(s) {
       ${iss.length ? `<div class="rp-iss">${iss.map(esc).join(' · ')}</div>` : ''}</div>`;
   }
   if (k === 'rv') { const r = rvById(pid) || {}; const n = r.due ? daysUntil(r.due) : null; return `<div class="rp-row" data-pid="${esc(pid)}" data-k="rv"><span class="rv-mk" aria-hidden="true">⚑</span><span class="rp-t"><b>${esc(r.reason || 'Review')}</b><span class="small ${n !== null && n <= 0 && !r.done ? 'rv-late' : 'muted'}">${r.done ? 'Done' : 'Due ' + esc(fmtDue(r.due))}${r.note ? ' · ' + esc(r.note) : ''}</span></span><button class="ghost small" data-a="rvedit">Edit</button><button class="ghost small" data-a="rvdone">${r.done ? 'Reopen' : 'Done'}</button><button class="ghost small danger" data-a="unmark">Remove</button></div>`; }
+  if (k === 'cd') { const c = cdById(s.dataset.ref); return `<div class="rp-row" data-pid="${esc(pid)}" data-k="cd" data-ref="${esc(s.dataset.ref || '')}"><i class="th-dot cd-dot" style="--c:${c ? c.color : '#888'}"></i><span class="rp-t"><b>${esc(c ? c.name : 'Code')}</b><span class="muted small">${esc(c && c.def ? c.def.slice(0, 90) : 'Code')}</span></span><button class="ghost small" data-a="cdread">All passages</button><button class="ghost small" data-a="unmark">Remove</button></div>`; }
   if (k === 'q') { const it = plItem(s.dataset.ref); return `<div class="rp-row" data-pid="${esc(pid)}" data-k="q" data-ref="${esc(s.dataset.ref || '')}"><b class="q-mk" aria-hidden="true">?</b><span class="rp-t"><b>${esc(it ? it.title || 'Untitled question' : 'Question (deleted)')}</b><span class="muted small">${it ? (it.status === 'answered' ? 'Answered' : 'Open question') : ''}</span></span><button class="ghost small" data-a="qopen">Open</button><button class="ghost small danger" data-a="unmark">Unlink</button></div>`; }
   return '';
 }
@@ -10368,6 +10863,7 @@ function showRmPop(marks, anchor) {
     if (a === 'read') { closeRmPop(); openDesk('threads', row.dataset.ref); }
     if (a === 'unmark') { closeRmPop(); removeMark(k, pid); }
     if (a === 'register') { closeRmPop(); openDesk('claims', pid); }
+    if (a === 'cdread') { closeRmPop(); openDesk('codes', row.dataset.ref); }
     if (a === 'rvedit') { closeRmPop(); openReviewKey(pid); }
     if (a === 'rvdone') { const r = rvById(pid); if (r) { r.done = !r.done; r.doneAt = r.done ? nowISO() : ''; markDirty(); rmRefresh(); } closeRmPop(); }
     if (a === 'qopen') { closeRmPop(); if (plItem(row.dataset.ref)) openPlanItem(row.dataset.ref); }
@@ -10388,7 +10884,7 @@ function openMarkMenu() { const m = $('#markMenu'), r = tbAnchor('#btnMark').get
 $('#btnMark').addEventListener('click', e => { e.stopPropagation(); if ($('#markMenu').classList.contains('open')) $('#markMenu').classList.remove('open'); else openMarkMenu(); });
 document.addEventListener('click', e => { if (!e.target.closest('#btnMark,#markMenu,#tbMore')) $('#markMenu').classList.remove('open'); });
 function rmDo(a) {
-  if (a === 'th') openThreadPick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
+  if (a === 'th') openThreadPick(); if (a === 'cd') openCodePick(); if (a === 'cl') markClaim(); if (a === 'rv') openReviewKey(); if (a === 'q') openQuestionLink();
   if (a === 'soc') openSocrates();
   if (a === 'orc') oracleConsult();
   if (a === 'desk') openDesk(); if (a === 'tab') { switchTab('research'); document.body.classList.add('side-open'); }
@@ -10398,7 +10894,7 @@ document.addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey;
   if (mod && e.altKey && e.code === 'KeyG') { e.preventDefault(); if ($$('dialog[open]').length) return; openMarkMenu(); $('#markMenu button').focus({ preventScroll: true }); return; }
   if ($('#markMenu').classList.contains('open') && !mod && !e.altKey) {
-    const m = { t: 'th', h: 'th', c: 'cl', r: 'rv', q: 'q', s: 'soc', o: 'orc', d: 'desk' }[e.key.toLowerCase()];
+    const m = { t: 'th', h: 'th', k: 'cd', c: 'cl', r: 'rv', q: 'q', s: 'soc', o: 'orc', d: 'desk' }[e.key.toLowerCase()];
     if (m) { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); rmDo(m); }
     else if (e.key === 'Escape') { e.preventDefault(); $('#markMenu').classList.remove('open'); restoreSelection(); }
   }
@@ -10413,7 +10909,7 @@ const CL_LINE = {
 };
 function rmStyle() {
   let st = $('#rmStyle'); if (!st) { st = document.createElement('style'); st.id = 'rmStyle'; document.head.append(st); }
-  st.textContent = P.threads.map(t => `.rm[data-ref="${rmEsc(t.id)}"]{--c:${t.color}}` + (t.hidden ? `#editor .rm[data-k=th][data-ref="${rmEsc(t.id)}"]{background:none;box-shadow:none}` : '')).join('\n')
+  st.textContent = P.threads.map(t => `.rm[data-ref="${rmEsc(t.id)}"]{--c:${t.color}}` + (t.hidden ? `#editor .rm[data-k=th][data-ref="${rmEsc(t.id)}"]{background:none;box-shadow:none}` : '')).concat((P.codes || []).map(c => `.rm[data-k=cd][data-ref="${rmEsc(c.id)}"]{--c:${c.color}}`)).join('\n')
     + P.claims.map(c => c.status !== 'open' ? `.rm[data-rm="${rmEsc(c.id)}"]{--cs:var(--cl-${c.status});${CL_LINE[c.status]}}` : '').join('')
     + P.reviewKeys.filter(r => r.done).map(r => `#editor .rm[data-rm="${rmEsc(r.id)}"]{border-bottom-color:transparent}`).join('');
   document.body.classList.toggle('marks-off', !!PREFS.marksOff);
@@ -10972,7 +11468,7 @@ function renderDesk() {
   deskJ = [];
   $$('#deskTabs [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === deskView); b.setAttribute('aria-selected', b.dataset.dv === deskView); });
   $('#deskTools').innerHTML = '';
-  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
+  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, lit: deskLit, codes: deskCodes, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
   fn();
 }
 $('#deskBody').addEventListener('click', e => {
@@ -11087,6 +11583,150 @@ function deskGrid() {
     <tbody>${rows.map(x => `<tr><th scope="row" class="eg-c"><a href="#" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}"><span class="cl-mk st-${x.c.status}" aria-hidden="true"></span>${esc(x.p.text.length > 110 ? x.p.text.slice(0, 108) + '…' : x.p.text)}</a></th>${cols.map(id => x.p.cites.includes(id) ? `<td><i class="eg-cell rt-${rateTier(srcRating(id))}" title="${esc(srcShort(P.sources.find(s => s.id === id)))}${srcRating(id) ? ', rated ' + esc(srcRating(id)) : ', not rated'}">${esc(srcRating(id) || '●')}</i></td>` : '<td></td>').join('')}<td class="eg-n ${x.p.cites.length ? '' : 'bad'}">${x.p.cites.length || '0'}</td></tr>`).join('')}
     <tr class="eg-tot"><th scope="row" class="eg-c">Claims each source supports</th>${cols.map(id => `<td>${use[id]}</td>`).join('')}<td></td></tr></tbody></table></div>
     <p class="small muted">Rate sources on their Sources card (OSINT reliability and credibility). Click a claim to go to it in the draft.</p></div>`;
+}
+
+/* literature grid (2.6): sources down the side, the questions or themes you're reading for across the top,
+   your summary in each cell with the notes that bear on it. The matrix most literature reviews are drafted from. */
+const LG_DEFAULT = ['Main argument', 'Evidence and method', 'Key findings', 'Limits and gaps', 'How I’ll use it'];
+function lgCfg() {
+  const g = P.litGrid = P.litGrid && typeof P.litGrid === 'object' ? P.litGrid : {};
+  if (!Array.isArray(g.cols) || !g.cols.length) g.cols = LG_DEFAULT.map(name => ({ id: uid('lc'), name, q: '' }));
+  if (!g.cells || typeof g.cells !== 'object') g.cells = {};
+  if (!['notes', 'cited', 'all'].includes(g.rows)) g.rows = 'notes';
+  return g;
+}
+function lgCited() { const c = new Set(); P.docs.forEach(d => { for (const m of String(d.html).matchAll(/&quot;id&quot;:&quot;([^&]+)&quot;/g)) c.add(m[1]); }); return c; }
+function lgRows(g) {
+  const cited = g.rows === 'cited' ? lgCited() : null;
+  return sortedSources().filter(s => g.rows === 'all' ? true : g.rows === 'cited' ? cited.has(s.id) : P.notes.some(n => n.sourceId === s.id) || (g.cells[s.id] && Object.values(g.cells[s.id]).some(Boolean)));
+}
+function lgNotes(src, col) {
+  if (col.q) { const it = plItem(col.q); const ids = new Set(it ? it.notes || [] : []); return P.notes.filter(n => n.sourceId === src.id && ids.has(n.id)); }
+  const t = col.name.toLowerCase();
+  return P.notes.filter(n => n.sourceId === src.id && (n.tags || []).some(x => x.toLowerCase() === t));
+}
+function deskLit() {
+  const g = lgCfg(), rows = lgRows(g), qs = qItems().filter(q => !g.cols.some(c => c.q === q.id));
+  $('#deskTools').innerHTML = `<label class="inline small">Rows <select id="lgRows"><option value="notes">Sources with notes</option><option value="cited">Sources cited in the project</option><option value="all">Every source</option></select></label>
+    <button class="small" data-j="${DJ(() => { g.cols.push({ id: uid('lc'), name: 'New column', q: '' }); markDirty(); renderDesk(); setTimeout(() => { const i = $$('#deskBody .lg-colname'); i[i.length - 1]?.select(); }, 30); })}">+ Column</button>
+    ${qs.length ? `<select id="lgAddQ" class="small" aria-label="Add a research question as a column"><option value="">+ Research question…</option>${qs.map(q => `<option value="${q.id}">${esc((q.title || 'Untitled question').slice(0, 60))}</option>`).join('')}</select>` : ''}
+    <button class="small" data-j="${DJ(() => lgDoc())}" ${rows.length ? '' : 'disabled'}>Make a document</button><button class="small" data-j="${DJ(() => lgCsv())}" ${rows.length ? '' : 'disabled'}>Download CSV</button>`;
+  $('#lgRows').value = g.rows;
+  $('#lgRows').addEventListener('change', e => { g.rows = e.target.value; markDirty(); renderDesk(); });
+  $('#lgAddQ')?.addEventListener('change', e => { const q = plItem(e.target.value); if (!q) return; g.cols.unshift({ id: uid('lc'), name: q.title || 'Question', q: q.id }); markDirty(); renderDesk(); });
+  if (!rows.length) { $('#deskBody').innerHTML = `<div class="desk-empty"><p><b>The literature grid sets your sources against what you’re reading for.</b></p><p>Each row is a source; each column, a question or theme. Write a line or two in each cell, and the notes tagged with the column’s name (or linked to its research question) show beneath, so you can see where the sources agree, where they differ, and where nobody has looked.</p><p>${P.sources.length ? 'Take notes on a source, or show every source with <b>Rows</b> above.' : 'Add sources in the Sources tab to begin.'}</p></div>`; return; }
+  const filled = rows.reduce((a, s) => a + g.cols.filter(c => (g.cells[s.id] || {})[c.id]).length, 0), total = rows.length * g.cols.length;
+  $('#deskBody').innerHTML = `<div class="desk-pad">
+    <p class="small muted lg-tip">Write a line or two in each cell. Notes on the source tagged with a column’s name, or linked to its research question, are listed under the cell. ${filled} of ${total} cells filled.</p>
+    <div class="eg-wrap lg-wrap"><table class="eg lg"><thead><tr><th scope="col" class="eg-c lg-src">Source</th>${g.cols.map((c, i) => `<th scope="col" class="lg-h"><div class="lg-hd">${c.q ? '<b class="q-mk" title="A research question">?</b>' : ''}<input class="lg-colname" data-lgcol="${c.id}" value="${esc(c.name)}" aria-label="Column name"><span class="lg-acts">${i ? `<button class="ghost small" title="Move left" aria-label="Move ${esc(c.name)} left" data-j="${DJ(() => { g.cols.splice(i - 1, 0, g.cols.splice(i, 1)[0]); markDirty(); renderDesk(); })}">‹</button>` : ''}<button class="ghost small" title="Remove column" aria-label="Remove column ${esc(c.name)}" data-j="${DJ(async () => { const has = rows.some(s => (g.cells[s.id] || {})[c.id]); if (has && !(await ask('Remove column', `Remove “${c.name}” and what you wrote in it?`, 'Remove'))) return; g.cols.splice(i, 1); Object.values(g.cells).forEach(r => delete r[c.id]); markDirty(); renderDesk(); })}">✕</button></span></div></th>`).join('')}</tr></thead>
+    <tbody>${rows.map(s => { const l = sourceLabel(s), nn = P.notes.filter(n => n.sourceId === s.id).length; return `<tr><th scope="row" class="eg-c lg-src"><a href="#" data-j="${DJ(e => { e.preventDefault(); switchTab('sources'); openSource(s.id); })}">${esc(srcShort(s))}</a><span class="small muted">${esc(l.title.slice(0, 80))}</span><span class="small muted">${nn ? orcPl(nn, 'note', 'notes') : 'no notes yet'}${s.stype ? ' · ' + esc(ST_NAME[s.stype] || '') : ''}</span></th>${g.cols.map(c => { const ns = lgNotes(s, c); return `<td><textarea class="lg-cell" data-lgs="${s.id}" data-lgc="${c.id}" rows="3" aria-label="${esc(srcShort(s) + ': ' + c.name)}">${esc((g.cells[s.id] || {})[c.id] || '')}</textarea>${ns.length ? `<div class="lg-notes">${ns.slice(0, 4).map(n => `<button class="lg-note k-${esc(n.kind)}" title="${esc(plainMd(n.body).slice(0, 200))}" data-j="${DJ(() => { switchTab('notes'); openNote(n.id); })}">${esc((n.title || plainMd(n.body)).slice(0, 40))}${n.locator ? ' <span class="muted">p. ' + esc(n.locator) + '</span>' : ''}</button>`).join('')}${ns.length > 4 ? `<span class="small muted">+${ns.length - 4}</span>` : ''}</div>` : ''}</td>`; }).join('')}</tr>`; }).join('')}</tbody></table></div></div>`;
+  $$('#deskBody .lg-cell').forEach(t => t.addEventListener('input', debounce(() => { const r = g.cells[t.dataset.lgs] = g.cells[t.dataset.lgs] || {}; const v = t.value.trim(); if (v) r[t.dataset.lgc] = t.value; else delete r[t.dataset.lgc]; markDirty(); }, 300)));
+  $$('#deskBody .lg-colname').forEach(inp => inp.addEventListener('change', () => { const c = g.cols.find(x => x.id === inp.dataset.lgcol); if (c) { c.name = inp.value.trim() || c.name; markDirty(); renderDesk(); } }));
+}
+function lgTable() { const g = lgCfg(), rows = lgRows(g); return { g, rows, cell: (s, c) => String((g.cells[s.id] || {})[c.id] || '').trim() }; }
+function lgDoc() {
+  syncEditor(); const { g, rows, cell } = lgTable();
+  const html = `<h1>Literature Review Grid</h1><p>${rows.length} sources against ${g.cols.length} questions and themes, from the research desk. Rewrite across the rows, not down them: a review compares sources on each question.</p>
+    <table><thead><tr><th>Source</th>${g.cols.map(c => `<th>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>${rows.map(s => `<tr><td>${esc(srcShort(s))}${citeHTML([{ id: s.id }])}</td>${g.cols.map(c => `<td>${esc(cell(s, c)).replace(/\n/g, '<br>') || '<br>'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const d = newDoc('Literature Review Grid', html); d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList();
+  closeDesk(); toast('Grid made into a document, with each source cited.');
+}
+function lgCsv() {
+  const { g, rows, cell } = lgTable(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const out = [['Source', 'Title', ...g.cols.map(c => c.name)].map(q).join(',')].concat(rows.map(s => [srcShort(s), sourceLabel(s).title, ...g.cols.map(c => cell(s, c))].map(q).join(',')));
+  download('literature-grid.csv', '﻿' + out.join('\r\n'), 'text/csv');
+}
+
+/* codes (2.6): qualitative coding. A codebook of codes with definitions; passages in documents are coded
+   with Mark → Code (a research mark, data-k="cd"), and notes (interview excerpts, quotes from PDFs and
+   archive photos) carry codes of their own. The desk view retrieves everything under a code, counts codes
+   by source and document, and shows which codes turn up together. */
+const cdById = id => (P.codes || []).find(c => c.id === id);
+function newCode(name, color, def = '') {
+  P.codes = P.codes || [];
+  const used = new Set(P.codes.map(c => c.color)), free = TH_COLORS.find(c => !used.has(c)) || TH_COLORS[P.codes.length % TH_COLORS.length];
+  const c = { id: uid('cd'), name, color: color || free, def, parent: '' }; P.codes.push(c); markDirty(); rmStyle(); return c;
+}
+function noteCodesHTML(n) {
+  const cs = (n.codes || []).map(cdById).filter(Boolean);
+  return `<span class="n-codes-l">Codes</span>${cs.map(c => `<span class="cd-chip" style="--c:${c.color}">${esc(c.name)}<button class="ghost" data-a="uncode" data-cd="${c.id}" aria-label="Remove code ${esc(c.name)}">✕</button></span>`).join('')}<select data-a="addcode" aria-label="Add a code"><option value="">＋ Code…</option>${(P.codes || []).filter(c => !(n.codes || []).includes(c.id)).map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}<option value="__new">New code…</option></select>`;
+}
+async function noteCode(n, v) {
+  if (v === '__new') { const name = await ask('New code', 'Name the code: a short label for an idea, theme or pattern you’ll look for across your material.', 'Create', ''); if (!name) return; v = newCode(name).id; }
+  n.codes = [...new Set([...(n.codes || []), v])]; n.modified = nowISO(); markDirty(); $('#nCodes').innerHTML = noteCodesHTML(n); if (deskOn) renderDesk();
+}
+document.addEventListener('change', e => { const sel = e.target.closest('#nCodes [data-a="addcode"]'); if (!sel || !sel.value || !panelState || panelState.kind !== 'note') return; const n = P.notes.find(x => x.id === panelState.id); if (n) noteCode(n, sel.value); });
+document.addEventListener('click', e => { const b = e.target.closest('#nCodes [data-a="uncode"]'); if (!b || !panelState || panelState.kind !== 'note') return; const n = P.notes.find(x => x.id === panelState.id); if (!n) return; n.codes = (n.codes || []).filter(id => id !== b.dataset.cd); if (!n.codes.length) delete n.codes; markDirty(); $('#nCodes').innerHTML = noteCodesHTML(n); if (deskOn) renderDesk(); });
+let cdRange = null;
+function openCodePick() {
+  const r = rmRange(); if (!r) return; cdRange = r;
+  const all = rmAll('cd');
+  $('#cdPickList').innerHTML = (P.codes || []).length ? P.codes.map(c => `<button class="th-pick" data-cd="${esc(c.id)}" title="${esc(c.def || '')}"><i class="th-dot" style="--c:${c.color}"></i>${esc(c.name)}<span class="muted small">${all.filter(p => p.ref === c.id).length || ''}</span></button>`).join('') : '<p class="small muted">No codes yet. Name your first one below.</p>';
+  $('#cdName').value = ''; $('#cdDef').value = ''; $('#cdDlg').showModal(); setTimeout(() => ((P.codes || []).length ? $('#cdPickList button') : $('#cdName')).focus(), 30);
+}
+function cdApply(id) {
+  const r = cdRange; $('#cdDlg').close(); if (!r) return; restoreSelection();
+  const c = cdById(id), ok = rmOp('code a passage', () => !!rmApply(r, 'cd', { ref: id }));
+  if (ok) rmUndoToast(`Coded “${c ? c.name : 'code'}”.`);
+}
+$('#cdPickList').addEventListener('click', e => { const b = e.target.closest('[data-cd]'); if (b) cdApply(b.dataset.cd); });
+$('#cdNew').addEventListener('click', () => { const name = $('#cdName').value.trim(); if (!name) { $('#cdName').focus(); return; } const c = newCode(name, '', $('#cdDef').value.trim()); cdApply(c.id); });
+$('#cdName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#cdNew').click(); } });
+$('#cdCancel').addEventListener('click', () => { $('#cdDlg').close(); restoreSelection(); });
+function cdItems(id) {
+  syncEditor(); rmDirty();
+  const pass = rmAll('cd').filter(p => !id || p.ref === id).map(p => ({ kind: 'passage', code: p.ref, text: p.text, where: (rmDoc(p.docId) || {}).title || 'Document', docId: p.docId, p }));
+  const notes = P.notes.filter(n => (n.codes || []).length && (!id || n.codes.includes(id))).flatMap(n => (id ? [id] : n.codes).map(c => ({ kind: 'note', code: c, text: plainMd(n.body), where: n.sourceId ? srcShort(P.sources.find(x => x.id === n.sourceId)) + (n.locator ? ', ' + n.locator : '') : (n.title || 'Note'), n })));
+  return pass.concat(notes);
+}
+function cdCooccur() {
+  // codes that share a note, or a paragraph of a document
+  const sets = [];
+  P.notes.forEach(n => { if ((n.codes || []).length > 1) sets.push(new Set(n.codes)); });
+  P.docs.forEach(d => { if (!String(d.html).includes('data-k="cd"')) return; const t = document.createElement('div'); t.innerHTML = d.html; $$(RM_BLOCK, t).forEach(b => { const ids = new Set($$('.rm[data-k="cd"]', b).map(x => x.dataset.ref)); if (ids.size > 1) sets.push(ids); }); });
+  const pair = {}; sets.forEach(set => { const a = [...set].sort(); a.forEach((x, i) => a.slice(i + 1).forEach(y => { const k = x + '|' + y; pair[k] = (pair[k] || 0) + 1; })); });
+  return Object.entries(pair).map(([k, n]) => ({ a: k.split('|')[0], b: k.split('|')[1], n })).filter(x => cdById(x.a) && cdById(x.b)).sort((x, y) => y.n - x.n);
+}
+function deskCodes() {
+  const codes = P.codes || [], all = cdItems(), cnt = id => all.filter(x => x.code === id).length;
+  if (deskSel && !cdById(deskSel) && deskSel !== '__over') deskSel = null;
+  if (!deskSel) deskSel = codes[0] ? codes[0].id : null;
+  $('#deskTools').innerHTML = codes.length ? `<button class="small" data-j="${DJ(() => cdExportBook())}">Codebook (.md)</button><button class="small" data-j="${DJ(() => cdExportCsv())}">Coded excerpts (.csv)</button><button class="small" data-j="${DJ(() => cdReport())}">Make a document</button>` : '';
+  const list = `<li class="${deskSel === '__over' ? 'on' : ''}" data-j="${DJ(() => { deskSel = '__over'; renderDesk(); })}"><span class="t"><b>Overview</b></span><em>${all.length}</em></li>` + codes.map(c => `<li class="${c.id === deskSel ? 'on' : ''}" data-j="${DJ(() => { deskSel = c.id; renderDesk(); })}"><i class="th-dot" style="--c:${c.color}"></i><span class="t">${esc(c.name)}</span><em>${cnt(c.id) || ''}</em></li>`).join('');
+  const side = `<aside class="desk-side"><h6>Codebook <button class="ghost small hl" data-j="${DJ(async () => { const name = await ask('New code', 'Name the code: a short label for an idea, theme or pattern you’ll look for across your material.', 'Create', ''); if (!name) return; deskSel = newCode(name).id; renderDesk(); })}" aria-label="New code">＋</button></h6><ul class="desk-list">${list}</ul></aside>`;
+  let main;
+  if (!codes.length) main = `<div class="desk-empty"><p><b>Code your material to see what it adds up to.</b></p><p>A code is a short label for an idea, theme or pattern, such as <i>distrust of officials</i> or <i>supply shortage</i>. Select a passage in a document (an interview transcript, field notes, a document you’ve typed up) and choose <b>Mark → Code passage…</b> (<kbd>K</kbd>), or add codes to a note. Here you’ll see everything under each code, how often each turns up in each source, and which codes appear together.</p><p>Write a definition for each code, saying when to use it and when not. A codebook keeps your coding consistent, and lets someone else check it.</p></div>`;
+  else if (deskSel === '__over') {
+    const srcs = {}, docs = {};
+    all.forEach(x => { if (x.kind === 'note') { const sid = x.n.sourceId || '_'; (srcs[sid] = srcs[sid] || {})[x.code] = ((srcs[sid] || {})[x.code] || 0) + 1; } else { (docs[x.docId] = docs[x.docId] || {})[x.code] = ((docs[x.docId] || {})[x.code] || 0) + 1; } });
+    const cols = [...Object.keys(docs).map(id => ({ k: 'd' + id, label: (rmDoc(id) || {}).title || 'Document', m: docs[id] })), ...Object.keys(srcs).map(id => ({ k: 's' + id, label: id === '_' ? 'Notes with no source' : srcShort(P.sources.find(x => x.id === id)), m: srcs[id] }))];
+    const co = cdCooccur().slice(0, 12), max = Math.max(1, ...cols.flatMap(c => Object.values(c.m)));
+    main = `<div class="desk-pad"><div class="eg-sum"><div><b>${codes.length}</b><span>codes</span></div><div><b>${all.filter(x => x.kind === 'passage').length}</b><span>coded passages</span></div><div><b>${all.filter(x => x.kind === 'note').length}</b><span>coded notes</span></div><div><b>${cols.length}</b><span>documents and sources</span></div></div>
+      ${cols.length ? `<h4 class="cd-h">How often each code turns up, by document and source</h4><div class="eg-wrap"><table class="eg cd-mx"><thead><tr><th scope="col" class="eg-c">Code</th>${cols.map(c => `<th scope="col" class="eg-h"><span>${esc(c.label)}</span></th>`).join('')}<th scope="col">All</th></tr></thead><tbody>${codes.map(c => `<tr><th scope="row" class="eg-c"><i class="th-dot" style="--c:${c.color}"></i> ${esc(c.name)}</th>${cols.map(col => { const v = col.m[c.id] || 0; return `<td class="cd-n" style="--a:${v / max}">${v || ''}</td>`; }).join('')}<td><b>${cnt(c.id) || ''}</b></td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">Nothing coded yet.</p>'}
+      <h4 class="cd-h">Codes that turn up together</h4>${co.length ? `<ul class="cd-co">${co.map(x => `<li><i class="th-dot" style="--c:${cdById(x.a).color}"></i>${esc(cdById(x.a).name)} <span class="muted">and</span> <i class="th-dot" style="--c:${cdById(x.b).color}"></i>${esc(cdById(x.b).name)} <b>${x.n}×</b></li>`).join('')}</ul>` : '<p class="small muted">When two codes are on the same note, or in the same paragraph, they’re counted here. Pairs that keep turning up together are often worth a closer look.</p>'}</div>`;
+  } else {
+    const c = cdById(deskSel), items = all.filter(x => x.code === c.id);
+    main = `<div class="desk-pad"><div class="th-head"><input id="cdRename" value="${esc(c.name)}" aria-label="Code name"><span class="swatches">${TH_COLORS.map(col => `<button class="sw th-sw ${col === c.color ? 'on' : ''}" style="background:${col}" aria-label="Color ${col}" data-j="${DJ(() => { c.color = col; markDirty(); rmStyle(); renderDesk(); })}"></button>`).join('')}</span><button class="ghost small danger" data-j="${DJ(async () => { if (!(await ask('Delete code', `Delete “${c.name}”? ${items.length ? `It comes off ${orcPl(items.length, 'passage or note', 'passages and notes')}; the text itself stays.` : ''}`, 'Delete'))) return; rmOp('delete a code', () => { rmAll('cd').filter(p => p.ref === c.id).forEach(p => removeMarkNow('cd', p.pid)); P.notes.forEach(n => { if (n.codes) { n.codes = n.codes.filter(x => x !== c.id); if (!n.codes.length) delete n.codes; } }); P.codes = P.codes.filter(x => x !== c); deskSel = null; markDirty(); rmRefresh(); return true; }); })}">Delete</button></div>
+      <textarea id="cdDefEdit" rows="2" placeholder="Definition: what this code means, when to use it, and when not to">${esc(c.def || '')}</textarea>
+      ${items.length ? `<p class="small muted">${orcPl(items.length, 'excerpt', 'excerpts')}: ${items.filter(x => x.kind === 'passage').length} in documents, ${items.filter(x => x.kind === 'note').length} in notes.</p><ol class="cd-list">${items.map(x => `<li><div class="cd-where small"><b>${esc(x.where)}</b>${x.kind === 'note' ? ' <span class="muted">note</span>' : ''}</div><blockquote data-j="${DJ(() => { if (x.kind === 'note') { closeDesk(); switchTab('notes'); openNote(x.n.id); } else { rmGo(x.p); } })}" tabindex="0">${esc(x.text.length > 600 ? x.text.slice(0, 600) + '…' : x.text)}</blockquote></li>`).join('')}</ol>` : `<p class="muted">Nothing coded “${esc(c.name)}” yet. Select a passage and choose <b>Mark → Code passage…</b>, or add the code to a note.</p>`}</div>`;
+  }
+  $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main">${main}</div></div>`;
+  $('#cdRename')?.addEventListener('change', e => { const c = cdById(deskSel); if (c && e.target.value.trim()) { c.name = e.target.value.trim(); markDirty(); renderDesk(); } });
+  $('#cdDefEdit')?.addEventListener('input', debounce(e => { const c = cdById(deskSel); if (c) { c.def = e.target.value; markDirty(); } }, 300));
+}
+function cdExportBook() {
+  const md = `# Codebook\n\n${(P.codes || []).map(c => `## ${c.name}\n\n${c.def || '_No definition yet._'}\n\nUsed ${cdItems(c.id).length} times.\n`).join('\n')}`;
+  download('codebook.md', md, 'text/markdown');
+}
+function cdExportCsv() {
+  const q = v => '"' + String(v).replace(/"/g, '""') + '"';
+  const rows = cdItems().map(x => [cdById(x.code)?.name || '', x.kind === 'note' ? 'Note' : 'Document passage', x.where, x.text].map(q).join(','));
+  download('coded-excerpts.csv', '﻿' + [['Code', 'Kind', 'Where', 'Excerpt'].map(q).join(','), ...rows].join('\r\n'), 'text/csv');
+}
+function cdReport() {
+  syncEditor();
+  const html = `<h1>Codes and Excerpts</h1><p>${(P.codes || []).length} codes, from the research desk.</p>` + (P.codes || []).map(c => { const it = cdItems(c.id); return `<h2>${esc(c.name)}</h2>${c.def ? `<p><i>${esc(c.def)}</i></p>` : ''}${it.length ? it.map(x => `<blockquote><p>${esc(x.text)}</p></blockquote><p>${esc(x.where)}${x.kind === 'note' && x.n.sourceId && P.sources.some(s => s.id === x.n.sourceId) ? citeHTML([Object.assign({ id: x.n.sourceId }, x.n.locator ? { locator: x.n.locator, label: x.n.label || 'page' } : {})]) : ''}</p>`).join('') : '<p><mark>[Nothing coded yet.]</mark></p>'}`; }).join('');
+  const d = newDoc('Codes and Excerpts', html); d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList(); closeDesk(); toast('Codes and their excerpts made into a document.');
 }
 
 /* review keys */
@@ -11218,7 +11858,7 @@ const J_PROMPTS = [
 function jPromptsHTML() {
   const have = new Set(jr().log.flatMap(e => e.tags.map(t => t.toLowerCase())));
   const done = J_PROMPTS.filter(p => have.has(p[0])).length;
-  return `<div class="j-prompts"><p class="small"><b>Research process</b> <span class="muted">${done} of ${J_PROMPTS.length} stages written about. Pick one to start an entry with its question.</span></p>
+  return `<div class="j-prompts"><p class="small"><b>Research process</b> <span class="muted">${done} of ${J_PROMPTS.length} stages written about. Pick one to start an entry with its question.</span> <button class="ghost small" type="button" data-gdgo="stages">How each stage works</button></p>
     <div class="j-prow">${J_PROMPTS.map(([k, l], i) => `<button type="button" class="small${have.has(k) ? ' done' : ''}" data-jp="${i}" title="${esc(J_PROMPTS[i][3].split('\n')[0])}">${have.has(k) ? '<span aria-hidden="true">✓ </span>' : ''}${esc(l)}${have.has(k) ? '<span class="sr-only"> (written about)</span>' : ''}</button>`).join('')}</div>
     <div class="j-psrc hidden" id="jPSrc"><label for="jPSrcSel" class="small">Which source?</label><select id="jPSrcSel"><option value="">Choose a source…</option>${sortedSources().map(x => { const l = sourceLabel(x); return `<option value="${esc(x.id)}">${esc(((l.who ? l.who + ', ' : '') + l.title).slice(0, 80))}</option>`; }).join('')}</select><span class="small muted">The citation goes in, in this document’s style.</span></div></div>`;
 }
@@ -11273,16 +11913,79 @@ function deskJournal() {
   const J = jr(), sec = PREFS.jSec || 'design';
   const hs = J.hypotheses, counts = Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]);
   const nOpen = J.log.filter(e => e.kind === 'next' && !e.done).length;
-  const nav = [['week', 'This week', nOpen ? nOpen + ' to do' : ''], ['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || '']];
+  const nav = [['week', 'This week', nOpen ? nOpen + ' to do' : ''], ['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || ''], ['guide', 'Research guide', gdChecksLeft() || '']];
   $('#deskTools').innerHTML = `<button data-j="${DJ(() => journalDoc('memo'))}" title="A document summing up the research so far">Research memo</button><button data-j="${DJ(() => journalDoc('appendix'))}" title="Methods, sources, searches and limitations, as back matter">Methods appendix</button>`;
   const side = `<aside class="desk-side j-side"><button class="primary j-today" data-j="${DJ(() => jSection('log', true))}">＋ Today’s entry</button>
     <ul class="desk-list" role="tablist" aria-label="Journal sections">${nav.map(([k, l, n]) => `<li role="tab" aria-selected="${k === sec}" class="${k === sec ? 'on' : ''}" data-j="${DJ(() => jSection(k))}"><span class="t">${l}</span><em>${n}</em></li>`).join('')}</ul>
     ${hs.length ? `<p class="small muted j-sum">${counts.map(([k, n]) => `<span class="h-chip h-${k}">${n} ${H_ST[k].toLowerCase()}</span>`).join(' ')}</p>` : ''}
     ${J.log.length ? `<p class="small muted">Last entry ${esc(relDay(J.log.reduce((a, e) => (e.date > a ? e.date : a), '')))}</p>` : ''}</aside>`;
-  const main = { week: jWeek, design: jDesign, hyp: jHyps, log: jLogView, search: jSearches }[sec] || jDesign;
+  const main = { week: jWeek, design: jDesign, hyp: jHyps, log: jLogView, search: jSearches, guide: jGuide }[sec] || jDesign;
   $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main j-main">${main()}</div></div>`;
   jWire(sec);
 }
+/* ---------- Research guide (2.6): stage guides, due-diligence checklists, method guides and a glossary,
+   from data/guide.txt. Read once, when first opened. Ticks are kept in the project (journal.checks). ---------- */
+let GUIDE = null;
+function guideData() {
+  if (GUIDE) return GUIDE;
+  const G = { stage: {}, check: [], method: {}, term: [] };
+  let cur = null;
+  ($('#data-guide')?.textContent || '').replace(/&lt;/g, '<').split('\n').forEach(raw => {
+    const l = raw.replace(/\s+$/, '');
+    const h = l.match(/^@@ (\w+) ([^|]+?) \| (.+)$/);
+    if (h) { cur = { kind: h[1], key: h[2].trim(), title: h[3].trim(), lines: [] }; if (cur.kind === 'check') G.check.push(cur); else if (cur.kind === 'term') G.term.push(cur); else G[cur.kind] && (G[cur.kind][cur.key] = cur); return; }
+    if (!cur || l.startsWith('//')) return;
+    cur.lines.push(l);
+  });
+  Object.values(G.stage).forEach(st => { st.parts = {}; let k = null; st.lines.forEach(l => { const m = l.match(/^(Do|Example|Watch for|Done when):\s*(.*)$/); if (m) { k = m[1]; st.parts[k] = m[2]; } else if (k && l.trim()) st.parts[k] += ' ' + l.trim(); }); });
+  G.check.forEach(c => { const body = c.lines.filter(l => l.trim()); c.purpose = (body.find(l => !l.startsWith('- ')) || '').trim(); c.items = body.filter(l => l.startsWith('- ')).map(l => { const m = l.slice(2).match(/^([\w-]+):\s*(.*)$/); return m ? { key: m[1], text: m[2] } : null; }).filter(Boolean); });
+  G.term.forEach(t => { const body = t.lines.filter(l => l.trim()); const see = body.find(l => l.startsWith('See:')); t.def = body.filter(l => !l.startsWith('See:')).join(' '); t.see = see ? see.slice(4).split(',').map(x => x.trim()).filter(Boolean) : []; });
+  G.term.sort((a, b) => a.title.localeCompare(b.title));
+  return (GUIDE = G);
+}
+// a little Markdown: **bold**, *italic*, and nothing else
+const gdInline = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/\*(.+?)\*/g, '<i>$1</i>');
+function gdChecks() { const J = jr(); J.checks = J.checks && typeof J.checks === 'object' ? J.checks : {}; return J.checks; }
+function gdChecksLeft() { try { const ch = gdChecks(); const started = guideData().check.filter(c => ch[c.key] && Object.keys(ch[c.key]).length); return started.reduce((n, c) => n + c.items.filter(i => !ch[c.key][i.key]).length, 0); } catch (e) { return 0; } }
+function jGuide() {
+  const G = guideData(), tab = PREFS.gdTab || 'stages', ch = gdChecks();
+  const tabs = [['stages', 'Stages'], ['checks', 'Checklists'], ['methods', 'Methods'], ['terms', 'Glossary']];
+  let body = '';
+  if (tab === 'stages') {
+    const have = new Set(jr().log.flatMap(e => e.tags.map(t => t.toLowerCase())));
+    const open = PREFS.gdStage || J_PROMPTS[0][0];
+    body = `<p class="small muted">What each stage of a research project is for, what to do, and how to tell when it’s done. Write about a stage in the log with <b>Write about this</b>.</p><div class="gd-stages">${J_PROMPTS.map(([k, label], i) => { const st = G.stage[k] || { parts: {} }, p = st.parts; return `<details class="gd-stage" data-gdstage="${esc(k)}" ${k === open ? 'open' : ''}><summary><span class="gd-n">${i + 1}</span>${esc(label)}${have.has(k) ? ' <span class="gd-done" title="Written about in the log">✓</span>' : ''}</summary>
+      ${p.Do ? `<p><b>Do.</b> ${gdInline(p.Do)}</p>` : ''}${p.Example ? `<p class="gd-ex"><b>For example.</b> ${gdInline(p.Example)}</p>` : ''}${p['Watch for'] ? `<p><b>Watch for.</b> ${gdInline(p['Watch for'])}</p>` : ''}${p['Done when'] ? `<p><b>Done when.</b> ${gdInline(p['Done when'])}</p>` : ''}
+      <button class="small" data-gdwrite="${i}">Write about this</button></details>`; }).join('')}</div>`;
+  } else if (tab === 'checks') {
+    body = `<p class="small muted">Lists to work through at the right moment. Newcomers can use them to learn what careful research involves; everyone can use them so nothing gets skipped. Ticks are saved with the project.</p>` + G.check.map(c => { const got = ch[c.key] || {}, n = c.items.filter(i => got[i.key]).length; return `<section class="gd-check"><h4>${esc(c.title)} <span class="muted small">${n} of ${c.items.length}</span>${n ? `<button class="ghost small" data-gdreset="${esc(c.key)}">Clear</button>` : ''}</h4><p class="small muted">${esc(c.purpose)}</p><ul>${c.items.map(i => `<li><label><input type="checkbox" data-gdc="${esc(c.key)}" data-gdi="${esc(i.key)}" ${got[i.key] ? 'checked' : ''}> <span>${gdInline(i.text)}</span></label></li>`).join('')}</ul></section>`; }).join('');
+  } else if (tab === 'methods') {
+    const keys = Object.keys(G.method), sel = G.method[PREFS.gdMethod] ? PREFS.gdMethod : keys[0], m = G.method[sel];
+    let html = '', inList = false;
+    (m ? m.lines : []).forEach(l => { if (l.startsWith('- ')) { if (!inList) { html += '<ul>'; inList = true; } html += `<li>${gdInline(l.slice(2))}</li>`; return; } if (inList) { html += '</ul>'; inList = false; } if (l.startsWith('## ')) html += `<h5>${esc(l.slice(3))}</h5>`; else if (l.trim()) html += `<p>${gdInline(l)}</p>`; });
+    if (inList) html += '</ul>';
+    body = `<div class="gd-mnav" role="group" aria-label="Methods">${keys.map(k => `<button class="small ${k === sel ? 'on' : ''}" data-gdm="${esc(k)}">${esc(G.method[k].title)}</button>`).join('')}</div><article class="gd-method"><h4>${esc(m ? m.title : '')}</h4>${html}${J_TPL[sel] ? `<p><button class="small" data-gdtpl="${esc(sel)}">Add this method’s prompts to the research design</button></p>` : ''}</article>`;
+  } else {
+    const q = (PREFS.gdQ || '').toLowerCase();
+    const list = G.term.filter(t => !q || t.title.toLowerCase().includes(q) || t.def.toLowerCase().includes(q));
+    body = `<input type="search" id="gdQ" placeholder="Find a term" value="${esc(PREFS.gdQ || '')}" aria-label="Find a term"><dl class="gd-terms">${list.map(t => `<dt id="gd-${esc(t.key.replace(/\s+/g, '-'))}">${esc(t.title)}</dt><dd>${gdInline(t.def)}${t.see.length ? ` <span class="muted">See ${t.see.map(x => `<a href="#" data-gdsee="${esc(x)}">${esc(x)}</a>`).join(', ')}.</span>` : ''}</dd>`).join('') || '<dd class="muted">No term matches.</dd>'}</dl>`;
+  }
+  return `<div class="gd"><div class="j-head"><h5>Research guide</h5></div><div class="cl-filters gd-tabs" role="tablist" aria-label="Guide sections">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${k === tab}" class="${k === tab ? 'on' : ''}" data-gdtab="${k}">${l}</button>`).join('')}</div>${body}</div>`;
+}
+function openGuide(tab, item) { if (tab) PREFS.gdTab = tab; if (item && tab === 'stages') PREFS.gdStage = item; if (item && tab === 'methods') PREFS.gdMethod = item; savePrefs(); openJournal('guide'); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-gdtab]'); if (t) { PREFS.gdTab = t.dataset.gdtab; savePrefs(); renderDesk(); return; }
+  const go = e.target.closest('[data-gdgo]'); if (go) { openGuide(go.dataset.gdgo); return; }
+  const m = e.target.closest('[data-gdm]'); if (m) { PREFS.gdMethod = m.dataset.gdm; savePrefs(); renderDesk(); return; }
+  const w = e.target.closest('[data-gdwrite]'); if (w) { PREFS.jSec = 'log'; savePrefs(); renderDesk(); setTimeout(() => jPrompt(+w.dataset.gdwrite), 30); return; }
+  const r = e.target.closest('[data-gdreset]'); if (r) { delete gdChecks()[r.dataset.gdreset]; markDirty(); renderDesk(); return; }
+  const tp = e.target.closest('[data-gdtpl]'); if (tp) { PREFS.jSec = 'design'; savePrefs(); renderDesk(); setTimeout(() => jApplyTpl(tp.dataset.gdtpl), 30); return; }
+  const see = e.target.closest('[data-gdsee]'); if (see) { e.preventDefault(); const k = see.dataset.gdsee.toLowerCase(); const term = guideData().term.find(x => x.title.toLowerCase() === k || x.key === k); PREFS.gdQ = ''; savePrefs(); renderDesk(); setTimeout(() => { const el = term && $('#gd-' + term.key.replace(/\s+/g, '-')); if (el) { el.scrollIntoView({ block: 'center' }); el.classList.add('flash'); } }, 30); }
+});
+document.addEventListener('toggle', e => { const d = e.target.closest && e.target.closest('[data-gdstage]'); if (d && d.open) { PREFS.gdStage = d.dataset.gdstage; savePrefs(); } }, true);
+document.addEventListener('change', e => { const c = e.target.closest('[data-gdc]'); if (!c) return; const ch = gdChecks(); const l = ch[c.dataset.gdc] = ch[c.dataset.gdc] || {}; if (c.checked) l[c.dataset.gdi] = todayISO(); else delete l[c.dataset.gdi]; if (!Object.keys(l).length) delete ch[c.dataset.gdc]; markDirty(); const h = c.closest('.gd-check').querySelector('h4 .muted'); const s = c.closest('.gd-check'); h.textContent = `${$$('[data-gdc]:checked', s).length} of ${$$('[data-gdc]', s).length}`; });
+document.addEventListener('input', e => { if (e.target.id !== 'gdQ') return; PREFS.gdQ = e.target.value; savePrefs(); const pos = e.target.selectionStart; renderDesk(); const q = $('#gdQ'); if (q) { q.focus(); q.setSelectionRange(pos, pos); } });
+
 function relDay(iso) { if (!iso) return ''; const n = daysUntil(iso); return n === 0 ? 'today' : n === -1 ? 'yesterday' : n < 0 && n > -7 ? `${-n} days ago` : fmtDay(new Date(iso + 'T12:00')); }
 function jSection(k, compose) { PREFS.jSec = k; savePrefs(); renderDesk(); if (compose) setTimeout(() => { const t = $('#jText'); if (t) t.focus(); }, 30); }
 function openJournal(sec, compose) { if (sec) { PREFS.jSec = sec; savePrefs(); } openDesk('journal'); if (compose) setTimeout(() => $('#jText')?.focus(), 40); }
@@ -12878,7 +13581,7 @@ async function popoutBoot() {
 
 const KEYS = [
   ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Alt R', 'Cross-reference'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
-  ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
+  ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then K', 'Code the selection'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
   ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
 ];

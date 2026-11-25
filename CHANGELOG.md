@@ -4,12 +4,26 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-11-25
+
 ### Added
+- **Research guide** in the journal, for newcomers finding their way and for anyone who doesn’t want to skip a step. **Stages**: for each of the twelve research-process stages, what to do, an example, what to watch for and when it’s done, with **Write about this**. **Checklists** (ticks saved with the project): verifying sources; quotes, numbers and names; ethics, consent and safety; data, files and backups; before you submit; open-source verification. **Methods**: short practical guides to the eight methods in Start from a method. **Glossary**: about sixty research terms, cross-referenced. Text in `data/guide.txt`, embedded and read when first opened.
+- **Close to your notes** (Outline): sentences that repeat seven or more words of a quote note (nine of a paraphrase or summary note) without quotation marks. **Add quotation marks** quotes the passage and cites the note’s source; **Compare** shows both with the shared words marked. Idea notes are never flagged.
+- **Highlights in the PDF.** Quote and paraphrase notes made in the reader (and in Take notes) keep where they were on the page, and show as highlights with a margin marker that opens the note.
+- **Literature grid** (research desk): sources against questions and themes, with your summary in each cell and the notes tagged with the column (or linked to its research question) beneath. Make a document (each source cited) or download CSV.
+- **Codes** for qualitative coding: a codebook with definitions; **Mark → Code passage…** (K) on documents; codes on notes. The research desk lists everything under a code, counts codes by document and source, shows codes that turn up together, and exports the codebook (Markdown), coded excerpts (CSV) or a document.
+- **Archive photos**: photos from an archive visit, filed by box, folder and item, transcribed beside the image, with quote notes that cite the box and folder. Images stay in the browser, resized to 2,400 pixels; transcriptions and a SHA-256 fingerprint of each original are in the project.
+- **Sources**: a reading list (To read, Reading, Read, and Read this first) with filters and a place on Project home; **Check for retractions** through Crossref (retractions, withdrawals, expressions of concern, corrections; only DOIs are sent); **Find duplicates** and merge, moving every citation, note, photo and grid cell; **Evidence files**, SHA-256 fingerprints with capture details and a check of any copy against them (PDFs linked to a source are fingerprinted automatically).
+- **Pseudonyms and consent** in Names & spellings: a pseudonym and other forms of the name, replaced in every export while the project keeps the real names; and each person’s consent, with people named in the draft whose consent is pending, declined or withdrawn flagged in the Outline.
+- A polish pass on the interface: sidebar tabs with their counts on the icon, research desk tabs in one scrolling row, roomier goal fields on Project home, the same header, body and footer in every dialog, and one focus ring. New features use the theme’s colors, in light and dark.
+
+### Also added
 - **A wiki** with in-depth pages on getting started, saving and privacy, citations, sources, notes and the board, reading PDFs, the research journal, Socrates, the Oracle, checking the draft and exporting. The pages live in `docs/wiki/` and a workflow (`wiki.yml`) publishes them to the GitHub wiki on every push. `tools/guide/wiki_shots.py` remakes their screenshots from the thesis example, and a new test suite (t45) checks the links, the pictures, the sidebar and that every section of Help has a page or is on the list still to write.
 - **Proofread in the toolbar's ⋯ menu**, as well as F7 and the command search.
 
 ### Fixed
 - Help said Proofread was under "Tools" and the abstract under "Document setup"; they're in the toolbar's ⋯ menu and Page setup.
+- The lock dialog shared its ids with Check links, so **Lock project** on a locked project opened Check links instead.
 
 ## [2.5.1] — 2026-11-25
 
