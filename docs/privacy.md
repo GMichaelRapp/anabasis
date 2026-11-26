@@ -15,6 +15,9 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **My library** is kept in the same browser storage, shared by the projects you open in this browser. A source goes into a project file only when you add it to that project. **Export** writes the library to a file you choose.
 - **Submissions** (outlets, editors, dates, fees and notes) are kept in the project file.
 - **The slush pile** (passages you cut and documents you delete) is kept in the project file, like the documents themselves, and is never included in an export.
+- **A followed Zotero library** is a file on your computer that Zotero (with Better BibTeX) keeps up to date. Anabasis reads it in the page; it never talks to Zotero or to zotero.org. The project file keeps the file's name and when it was read. In Chrome and Edge, the browser's permission to re-read that one file is kept in the same browser storage, and removing the link (or clearing site data) forgets it.
+- **Book for print** and **submission packages** are made in the page: the book goes to your browser's print dialog, and the package is a .zip saved to your computer. Anonymizing for blind review happens before the file is written; the original document is not changed.
+- **Editing marks** carry the name you give in Settings, so an author can see who made each mark. Exports leave the marks out.
 - **The calendar** is kept in the project file. **Export .ics** writes a file to your computer for you to import into a calendar app; Anabasis doesn’t connect to Google, Apple or Microsoft calendars.
 
 - **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.

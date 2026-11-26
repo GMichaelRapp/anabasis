@@ -66,6 +66,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
 - **A calendar** on Project home: the words you wrote each day, deadlines, journal entries, and your archive visits and interviews, exported as an .ics file for any calendar app.
 - **A slush pile** for the passages you cut and the documents you delete, searchable and ready to put back.
+- **A rhetorical précis** of a source in four sentences, kept as a note and gathered into one document; **follow a Zotero library** through a Better BibTeX auto-export file, so changes come in by themselves.
 - **A scratch pad** for jotting now and sorting later, turned into notes (or a journal entry) a passage at a time; **note templates** for interview logs, archive visits, source summaries, field notes and meetings, plus your own; a **note trash** that keeps deleted notes 30 days; **copy citation** in any style; and **⌘/Ctrl E** for the documents, notes and sources you opened last.
 - **Submissions**: where each piece has gone, its status and fee, with follow-ups on the calendar.
 - Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
@@ -74,6 +75,14 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.
 - Maps that work offline: shade countries or provinces, and add markers, routes, arrows and hatched areas, with rivers, a scale bar and a locator inset.
 - Timelines from dated notes, and relationship maps of the people, places and organizations in your text.
+
+**Revise and finish**
+- **The revision pass**: the revision lens now also shades clichés, same-length runs, pet words, *-ly* adverbs and buried verbs, and the Research desk's **Revision** view sets every chapter side by side with a dated revision checklist for each.
+- **Editing marks** for collaboration: the copyeditor's set (query to author, verify, stet, delete, replace, transpose, close up, capitalize, lowercase, italic, roman, spell out, new paragraph, run in), signed and dated, accepted to make the change or rejected. Reviewers can mark the page you send them too.
+- **Contents, lists of figures, tables and equations** that fill themselves in; **paragraph numbers** and **line numbers** in the page and in exports.
+- **Book for print**: a print-ready PDF at a trim size, with mirrored margins, chapters on right-hand pages, running heads, roman folios in the front matter, and the half title, title page, copyright page and contents made for you.
+- **Submission packages**: the piece (anonymized for blind review if you like), a title page and your cover letter, pitch, query, synopsis or proposal, in one .zip.
+- **Special characters for scientific and academic writing**: math, logic and sets, superscripts and subscripts, units and science, and scholarly marks, found by name.
 
 **Check the draft**
 - **Proofread** (F7): about 400 common misspellings, mixed-up words ("would of", "more then", "your welcome"), *a* and *an* by sound, doubled words, spacing and capitals, with fix, fix all and ignore. Offline, and no grammar engine.

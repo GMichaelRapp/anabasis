@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.7.3';
+const APP_VERSION = '2.8.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -144,8 +144,8 @@ function normalize(p) {
   out.sources = Array.isArray(out.sources) ? out.sources : [];
   out.docs = out.docs.map(x => { const b = newDoc(); return Object.assign(b, x, { meta: Object.assign(b.meta, x.meta || {}), layout: Object.assign(b.layout, x.layout || {}) }); })
     .map(x => (STYLES[x.style] ? x : Object.assign(x, { style: DEFAULT_STYLE })))
-    .map(x => { if (x.lang && !LANG_OK(x.lang)) x.lang = ''; return x; });
-  out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }, x.pdfHl ? { pdfHl: cleanHl(x.pdfHl) } : {}));
+    .map(x => { if (x.lang && !LANG_OK(x.lang)) x.lang = ''; if (x.revision !== undefined) { const r = x.revision && typeof x.revision === 'object' && !Array.isArray(x.revision) ? x.revision : {}; x.revision = Object.fromEntries(Object.entries(r).filter(([k, v]) => /^[a-z]{1,20}$/.test(k) && /^\d{4}-\d{2}-\d{2}$/.test(String(v)))); } return x; });
+  out.notes = out.notes.map(x => Object.assign(newNote(), x, x.precis !== undefined ? { precis: x.precis && typeof x.precis === 'object' && !Array.isArray(x.precis) ? Object.fromEntries(['cred', 'genre', 'verb', 'thesis', 'how', 'method', 'purpose', 'aim', 'audience', 'tone'].map(k => [k, typeof x.precis[k] === 'string' ? x.precis[k].slice(0, 2000) : ''])) : undefined } : {}, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }, x.pdfHl ? { pdfHl: cleanHl(x.pdfHl) } : {}));
   out.notes.forEach(n => { if (n.pdfHl && !n.pdfHl.length) delete n.pdfHl; });
   out.sources.forEach(x => { if (!x.photos) return; x.photos = Array.isArray(x.photos) ? x.photos.filter(f => f && f.id).map(f => ({ id: asStr(f.id), name: asStr(f.name), box: asStr(f.box), folder: asStr(f.folder), item: asStr(f.item), date: asStr(f.date), caption: asStr(f.caption), text: asStr(f.text), sha256: /^[0-9a-f]{64}$/.test(f.sha256) ? f.sha256 : '', size: +f.size || 0, taken: asStr(f.taken), added: asStr(f.added), rot: [0, 90, 180, 270].includes(+f.rot) ? +f.rot : 0 })) : []; if (!x.photos.length) delete x.photos; });
   out.sources.forEach(x => {
@@ -205,7 +205,7 @@ function normalize(p) {
       out.journal.trans = { from: L(t.from), to: L(t.to), system: typeof t.system === 'string' && /^[a-z-]{2,12}$/.test(t.system) ? t.system : '', insert: ['note', 'brackets', 'orig', 'none'].includes(t.insert) ? t.insert : 'note', mine: t.mine !== false,
         glossary: (Array.isArray(t.glossary) ? t.glossary : []).filter(g => g && typeof g === 'object' && g.term).map(g => ({ id: asStr(g.id) || uid('tg'), term: asStr(g.term), lang: L(g.lang), render: asStr(g.render), avoid: (Array.isArray(g.avoid) ? g.avoid : String(g.avoid || '').split(',')).map(x => asStr(x).trim()).filter(Boolean), note: asStr(g.note), translit: asStr(g.translit), created: asStr(g.created) || nowISO() })) }; }
   }
-  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {},
+  out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {}, typeof s.zkey === 'string' && s.zkey ? { zkey: s.zkey.slice(0, 300) } : {},
     Array.isArray(s.photos) && s.photos.length ? { photos: s.photos } : {}, Array.isArray(s.evidence) && s.evidence.length ? { evidence: s.evidence } : {}, s.read ? { read: s.read } : {}, s.prio ? { prio: 1 } : {}, s.rc ? { rc: s.rc } : {},
     s.lc && typeof s.lc === 'object' ? { lc: Object.fromEntries(['at', 'url', 'ts', 'st', 'err'].filter(k => s.lc[k] != null && s.lc[k] !== '').map(k => [k, k === 'err' ? 1 : String(s.lc[k]).slice(0, 300)]).filter(([k, v]) => k !== 'url' || WB_OK_N.test(v))) } : {}));
   { // datasets and dashboards (1.7)
@@ -227,6 +227,9 @@ function normalize(p) {
     const EVK = { visit: 1, interview: 1, meeting: 1, deadline: 1, other: 1 };
     out.events = arr(out.events).map(e => ({ id: String(e.id), date: dayOk(e.date), time: /^\d\d:\d\d$/.test(e.time || '') ? e.time : '', title: rstr(e.title), kind: EVK[e.kind] ? e.kind : 'other', note: rstr(e.note), created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.date);
     out.scratch = rstr(out.scratch).slice(0, 500000);
+    if (out.zotero !== undefined) { const z = out.zotero && typeof out.zotero === 'object' ? out.zotero : {}; out.zotero = z.file ? { file: rstr(z.file).slice(0, 200), read: rstr(z.read), modified: +z.modified || 0, count: +z.count || 0 } : undefined; if (!out.zotero) delete out.zotero; }
+    out.sources.forEach(x => { if (x.zkey !== undefined && typeof x.zkey !== 'string') delete x.zkey; });
+    out.docs.forEach(d => { if (d && d.layout && typeof d.layout === 'object') ['paraNums', 'lineNums'].forEach(k => { if (k in d.layout) d.layout[k] = d.layout[k] === true; }); });
     out.slush = (Array.isArray(out.slush) ? out.slush : []).filter(x => x && typeof x === 'object' && typeof x.html === 'string').slice(0, 2000).map(x => ({ id: String(x.id || uid('sl')), html: scrubHTML(x.html), title: rstr(x.title), from: rstr(x.from), fromTitle: rstr(x.fromTitle),
       kind: ['cut', 'copy', 'doc'].includes(x.kind) ? x.kind : 'cut', at: rstr(x.at) || nowISO(), note: rstr(x.note), ...(x.doc && typeof x.doc === 'object' ? { doc: { style: rstr(x.doc.style), lang: LANG_OK(x.doc.lang) ? x.doc.lang : '', role: rstr(x.doc.role) } } : {}) }));
     const keep = 30 * 864e5;
@@ -449,6 +452,20 @@ function itemFor(id) {
   if (s.citeArchive && s.osint && /^https:\/\//.test(s.osint.archiveUrl || '')) it.URL = s.osint.archiveUrl; // the page is gone: cite the saved copy
   return it;
 }
+/* Speed: while building an engine, citeproc looks up each macro by name with a full walk of the style,
+   many times over. Remembering each lookup per style gives the same engine in about half the time. */
+(function memoMacros() {
+  if (typeof CSL === 'undefined' || !CSL.XmlJSON || CSL.XmlJSON.prototype.__memo) return;
+  const orig = CSL.XmlJSON.prototype.getNodesByName, memo = new WeakMap();
+  CSL.XmlJSON.prototype.getNodesByName = function (json, name, val, ret) {
+    if (name !== 'macro' || ret || !json || typeof json !== 'object') return orig.call(this, json, name, val, ret);
+    let m = memo.get(json); if (!m) { m = new Map(); memo.set(json, m); }
+    const k = val === undefined ? '\u0000' : String(val);
+    if (!m.has(k)) m.set(k, orig.call(this, json, name, val));
+    return m.get(k);
+  };
+  CSL.XmlJSON.prototype.__memo = true; CSL.XmlJSON.prototype.__plain = orig;
+})();
 function makeEngine(style, lang = 'en-US') {
   return new CSL.Engine({ retrieveLocale: l => cslLocaleText(l), retrieveItem: itemFor }, cslXml(style), lang, lang !== 'en-US');
 }
@@ -694,8 +711,15 @@ function syncEditor() {
   const h = stripCp(editor.innerHTML);
   if (h !== d.html) { d.html = h; d.modified = nowISO(); }
 }
+var refsLater = false;
 function renderRefs(force = false) {
   const doc = curDoc(); if (!doc) return;
+  /* Speed: at startup the saved page already shows its citations, so building the citation engine
+     waits until the window has painted. */
+  if (!appReady) {
+    if (!refsLater) { refsLater = true; requestAnimationFrame(() => setTimeout(() => { refsLater = false; lastSig = ''; renderRefs(true); }, 30)); }
+    return;
+  }
   const markers = $$('.cite,.fn', editor);
   const sig = [doc.style + '|' + docLang(doc), srcVersion, doc.layout.bib, !!doc.layout.bibSplit, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   if (!force && sig === lastSig) return;
@@ -712,7 +736,7 @@ function applyLayout(el, doc) {
   el.classList.toggle('bib-ds', !!STYLES[doc.style].ds && L.spacing === '2');
   el.style.setProperty('--doc-size', L.size + 'pt');
   el.style.setProperty('--doc-lh', L.spacing);
-  if (el.id === 'page') { applyScreen(L); applyDocLang(doc); }
+  if (el.id === 'page') { applyScreen(L); applyDocLang(doc); if (typeof lnApply === 'function') requestAnimationFrame(lnApply); }
 }
 /* screen-only reading comfort: never touches exports, print or Page setup */
 function applyScreen(L) {
@@ -750,7 +774,7 @@ function openDoc(id, skipSync = false) {
   if (!$('#findBar').classList.contains('hidden')) runFind();
   $('#scroller').scrollTop = 0; tipCheck();
   document.body.classList.remove('side-open');
-  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderGlossaryCheck(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
+  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderGlossaryCheck(); if (typeof renderEditMarks === 'function') renderEditMarks(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
 function updateWordCount() {
   const words = wordsIn(editor);
@@ -1233,7 +1257,7 @@ $('#btnPageSetup').addEventListener('click', () => {
   $('#suTitleBlock').checked = m.showTitleBlock; $('#suAuthor').value = m.author; $('#suDate').value = m.date; $('#suSubtitle').value = m.subtitle;
   $('#suFont').value = L.font; $('#suSize').value = L.size; $('#suSpacing').value = L.spacing; $('#suPaper').value = L.paper; $('#suBib').value = L.bib; $('#suBibSplit').checked = !!L.bibSplit;
   $('#suLang').innerHTML = langOptions(d.lang || 'en-US');
-  $('#suIndent').checked = !!L.indent; $('#suPageNums').checked = !!L.pageNums; $('#suTarget').value = d.target || ''; $('#suRole').value = d.role || 'body'; $('#suPdfNotes').value = L.pdfNotes || 'foot'; $('#suIndex').checked = !!L.index; $('#suMargin').value = L.marginalia || 'word'; $('#suScript').checked = !!(L.script && L.script.on); $('#suWpm').value = (L.script && L.script.wpm) || 150;
+  $('#suIndent').checked = !!L.indent; $('#suPageNums').checked = !!L.pageNums; $('#suTarget').value = d.target || ''; $('#suRole').value = d.role || 'body'; $('#suPdfNotes').value = L.pdfNotes || 'foot'; $('#suIndex').checked = !!L.index; $('#suParaNums').checked = !!L.paraNums; $('#suLineNums').checked = !!L.lineNums; $('#suMargin').value = L.marginalia || 'word'; $('#suScript').checked = !!(L.script && L.script.on); $('#suWpm').value = (L.script && L.script.wpm) || 150;
   $('#setupDlg').showModal();
 });
 $('#suCancel').addEventListener('click', () => $('#setupDlg').close());
@@ -1241,7 +1265,7 @@ $('#suOk').addEventListener('click', () => {
   const d = curDoc();
   Object.assign(d.meta, { showTitleBlock: $('#suTitleBlock').checked, author: $('#suAuthor').value.trim(), date: $('#suDate').value.trim(), subtitle: $('#suSubtitle').value.trim() });
   Object.assign(d.layout, { font: $('#suFont').value, size: $('#suSize').value, spacing: $('#suSpacing').value, paper: $('#suPaper').value, bib: $('#suBib').value, bibSplit: $('#suBibSplit').checked, indent: $('#suIndent').checked, pageNums: $('#suPageNums').checked });
-  d.target = Math.max(0, parseInt($('#suTarget').value, 10) || 0); d.role = $('#suRole').value; d.layout.pdfNotes = $('#suPdfNotes').value; d.layout.index = $('#suIndex').checked; d.layout.marginalia = $('#suMargin').value; d.layout.script = { on: $('#suScript').checked, wpm: Math.max(60, Math.min(260, parseInt($('#suWpm').value, 10) || 150)) }; setTimeout(updateScript, 0);
+  d.target = Math.max(0, parseInt($('#suTarget').value, 10) || 0); d.role = $('#suRole').value; d.layout.pdfNotes = $('#suPdfNotes').value; d.layout.index = $('#suIndex').checked; d.layout.paraNums = $('#suParaNums').checked; d.layout.lineNums = $('#suLineNums').checked; d.layout.marginalia = $('#suMargin').value; d.layout.script = { on: $('#suScript').checked, wpm: Math.max(60, Math.min(260, parseInt($('#suWpm').value, 10) || 150)) }; setTimeout(updateScript, 0);
   { const v = $('#suLang').value; if ((d.lang || 'en-US') !== v) { d.lang = v === 'en-US' ? '' : v; lastSig = ''; } }
   $('#setupDlg').close(); updateTargets(); renderDocList();
   $('#titleBlock').innerHTML = titleBlockHTML(d); applyLayout($('#page'), d); renderRefs(true); markDirty();
@@ -1491,7 +1515,7 @@ function openSource(id, focusTitle = false) {
   $('#panel').classList.remove('hidden');
   $('#panelTitle').textContent = 'Source';
   renderSourcePanel(s);
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="note">+ Note on this</button><div class="pf-more"><button class="small ghost" data-a="savelib" title="Keep this source (and its notes) on your library shelf, for every project">Save to library</button><button class="small ghost" data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button class="small ghost" data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button class="small ghost" data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><button class="small ghost danger pf-end" data-a="del">Delete</button></div>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="note">+ Note on this</button><div class="pf-more"><button class="small ghost" data-a="precis" title="A four-sentence rhetorical précis of this source">Précis…</button><button class="small ghost" data-a="savelib" title="Keep this source (and its notes) on your library shelf, for every project">Save to library</button><button class="small ghost" data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button class="small ghost" data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button class="small ghost" data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><button class="small ghost danger pf-end" data-a="del">Delete</button></div>`;
   renderSourceList();
   if (focusTitle) setTimeout(() => $('#panelBody [data-f="title"]')?.focus(), 30);
 }
@@ -1629,6 +1653,7 @@ $('#panelFoot').addEventListener('click', async e => {
     if (a === 'pdf') { readSourcePdf(s.id); return; }
     if (a === 'photos') { openPhotos(s.id); return; }
     if (a === 'copycite') { openCopyCite(s.id); return; }
+    if (a === 'precis') { openPrecis(s.id); return; }
     if (a === 'savelib') { libAdd([s]).then(r => toast(r.added ? 'Saved to your library, with its notes. Add it to any project from Sources → My library.' : 'Updated in your library.')).catch(() => toast('This browser couldn’t save to the library.')); return; }
     if (a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: s.id }])); toast('Citation inserted. Click it to add a page number.'); }
     if (a === 'note') { const n = newNote(); n.sourceId = s.id; n.kind = 'quote'; P.notes.unshift(n); renderNoteList(); openNote(n.id); switchTab('notes'); markDirty(); }
@@ -1939,7 +1964,7 @@ function openNote(id, focus = false) {
     </div>
     <div class="note-links" id="noteLinks">${noteLinksHTML(n)}</div>
     <div class="muted small" style="margin-top:12px">Created ${new Date(n.created).toLocaleString()} · edited ${relTime(n.modified)} · Link notes with [[Note title]]</div>`;
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="dupn">Duplicate</button><div class="pf-more"><button class="small ghost" data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button class="small ghost" data-a="savetpl" title="Use this note’s layout to start new notes (Notes → Templates…)">Save as template</button><button class="small ghost danger pf-end" data-a="deln">Delete</button></div>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="dupn">Duplicate</button><div class="pf-more">${n.precis ? '<button class="small ghost" data-a="editprecis">Edit précis</button>' : ''}<button class="small ghost" data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button class="small ghost" data-a="savetpl" title="Use this note’s layout to start new notes (Notes → Templates…)">Save as template</button><button class="small ghost danger pf-end" data-a="deln">Delete</button></div>`;
   renderNoteList();
   if (focus) setTimeout(() => $('#panelBody [data-n=title]').focus(), 30);
 }
@@ -1980,6 +2005,7 @@ async function noteFootClick(a) {
   if (a === 'dupn') { const c = Object.assign({}, n, { id: uid('n'), title: n.title + ' (copy)', tags: [...n.tags], created: nowISO(), modified: nowISO() }); P.notes.unshift(c); openNote(c.id); markDirty(); }
   if (a === 'deln') trashNotes([n]);
   if (a === 'savetpl') saveNoteAsTpl(n);
+  if (a === 'editprecis') openPrecis(n.sourceId, n.id);
 }
 /* turn a note into document HTML */
 function noteToHTML(n, { withCite = true, heading = '' } = {}) {
@@ -2083,11 +2109,11 @@ function buildExport(doc, mode = 'html', opt = {}) {
   $$('.flag', tmp).forEach(f => { const m = document.createElement('mark'); m.textContent = `[${(FLAG_KINDS[f.dataset.kind] || FLAG_KINDS.tk).label}${f.dataset.note ? ': ' + f.dataset.note : ''}]`; f.replaceWith(m); });
   $$('.qlink', tmp).forEach(q => q.replaceWith(...q.childNodes));
   $$('[data-qn]', tmp).forEach(q => q.removeAttribute('data-qn'));
-  const figs = prepExportFigures(tmp); prepExportXrefs(tmp, mode, doc); prepExportMath(tmp, opt.texMath ? 'substack' : mode); fillAbbreviations(tmp);
+  const figs = prepExportFigures(tmp); prepExportNavs(tmp); prepExportParaNums(tmp, mode, doc); prepExportXrefs(tmp, mode, doc); prepExportMath(tmp, opt.texMath ? 'substack' : mode); fillAbbreviations(tmp);
   const mgWant = doc.layout.marginalia || 'word';
   const mg = mgWant === 'page' && mode !== 'substack' ? collectMarginalia(tmp, mode) : [];
   if (mode !== 'docx' || mgWant !== 'word') $$('.cmt', tmp).forEach(c => c.replaceWith(...c.childNodes));
-  $$('.rm', tmp).forEach(c => c.replaceWith(...c.childNodes));
+  $$('.rm, .edm', tmp).forEach(c => c.replaceWith(...c.childNodes));
   if (mode !== 'docx') { $$('del.sg', tmp).forEach(d => d.remove()); $$('ins.sg', tmp).forEach(d => d.replaceWith(...d.childNodes)); }
   tmp.normalize();
   if (!opt.realNames) pseudoApply(tmp);
@@ -2146,7 +2172,7 @@ function exportMarkdown(doc) {
   const td = addMathRules(addTableRules(new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' })));
   let md = `# ${doc.title}\n\n` + [doc.meta.subtitle, doc.meta.author, doc.meta.date].filter(Boolean).map(s => `*${s}*`).join('  \n') + '\n\n';
   if (absOn(doc)) { const a = doc.meta.abstract; md += `**Abstract.** ${a.text.trim()}\n\n` + (a.keywords.length ? `*Keywords:* ${a.keywords.join('; ')}\n\n` : ''); }
-  md += td.turndown(x.body).replace(/@@FN(\d+)@@/g, '[^$1]');
+  md += td.turndown(x.body).replace(/@@FN(\d+)@@/g, '[^$1]').replace(/@@PN(\d+)@@/g, '[$1]');
   if (x.out.notes.length) md += '\n\n' + x.out.notes.map(n => `[^${n.n}]: ${td.turndown(n.html).replace(/\n+/g, ' ')}`).join('\n');
   if (x.out.bib) md += `\n\n## ${x.out.heading}\n\n` + x.out.bib.entries.map(e => td.turndown(e).trim()).join('\n\n');
   if (x.mg && x.mg.length) md += '\n\n## Marginalia\n\n' + x.mg.map(m => `${m.n}. **${m.sec || 'Opening'}** — “${m.passage}”  \n   ${m.text.replace(/\n/g, '  \n   ')}`).join('\n\n');
@@ -2201,6 +2227,8 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'annot') annotatedBibliography();
   if (x === 'litrev') lgReview();
   if (x === 'rvsend') openReviewSend();
+  if (x === 'book') openBook();
+  if (x === 'subpkg') openSubPackage();
   if (x === 'rvimport') openReviewImport();
   if (x === 'osintlist') download(fileSafe(P.title) + ' - OSINT sources.json', exportOsintList(), 'application/json');
   if (x === 'csl') download(fileSafe(P.title) + ' - sources.json', toCSLJSON(), 'application/json');
@@ -2322,7 +2350,7 @@ function blockSnippet(el, n = 70) { const t = (el.textContent || '').replace(/\s
 /* one word count everywhere: citations, footnote markers, flags and display equations don't count, an inline equation counts as one word,
    and paragraphs, headings and list items are kept apart so the last word of one and the first of the next aren't run together */
 function wordsIn(el) {
-  const c = el.cloneNode(true); $$('.cite,.fn,.flag,del.sg,p.eq', c).forEach(m => m.remove()); $$('span.math', c).forEach(m => { m.textContent = 'x'; });
+  const c = el.cloneNode(true); $$('.cite,.fn,.flag,del.sg,p.eq,nav', c).forEach(m => m.remove()); $$('span.math', c).forEach(m => { m.textContent = 'x'; });
   $$('p,h1,h2,h3,h4,h5,h6,li,blockquote,figcaption,td,th,pre,div,dt,dd', c).forEach(b => b.append(' ')); $$('br', c).forEach(b => b.replaceWith(' '));
   return wc(c.textContent || '');
 }
@@ -2712,7 +2740,7 @@ async function exportDocx(doc, opt = {}) {
   const headers = ms ? { default: new D.Header({ children: [new D.Paragraph({ alignment: D.AlignmentType.RIGHT, children: [new D.TextRun({ children: [`${ms.surname} / ${ms.short} / `, D.PageNumber.CURRENT], font, size })] })] }), first: new D.Header({ children: [new D.Paragraph({ children: [] })] }) } : undefined;
   const bullets = ['•', '◦', '▪'];
   const wdoc = new D.Document({
-    creator: doc.meta.author || 'Anabasis', title: doc.title, ...(x.index || (x.mg && x.mg.length) ? { features: { updateFields: true } } : {}),
+    creator: doc.meta.author || 'Anabasis', title: doc.title, ...(x.index || (x.mg && x.mg.length) || /<nav class="toc/.test(x.body) ? { features: { updateFields: true } } : {}),
     styles: {
       default: { document: { run: Object.assign({ font, size, language: { value: docLang(doc), ...(langOf(docLang(doc)).rtl ? { bidirectional: docLang(doc) } : {}), ...(langOf(docLang(doc)).cjk ? { eastAsia: docLang(doc) } : {}) } }, langOf(docLang(doc)).rtl ? { rightToLeft: true } : {}), ...(langOf(docLang(doc)).rtl ? { paragraph: { bidirectional: true } } : {}) }, heading1: hstyle(size + 8), heading2: hstyle(size + 4), heading3: hstyle(size + 2, true) },
     },
@@ -2722,10 +2750,11 @@ async function exportDocx(doc, opt = {}) {
     ] },
     footnotes,
     ...(cmtList.length ? { comments: { children: cmtList } } : {}),
-    sections: [{ properties: { ...(ms ? { titlePage: true } : {}), page: { size: page, margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } }, ...(headers ? { headers } : {}), footers, children }],
+    sections: [{ properties: { ...(ms ? { titlePage: true } : {}), ...(L.lineNums ? { lineNumbers: { countBy: 1, restart: D.LineNumberRestartFormat.NEW_PAGE } } : {}), page: { size: page, margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 } } }, ...(headers ? { headers } : {}), footers, children }],
   });
   try {
     const blob = await D.Packer.toBlob(wdoc);
+    if (opt.returnBlob) return blob;
     download(fileSafe(doc.title) + (ms ? ' - manuscript' : '') + '.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     if (ms) { toast(`Manuscript saved: Times New Roman 12, double-spaced, ${ms.words}, with your name and page numbers at the top of each page.`); return; }
     const fl = (doc.html.match(/class="flag/g) || []).length;
@@ -2842,7 +2871,12 @@ function htmlToDocx(html, ctx, opt = {}) {
     if (tag === 'FIGURE') { out.push(...figureToDocx(el, ctx, runs, trimRuns)); prevHeading = true; return; }
     if (tag === 'P' && el.classList.contains('eq') && el.hasAttribute('data-tex')) { out.push(eqToDocx(el, ctx)); prevHeading = true; return; }
     if (tag === 'TABLE') { out.push(tableToDocx(el, ctx, runs, trimRuns)); prevHeading = true; return; }
-    if (tag === 'NAV') { if (el.classList.contains('lof') || el.classList.contains('toc')) out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); [...el.childNodes].forEach(block); return; }
+    if (tag === 'NAV' && el.classList.contains('toc')) { // Word builds the real contents, with page numbers, from the headings
+      out.push(new D.Paragraph({ pageBreakBefore: true, spacing: { after: 240 }, children: [new D.TextRun({ text: 'Contents', bold: true, font: ctx.font, size: ctx.size + 4 })] }));
+      out.push(new D.Paragraph({ children: [new D.SimpleField('TOC \\o "1-3" \\h \\z \\u', 'Word builds the contents here. If they don’t appear, right-click this line and choose Update Field.')] }));
+      out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); prevHeading = true; return;
+    }
+    if (tag === 'NAV') { if (el.classList.contains('lof') || el.classList.contains('loe')) out.push(new D.Paragraph({ pageBreakBefore: true, children: [] })); [...el.childNodes].forEach(block); return; }
     if (tag === 'BLOCKQUOTE') {
       const hasBlocks = [...el.children].some(c => /^(P|DIV|UL|OL)$/.test(c.nodeName));
       const items = hasBlocks ? [...el.childNodes].filter(c => c.nodeType === 1 || c.data.trim()) : [el];
@@ -3269,6 +3303,8 @@ html,body{margin:0;background:#fff;color:#000}
 .docbody nav.toc li a{color:inherit;text-decoration:none;flex:1}
 .docbody nav.toc li a::after{content:target-counter(attr(href url), page);float:right}
 .docbody nav.toc .toc-part{font-weight:bold;margin-top:8pt}
+.docbody nav.toc .toc-l2 a{padding-left:1.2em}.docbody nav.toc .toc-l3 a{padding-left:2.4em}
+.docbody nav.loe{break-before:page}.docbody nav.loe ol{list-style:none;padding:0}.docbody nav.loe li{margin:0 0 4pt}.docbody nav.loe li a{color:inherit;text-decoration:none}.docbody nav.loe li a::after{content:target-counter(attr(href url), page);float:right}
 .docbody mark{background:#fde68a}
 .docbody figure{break-inside:avoid}
 .docbody nav.lof{break-before:page}
@@ -3295,8 +3331,8 @@ function exportPagedPDF(doc, opt = {}) {
   const x = buildExport(doc, 'paged'), cs = docClassAndStyle(doc);
   const lib = document.getElementById('lib-paged').textContent;
   const bib = refsHTML(Object.assign({}, x.out, { notes: [] }), true);
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(fileSafe(doc.title))}</title><style>${$('#docCss').textContent}\n${pagedCSS(doc)}${opt.review ? '\n' + reviewCSS() : ''}</style>
-<script>${IX_PAGES_JS}${opt.review ? LINE_NUMS_JS : ''}window.PagedConfig={auto:true,after:function(){try{cpIndexPages()}catch(e){}${opt.review ? 'try{cpLineNums()}catch(e){}' : ''}parent.postMessage({cpPaged:1},'*')}};<\/script><script>${lib}<\/script></head>
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${esc(fileSafe(doc.title))}</title><style>${$('#docCss').textContent}\n${pagedCSS(doc)}${opt.review ? '\n' + reviewCSS() : doc.layout.lineNums ? '\n.pagedjs_page{position:relative}.cp-ln{position:absolute;width:30px;text-align:right;font:7.5pt/12px Helvetica,Arial,sans-serif;color:#888;user-select:none}' : ''}</style>
+<script>${IX_PAGES_JS}${opt.review || doc.layout.lineNums ? LINE_NUMS_JS : ''}window.PagedConfig={auto:true,after:function(){try{cpIndexPages()}catch(e){}${opt.review || doc.layout.lineNums ? 'try{cpLineNums()}catch(e){}' : ''}parent.postMessage({cpPaged:1},'*')}};<\/script><script>${lib}<\/script></head>
 <body><article class="${cs.cls}" style="${cs.style}"><p class="rh">${esc(doc.title)}</p>${x.title ? `<header class="title-block">${x.title}</header>` : ''}${x.body}${bib}${x.index || ''}${x.marginalia || ''}</article></body></html>`;
   $$('iframe.paged-print').forEach(f => f.remove());
   const f = document.createElement('iframe'); f.className = 'paged-print';
@@ -3726,7 +3762,8 @@ async function exportEpub(doc) {
   const css = `.eq{text-align:center;margin:.8em 0}.eq svg{max-width:100%}.eq-n{float:right}body{font-family:Georgia,serif;line-height:1.5;margin:0 5%}h1,h2,h3{line-height:1.25;page-break-after:avoid}h1.part-title{text-align:center;margin-top:30%}p{margin:0 0 .6em;text-indent:0}blockquote{margin:0 0 .8em 1.5em}sup{font-size:.7em;line-height:0}a.noteref{text-decoration:none}aside{margin:0 0 .6em}.csl-entry{margin:0 0 .5em}.hanging .csl-entry{padding-left:1.5em;text-indent:-1.5em}.titlepage{text-align:center;margin-top:30%}.titlepage .author{margin-top:2em}mark{background:#fde68a}`;
   const opf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="bookid" xml:lang="en">
-<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">${uuid}</dc:identifier><dc:title>${esc(doc.title)}</dc:title>${m.author ? `<dc:creator>${esc(m.author)}</dc:creator>` : ''}<dc:language>en</dc:language><meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</meta></metadata>
+<metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="bookid">${uuid}</dc:identifier><dc:title>${esc(doc.title)}</dc:title>${m.author ? `<dc:creator>${esc(m.author)}</dc:creator>` : ''}<dc:language>${esc(docLang(doc))}</dc:language>${P.book && P.book.publisher ? `<dc:publisher>${esc(P.book.publisher)}</dc:publisher>` : ''}${P.book && P.book.isbn ? `<dc:source>urn:isbn:${esc(P.book.isbn.replace(/[^0-9Xx]/g, ''))}</dc:source>` : ''}<meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</meta>
+<meta property="schema:accessMode">textual</meta>${/<img/.test(all.map(f => f.html || '').join('')) ? '<meta property="schema:accessMode">visual</meta>' : ''}<meta property="schema:accessModeSufficient">textual</meta><meta property="schema:accessibilityFeature">structuralNavigation</meta><meta property="schema:accessibilityFeature">tableOfContents</meta><meta property="schema:accessibilityFeature">readingOrder</meta><meta property="schema:accessibilityFeature">alternativeText</meta><meta property="schema:accessibilityHazard">none</meta><meta property="schema:accessibilitySummary">Text with headings, a table of contents and notes in reading order. Images carry the descriptions the author gave them.</meta></metadata>
 <manifest><item id="nav" href="nav.xhtml" media-type="application/xhtml+xml" properties="nav"/><item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/><item id="css" href="style.css" media-type="text/css"/>${all.map(f => `<item id="${f.id}" href="${f.file}" media-type="application/xhtml+xml"${/<svg[\s>]/.test(f.html) ? ' properties="svg"' : ''}/>`).join('')}${imgs.files.map(f => `<item id="${f.id}" href="${f.name}" media-type="${f.mime}"/>`).join('')}</manifest>
 <spine toc="ncx">${all.map(f => `<itemref idref="${f.id}"/>`).join('')}</spine></package>`;
   const nav = xpage('Contents', `<nav epub:type="toc" id="toc"><h1>Contents</h1><ol>${all.map(f => `<li><a href="${f.file}">${esc(f.title)}</a></li>`).join('')}</ol></nav>`);
@@ -3781,7 +3818,7 @@ function parseBibTeX(text) {
     const m = text.slice(i).match(/^@(\w+)\s*[{(]/); if (!m) { i++; continue; }
     const kind = m[1].toLowerCase(); i += m[0].length;
     if (/^(comment|preamble|string)$/.test(kind)) { let depth = 1; while (i < text.length && depth) { if (text[i] === '{') depth++; else if (text[i] === '}') depth--; i++; } continue; }
-    const comma = text.indexOf(',', i); if (comma < 0) break; i = comma + 1;
+    const comma = text.indexOf(',', i); if (comma < 0) break; const bibKey = text.slice(i, comma).trim(); i = comma + 1;
     const f = {};
     while (i < text.length) {
       const km = text.slice(i).match(/^\s*([\w-]+)\s*=\s*/); if (!km) { const end = text.slice(i).match(/^\s*[})]/); if (end) i += end[0].length; break; }
@@ -3807,6 +3844,7 @@ function parseBibTeX(text) {
     if (date) o.issued = parseDate(date); else if (f.year) { const mo = months[String(f.month || '').toLowerCase().slice(0, 3)] || parseInt(f.month, 10); o.issued = { 'date-parts': [[parseInt(texClean(f.year), 10), ...(mo ? [mo] : [])]] }; }
     if (f.urldate) o.accessed = parseDate(texClean(f.urldate));
     if (f.author) o.author = names(f.author); if (f.editor) o.editor = names(f.editor); if (f.translator) o.translator = names(f.translator);
+    if (bibKey && /^[^\s{}]+$/.test(bibKey)) Object.defineProperty(o, '_key', { value: bibKey, enumerable: false });
     if (o.title || o.author) out.push(o);
   }
   return out;
@@ -4040,7 +4078,7 @@ function pfScan(t) {
 function pfText(el) {
   const map = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.cite,.fn,sup,code,pre,.math,mjx-container,.flag,.ixm,.cmt-pt,.ix-a,.eq,[contenteditable="false"]') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT });
   let t = '', n; while ((n = w.nextNode())) { map.push({ n, at: t.length }); t += n.data; }
-  return { t: t.replace(/ /g, ' '), map };
+  return { t: t.replace(/\u00a0/g, ' '), map };
 }
 function pfRange(map, at, len) {
   // the end of a word belongs to the text node it's in, not to the start of the next one (so a fix stays inside italics)
@@ -4335,30 +4373,71 @@ function blockMap(el) {
   const range = (a, b) => { if (!map.length) return null; const s = at(a), e = at(b); const r = document.createRange(); r.setStart(s.node, s.off); r.setEnd(e.node, e.off); return r; };
   return { text, range };
 }
+/* the revision lens: one scan, used by the lens in the page and by the Revision view of the research desk */
+const LENS_KINDS = [
+  ['long', 'Long sentences', 'Sentences over 35 words. Split them, or make sure each one earns its length.'],
+  ['passive', 'Passive voice', 'Who did it? Passive voice hides the actor; keep it only when the actor doesn’t matter.'],
+  ['hedge', 'Hedges & filler', 'Words that soften or pad: very, quite, arguably, it should be noted.'],
+  ['repeat', 'Repeated words', 'The same word again within 40 words.'],
+  ['rhythm', 'Same-length run', 'Four or more sentences in a row of about the same length read as a drone. Vary them.'],
+  ['pet', 'Pet words', 'Words this document leans on far more than most writing does.'],
+  ['cliche', 'Clichés', 'Stock phrases a reader has seen a thousand times.'],
+  ['adverb', '-ly adverbs', 'Adverbs often prop up a weak verb. Look for a stronger verb.'],
+  ['nominal', 'Buried verbs', '“The implementation of” hides “implement”. Turning the noun back into a verb tightens the sentence.'],
+];
+const CLICHES = ['at the end of the day', 'in this day and age', 'the fact of the matter', 'when all is said and done', 'last but not least', 'first and foremost', 'each and every', 'few and far between', 'a perfect storm', 'tip of the iceberg', 'game changer', 'game-changer', 'paradigm shift', 'move the needle', 'think outside the box', 'low-hanging fruit', 'at this point in time', 'in the final analysis', 'it goes without saying', 'needless to say', 'a double-edged sword', 'the elephant in the room', 'all walks of life', 'since time immemorial', 'the lion’s share', "the lion's share", 'a level playing field', 'par for the course', 'by and large', 'in the nick of time', 'a drop in the ocean', 'the bottom line', 'push the envelope', 'cutting edge', 'cutting-edge', 'state of the art', 'state-of-the-art', 'raises the question', 'begs the question', 'shed light on', 'sheds light on', 'a stark reminder', 'stark contrast', 'in stark contrast', 'plays a crucial role', 'plays a key role', 'plays a vital role', 'plays an important role', 'a key role', 'pivotal role', 'a wake-up call', 'perfect storm', 'nothing short of', 'the writing on the wall', 'turned a blind eye', 'a slippery slope', 'it remains to be seen', 'only time will tell', 'the jury is still out', 'a whole new level', 'on the same page', 'going forward', 'at the heart of', 'lies at the heart of', 'a far cry from', 'hit the ground running', 'a steep learning curve', 'by the same token', 'in a nutshell', 'to all intents and purposes', 'for all intents and purposes', 'in the wake of', 'a sea change', 'tipping point', 'grinding halt', 'ground zero', 'acid test', 'the tide turned', 'turn the tide', 'a new era', 'ushered in', 'stood the test of time', 'a testament to', 'testament to', 'navigate the complexities', 'delve into', 'a rich tapestry', 'tapestry of'];
+const NOT_ADVERB = new Set('only early family likely unlikely reply supply apply july italy ally belly holy rally daily weekly monthly yearly hourly ugly friendly lonely lovely elderly comply rely assembly monopoly anomaly sicily emily kelly bully jelly silly hilly chilly curly lily fly butterfly anthology apology ideology methodology technology biology geology mythology theology philosophy holly folly jolly melancholy homily trolley imply multiply deadly costly orderly scholarly timely kindly worldly heavenly ghostly manly cowardly fatherly motherly brotherly sisterly neighborly leisurely surly burly gully dolly molly sully woolly wobbly bubbly'.split(' '));
+const PET_SKIP = new Set('that this with from have were they them been into more most than then also only some such what when will your their there these those which would could should about after other each many much over very just like even both made make does done here said says upon onto whom whose itself'.split(' '));
+const NOMINAL = /\b(?:the|a|an)\s+([a-z]+(?:tion|sion|ment|ance|ence|ization|isation))\s+of\b/gi;
+const LENS_BLOCKS = root => $$(':scope > p, :scope > li, :scope > ul > li, :scope > ol > li, :scope > blockquote > p, :scope > blockquote', root).filter(el => !(el.matches('blockquote') && el.querySelector('p')) && !el.closest('nav'));
+const SENT_RE = /[^.!?]+(?:[.!?]+["”’)\]]*|$)/g;
+/* scan blocks; with ranges, also say where each finding is */
+function lensScan(blocks, withRanges) {
+  const R = Object.fromEntries(LENS_KINDS.map(([k]) => [k, []])), N = Object.fromEntries(LENS_KINDS.map(([k]) => [k, 0]));
+  let words = 0, sents = 0, syl = 0; const lens = [], freq = {};
+  const hre = new RegExp('\\b(' + HEDGES.map(escRe).join('|') + ')\\b', 'gi'), cre = new RegExp('\\b(' + CLICHES.map(escRe).join('|') + ')\\b', 'gi');
+  const maps = blocks.map(el => withRanges ? blockMap(el) : { text: el.textContent.replace(/\s+/g, ' '), range: () => null });
+  maps.forEach(({ text }) => { for (const m of text.matchAll(/[A-Za-z’']{4,}/g)) { const w = m[0].toLowerCase().replace(/[’']s$/, ''); if (!STOP.has(w) && !PET_SKIP.has(w)) freq[w] = (freq[w] || 0) + 1; } });
+  const total = maps.reduce((a, x) => a + wc(x.text), 0);
+  const pets = new Set(Object.entries(freq).filter(([w, n]) => n >= 4 && n / Math.max(total, 1) * 1000 >= 4 && !HEDGES.includes(w)).sort((a, b) => b[1] - a[1]).slice(0, 6).map(x => x[0]));
+  const add = (k, rg, a, b) => { N[k]++; if (rg) { const r = rg(a, b); if (r) R[k].push(r); } };
+  const sentList = [];
+  maps.forEach(({ text, range }) => {
+    if (!text.trim()) return; const rg = withRanges ? range : null; let m;
+    SENT_RE.lastIndex = 0;
+    while ((m = SENT_RE.exec(text))) { const s = m[0], n = wc(s); if (!n) { if (!s) SENT_RE.lastIndex++; continue; } sents++; words += n; lens.push(n); syl += (s.match(/[A-Za-z]+/g) || []).reduce((a, w) => a + syllables(w), 0); const lead = s.length - s.trimStart().length; sentList.push({ n, rg, a: m.index + lead, b: m.index + s.trimEnd().length }); if (n > 35) add('long', rg, m.index + lead, m.index + s.trimEnd().length); }
+    PASSIVE.lastIndex = 0; while ((m = PASSIVE.exec(text))) add('passive', rg, m.index, m.index + m[0].length);
+    hre.lastIndex = 0; while ((m = hre.exec(text))) add('hedge', rg, m.index, m.index + m[0].length);
+    cre.lastIndex = 0; while ((m = cre.exec(text))) add('cliche', rg, m.index, m.index + m[0].length);
+    NOMINAL.lastIndex = 0; while ((m = NOMINAL.exec(text))) add('nominal', rg, m.index, m.index + m[0].length);
+    for (const a of text.matchAll(/\b[A-Za-z]{4,}ly\b/g)) { const w = a[0].toLowerCase(); if (!NOT_ADVERB.has(w) && !HEDGES.includes(w)) add('adverb', rg, a.index, a.index + a[0].length); }
+    const wre = /[A-Za-z’']{5,}/g, last = {}; let idx = 0;
+    while ((m = wre.exec(text))) { const w = m[0].toLowerCase().replace(/[’']s$/, ''); idx++; if (STOP.has(w)) continue; if (last[w] !== undefined && idx - last[w] <= 40) add('repeat', rg, m.index, m.index + m[0].length); last[w] = idx; }
+    if (pets.size) for (const a of text.matchAll(/[A-Za-z’']{4,}/g)) { const w = a[0].toLowerCase().replace(/[’']s$/, ''); if (pets.has(w)) add('pet', rg, a.index, a.index + a[0].length); }
+  });
+  // runs of four or more sentences within a few words of each other's length
+  for (let i = 0; i < sentList.length;) {
+    let j = i + 1; while (j < sentList.length && Math.abs(sentList[j].n - sentList[i].n) <= Math.max(1, Math.round(sentList[i].n * 0.15)) && sentList[i].n >= 3) j++;
+    if (j - i >= 4) for (let k = i; k < j; k++) add('rhythm', sentList[k].rg, sentList[k].a, sentList[k].b);
+    i = j > i + 1 ? j : i + 1;
+  }
+  const mean = lens.length ? words / lens.length : 0, sd = lens.length > 1 ? Math.sqrt(lens.reduce((a, n) => a + (n - mean) ** 2, 0) / lens.length) : 0;
+  const grade = words && sents ? Math.max(0, 0.39 * (words / sents) + 11.8 * (syl / words) - 15.59) : 0;
+  return { R, N, words, sents, mean, sd, grade, pets: [...pets] };
+}
+if (!lensOff.size) ['rhythm', 'pet', 'adverb', 'nominal'].forEach(k => lensOff.add(k)); // the quieter checks start switched off
 function runLens() {
   const hl = window.CSS && CSS.highlights && window.Highlight;
-  const R = { long: [], passive: [], hedge: [], repeat: [] };
-  let words = 0, sents = 0, syl = 0;
-  $$(':scope > p, :scope > li, :scope > ul > li, :scope > ol > li, :scope > blockquote > p, :scope > blockquote', editor).forEach(el => {
-    if (el.matches('blockquote') && el.querySelector('p')) return;
-    const { text, range } = blockMap(el); if (!text.trim()) return;
-    const sre = /[^.!?]+(?:[.!?]+["”’)\]]*|$)/g; let m;
-    while ((m = sre.exec(text))) { const s = m[0]; const n = wc(s); if (!n) continue; sents++; words += n; syl += (s.match(/[A-Za-z]+/g) || []).reduce((a, w) => a + syllables(w), 0); if (n > 35) { const lead = s.length - s.trimStart().length; const r = range(m.index + lead, m.index + s.trimEnd().length); r && R.long.push(r); } }
-    PASSIVE.lastIndex = 0; while ((m = PASSIVE.exec(text))) { const r = range(m.index, m.index + m[0].length); r && R.passive.push(r); }
-    const hre = new RegExp('\\b(' + HEDGES.map(escRe).join('|') + ')\\b', 'gi'); while ((m = hre.exec(text))) { const r = range(m.index, m.index + m[0].length); r && R.hedge.push(r); }
-    const wre = /[A-Za-z’']{5,}/g, last = {}; let idx = 0;
-    while ((m = wre.exec(text))) { const w = m[0].toLowerCase().replace(/[’']s$/, ''); idx++; if (STOP.has(w)) continue; if (last[w] !== undefined && idx - last[w] <= 40) { const r = range(m.index, m.index + m[0].length); r && R.repeat.push(r); } last[w] = idx; }
-  });
-  const grade = words && sents ? Math.max(0, 0.39 * (words / sents) + 11.8 * (syl / words) - 15.59) : 0;
-  if (hl) Object.keys(R).forEach(k => { if (R[k].length && !lensOff.has(k)) CSS.highlights.set('cp-' + k, new Highlight(...R[k])); else CSS.highlights.delete('cp-' + k); });
-  const chip = (k, label) => `<button class="lchip l-${k} ${lensOff.has(k) ? 'off' : ''}" data-l="${k}">${label} <b>${R[k].length}</b></button>`;
-  $('#lensBar').innerHTML = chip('long', 'Long sentences') + chip('passive', 'Passive voice') + chip('hedge', 'Hedges & filler') + chip('repeat', 'Repeated words') +
-    `<span class="muted small">Grade level ${grade ? grade.toFixed(1) : '—'} · ${sents ? Math.round(words / sents) : 0} words per sentence</span>${hl ? '' : '<span class="muted small">(Highlighting needs a newer browser. Counts still work.)</span>'}<button class="ghost small" id="lensClose">✕</button>`;
+  const S = lensScan(LENS_BLOCKS(editor), true);
+  if (hl) LENS_KINDS.forEach(([k]) => { if (S.R[k].length && !lensOff.has(k)) CSS.highlights.set('cp-' + k, new Highlight(...S.R[k])); else CSS.highlights.delete('cp-' + k); });
+  const chip = ([k, label, tip]) => `<button class="lchip l-${k} ${lensOff.has(k) ? 'off' : ''}" data-l="${k}" title="${esc(tip)}${k === 'pet' && S.pets.length ? ' Here: ' + esc(S.pets.join(', ')) + '.' : ''}" aria-pressed="${!lensOff.has(k)}">${label} <b>${S.N[k]}</b></button>`;
+  $('#lensBar').innerHTML = LENS_KINDS.map(chip).join('') +
+    `<span class="muted small">Grade level ${S.grade ? S.grade.toFixed(1) : '—'} · ${S.sents ? Math.round(S.mean) : 0} words a sentence, varying by ${S.sd ? Math.round(S.sd) : 0}</span>${hl ? '' : '<span class="muted small">(Highlighting needs a newer browser. Counts still work.)</span>'}<button class="ghost small" id="lensClose" aria-label="Close the revision lens">✕</button>`;
 }
 const runLensSoon = debounce(() => { if (lensOn) runLens(); }, 700);
 function toggleLens(on) {
   lensOn = on ?? !lensOn; $('#lensBar').classList.toggle('hidden', !lensOn); $('#btnLens').classList.toggle('on', lensOn);
-  if (lensOn) runLens(); else if (window.CSS && CSS.highlights) ['long', 'passive', 'hedge', 'repeat'].forEach(k => CSS.highlights.delete('cp-' + k));
+  if (lensOn) runLens(); else if (window.CSS && CSS.highlights) LENS_KINDS.forEach(([k]) => CSS.highlights.delete('cp-' + k));
 }
 $('#btnLens').addEventListener('click', () => toggleLens());
 $('#lensBar').addEventListener('click', e => { if (e.target.closest('#lensClose')) { toggleLens(false); return; } const c = e.target.closest('[data-l]'); if (!c) return; lensOff.has(c.dataset.l) ? lensOff.delete(c.dataset.l) : lensOff.add(c.dataset.l); runLens(); });
@@ -5940,6 +6019,7 @@ function renumberFigures(root = editor) {
   numberEquations(root);
   creditMarks(root);
   refreshXrefs(root);
+  if (typeof navRender === 'function') navRender(root);
 }
 function prepFigureDom(root) { // contenteditable plumbing after paste/import/open
   $$('figure.fig', root).forEach(f => { f.setAttribute('contenteditable', 'false'); const c = f.querySelector(':scope > figcaption'); if (c) c.setAttribute('contenteditable', 'true'); });
@@ -6123,8 +6203,11 @@ function prepExportFigures(tmp) {
   $$('nav.lof', tmp).forEach(nav => {
     nav.removeAttribute('contenteditable');
     if (!list.length) { nav.remove(); return; }
-    const sec = (arr, h) => arr.length ? `<h2 class="lof-h">${h}</h2><ol>${arr.map(x => `<li><a href="#${x.id}">${esc(x.label)} ${esc(x.text)}</a></li>`).join('')}</ol>` : '';
-    nav.innerHTML = `<h1 class="toc-title">Figures and Tables</h1>${sec(list.filter(x => !x.isT), 'Figures')}${sec(list.filter(x => x.isT), 'Tables')}`;
+    const sec = (arr, h) => arr.length ? `${h ? `<h2 class="lof-h">${h}</h2>` : ''}<ol>${arr.map(x => `<li><a href="#${x.id}">${esc(x.label)} ${esc(x.text)}</a></li>`).join('')}</ol>` : '';
+    const k = nav.dataset.k, F = list.filter(x => !x.isT), T = list.filter(x => x.isT);
+    if ((k === 'fig' && !F.length) || (k === 'tbl' && !T.length)) { nav.remove(); return; }
+    nav.innerHTML = k === 'fig' ? `<h1 class="toc-title">Figures</h1>${sec(F, '')}` : k === 'tbl' ? `<h1 class="toc-title">Tables</h1>${sec(T, '')}`
+      : `<h1 class="toc-title">Figures and Tables</h1>${sec(F, 'Figures')}${sec(T, 'Tables')}`;
   });
   return list;
 }
@@ -6501,7 +6584,7 @@ $('#btnRetract').addEventListener('click', openRetractions);
    Merging keeps the fuller record, fills its gaps from the other, and moves every citation, note,
    photo and grid cell across.
    ================================================================ */
-const dupNorm = t => String(t || '').toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/^(the|a|an) /, '').trim();
+const dupNorm = t => String(t || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, ' ').replace(/^(the|a|an) /, '').trim();
 function dupPairs() {
   const S = P.sources, out = [], seen = new Set();
   const key = s => ({ doi: doiOf(s).toLowerCase(), isbn: String(s.csl.ISBN || '').replace(/[^0-9xX]/g, '').slice(-10), url: String(s.csl.URL || '').replace(/^https?:\/\/(www\.)?/i, '').replace(/[#?].*$/, '').replace(/\/$/, '').toLowerCase(), t: dupNorm(s.csl.title), a: dupNorm(((s.csl.author || s.csl.editor || [])[0] || {}).family || ((s.csl.author || [])[0] || {}).literal || ''), y: String(((s.csl.issued || {})['date-parts'] || [[]])[0][0] || '') });
@@ -6995,7 +7078,7 @@ function texTextToMath() {
 /* ---- MathML (from MathJax) → Office Math (OMML), for Word ---- */
 const OM_NARY = '∑∏∐⋀⋁⋂⋃⨀⨁⨂⨄⨆∫∬∭∮∯∰∱∲∳⨌';
 const OM_REL = new Set([...'=<>≤≥≠≈≡∼≃≅∝→←↔⇒⇐⇔⟶⟵⟷⟹⟸⟺↦∈∉∋⊂⊃⊆⊇⊊⊋≪≫≺≻⪯⪰∣∥⊥≐≜:≔']);
-const OM_ACC = { '^': '̂', 'ˆ': '̂', '~': '̃', '˜': '̃', '˙': '̇', '¨': '̈', '→': '⃗', '⃗': '⃗', '´': '́', 'ˊ': '́', '`': '̀', 'ˋ': '̀', '˘': '̆', 'ˇ': '̌', '¯': '̅', 'ˉ': '̅', '°': '̊', '˚': '̊' };
+const OM_ACC = { '^': '\u0302', 'ˆ': '\u0302', '~': '\u0303', '˜': '\u0303', '˙': '\u0307', '¨': '\u0308', '→': '\u20d7', '\u20d7': '\u20d7', '´': '\u0301', 'ˊ': '\u0301', '`': '\u0300', 'ˋ': '\u0300', '˘': '\u0306', 'ˇ': '\u030c', '¯': '\u0305', 'ˉ': '\u0305', '°': '\u030a', '˚': '\u030a' };
 const OM_VAR = { normal: ['', 'p'], bold: ['', 'b'], italic: ['', 'i'], 'bold-italic': ['', 'bi'], 'double-struck': ['double-struck', 'p'], script: ['script', 'p'], 'bold-script': ['script', 'b'], fraktur: ['fraktur', 'p'], 'bold-fraktur': ['fraktur', 'b'], 'sans-serif': ['sans-serif', 'p'], 'bold-sans-serif': ['sans-serif', 'b'], 'sans-serif-italic': ['sans-serif', 'i'], 'sans-serif-bold-italic': ['sans-serif', 'bi'], monospace: ['monospace', 'p'] };
 const omX = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const OM_FONT = '<w:rPr><w:rFonts w:ascii="Cambria Math" w:hAnsi="Cambria Math"/></w:rPr>';
@@ -7005,7 +7088,7 @@ function mathOMML(tex, display) {
   let doc; try { doc = new DOMParser().parseFromString(MathJax.tex2mml(tex, { display }), 'application/xml'); } catch (e) { return ''; }
   const root = doc.documentElement; if (!root || root.localName !== 'math' || doc.querySelector('parsererror')) return '';
   const kids = n => [...n.children];
-  const txt = n => n.textContent.replace(/[⁡-⁤]/g, '');
+  const txt = n => n.textContent.replace(/[\u2061-\u2064]/g, '');
   const tc = n => (n && n.getAttribute && n.getAttribute('data-mjx-texclass')) || '';
   const isMo = n => n && n.localName === 'mo';
   const fenceCh = n => { if (!n) return null; if (isMo(n) && (/^(OPEN|CLOSE)$/.test(tc(n)) || n.getAttribute('fence') === 'true')) return txt(n); if (n.localName === 'mrow' && /^(OPEN|CLOSE)$/.test(tc(n)) && n.children.length === 1 && isMo(n.children[0])) return txt(n.children[0]); return null; };
@@ -7035,7 +7118,7 @@ function mathOMML(tex, display) {
         const c = kids(n); out += `<m:func><m:fName><m:limLow><m:e>${omRun(txt(c[0]), '<m:sty m:val="p"/>')}</m:e><m:lim>${c[1] ? node(c[1]) : ''}</m:lim></m:limLow></m:fName><m:e>${node(nodes[i + 1])}</m:e></m:func>`; i += 1; continue;
       }
       const nx = nodes[i + 1], arg = nodes[i + 2];
-      if (isMo(nx) && nx.textContent === '⁡' && arg && !(isMo(arg) && /^(OPEN|)$/.test(tc(arg)) && /^[([{|]$/.test(txt(arg)))) { out += `<m:func><m:fName>${node(n)}</m:fName><m:e>${node(arg)}</m:e></m:func>`; i += 2; continue; }
+      if (isMo(nx) && nx.textContent === '\u2061' && arg && !(isMo(arg) && /^(OPEN|)$/.test(tc(arg)) && /^[([{|]$/.test(txt(arg)))) { out += `<m:func><m:fName>${node(n)}</m:fName><m:e>${node(arg)}</m:e></m:func>`; i += 2; continue; }
       out += node(n);
     }
     return out;
@@ -7055,8 +7138,8 @@ function mathOMML(tex, display) {
       case 'mi': { const t = txt(n); if (!t) return ''; const v = OM_VAR[n.getAttribute('mathvariant') || (t.length > 1 ? 'normal' : '')]; return omRun(t, v ? (v[0] ? `<m:scr m:val="${v[0]}"/>` : '') + `<m:sty m:val="${v[1]}"/>` : ''); }
       case 'mn': { const v = OM_VAR[n.getAttribute('mathvariant') || '']; return omRun(txt(n), v ? (v[0] ? `<m:scr m:val="${v[0]}"/>` : '') + `<m:sty m:val="${v[1]}"/>` : ''); }
       case 'mo': return omRun(txt(n), '<m:sty m:val="p"/>');
-      case 'mtext': case 'ms': return omRun(txt(n).replace(/ /g, ' '), '<m:nor/>');
-      case 'mspace': { const w = parseFloat(n.getAttribute('width') || '0'); return w >= 0.25 ? omRun(w >= 0.9 ? ' ' : ' ', '<m:sty m:val="p"/>') : w > 0 ? omRun(' ', '<m:sty m:val="p"/>') : ''; }
+      case 'mtext': case 'ms': return omRun(txt(n).replace(/\u00a0/g, ' '), '<m:nor/>');
+      case 'mspace': { const w = parseFloat(n.getAttribute('width') || '0'); return w >= 0.25 ? omRun(w >= 0.9 ? '\u2003' : ' ', '<m:sty m:val="p"/>') : w > 0 ? omRun('\u2009', '<m:sty m:val="p"/>') : ''; }
       case 'mfrac': return `<m:f>${n.getAttribute('linethickness') === '0' ? '<m:fPr><m:type m:val="noBar"/></m:fPr>' : ''}<m:num>${c[0] ? node(c[0]) : ''}</m:num><m:den>${c[1] ? node(c[1]) : ''}</m:den></m:f>`;
       case 'msqrt': return `<m:rad><m:radPr><m:degHide m:val="1"/></m:radPr><m:deg/><m:e>${inner(n)}</m:e></m:rad>`;
       case 'mroot': return `<m:rad><m:deg>${c[1] ? node(c[1]) : ''}</m:deg><m:e>${c[0] ? node(c[0]) : ''}</m:e></m:rad>`;
@@ -7098,7 +7181,7 @@ const TEX_OF = { 'α': 'alpha', 'β': 'beta', 'γ': 'gamma', 'δ': 'delta', 'ε'
   '→': 'to', '←': 'leftarrow', '↔': 'leftrightarrow', '⇒': 'Rightarrow', '⇐': 'Leftarrow', '⇔': 'Leftrightarrow', '⟹': 'implies', '⟸': 'impliedby', '⟺': 'iff', '↦': 'mapsto', '∈': 'in', '∉': 'notin', '∋': 'ni', '⊂': 'subset', '⊃': 'supset', '⊆': 'subseteq', '⊇': 'supseteq', '∪': 'cup', '∩': 'cap', '∅': 'emptyset', '∞': 'infty', '∂': 'partial', '∇': 'nabla', '∀': 'forall', '∃': 'exists', '¬': 'neg', '∧': 'wedge', '∨': 'vee', '⊕': 'oplus', '⊗': 'otimes', '⊥': 'perp', '∥': 'parallel', '∠': 'angle', '…': 'ldots', '⋯': 'cdots', '⋮': 'vdots', '⋱': 'ddots', 'ℏ': 'hbar', 'ℓ': 'ell', 'ℜ': 'Re', 'ℑ': 'Im', '′': 'prime', '°': 'circ',
   '∑': 'sum', '∏': 'prod', '∐': 'coprod', '∫': 'int', '∬': 'iint', '∭': 'iiint', '∮': 'oint', '⋃': 'bigcup', '⋂': 'bigcap', '⋁': 'bigvee', '⋀': 'bigwedge', '⨁': 'bigoplus', '⨂': 'bigotimes', '⟨': 'langle', '⟩': 'rangle', '⌊': 'lfloor', '⌋': 'rfloor', '⌈': 'lceil', '⌉': 'rceil', '{': '{', '}': '}' };
 const TEX_FN = new Set('sin cos tan cot sec csc arcsin arccos arctan sinh cosh tanh coth log ln lg exp lim max min sup inf det gcd deg dim arg ker Pr hom liminf limsup'.split(' '));
-const TEX_ACC = { '̂': 'hat', '̃': 'tilde', '̇': 'dot', '̈': 'ddot', '⃗': 'vec', '́': 'acute', '̀': 'grave', '̆': 'breve', '̌': 'check', '̅': 'bar', '̄': 'bar', '̊': 'mathring' };
+const TEX_ACC = { '\u0302': 'hat', '\u0303': 'tilde', '\u0307': 'dot', '\u0308': 'ddot', '\u20d7': 'vec', '\u0301': 'acute', '\u0300': 'grave', '\u0306': 'breve', '\u030c': 'check', '\u0305': 'bar', '\u0304': 'bar', '\u030a': 'mathring' };
 const texDelim = ch => ch === '' ? '.' : ch === '{' ? '\\{' : ch === '}' ? '\\}' : ch === '‖' ? '\\|' : TEX_OF[ch] && ch.length === 1 && !/[()[\]|]/.test(ch) ? '\\' + TEX_OF[ch] : ch;
 const texChars = s => [...s.replace(/[\u200B\u2061-\u2064]/g, '').replace(/\u2212/g, '-')].map(ch => ch === '{' || ch === '}' ? '\\' + ch : ch === '\\' ? '\\backslash ' : ch === '%' || ch === '#' || ch === '$' ? '\\' + ch : TEX_OF[ch] ? `\\${TEX_OF[ch]} ` : ch).join('');
 function ommlTex(xml) {
@@ -7141,7 +7224,7 @@ function ommlTex(xml) {
         const es = [...n.children].filter(c => c.localName === 'e').map(kids).join(` ${sep === null ? '|' : texDelim(sep)} `);
         return `\\left${texDelim(b === null ? '(' : b)} ${es} \\right${texDelim(e === null ? ')' : e)}`;
       }
-      case 'acc': { const c = val(n, 'accPr', 'chr'); return `\\${TEX_ACC[c === null ? '̂' : c] || 'hat'}{${arg(n, 'e')}}`; }
+      case 'acc': { const c = val(n, 'accPr', 'chr'); return `\\${TEX_ACC[c === null ? '\u0302' : c] || 'hat'}{${arg(n, 'e')}}`; }
       case 'bar': return `\\${val(n, 'barPr', 'pos') === 'top' ? 'overline' : 'underline'}{${arg(n, 'e')}}`;
       case 'groupChr': { const c = val(n, 'groupChrPr', 'chr') || '⏟', top = val(n, 'groupChrPr', 'pos') === 'top' || c === '⏞'; return `\\${top ? 'overbrace' : 'underbrace'}{${arg(n, 'e')}}`; }
       case 'limLow': { const e = arg(n, 'e').trim(); return /^(\\lim|\\max|\\min|\\sup|\\inf|\\mathrm\{lim\})\s*$/.test(e) ? `${e.replace('\\mathrm{lim}', '\\lim')}_{${arg(n, 'lim')}} ` : `\\underset{${arg(n, 'lim')}}{${e}}`; }
@@ -7351,7 +7434,7 @@ function collectMarginalia(tmp, mode) {
 function marginaliaHTML(list, mode) {
   if (!list.length) return '';
   const page = mode === 'paged' ? x => `<a class="mg-ref" href="#${x.id}"></a>` : () => '';
-  return `<section class="end-sec marginalia"><h2 class="end-h">Marginalia</h2>${list.map(x => `<div class="mg-entry"><p class="mg-loc"><b>${x.n}.</b> ${mode === 'paged' ? 'p. ' + page(x) + ' · ' : ''}${esc(x.sec || 'Opening')}</p>${x.passage ? `<p class="mg-pass">“${esc(x.passage)}”</p>` : ''}<p class="mg-note">${esc(x.text).replace(/\n/g, '<br>')}</p></div>`).join('')}</section>`;
+  return `<section class="end-sec marginalia"><h2 class="end-h">Marginalia</h2>${list.map(x => `<div class="mg-entry"><p class="mg-loc"><b>${x.n}.</b> ${mode === 'paged' ? 'p.\u00a0' + page(x) + ' · ' : ''}${esc(x.sec || 'Opening')}</p>${x.passage ? `<p class="mg-pass">“${esc(x.passage)}”</p>` : ''}<p class="mg-note">${esc(x.text).replace(/\n/g, '<br>')}</p></div>`).join('')}</section>`;
 }
 
 /* ================================================================
@@ -7460,7 +7543,7 @@ function parseYaml(y) {
 }
 function mdToNote(text, file, root) {
   let fm = {};
-  const m = text.match(/^﻿?---\s*\r?\n([\s\S]*?)\r?\n---\s*(\r?\n|$)/);
+  const m = text.match(/^\ufeff?---\s*\r?\n([\s\S]*?)\r?\n---\s*(\r?\n|$)/);
   if (m) { fm = parseYaml(m[1]); text = text.slice(m[0].length); }
   let title = typeof fm.title === 'string' ? fm.title : '';
   const h = text.match(/^\s*#\s+(.+)\r?\n?/);
@@ -7717,9 +7800,9 @@ function openInsertMenu(viaKeys) {
   popEl.addEventListener('keydown', e => { const i = btns.indexOf(document.activeElement); if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); btns[(i + (e.key === 'ArrowDown' ? 1 : -1) + btns.length) % btns.length].focus(); } if (e.key === 'Escape') { closePop(); $('#btnInsert').focus(); } });
   popEl.addEventListener('click', e => {
     const k = e.target.closest('[data-i]')?.dataset.i; if (!k) return; closePop(); specTarget = null; restoreSelection();
-    ({ img: () => $('#fileFigure').click(), chart: () => openChart(), map: () => openMap(), timeline: () => openTimelineFig(), network: () => openRel(true),
+    (({ img: () => $('#fileFigure').click(), chart: () => openChart(), map: () => openMap(), timeline: () => openTimelineFig(), network: () => openRel(true),
        table: () => $('#btnTable').click(), eq: () => openEq(), chars: () => openChars(editor), xref: () => openXref(), index: () => openIndexMark(),
-       lof: () => { insertBlocksAtCursor(lofPlaceholder()); onEdit(); }, abbr: () => { insertBlocksAtCursor(abbrPlaceholder()); onEdit(); } })[k]();
+       lof: () => { insertBlocksAtCursor(lofPlaceholder()); renumberFigures(); onEdit(); }, abbr: () => { insertBlocksAtCursor(abbrPlaceholder()); onEdit(); } })[k] || INSERT_EXTRA[k])();
   });
 }
 $('#btnInsert').addEventListener('click', e => { e.stopPropagation(); if (popEl && popEl.classList.contains('ins-menu')) { closePop(); return; } openInsertMenu(e.detail === 0); });
@@ -7920,7 +8003,7 @@ const US_POSTAL = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', 
 const PLACE_ALIAS = { 'united states': 'United States of America', usa: 'United States of America', us: 'United States of America', america: 'United States of America', uk: 'United Kingdom', britain: 'United Kingdom', 'great britain': 'United Kingdom', 'democratic republic of the congo': 'Dem. Rep. Congo', drc: 'Dem. Rep. Congo', 'dr congo': 'Dem. Rep. Congo', 'congo kinshasa': 'Dem. Rep. Congo', 'republic of the congo': 'Congo', 'congo brazzaville': 'Congo', 'czech republic': 'Czechia', 'ivory coast': "Côte d'Ivoire", 'cote divoire': "Côte d'Ivoire", 'north macedonia': 'Macedonia', burma: 'Myanmar', 'republic of korea': 'South Korea', 'korea south': 'South Korea', 'korea republic of': 'South Korea', korea: 'South Korea', 'korea north': 'North Korea', dprk: 'North Korea', 'democratic peoples republic of korea': 'North Korea', 'russian federation': 'Russia', 'iran islamic republic of': 'Iran', 'syrian arab republic': 'Syria', 'viet nam': 'Vietnam', 'lao pdr': 'Laos', 'lao peoples democratic republic': 'Laos', turkiye: 'Turkey', 'cape verde': 'Cabo Verde', 'east timor': 'Timor-Leste', swaziland: 'eSwatini', eswatini: 'eSwatini', 'the gambia': 'Gambia', 'the bahamas': 'Bahamas', 'state of palestine': 'Palestine', 'palestinian territories': 'Palestine', 'holy see': 'Vatican', 'vatican city': 'Vatican', 'prc': 'China', 'peoples republic of china': 'China', 'republic of china': 'Taiwan', 'chinese taipei': 'Taiwan', 'uae': 'United Arab Emirates', 'district of columbia': 'Washington, D.C.', dc: 'Washington, D.C.', 'washington dc': 'Washington, D.C.' };
 const ABBR = [[/\bis\./g, 'islands'], [/\brep\./g, 'republic'], [/\bdem\./g, 'democratic'], [/\bst\.?(?=\s)/g, 'saint'], [/\bn\.(?=\s)/g, 'north'], [/\bs\.(?=\s)/g, 'south'], [/\beq\./g, 'equatorial'], [/\bfr\./g, 'french'], [/\bbr\./g, 'british'], [/\bherz\./g, 'herzegovina'], [/\bbarb\./g, 'barbuda'], [/\bgren\./g, 'grenadines'], [/\bvin\./g, 'vincent'], [/\bcentral african rep\b/g, 'central african republic']];
 let _pal = null; const PLACE_AL = () => _pal || (_pal = Object.fromEntries(Object.entries(PLACE_ALIAS).map(([k, v]) => [placeKey(k), v])));
-function placeKey(s) { let k = String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''); ABBR.forEach(([re, r]) => { k = k.replace(re, r); }); return k.replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\bthe\b/g, ' ').replace(/\s+/g, ' ').trim(); }
+function placeKey(s) { let k = String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); ABBR.forEach(([re, r]) => { k = k.replace(re, r); }); return k.replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(/\bthe\b/g, ' ').replace(/\s+/g, ' ').trim(); }
 const CHORO_REGIONS = () => [['world', 'World (countries)'], ...Object.entries(MAP_PRESETS).filter(([k]) => k !== 'world').map(([k, v]) => [k, v[0] + ' (countries)']), ['us', 'United States (states)'],
   ...['Russia', 'Ukraine', 'China', 'India', 'Japan', 'Turkey', 'Iran', 'Iraq', 'Syria', 'Afghanistan', 'Pakistan', 'Poland', 'South Korea', 'North Korea', 'Taiwan', 'Saudi Arabia', 'Yemen', 'Israel', 'Georgia', 'Armenia', 'Azerbaijan', 'Belarus', 'Moldova', 'Jordan', 'Lebanon'].map(c => ['adm:' + c, c + ' (regions)'])];
 function choroShapes(region) {
@@ -8548,7 +8631,7 @@ function abbrPlaceholder() { return '<nav class="abbr" contenteditable="false"><
 function fillAbbreviations(tmp) {
   const navs = $$('nav.abbr', tmp); if (!navs.length) return;
   const text = tmp.textContent; const used = acroList().filter(a => a.short && a.long && new RegExp('(?<![\\p{L}\\p{N}])' + escRe(a.short) + 's?(?![\\p{L}\\p{N}])', 'u').test(text)).sort((a, b) => a.short.localeCompare(b.short));
-  navs.forEach(nav => { nav.removeAttribute('contenteditable'); if (!used.length) { nav.remove(); return; } nav.innerHTML = `<h1 class="toc-title">Abbreviations</h1>${used.map(a => `<p class="abbr-row"><b>${esc(a.short)}</b> ${esc(a.long)}</p>`).join('')}`; });
+  navs.forEach(nav => { nav.removeAttribute('contenteditable'); if (!used.length) { nav.remove(); return; } nav.innerHTML = `<h1 class="toc-title">Abbreviations</h1>${used.map(a => `<p class="abbr-row"><b>${esc(a.short)}</b>\u2003${esc(a.long)}</p>`).join('')}`; });
 }
 
 /* ================================================================
@@ -9208,7 +9291,7 @@ function frRegex() {
   let src = $('#frRe').checked ? q : escRe(q); if ($('#frWord').checked) src = `(?<![\\p{L}\\p{N}_])(?:${src})(?![\\p{L}\\p{N}_])`;
   try { return new RegExp(src, 'gu' + ($('#frCase').checked ? '' : 'i')); } catch (e) { $('#frMsg').textContent = 'That pattern isn’t valid: ' + e.message; return null; }
 }
-function frTextNodes(root) { const out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.cite,.fn,.flag,.ix-a,.cmt-pt,nav.lof,nav.abbr') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); while (w.nextNode()) out.push(w.currentNode); return out; }
+function frTextNodes(root) { const out = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.cite,.fn,.flag,.ix-a,.cmt-pt,nav') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); while (w.nextNode()) out.push(w.currentNode); return out; }
 function frScopeDocs() {
   const sc = $('#frScope').value, d = curDoc();
   if (sc === 'doc') return [d];
@@ -9472,6 +9555,13 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.8.0': ['A revision pass: the revision lens also shades clichés, runs of same-length sentences, pet words, -ly adverbs and buried verbs (“the implementation of”), and Research desk → Revision sets every chapter side by side, with a dated revision checklist for each.',
+    'Editing marks for working with an editor (⌘/Ctrl Alt M, or Mark → Editing mark…): query to author, verify, stet, delete, replace, transpose, close up, capitalize, lowercase, italic, roman, spell out, new paragraph and run in. Each is signed and dated and listed in the Outline; accept to make the change, or reject. The page you send a reviewer has them too.',
+    'Insert → Lists: a contents, a list of figures, of tables or of equations, filled in as you write. Page setup can number paragraphs (¶ 12, in every export) and lines (in the page, PDF and Word).',
+    'Export → Book for print: a print-ready PDF at a trim size (6 × 9 and nine others), with mirrored margins, chapters opening on the right, running heads, roman page numbers in the front matter, and the half title, title page, copyright page and contents made for you.',
+    'Export → Submission package: the piece as Word (anonymized for blind review if you like), a title page with the word count, and your cover letter, pitch, query, synopsis or proposal from a template, in one .zip that goes on your Submissions list.',
+    'A rhetorical précis of any source (Précis… on a source): four sentences, built a part at a time, kept as a summary note and gathered into one document. Follow a Zotero library through a Better BibTeX auto-export file (Sources → Tools), so changes come in by themselves.',
+    'Special characters for scientific and academic writing: math, logic and sets, superscripts and subscripts, units and science, and scholarly marks, with a search by name (“integral”, “subscript 2”). And the app is ready to type in sooner: the citation engine is built after the window appears, in about half the time.'],
   '2.7.3': ['A tidying pass over the whole app: Settings in clear sections, quieter footers on sources and notes, the research desk’s tools on a line of their own, an eye to show or hide each thread, room for long project and chapter names, a one-word save state on phones, and one word count everywhere (paragraphs no longer run together in it).'],
   '2.7.2': ['A slush pile for passages you cut but might want later: select them and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile). Documents you delete go there too. Open it from the Docs tab to search, put a piece back where the cursor is, or make it a document or a note.'],
   '2.7.1': ['Search inside sources lays out long places, such as “box 3, folder 12, item 4”, on lines of their own instead of over the found words.'],
@@ -11545,7 +11635,7 @@ function renderDesk() {
   deskJ = [];
   $$('#deskTabs [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === deskView); b.setAttribute('aria-selected', b.dataset.dv === deskView); });
   $('#deskTools').innerHTML = '';
-  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, lit: deskLit, codes: deskCodes, translate: deskTranslate, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
+  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, lit: deskLit, codes: deskCodes, translate: deskTranslate, revision: deskRevision, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
   fn();
 }
 $('#deskBody').addEventListener('click', e => {
@@ -11754,7 +11844,7 @@ function lgReview() {
 function lgCsv() {
   const { g, rows, cell } = lgTable(), q = v => '"' + String(v).replace(/"/g, '""') + '"';
   const out = [['Source', 'Title', ...g.cols.map(c => c.name)].map(q).join(',')].concat(rows.map(s => [srcShort(s), sourceLabel(s).title, ...g.cols.map(c => cell(s, c))].map(q).join(',')));
-  download('literature-grid.csv', '﻿' + out.join('\r\n'), 'text/csv');
+  download('literature-grid.csv', '\ufeff' + out.join('\r\n'), 'text/csv');
 }
 
 /* codes (2.6): qualitative coding. A codebook of codes with definitions; passages in documents are coded
@@ -11841,7 +11931,7 @@ function cdExportBook() {
 function cdExportCsv() {
   const q = v => '"' + String(v).replace(/"/g, '""') + '"';
   const rows = cdItems().map(x => [cdById(x.code)?.name || '', x.kind === 'note' ? 'Note' : 'Document passage', x.where, x.text].map(q).join(','));
-  download('coded-excerpts.csv', '﻿' + [['Code', 'Kind', 'Where', 'Excerpt'].map(q).join(','), ...rows].join('\r\n'), 'text/csv');
+  download('coded-excerpts.csv', '\ufeff' + [['Code', 'Kind', 'Where', 'Excerpt'].map(q).join(','), ...rows].join('\r\n'), 'text/csv');
 }
 function cdReport() {
   syncEditor();
@@ -12312,7 +12402,7 @@ function jWire(sec) {
 function searchesCSV() {
   const q = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
   const rows = [['Date', 'Where', 'Terms', 'Filters', 'Results', 'Kept', 'Notes']].concat(jr().searches.slice().sort((a, b) => a.date.localeCompare(b.date)).map(s => [s.date, s.where, s.terms, s.filters, s.results, s.kept, s.notes]));
-  download(fileSafe(P.title) + ' - search log.csv', '﻿' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+  download(fileSafe(P.title) + ' - search log.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
 }
 
 /* ---------- the journal as a document: research memo, methods appendix ---------- */
@@ -14440,10 +14530,17 @@ const CH_SETS = [
   ['translit', 'Transliteration', 'ʹʺʾʿāēīōūȳăĕĭŏŭėȯżḥḫṣḍṭẓṯḏġẖṅṇṃśṛḷñǧčšžẏḟ\u0361\u0304\u0306'],
   ['greek', 'Greek', 'αβγδεζηθικλμνξοπρσςτυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩϝϙϛϡ'],
   ['cyr', 'Cyrillic', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяґєіїўђјљњћџѓќѕѣѳѵѫѧ'],
+  ['math', 'Math', '±∓×÷−·∙√∛∞≈≃≅≡≠≤≥≪≫∝∑∏∫∬∮∂∆∇′″‰‱°ℏℓℯⅈ½⅓¼¾∠⊥∥'],
+  ['sets', 'Logic & sets', '∀∃∄¬∧∨⊕⊢⊨∴∵∈∉∋⊂⊃⊆⊇⊄∪∩∅∖ℕℤℚℝℂℵ□◇⊤⊥≔'],
+  ['scripts', 'Super & sub', '⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱ₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎ₐₑₓₙᵢⱼ'],
+  ['units', 'Units & science', 'µÅΩ℧℃℉K㏑㎎㎏㎖㎞㎡㎥㏄ⅠⅡⅢⅣⅤⅰⅱⅲ→⇌⇄↑↓⟶←↔⇒⇔↦♂♀☉☽⊕'],
+  ['scholar', 'Scholarly', '§¶†‡※⁂*⸮‽℗©®™№℞℅ªº⟨⟩⟦⟧‖⁄‐‑‒–—―…\u2009\u200a\u2007\xad\u200b'],
 ];
 const CH_NAME = { '\u00a0': 'no-break space', '\u202f': 'narrow no-break space (French)', '\u0361': 'tie (for t\u0361s, i\u0361a)', '\u0304': 'macron above', '\u0306': 'breve above' };
+
+Object.assign(CH_NAME, {"±": "plus-minus", "∓": "minus-plus", "×": "times", "÷": "divide", "−": "minus sign", "·": "dot operator", "∙": "bullet operator", "√": "square root", "∛": "cube root", "∞": "infinity", "≈": "approximately", "≃": "asymptotically equal", "≅": "congruent", "≡": "identical", "≠": "not equal", "≤": "less or equal", "≥": "greater or equal", "≪": "much less", "≫": "much greater", "∝": "proportional to", "∑": "sum", "∏": "product", "∫": "integral", "∬": "double integral", "∮": "contour integral", "∂": "partial derivative", "∆": "increment (delta)", "∇": "nabla (del)", "′": "prime", "″": "double prime", "‰": "per mille", "‱": "per ten thousand", "°": "degree", "ℏ": "h-bar (Planck)", "ℓ": "script l", "ℯ": "e (natural)", "ⅈ": "imaginary i", "½": "one half", "⅓": "one third", "¼": "one quarter", "¾": "three quarters", "∠": "angle", "⊥": "bottom (false)", "∥": "parallel", "∀": "for all", "∃": "there exists", "∄": "there does not exist", "¬": "not", "∧": "and", "∨": "or", "⊕": "earth", "⊢": "proves", "⊨": "entails", "∴": "therefore", "∵": "because", "∈": "element of", "∉": "not an element of", "∋": "contains as member", "⊂": "subset", "⊃": "superset", "⊆": "subset or equal", "⊇": "superset or equal", "⊄": "not a subset", "∪": "union", "∩": "intersection", "∅": "empty set", "∖": "set minus", "ℕ": "natural numbers", "ℤ": "integers", "ℚ": "rationals", "ℝ": "real numbers", "ℂ": "complex numbers", "ℵ": "aleph", "□": "necessarily (box)", "◇": "possibly (diamond)", "⊤": "top (true)", "≔": "defined as", "⁰": "superscript 0", "¹": "superscript 1", "²": "superscript 2", "³": "superscript 3", "⁴": "superscript 4", "⁵": "superscript 5", "⁶": "superscript 6", "⁷": "superscript 7", "⁸": "superscript 8", "⁹": "superscript 9", "⁺": "superscript plus", "⁻": "superscript minus", "⁼": "superscript equals", "⁽": "superscript (", "⁾": "superscript )", "ⁿ": "superscript n", "ⁱ": "superscript i", "₀": "subscript 0", "₁": "subscript 1", "₂": "subscript 2", "₃": "subscript 3", "₄": "subscript 4", "₅": "subscript 5", "₆": "subscript 6", "₇": "subscript 7", "₈": "subscript 8", "₉": "subscript 9", "₊": "subscript plus", "₋": "subscript minus", "₌": "subscript equals", "₍": "subscript (", "₎": "subscript )", "ₐ": "subscript a", "ₑ": "subscript e", "ₓ": "subscript x", "ₙ": "subscript n", "ᵢ": "subscript i", "ⱼ": "subscript j", "µ": "micro", "Å": "angstrom", "Ω": "ohm", "℧": "mho", "℃": "degree Celsius", "℉": "degree Fahrenheit", "K": "kelvin", "㏑": "natural log", "㎎": "milligram", "㎏": "kilogram", "㎖": "millilitre", "㎞": "kilometre", "㎡": "square metre", "㎥": "cubic metre", "㏄": "cubic centimetre", "Ⅰ": "roman numeral one", "Ⅱ": "roman numeral two", "Ⅲ": "roman numeral three", "Ⅳ": "roman numeral four", "Ⅴ": "roman numeral five", "ⅰ": "small roman one", "ⅱ": "small roman two", "ⅲ": "small roman three", "→": "reaction arrow", "⇌": "equilibrium arrows", "⇄": "reversible arrows", "↑": "gas evolved (up arrow)", "↓": "precipitate (down arrow)", "⟶": "long arrow", "←": "left arrow", "↔": "left-right arrow", "⇒": "implies", "⇔": "if and only if", "↦": "maps to", "♂": "male", "♀": "female", "☉": "sun", "☽": "moon", "§": "section", "¶": "paragraph (pilcrow)", "†": "dagger", "‡": "double dagger", "※": "reference mark", "⁂": "asterism", "*": "asterisk", "⸮": "irony mark", "‽": "interrobang", "℗": "sound recording", "©": "copyright", "®": "registered", "™": "trademark", "№": "numero", "℞": "prescription", "℅": "care of", "ª": "feminine ordinal", "º": "masculine ordinal", "⟨": "left angle bracket", "⟩": "right angle bracket", "⟦": "left double bracket", "⟧": "right double bracket", "‖": "double vertical line", "⁄": "fraction slash", "‐": "hyphen", "‑": "non-breaking hyphen", "‒": "figure dash", "–": "en dash", "—": "em dash", "―": "quotation dash", "…": "ellipsis", "\u2009": "thin space", "\u200a": "hair space", "\u2007": "figure space", "\u00ad": "soft hyphen", "\u200b": "zero-width space"});
 let chTarget = null, chRange = null, chCaps = false;
-function chShow(c) { return c === '\u00a0' ? '⍽' : c === '\u202f' ? '⍽ₙ' : /[\u0300-\u036f]/.test(c) ? '◌' + c : c; }
+function chShow(c) { return c === '\u00a0' ? '⍽' : c === '\u202f' ? '⍽ₙ' : /[\u2007\u2009\u200a]/.test(c) ? '␣' : c === '\u200b' ? 'ZW' : c === '\u00ad' ? '‐?' : /[\u0300-\u036f]/.test(c) ? '◌' + c : c; }
 function openChars(target) {
   const a = target || document.activeElement;
   if (a && (a.matches?.('textarea, input[type=text], input:not([type])') || a === editor)) { chTarget = a; chRange = a === editor && getSelection().rangeCount ? getSelection().getRangeAt(0).cloneRange() : null; }
@@ -14455,10 +14552,13 @@ function chPlace() { const d = $('#spcDlg'), pos = PREFS.chPos; if (pos) { d.sty
 function chRender() {
   const set = PREFS.chSet || 'latin', recent = (PREFS.chRecent || []).slice(0, 16);
   $('#spcTabs').innerHTML = [['recent', 'Recent'], ...CH_SETS.map(([k, n]) => [k, n]), ['poly', 'Polytonic']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${k === set}" class="${k === set ? 'on' : ''}" data-chset="${k}">${n}</button>`).join('');
-  const chars = set === 'recent' ? recent : set === 'poly' ? [] : [...(CH_SETS.find(x => x[0] === set) || CH_SETS[0])[2]];
-  const shown = chars.map(c => chCaps && set !== 'punct' && set !== 'translit' && set !== 'recent' ? (c === 'ß' ? 'ẞ' : c.toUpperCase()) : c).filter((c, i, a) => a.indexOf(c) === i);
-  $('#spcGrid').innerHTML = set === 'poly' ? chPolyHTML() : shown.length ? shown.map(c => `<button type="button" class="chb" data-ch="${esc(c)}" title="${esc(CH_NAME[c] || 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'))}">${esc(chShow(c))}</button>`).join('') : '<p class="small muted">Characters you use show up here.</p>';
-  $('#spcCaps').classList.toggle('hidden', set === 'punct' || set === 'translit' || set === 'recent'); $('#spcCaps').setAttribute('aria-pressed', chCaps);
+  const q = ($('#spcQ')?.value || '').trim().toLowerCase();
+  const NOCAPS = ['punct', 'translit', 'recent', 'math', 'sets', 'scripts', 'units', 'scholar'];
+  const chars = q ? CH_SETS.flatMap(x => [...x[2]]).filter((c, i, a) => a.indexOf(c) === i && (c === q || (CH_NAME[c] || '').toLowerCase().includes(q)))
+    : set === 'recent' ? recent : set === 'poly' ? [] : [...(CH_SETS.find(x => x[0] === set) || CH_SETS[0])[2]];
+  const shown = chars.map(c => chCaps && !q && !NOCAPS.includes(set) ? (c === 'ß' ? 'ẞ' : c.toUpperCase()) : c).filter((c, i, a) => a.indexOf(c) === i);
+  $('#spcGrid').innerHTML = set === 'poly' && !q ? chPolyHTML() : shown.length ? shown.map(c => `<button type="button" class="chb" data-ch="${esc(c)}" title="${esc(CH_NAME[c] || 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'))}">${esc(chShow(c))}</button>`).join('') : `<p class="small muted">${q ? 'No character by that name. Try “arrow”, “sub”, “degree” or “integral”.' : 'Characters you use show up here.'}</p>`;
+  $('#spcCaps').classList.toggle('hidden', !!q || NOCAPS.includes(set)); $('#spcCaps').setAttribute('aria-pressed', chCaps);
 }
 /* polytonic Greek: a vowel, then breathing, accent, iota subscript or diaeresis, composed into one letter */
 const POLY = { v: 'α', br: '', ac: '', io: false, di: false };
@@ -14481,7 +14581,7 @@ function chInsert(c) {
   if (!t || !document.contains(t)) { toast('Click where the character should go, then choose it.'); return; }
   if (t === editor) {
     editor.focus(); const s = getSelection();
-    if (!(s.rangeCount && editor.contains(s.anchorNode)) && chRange) { s.removeAllRanges(); s.addRange(chRange); }
+    if (chRange && editor.contains(chRange.startContainer)) { s.removeAllRanges(); s.addRange(chRange); } // focus alone would put the caret at the start
     document.execCommand('insertText', false, c); chRange = getSelection().getRangeAt(0).cloneRange(); onEdit();
   } else {
     t.focus(); const a = t.selectionStart ?? t.value.length, b = t.selectionEnd ?? a;
@@ -14489,9 +14589,11 @@ function chInsert(c) {
   }
   PREFS.chRecent = [c, ...(PREFS.chRecent || []).filter(x => x !== c)].slice(0, 24); savePrefs();
 }
+$('#spcQ').addEventListener('input', () => chRender());
+$('#spcQ').addEventListener('keydown', e => { if (e.key === 'Enter') { const b = $('#spcGrid .chb'); if (b) { e.preventDefault(); chInsert(b.dataset.ch); } } if (e.key === 'Escape' && e.target.value) { e.preventDefault(); e.stopPropagation(); e.target.value = ''; chRender(); } });
 $('#spcDlg').addEventListener('mousedown', e => { if (e.target.closest('.chb, .chp, #spcCaps, #spcTabs button')) e.preventDefault(); }); // keep the caret where it was
 $('#spcDlg').addEventListener('click', e => {
-  const t = e.target.closest('[data-chset]'); if (t) { PREFS.chSet = t.dataset.chset; savePrefs(); chRender(); return; }
+  const t = e.target.closest('[data-chset]'); if (t) { PREFS.chSet = t.dataset.chset; savePrefs(); if ($('#spcQ')) $('#spcQ').value = ''; chRender(); return; }
   const p = e.target.closest('[data-poly]');
   if (p) { const k = p.dataset.poly; if (k === 'io' || k === 'di') POLY[k] = !POLY[k]; else POLY[k] = p.dataset.v; chRender(); return; }
   const b = e.target.closest('[data-ch]'); if (b) { chInsert(b.dataset.ch); if (PREFS.chSet === 'recent') chRender(); return; }
@@ -15096,13 +15198,15 @@ function paint(){D.querySelectorAll('.rv-c').forEach(function(m){var p=m.parentN
   var n=ops.indexOf(o)+1;if(o.type==='change'&&o.with){var ins=D.createElement('span');ins.className='rv-ins';ins.textContent=o.with;var e=r.cloneRange();e.collapse(false);e.insertNode(ins);}
   if(!r.collapsed){var nodes=[],w=tw(el),x;while((x=w.nextNode()))if(r.intersectsNode(x))nodes.push(x);nodes.forEach(function(t){var s=t===r.startContainer?r.startOffset:0,f=t===r.endContainer?r.endOffset:t.data.length;if(f<=s)return;if(f<t.data.length)t.splitText(f);var u=s?t.splitText(s):t;var m=D.createElement('span');m.className='rv-c '+(o.type==='change'?(o.with?'rv-rep':'rv-del'):'rv-cm');m.dataset.op=o.id;u.parentNode.insertBefore(m,u);m.appendChild(u);});}
   var tag=D.createElement('sup');tag.className='rv-tag';tag.textContent=n;var q=r.cloneRange();q.collapse(false);var after=D.querySelector('.rv-ins');q.insertNode(tag);});
- var L=D.getElementById('rvList');L.innerHTML=ops.length?ops.map(function(o,i){return '<li><b>'+(i+1)+'.</b> '+(o.type==='comment'?esc(o.text):(o.with?(o.quote?'Change “'+esc(o.quote)+'” to “'+esc(o.with)+'”':'Insert “'+esc(o.with)+'”'):'Delete “'+esc(o.quote)+'”'))+(o.type==='comment'&&o.quote?'<div class="q">on “'+esc(o.quote.slice(0,80))+'”</div>':'')+' <button data-del="'+o.id+'" aria-label="Remove">✕</button></li>';}).join(''):'<li class="muted">Select some text, then Comment or Suggest a change.</li>';
+ var L=D.getElementById('rvList');L.innerHTML=ops.length?ops.map(function(o,i){return '<li><b>'+(i+1)+'.</b> '+(o.type==='mark'?'<b>'+esc(MK[o.k]||o.k)+'</b> on “'+esc(o.quote)+'”'+(o.text?': '+esc(o.text):''):o.type==='comment'?esc(o.text):(o.with?(o.quote?'Change “'+esc(o.quote)+'” to “'+esc(o.with)+'”':'Insert “'+esc(o.with)+'”'):'Delete “'+esc(o.quote)+'”'))+(o.type==='comment'&&o.quote?'<div class="q">on “'+esc(o.quote.slice(0,80))+'”</div>':'')+' <button data-del="'+o.id+'" aria-label="Remove">✕</button></li>';}).join(''):'<li class="muted">Select some text, then Comment or Suggest a change.</li>';
  D.getElementById('rvN').textContent=ops.length?ops.length+(ops.length===1?' note':' notes'):'';}
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 function add(o){o.id='o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);o.at=new Date().toISOString();ops.push(o);save();paint();getSelection().removeAllRanges();}
 D.getElementById('rvComment').onclick=function(){var s=sel();if(!s){alert('Select the words you want to comment on.');return;}if(s.err){alert(s.err);return;}var t=prompt('Your comment:','');if(!t||!t.trim())return;who();s.type='comment';s.text=t.trim();add(s);};
 D.getElementById('rvChange').onclick=function(){var s=sel();if(!s){alert('Select the words to change, or click where text should go.');return;}if(s.err){alert(s.err);return;}
  var t=prompt(s.quote?'Replace “'+s.quote.slice(0,60)+(s.quote.length>60?'…':'')+'” with (leave empty to delete it):':'Text to insert here:',s.quote);if(t===null)return;if(t===s.quote)return;if(!s.quote&&!t)return;who();s.type='change';s.with=t;add(s);};
+var MK={},ASK={aq:'Your question for the author:',ins:'Replace with:',sp:'Spelled out (optional):',chk:'What to check (optional):'};[].forEach.call(D.querySelectorAll('#rvMark option'),function(o){if(o.value)MK[o.value]=o.textContent;});
+D.getElementById('rvMark').onchange=function(){var k=this.value;this.value='';if(!k)return;var s=sel();if(!s||!s.quote){alert('Select the words to mark first.');return;}if(s.err){alert(s.err);return;}var t='';if(ASK[k]){t=prompt(ASK[k],k==='ins'?s.quote:'');if(t===null)return;t=t.trim();if(!t&&(k==='aq'||k==='ins'))return;}who();s.type='mark';s.k=k;s.text=t;add(s);};
 D.getElementById('rvList').onclick=function(e){var b=e.target.closest('[data-del]');if(!b)return;ops=ops.filter(function(o){return o.id!==b.dataset.del;});save();paint();};
 D.getElementById('rvSave').onclick=function(){if(!ops.length){alert('There’s nothing to send yet.');return;}who();var blob=new Blob([JSON.stringify({app:'Anabasis review',v:1,id:R.id,docId:R.docId,title:R.title,reviewer:me,made:new Date().toISOString(),ops:ops},null,1)],{type:'application/json'});
  var a=D.createElement('a');a.href=URL.createObjectURL(blob);a.download=R.title.replace(/[\\/:*?"<>|]+/g,' ').slice(0,80)+' - review by '+(me||'reviewer').replace(/[\\/:*?"<>|]+/g,' ')+'.json';D.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
@@ -15121,7 +15225,7 @@ function reviewPageHTML(d, msg) {
   $$('.cite,.fn,.flag', tmp).forEach(e => { e.removeAttribute('title'); [...e.attributes].filter(a => a.name.startsWith('data-') && a.name !== 'data-text').forEach(a => e.removeAttribute(a.name)); });
   $$('.fn', tmp).forEach(f => { f.textContent = '*'; f.title = f.getAttribute('data-text') || ''; f.removeAttribute('data-text'); });
   // your own margin comments and research marks stay with you: keep their words, drop the marks
-  $$('span.cmt, span.rm, span.qlink', tmp).forEach(e => e.replaceWith(...e.childNodes));
+  $$('span.cmt, span.rm, span.qlink, span.edm', tmp).forEach(e => e.replaceWith(...e.childNodes));
   $$('[data-cmt],[data-rm],[data-ref],[data-qn]', tmp).forEach(e => ['data-cmt', 'data-rm', 'data-ref', 'data-qn', 'data-k'].forEach(a => e.removeAttribute(a)));
   const blocks = rvBlocks(tmp);
   blocks.forEach((el, i) => { el.dataset.b = i; el.dataset.h = rvHash(rvBlockText(el)); });
@@ -15133,6 +15237,7 @@ header.rv{position:fixed;top:0;left:0;right:0;z-index:5;background:#1d2d44;color
 header.rv b{font-size:15px}header.rv .sp{flex:1}
 header.rv button{font:600 14px system-ui,sans-serif;border:0;border-radius:6px;padding:8px 12px;background:#fff;color:#1d2d44;cursor:pointer}
 header.rv button.go{background:#e0b04f;color:#1d2d44}
+header.rv select{font:600 14px system-ui,sans-serif;border:0;border-radius:6px;padding:8px 10px;background:#fff;color:#1d2d44;cursor:pointer}
 aside.rv{position:fixed;right:14px;top:70px;width:290px;max-height:calc(100vh - 90px);overflow:auto;background:#fff;border:1px solid #d8d1c4;border-radius:10px;font:13.5px/1.45 system-ui,sans-serif;padding:10px 12px}
 aside.rv ol{padding:0;margin:0;list-style:none}aside.rv li{position:relative;padding:7px 24px 7px 0;border-bottom:1px solid #eee}aside.rv li .q{color:#777;font-size:12px}aside.rv li button{position:absolute;right:0;top:6px;border:0;background:none;color:#a3271b;cursor:pointer}
 .msg{font:15px/1.5 system-ui,sans-serif;background:#f4efe3;border-left:4px solid #e0b04f;padding:10px 14px;margin:0 0 28px}
@@ -15144,7 +15249,7 @@ del.sg{color:#a3271b}ins.sg{color:#1f6b45}h1,h2,h3{line-height:1.25}img{max-widt
 @media (max-width:1100px){aside.rv{position:static;width:auto;margin:0 auto;max-width:680px;border-radius:0}main{padding-top:120px}}
 @media print{header.rv,aside.rv{display:none}main{padding:0;box-shadow:none}}`;
   return `<!DOCTYPE html><html lang="${esc(docLang(d))}"${L.rtl ? ' dir="rtl"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(R.title)}: for review</title><meta name="generator" content="Anabasis ${APP_VERSION}"><style>${css}</style></head><body>
-<header class="rv"><b>${esc(R.title)}</b><span>for review${me ? ' · from ' + esc(me) : ''}</span><span class="sp"></span><span id="rvN"></span><button id="rvComment" title="Select words first (Ctrl/Cmd Alt M)">Comment</button><button id="rvChange" title="Select words to change, or click where to insert">Suggest a change</button><button id="rvSave" class="go">Save my review</button></header>
+<header class="rv"><b>${esc(R.title)}</b><span>for review${me ? ' · from ' + esc(me) : ''}</span><span class="sp"></span><span id="rvN"></span><button id="rvComment" title="Select words first (Ctrl/Cmd Alt M)">Comment</button><button id="rvChange" title="Select words to change, or click where to insert">Suggest a change</button><select id="rvMark" aria-label="Editing mark" title="Mark the selected words the way a copyeditor would"><option value="">Editing mark…</option>${EDM_ORDER.map(k => `<option value="${k}">${esc(EDM[k].sym + " – " + EDM[k].name)}</option>`).join("")}</select><button id="rvSave" class="go">Save my review</button></header>
 <aside class="rv" aria-label="Your notes"><ol id="rvList"></ol><p id="rvDone" hidden>Saved. Send the file that downloaded to ${me ? esc(me) : 'the author'}.</p></aside>
 <main>${msg ? `<p class="msg">${esc(msg).replace(/\n/g, '<br>')}</p>` : ''}<div class="doc">${titleBlockHTML(d)}${tmp.innerHTML}</div></main>
 <script>var R=${JSON.stringify(R).replace(/</g, '\\u003c')};${RV_PAGE_JS}</scr` + `ipt></body></html>`;
@@ -15176,14 +15281,15 @@ function rvLocate(op) {
 }
 function rvApply(rev, doc) {
   const who = String(rev.reviewer || 'Reviewer').slice(0, 60), placed = [], lost = [];
-  const ops = rev.ops.filter(o => o && typeof o === 'object' && (o.type === 'comment' || o.type === 'change')).map(o => ({ type: o.type, b: +o.b || 0, a: +o.a || 0, z: +o.z || 0, quote: String(o.quote || ''), prefix: String(o.prefix || ''), suffix: String(o.suffix || ''), text: String(o.text || '').slice(0, 4000), with: String(o.with ?? '').slice(0, 4000), at: String(o.at || nowISO()) }));
+  const ops = rev.ops.filter(o => o && typeof o === 'object' && (o.type === 'comment' || o.type === 'change' || (o.type === 'mark' && EDM[o.k]))).map(o => ({ k: o.k, type: o.type, b: +o.b || 0, a: +o.a || 0, z: +o.z || 0, quote: String(o.quote || ''), prefix: String(o.prefix || ''), suffix: String(o.suffix || ''), text: String(o.text || '').slice(0, 4000), with: String(o.with ?? '').slice(0, 4000), at: String(o.at || nowISO()) }));
   const located = ops.map(o => ({ o, L: rvLocate(o) }));
   located.filter(x => !x.L).forEach(x => lost.push(x.o));
   // apply from the end of the draft backwards, so earlier places don't shift
   const blocks = rvBlocks(editor);
   located.filter(x => x.L).sort((x, y) => (blocks.indexOf(y.L.el) - blocks.indexOf(x.L.el)) || (y.L.a - x.L.a)).forEach(({ o, L }) => {
     const { range } = blockMap(L.el), r = range(L.a, L.z); if (!r) { lost.push(o); return; }
-    if (o.type === 'comment') {
+    if (o.type === 'mark') { if (r.collapsed || !edmWrap(r, { 'data-edm': uid('em'), 'data-ek': o.k, 'data-by': who, 'data-at': o.at, 'data-t': o.text, 'data-sym': edmSym(o.k, o.text) }).length) { lost.push(o); return; } }
+    else if (o.type === 'comment') {
       const id = uid('c'); doc.comments.push({ id, text: o.text, author: who, date: o.at });
       const span = document.createElement('span'); span.className = 'cmt'; span.dataset.cmt = id;
       if (!r.collapsed && !r.cloneContents().querySelector('figure,table,.cmt,.cite,.fn')) { span.append(r.extractContents()); r.insertNode(span); }
@@ -15212,8 +15318,9 @@ $('#rviFile').addEventListener('change', async e => {
   syncEditor(); try { snapshot(curDoc(), `Before ${rev.reviewer || 'a reviewer'}’s review`); } catch (err) { /* drafts unavailable */ }
   const { placed, lost, who } = rvApply(rev, curDoc());
   onEdit(); syncEditor(); markDirty(); try { renderMargin(); } catch (err) { /* margin not shown */ }
-  const nC = placed.filter(o => o.type === 'comment').length, nS = placed.length - nC;
-  toast(`${who}’s review: ${nC} ${nC === 1 ? 'comment' : 'comments'} and ${nS} suggested ${nS === 1 ? 'change' : 'changes'} added.${lost.length ? ` ${lost.length} couldn’t be placed.` : ''}`);
+  const nC = placed.filter(o => o.type === 'comment').length, nM = placed.filter(o => o.type === 'mark').length, nS = placed.length - nC - nM;
+  renderEditMarks();
+  toast(`${who}’s review: ${nC} ${nC === 1 ? 'comment' : 'comments'}${nM ? `, ${nM} editing ${nM === 1 ? 'mark' : 'marks'}` : ''} and ${nS} suggested ${nS === 1 ? 'change' : 'changes'} added.${lost.length ? ` ${lost.length} couldn’t be placed.` : ''}`);
   if (lost.length) infoDialog(`${lost.length} ${lost.length === 1 ? 'note' : 'notes'} from ${esc(who)} couldn’t be placed`, `<p>The text they refer to has changed since you sent the draft. Here they are, so nothing is lost:</p><ul>${lost.map(o => `<li>${o.type === 'comment' ? `<b>Comment</b> on “${esc(o.quote.slice(0, 120))}”: ${esc(o.text)}` : `<b>Change</b> “${esc(o.quote.slice(0, 120))}” to “${esc(o.with)}”`}</li>`).join('')}</ul>`);
 });
 function openReviewImport() { $('#rviFile').click(); }
@@ -15449,6 +15556,739 @@ COMMANDS.push(
   ['Copy the selection to the slush pile', () => slushSelection(true)]
 );
 { const g = KEYS.find(k => k[0] === 'Writing'); if (g) g[1].push(['⌘/Ctrl Alt J', 'Move the selection to the slush pile']); }
+
+/* ================================================================
+   2.8: contents, lists of figures, tables and equations, kept up to date in the page
+   ================================================================ */
+const NAV_KINDS = {
+  toc: { cls: 'toc', title: 'Contents', empty: 'Headings in this document will be listed here.' },
+  fig: { cls: 'lof', k: 'fig', title: 'Figures', empty: 'Figures in this document will be listed here.' },
+  tbl: { cls: 'lof', k: 'tbl', title: 'Tables', empty: 'Tables in this document will be listed here.' },
+  both: { cls: 'lof', k: '', title: 'Figures and Tables', empty: 'Figures and tables in this document will be listed here.' },
+  eq: { cls: 'loe', title: 'Equations', empty: 'Numbered equations in this document will be listed here.' },
+};
+function navKind(nav) {
+  if (nav.classList.contains('toc')) return 'toc';
+  if (nav.classList.contains('loe')) return 'eq';
+  if (nav.classList.contains('lof')) return nav.dataset.k === 'fig' ? 'fig' : nav.dataset.k === 'tbl' ? 'tbl' : 'both';
+  return '';
+}
+function navPlaceholder(kind, depth = 3) {
+  const K = NAV_KINDS[kind];
+  return `<nav class="${K.cls}"${K.k ? ` data-k="${K.k}"` : ''}${kind === 'toc' ? ` data-depth="${depth}"` : ''} contenteditable="false"><p class="nav-h">${K.title}</p><p class="nav-empty">${K.empty}</p></nav>`;
+}
+const capText = cap => { if (!cap) return ''; const c = cap.cloneNode(true); $$('.cite,.fn,.flag,.cmt-pt,.fig-n,.fig-credit', c).forEach(x => x.remove()); return c.textContent.replace(/\s+/g, ' ').trim(); };
+/* what each list holds, in reading order */
+function navEntries(root, kind, depth = 3) {
+  if (kind === 'toc') {
+    const sel = ['h1', 'h2', 'h3'].slice(0, Math.max(1, Math.min(3, depth))).join(',');
+    return $$(sel, root).filter(h => !h.closest('nav,figure,blockquote,.title-block') && h.textContent.trim()).map(h => ({ el: h, lv: +h.tagName[1], label: '', text: h.textContent.replace(/\s+/g, ' ').trim() }));
+  }
+  if (kind === 'eq') {
+    let q = 0;
+    return $$('p.eq.num', root).map(p => ({ el: p, lv: 1, label: `(${++q})`, text: p.getAttribute('data-tex') || '' }));
+  }
+  let f = 0, t = 0; const out = [];
+  $$('figure:not(.av)', root).forEach(fig => {
+    const isT = fig.classList.contains('tbl'), n = isT ? ++t : ++f;
+    if ((kind === 'fig' && isT) || (kind === 'tbl' && !isT)) return;
+    out.push({ el: fig, lv: 1, isT, label: (isT ? 'Table ' : 'Figure ') + n + '.', text: capText(fig.querySelector(':scope > figcaption')) });
+  });
+  return out;
+}
+/* in the page: each list shows what it will hold, and a click goes there */
+var navGo = [];
+function navRender(root = editor) {
+  const navs = $$('nav.toc, nav.lof, nav.loe', root); if (!navs.length) return;
+  navGo = [];
+  navs.forEach(nav => {
+    const kind = navKind(nav); if (!kind) return;
+    const K = NAV_KINDS[kind], es = navEntries(root, kind, +nav.dataset.depth || 3);
+    const html = `<p class="nav-h">${K.title}</p>` + (es.length ? `<ol class="nav-l">${es.map(e => { navGo.push(e.el); return `<li class="nav-lv${e.lv}"><span class="nav-go" data-go="${navGo.length - 1}">${e.label ? `<b>${esc(e.label)}</b> ` : ''}${kind === 'eq' ? `<code>${esc(e.text.slice(0, 80))}</code>` : esc(e.text || '(no caption)')}</span></li>`; }).join('')}</ol>` : `<p class="nav-empty">${K.empty}</p>`);
+    if (nav.innerHTML !== html) nav.innerHTML = html;
+    nav.setAttribute('contenteditable', 'false');
+  });
+}
+editor.addEventListener('click', e => {
+  const g = e.target.closest('nav [data-go]'); if (!g) return;
+  const el = navGo[+g.dataset.go]; if (!el || !editor.contains(el)) return;
+  e.preventDefault(); el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  el.classList.add('nav-flash'); setTimeout(() => el.classList.remove('nav-flash'), 1400);
+});
+/* in exports: real links, page numbers in PDFs, a Contents field in Word */
+function prepExportNavs(tmp) {
+  let k = 0;
+  $$('nav.toc', tmp).forEach(nav => {
+    if (nav.querySelector('h1.toc-title')) return; // a compiled manuscript's own contents
+    const es = navEntries(tmp, 'toc', +nav.dataset.depth || 3);
+    nav.removeAttribute('contenteditable');
+    if (!es.length) { nav.remove(); return; }
+    nav.innerHTML = `<h2 class="toc-title">Contents</h2><ol>${es.map(e => { if (!e.el.id) e.el.id = 'sec-' + (++k); return `<li class="toc-l${e.lv}"><a href="#${e.el.id}">${esc(e.text)}</a></li>`; }).join('')}</ol>`;
+  });
+  $$('nav.loe', tmp).forEach(nav => {
+    const es = navEntries(tmp, 'eq'); nav.removeAttribute('contenteditable');
+    if (!es.length) { nav.remove(); return; }
+    nav.innerHTML = `<h2 class="toc-title">Equations</h2><ol>${es.map((e, i) => { if (!e.el.id) e.el.id = 'eq-' + (i + 1); return `<li><a href="#${e.el.id}">${esc(e.label)} <code>${esc(e.text.slice(0, 80))}</code></a></li>`; }).join('')}</ol>`;
+  });
+}
+const INSERT_EXTRA = {
+  toc: () => { insertBlocksAtCursor(navPlaceholder('toc')); renumberFigures(); onEdit(); },
+  lofig: () => { insertBlocksAtCursor(navPlaceholder('fig')); renumberFigures(); onEdit(); },
+  lotab: () => { insertBlocksAtCursor(navPlaceholder('tbl')); renumberFigures(); onEdit(); },
+  loe: () => { insertBlocksAtCursor(navPlaceholder('eq')); renumberFigures(); onEdit(); },
+};
+{
+  const L = INSERT_ITEMS.find(x => x[0] === 'Lists');
+  const ic = '<path d="M9 6h12M9 12h12M9 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01" stroke-width="2.6"/>';
+  if (L) L[1].unshift(['toc', 'Contents', ic], ['lofig', 'List of figures', ic], ['lotab', 'List of tables', ic], ['loe', 'List of equations', ic]);
+}
+COMMANDS.push(
+  ['Insert contents (table of contents)', () => INSERT_EXTRA.toc()],
+  ['Insert a list of figures', () => INSERT_EXTRA.lofig()],
+  ['Insert a list of tables', () => INSERT_EXTRA.lotab()],
+  ['Insert a list of equations', () => INSERT_EXTRA.loe()]
+);
+
+/* ---------- 2.8: paragraph numbers and line numbers ----------
+   Paragraph numbers (Page setup) show in the page and in every export, for policy papers, legal writing and reviews that cite “¶ 12”.
+   Line numbers show in the page and go into PDF and Word; the reviewer PDF already numbers lines. */
+const PN_SKIP = 'p.eq,p.rh,.title-block p,nav p,figure p,td p,th p';
+const pnParas = root => [...root.children].filter(el => el.tagName === 'P' && !el.matches(PN_SKIP) && el.textContent.trim());
+function prepExportParaNums(tmp, mode, doc) {
+  if (!doc.layout || !doc.layout.paraNums) return;
+  pnParas(tmp).forEach((p, i) => {
+    const s = document.createElement('span'); s.className = 'pn';
+    s.textContent = /^(html|paged|epub)$/.test(mode) ? String(i + 1) : mode === 'md' ? `@@PN${i + 1}@@ ` : `[${i + 1}] `;
+    if (/^(html|paged|epub)$/.test(mode)) s.setAttribute('aria-hidden', 'true');
+    p.prepend(s); p.setAttribute('data-pn', i + 1);
+  });
+}
+/* line numbers in the page: one label per line of text, worked out from each block's height and line height */
+var lnOn = false;
+function lnApply() {
+  const d = curDoc(), L = (d && d.layout) || {};
+  lnOn = !!(L.lineNums || L.paraNums); let layer = $('#lnLayer');
+  if (!lnOn) { if (layer) layer.remove(); return; }
+  if (!layer) { layer = document.createElement('div'); layer.id = 'lnLayer'; layer.setAttribute('aria-hidden', 'true'); $('#page').append(layer); }
+  lnDraw();
+}
+function lnBlocks() {
+  const out = [];
+  [...editor.children].forEach(el => {
+    if (el.matches('figure,table,nav,hr,p.eq,.ch-break') || !el.textContent.trim()) return;
+    if (el.matches('ul,ol')) { $$(':scope > li', el).forEach(li => out.push(li)); return; }
+    if (el.matches('blockquote') && el.querySelector(':scope > p')) { $$(':scope > p', el).forEach(p => out.push(p)); return; }
+    out.push(el);
+  });
+  return out;
+}
+function lnDraw() {
+  const layer = $('#lnLayer'); if (!layer || !lnOn) return;
+  const L = curDoc().layout, pr = $('#page').getBoundingClientRect(), er = editor.getBoundingClientRect();
+  const geo = el => { const cs = getComputedStyle(el), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.4, r = el.getBoundingClientRect(), pt = parseFloat(cs.paddingTop) || 0; return { lh, top: r.top + pt - pr.top, lines: Math.max(1, Math.round((r.height - pt - (parseFloat(cs.paddingBottom) || 0)) / lh)) }; };
+  let h = '';
+  if (L.lineNums) { let n = 0; lnBlocks().forEach(el => { const g = geo(el); for (let i = 0; i < g.lines; i++) h += `<span class="ln" style="top:${(g.top + i * g.lh + g.lh / 2).toFixed(1)}px;left:${(er.left - pr.left - 42).toFixed(0)}px">${++n}</span>`; }); }
+  if (L.paraNums) { const side = L.lineNums ? `left:${(er.right - pr.left + 12).toFixed(0)}px` : `left:${(er.left - pr.left - 42).toFixed(0)}px`;
+    pnParas(editor).forEach((p, i) => { const g = geo(p); h += `<span class="pnum${L.lineNums ? ' r' : ''}" style="top:${(g.top + g.lh / 2).toFixed(1)}px;${side}">¶${i + 1}</span>`; }); }
+  layer.innerHTML = h;
+}
+const lnSoon = debounce(() => { if (lnOn) lnDraw(); }, 250);
+editor.addEventListener('input', lnSoon);
+addEventListener('resize', lnSoon);
+try { new ResizeObserver(() => lnSoon()).observe(editor); } catch (e) { /* older browsers redraw on input and resize */ }
+function setNumbering(kind, on) {
+  const d = curDoc(); if (!d) return;
+  d.layout[kind === 'para' ? 'paraNums' : 'lineNums'] = on ?? !d.layout[kind === 'para' ? 'paraNums' : 'lineNums'];
+  lnApply(); markDirty();
+  toast(kind === 'para' ? (d.layout.paraNums ? 'Paragraphs numbered, here and in every export.' : 'Paragraph numbers off.') : (d.layout.lineNums ? 'Lines numbered, here and in PDF and Word.' : 'Line numbers off.'));
+}
+COMMANDS.push(
+  ['Number paragraphs (on and off)', () => setNumbering('para')],
+  ['Number lines (on and off)', () => setNumbering('line')]
+);
+
+/* ---------- 2.8: the rhetorical précis ----------
+   Woodworth's four sentences: who said what, and how (a rhetorically accurate verb and a “that” clause); how the author
+   develops the claim; the author's purpose (“in order to”); and the audience and tone. Kept as a summary note on the
+   source, so it also feeds the annotated bibliography. */
+const PRC_VERBS = ['argues', 'asserts', 'claims', 'contends', 'maintains', 'suggests', 'proposes', 'implies', 'questions', 'challenges', 'demonstrates', 'explains', 'describes', 'shows'];
+const PRC_HOW = ['supports this claim by', 'develops this argument by', 'builds this case by', 'illustrates this by', 'demonstrates this by', 'makes this case by'];
+const PRC_GENRE = { book: 'book', chapter: 'chapter', 'article-journal': 'article', 'article-magazine': 'article', 'article-newspaper': 'article', webpage: 'article', 'post-weblog': 'blog post', report: 'report', thesis: 'dissertation', speech: 'speech', interview: 'interview', 'motion_picture': 'film', broadcast: 'broadcast', manuscript: 'manuscript', legislation: 'act', paper: 'paper', 'paper-conference': 'paper' };
+var prcSrc = null, prcNote = null;
+function prcAuthor(s) {
+  const a = (s.csl.author || s.csl.editor || [])[0] || {};
+  const full = a.literal || [a.given, a.family].filter(Boolean).join(' ');
+  return { full: full || 'The author', last: a.family || a.literal || full || 'The author' };
+}
+function prcTitle(s) {
+  const t = s.csl.title || 'Untitled', italic = /^(book|thesis|report|motion_picture|broadcast|legislation)$/.test(s.csl.type || 'book');
+  return italic ? `<i>${esc(t)}</i>` : `“${esc(t)}”`;
+}
+function prcCompose(f, s) {
+  const A = prcAuthor(s), yr = yearOf(s.csl.issued), cred = f.cred.trim();
+  const clean = x => x.trim().replace(/[.\s]+$/, '');
+  const s1 = `${esc(A.full)}${cred ? `, ${esc(cred)},` : ','} in the ${esc(f.genre || 'work')} ${prcTitle(s)}${yr ? ` (${esc(yr)})` : ''}, ${esc(f.verb)} that ${esc(clean(f.thesis) || '…')}.`;
+  const s2 = `${esc(A.last)} ${esc(f.how)} ${esc(clean(f.method) || '…')}.`;
+  const s3 = `${esc(A.last)}’s purpose is to ${esc(clean(f.purpose) || '…')}${clean(f.aim) ? ` in order to ${esc(clean(f.aim))}` : ''}.`;
+  const s4 = `${esc(A.last)} writes for ${esc(clean(f.audience) || '…')}${clean(f.tone) ? `, in a ${esc(clean(f.tone))} tone` : ''}.`;
+  return [s1, s2, s3, s4].join(' ');
+}
+const prcFields = () => ({ cred: $('#prcCred').value, genre: $('#prcGenre').value, verb: $('#prcVerb').value, thesis: $('#prcThesis').value, how: $('#prcHow').value, method: $('#prcMethod').value, purpose: $('#prcPurpose').value, aim: $('#prcAim').value, audience: $('#prcAudience').value, tone: $('#prcTone').value });
+const htmlToPlain = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
+const plainToMd = h => h.replace(/<i>(.*?)<\/i>/g, '*$1*').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+function prcPreview() {
+  if (!prcSrc) return;
+  const html = prcCompose(prcFields(), prcSrc);
+  $('#prcOut').innerHTML = html;
+  const left = ['thesis', 'method', 'purpose', 'audience'].filter(k => !prcFields()[k].trim());
+  $('#prcLeft').textContent = left.length ? `Still to fill in: ${left.map(k => ({ thesis: 'the claim', method: 'how it’s developed', purpose: 'the purpose', audience: 'the audience' })[k]).join(', ')}.` : 'Four sentences. Read it aloud: does each verb say exactly what the author does?';
+}
+function openPrecis(sourceId, noteId) {
+  const n = noteId ? P.notes.find(x => x.id === noteId) : null;
+  const s = P.sources.find(x => x.id === (sourceId || (n && n.sourceId)));
+  $('#prcSrc').innerHTML = sortedSources().map(x => { const l = sourceLabel(x); return `<option value="${x.id}">${esc((l.who ? l.who + ' ' : '') + (l.yr ? `(${l.yr}) ` : '') + l.title).slice(0, 90)}</option>`; }).join('');
+  if (!P.sources.length) { toast('Add the source first: a précis summarizes one source.'); return; }
+  prcSrc = s || sortedSources()[0]; prcNote = n;
+  $('#prcSrc').value = prcSrc.id;
+  const f = (n && n.precis) || {};
+  $('#prcVerb').innerHTML = PRC_VERBS.map(v => `<option>${v}</option>`).join(''); $('#prcHow').innerHTML = PRC_HOW.map(v => `<option>${v}</option>`).join('');
+  $('#prcCred').value = f.cred || ''; $('#prcGenre').value = f.genre || PRC_GENRE[prcSrc.csl.type] || 'work';
+  $('#prcVerb').value = f.verb || 'argues'; $('#prcHow').value = f.how || PRC_HOW[0];
+  ['thesis', 'method', 'purpose', 'aim', 'audience', 'tone'].forEach(k => { $('#prc' + k[0].toUpperCase() + k.slice(1)).value = f[k] || ''; });
+  $('#prcTitle').textContent = n ? 'Edit précis' : 'Write a précis';
+  prcPreview(); $('#prcDlg').showModal(); setTimeout(() => $('#prcThesis').focus(), 30);
+}
+$('#prcDlg').addEventListener('input', e => { if (e.target.id === 'prcSrc') return; prcPreview(); });
+$('#prcSrc').addEventListener('change', () => { prcSrc = P.sources.find(x => x.id === $('#prcSrc').value); $('#prcGenre').value = PRC_GENRE[prcSrc.csl.type] || 'work'; prcPreview(); });
+$('#prcCancel').addEventListener('click', () => $('#prcDlg').close());
+function prcSave() {
+  const f = prcFields(), html = prcCompose(f, prcSrc), l = sourceLabel(prcSrc);
+  const n = prcNote || newNote();
+  Object.assign(n, { kind: 'summary', sourceId: prcSrc.id, title: 'Précis: ' + (prcSrc.csl['title-short'] || l.title).slice(0, 60), body: plainToMd(html), precis: f, modified: nowISO() });
+  if (!n.tags.includes('précis')) n.tags.push('précis');
+  if (!prcNote) P.notes.unshift(n);
+  renderNoteList(); markDirty(); return n;
+}
+$('#prcSave').addEventListener('click', () => { const n = prcSave(); $('#prcDlg').close(); toast('Précis saved as a summary note on the source.', { label: 'Open', fn: () => openNote(n.id) }); });
+$('#prcInsert').addEventListener('click', () => {
+  const n = prcSave(); $('#prcDlg').close();
+  insertBlocksAtCursor(`<p>${prcCompose(n.precis, prcSrc)}${citeHTML([{ id: prcSrc.id, locator: '', label: 'page' }])}</p>`); onEdit(); renderRefs();
+  toast('Précis inserted, with a citation, and kept as a note.');
+});
+/* every précis in the project, each under its bibliography entry */
+function precisCollection() {
+  syncEditor();
+  const ns = P.notes.filter(n => n.precis && P.sources.some(s => s.id === n.sourceId));
+  if (!ns.length) { toast('No précis yet. Open a source and choose Précis…'); return; }
+  const style = curDoc()?.style || DEFAULT_STYLE, ids = [...new Set(ns.map(n => n.sourceId))];
+  let entries = [];
+  if (STYLES[style].custom) entries = sortedSources().filter(s => ids.includes(s.id)).map(s => ({ id: s.id, html: osintCluster([{ id: s.id }], new Set()) }));
+  else { const e = makeEngine(style, docCslLang(curDoc())); e.updateItems(ids); const b = e.makeBibliography(); entries = b[0].entry_ids.map((x, i) => ({ id: x[0], html: b[1][i].replace(/^\s*<div class="csl-entry">|<\/div>\s*$/g, '') })); }
+  const html = '<h1>Précis</h1>' + entries.map(en => `<p class="ab-entry">${en.html}</p>` + ns.filter(n => n.sourceId === en.id).map(n => `<p class="ab-note">${prcCompose(n.precis, P.sources.find(s => s.id === en.id))}</p>`).join('')).join('');
+  const d = newDoc('Précis', html); d.style = style; addDoc(d); renderDocList(); openDoc(d.id);
+  toast(`A document of ${ns.length} précis, each under its source.`);
+}
+COMMANDS.push(
+  ['Write a précis of a source (rhetorical précis)', () => openPrecis(panelState?.kind === 'source' ? panelState.id : '')],
+  ['Précis of every source, as a document', () => precisCollection()]
+);
+
+/* ---------- 2.8: editing marks, the copyeditor's set ----------
+   An editor marks a passage (transpose, close up, capital, spell out, query to author…); the author accepts it, which makes
+   the change, or rejects it. Marks are spans in the text: <span class="edm" data-edm="id" data-ek="kind" data-by data-at data-t>.
+   They are working markup: every export leaves them out. */
+const EDM = {
+  aq: { sym: 'AQ', name: 'Query to author', tip: 'A question for the author to answer', ask: 'Your question for the author', resolve: true },
+  chk: { sym: 'ck', name: 'Verify', tip: 'Check this fact, spelling or quotation against the source', ask: 'What to check (optional)', resolve: true, optional: true },
+  stet: { sym: 'stet', name: 'Stet', tip: 'Let it stand: keep the original wording', resolve: true },
+  del: { sym: 'del', name: 'Delete', tip: 'Take these words out' },
+  ins: { sym: '^', name: 'Replace with…', tip: 'Put other words in their place', ask: 'Replace with' },
+  tr: { sym: 'tr', name: 'Transpose', tip: 'Swap the first and last words (or two letters)' },
+  close: { sym: '⁀', name: 'Close up', tip: 'Take out the space' },
+  space: { sym: '#', name: 'Add space', tip: 'Put a space after these characters' },
+  cap: { sym: 'cap', name: 'Capitalize', tip: 'Capital first letter on each word' },
+  lc: { sym: 'lc', name: 'Lowercase', tip: 'Set in lowercase' },
+  ital: { sym: 'ital', name: 'Italic', tip: 'Set in italics' },
+  rom: { sym: 'rom', name: 'Roman', tip: 'Take the italics off' },
+  bf: { sym: 'bf', name: 'Bold', tip: 'Set in bold' },
+  sp: { sym: 'sp', name: 'Spell out', tip: 'Write the number or abbreviation in words', ask: 'Spelled out (leave blank to do it yourself)', optional: true },
+  para: { sym: '¶', name: 'New paragraph', tip: 'Start a new paragraph here' },
+  runin: { sym: 'run in', name: 'Run in', tip: 'Join this paragraph to the one before' },
+};
+const EDM_ORDER = ['aq', 'chk', 'stet', 'del', 'ins', 'tr', 'close', 'space', 'cap', 'lc', 'ital', 'rom', 'bf', 'sp', 'para', 'runin'];
+const EM_NUM = 'zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen'.split(' '), EM_TENS = ',,twenty,thirty,forty,fifty,sixty,seventy,eighty,ninety'.split(',');
+function spellNum(t) {
+  const n = +String(t).replace(/,/g, '').trim(); if (!/^\d{1,3}$/.test(String(t).trim()) || n > 100) return '';
+  if (n < 20) return EM_NUM[n]; if (n === 100) return 'one hundred';
+  return EM_TENS[Math.floor(n / 10)] + (n % 10 ? '-' + EM_NUM[n % 10] : '');
+}
+const edmSpans = (id, root = editor) => $$(`span.edm[data-edm="${CSS.escape(id)}"]`, root);
+function edmWrap(range, attrs) {
+  let root = range.commonAncestorContainer; if (root.nodeType === 3) root = root.parentNode;
+  if (!editor.contains(root) && root !== editor) return [];
+  const nodes = [], w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) { const n = w.currentNode; if (!n.data.length || !range.intersectsNode(n)) continue; const pe = n.parentElement; if (!pe || pe.closest(RM_SKIP) || !pe.closest(RM_BLOCK) || !editor.contains(pe)) continue; nodes.push(n); }
+  const spans = [];
+  nodes.forEach(n => {
+    let s = 0, e = n.data.length;
+    if (n === range.startContainer) s = range.startOffset; if (n === range.endContainer) e = range.endOffset;
+    if (e <= s) return; if (e < n.data.length) n.splitText(e); if (s > 0) n = n.splitText(s); if (!n.data.length) return;
+    const sp = document.createElement('span'); sp.className = 'edm'; Object.entries(attrs).forEach(([k, v]) => { if (v) sp.setAttribute(k, v); });
+    n.parentNode.insertBefore(sp, n); sp.appendChild(n); spans.push(sp);
+  });
+  if (spans.length) { spans[spans.length - 1].classList.add('edm-end'); spans[0].classList.add('edm-start'); }
+  return spans;
+}
+function edmSym(k, t) { const K = EDM[k]; return k === 'ins' && t ? '^ ' + (t.length > 24 ? t.slice(0, 23) + '…' : t) : K.sym; }
+async function addEditMark(kind, range) {
+  const K = EDM[kind]; if (!K) return;
+  const sel = getSelection(); range = range || (sel.rangeCount && editor.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : (savedRange && editor.contains(savedRange.startContainer) ? savedRange.cloneRange() : null));
+  if (!range || (range.collapsed && kind !== 'para')) { toast('Select the words to mark first.'); return; }
+  if (range.collapsed) { // a new paragraph at the cursor: mark the next character
+    const r = range.cloneRange(); const n = r.startContainer; if (n.nodeType !== 3 || r.startOffset >= n.data.length) { toast('Put the cursor before the word that should start the paragraph, or select it.'); return; } r.setEnd(n, r.startOffset + 1); range = r;
+  }
+  let t = '';
+  if (K.ask) { t = await ask(K.name, K.ask + (kind === 'sp' && spellNum(range.toString()) ? ` (for example “${spellNum(range.toString())}”)` : ''), 'Mark', kind === 'sp' ? spellNum(range.toString()) : kind === 'ins' ? range.toString() : ''); if (t === null) return; t = t.trim(); if (!t && !K.optional) return; }
+  syncEditor();
+  const id = uid('em'), spans = edmWrap(range, { 'data-edm': id, 'data-ek': kind, 'data-by': (PREFS.myName || '').trim() || 'Editor', 'data-at': nowISO(), 'data-t': t, 'data-sym': edmSym(kind, t) });
+  if (!spans.length) { toast('Editing marks go on running text, not on figures, notes or citations.'); return; }
+  getSelection().removeAllRanges(); onEdit(); renderEditMarks();
+  toast(`${K.name} marked.`, { label: 'Undo', fn: () => { edmSpans(id).forEach(s => s.replaceWith(...s.childNodes)); editor.normalize(); onEdit(); renderEditMarks(); } });
+}
+function edmUnwrap(spans) { spans.forEach(s => { if (s.isConnected) s.replaceWith(...s.childNodes); }); editor.normalize(); }
+/* accept: make the change the mark asks for */
+function edmApply(id) {
+  const spans = edmSpans(id); if (!spans.length) return false;
+  const k = spans[0].dataset.ek, t = spans[0].dataset.t || '', text = spans.map(s => s.textContent).join('');
+  const setText = v => { spans[0].textContent = v; spans.slice(1).forEach(s => s.remove()); };
+  syncEditor();
+  if (EDM[k] && EDM[k].resolve) { edmUnwrap(spans); return true; }
+  if (k === 'del') { const blks = new Set(spans.map(x => x.closest('p,li,h1,h2,h3,h4,blockquote'))); spans.forEach(x => x.remove()); blks.forEach(b => { if (b && !b.textContent.trim() && !b.querySelector('img,figure,.cite,.fn')) b.remove(); }); editor.normalize(); return true; }
+  if (k === 'ins') setText(t);
+  else if (k === 'tr') { const m = /^(\S+)(\s+[\s\S]*\s+|\s+)(\S+)$/.exec(text); setText(m ? m[3] + m[2] + m[1] : text.length === 2 ? text[1] + text[0] : text.split('').reverse().join('')); }
+  else if (k === 'close') setText(text.replace(/\s+/g, ''));
+  else if (k === 'space') setText(text + ' ');
+  else if (k === 'cap') setText(text.replace(/(^|[\s\-–—(“"‘'])(\p{Ll})/gu, (a, b, c) => b + c.toUpperCase()));
+  else if (k === 'lc') setText(text.toLowerCase());
+  else if (k === 'sp') { const v = t || spellNum(text); if (!v) { edmUnwrap(spans); toast('Spell it out in your own words; the mark is cleared.'); return true; } setText(v); }
+  else if (k === 'ital' || k === 'bf') { spans.forEach(s => { const w = document.createElement(k === 'ital' ? 'i' : 'b'); w.append(...s.childNodes); s.append(w); }); }
+  else if (k === 'rom') { spans.forEach(sp => { const it = sp.closest('i,em'); if (!it || !editor.contains(it)) return;
+      const pre = document.createRange(); pre.setStart(it, 0); pre.setEndBefore(sp); const post = document.createRange(); post.setStartAfter(sp); post.setEnd(it, it.childNodes.length);
+      const a = it.cloneNode(false), b = it.cloneNode(false); a.append(pre.extractContents()); b.append(post.extractContents());
+      it.before(a); it.after(b); it.replaceWith(...it.childNodes); if (!a.textContent) a.remove(); if (!b.textContent) b.remove(); }); }
+  else if (k === 'para') {
+    const s = spans[0], blk = s.closest('p,li,h1,h2,h3,blockquote'); if (blk && blk.parentNode) { const r = document.createRange(); r.setStartBefore(s); r.setEndAfter(blk.lastChild || blk); const frag = r.extractContents(); const np = document.createElement(blk.tagName === 'LI' ? 'li' : 'p'); np.append(frag); blk.after(np); $$('span.edm', np).forEach(x => { if (x.dataset.edm === id) x.replaceWith(...x.childNodes); }); if (!blk.textContent.trim()) blk.innerHTML = '<br>'; }
+  }
+  else if (k === 'runin') {
+    const s = spans[0], blk = s.closest('p,li,h1,h2,h3'), prev = blk && blk.previousElementSibling;
+    if (blk && prev && /^(P|LI|H1|H2|H3)$/.test(prev.tagName)) { const last = prev.lastChild; if (last && last.nodeName === 'BR') last.remove(); if (prev.textContent && !/\s$/.test(prev.textContent)) prev.append(' '); prev.append(...blk.childNodes); blk.remove(); }
+  }
+  edmUnwrap(edmSpans(id)); return true;
+}
+function edmReject(id) { edmUnwrap(edmSpans(id)); }
+/* the list in the Outline tab */
+function renderEditMarks() {
+  const box = $('#emList'); if (!box) return;
+  const seen = new Map(); $$('span.edm[data-edm]', editor).forEach(s => { const id = s.dataset.edm; if (!seen.has(id)) seen.set(id, []); seen.get(id).push(s); });
+  const all = [...seen.entries()];
+  $('#emHead').classList.toggle('hidden', !all.length); box.classList.toggle('hidden', !all.length); $('#emTools').classList.toggle('hidden', !all.length);
+  $('#emCount').textContent = all.length || '';
+  box.innerHTML = all.map(([id, ss]) => { const s = ss[0], K = EDM[s.dataset.ek] || EDM.chk, txt = ss.map(x => x.textContent).join(''); return `<li data-emgo="${esc(id)}"><span><b class="em-k">${esc(K.sym)}</b> ${esc(K.name)}: “${esc(txt.length > 40 ? txt.slice(0, 38) + '…' : txt)}”${s.dataset.t ? ` <span class="muted small">${esc(s.dataset.t.slice(0, 60))}</span>` : ''}<br><span class="muted small">${esc(s.dataset.by || '')}${s.dataset.ans ? ' · answered' : ''}</span></span><span class="em-acts"><button class="ghost small" data-emok="${esc(id)}" title="${K.resolve ? 'Resolve' : 'Make the change'}">✓</button><button class="ghost small" data-emno="${esc(id)}" title="${K.resolve ? 'Remove' : 'Reject'}">✕</button></span></li>`; }).join('');
+}
+$('#emList').addEventListener('click', e => {
+  const ok = e.target.closest('[data-emok]'), no = e.target.closest('[data-emno]');
+  if (ok) { edmApply(ok.dataset.emok); onEdit(); renderEditMarks(); return; }
+  if (no) { edmReject(no.dataset.emno); onEdit(); renderEditMarks(); return; }
+  const li = e.target.closest('[data-emgo]'); if (!li) return; const s = edmSpans(li.dataset.emgo)[0]; if (s) { s.scrollIntoView({ block: 'center', behavior: 'smooth' }); openEdmPop(s); }
+});
+$('#emAll').addEventListener('click', () => {
+  syncEditor(); const before = editor.innerHTML, ids = [...new Set($$('span.edm[data-edm]', editor).filter(s => !(EDM[s.dataset.ek] || {}).resolve && s.dataset.ek !== 'sp' || (s.dataset.ek === 'sp' && (s.dataset.t || spellNum(s.textContent)))).map(s => s.dataset.edm))];
+  if (!ids.length) { toast('Nothing that can be applied automatically: queries, checks and stets need you.'); return; }
+  ids.forEach(edmApply); onEdit(); renderEditMarks();
+  toast(`${ids.length} ${ids.length === 1 ? 'change' : 'changes'} made. Queries, checks and stets are left for you.`, { label: 'Undo', fn: () => { editor.innerHTML = before; prepFigureDom(editor); onEdit(); renderEditMarks(); } });
+});
+/* the mark's own card, from a click in the text */
+var edmPopEl = null;
+function closeEdmPop() { if (edmPopEl) { edmPopEl.remove(); edmPopEl = null; } }
+function openEdmPop(s) {
+  closeEdmPop(); const id = s.dataset.edm, K = EDM[s.dataset.ek] || EDM.chk, ss = edmSpans(id), txt = ss.map(x => x.textContent).join('');
+  edmPopEl = document.createElement('div'); edmPopEl.className = 'pop edm-pop'; edmPopEl.setAttribute('role', 'dialog'); edmPopEl.setAttribute('aria-label', 'Editing mark');
+  const when = s.dataset.at ? new Date(s.dataset.at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+  edmPopEl.innerHTML = `<div class="edm-h"><b class="em-k">${esc(K.sym)}</b> <b>${esc(K.name)}</b> <span class="muted small">${esc(s.dataset.by || '')}${when ? ' · ' + esc(when) : ''}</span></div>
+    <p class="small muted" style="margin:4px 0">${esc(K.tip)}</p>${s.dataset.t ? `<p class="edm-t">${s.dataset.ek === 'ins' ? `“${esc(txt)}” → “${esc(s.dataset.t)}”` : esc(s.dataset.t)}</p>` : ''}
+    ${s.dataset.ek === 'aq' ? `<label class="small" for="edmAns">Your answer</label><textarea id="edmAns" rows="2">${esc(s.dataset.ans || '')}</textarea>` : ''}
+    <div class="edm-b">${K.resolve ? `<button class="primary small" data-x="ok">${s.dataset.ek === 'aq' ? 'Answer and resolve' : 'Resolve'}</button>` : `<button class="primary small" data-x="ok">Accept</button><button class="small" data-x="no">Reject</button>`}${s.dataset.ek === 'aq' ? '<button class="small" data-x="save">Save answer</button>' : ''}</div>`;
+  document.body.append(edmPopEl);
+  const r = s.getBoundingClientRect(); edmPopEl.style.left = Math.max(8, Math.min(innerWidth - edmPopEl.offsetWidth - 8, r.left)) + 'px'; edmPopEl.style.top = Math.min(innerHeight - edmPopEl.offsetHeight - 8, r.bottom + 6) + 'px';
+  edmPopEl.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]')?.dataset.x; if (!x) return;
+    const ans = $('#edmAns')?.value.trim();
+    if (x === 'save') { edmSpans(id).forEach(sp => ans ? sp.setAttribute('data-ans', ans) : sp.removeAttribute('data-ans')); onEdit(); renderEditMarks(); closeEdmPop(); toast('Answer saved with the query.'); return; }
+    if (x === 'ok' && s.dataset.ek === 'aq' && ans) { const d = curDoc(), cid = uid('c'); const first = edmSpans(id)[0]; d.comments.push({ id: cid, text: `Q (${s.dataset.by || 'Editor'}): ${s.dataset.t}\nA: ${ans}`, author: (PREFS.myName || '').trim() || 'Author', date: nowISO() }); const c = document.createElement('span'); c.className = 'cmt'; c.dataset.cmt = cid; first.before(c); c.append(...edmSpans(id)); }
+    if (x === 'ok') edmApply(id); else edmReject(id);
+    closeEdmPop(); onEdit(); renderEditMarks(); if (typeof renderMargin === 'function') renderMargin();
+  });
+}
+editor.addEventListener('click', e => { const s = e.target.closest('span.edm'); if (s) openEdmPop(s); });
+document.addEventListener('mousedown', e => { if (edmPopEl && !edmPopEl.contains(e.target) && !e.target.closest('span.edm')) closeEdmPop(); });
+/* choosing a mark */
+function openEdmMenu() {
+  saveSelectionNow(); closePop();
+  const sel = getSelection(), r = sel.rangeCount ? sel.getRangeAt(0).getBoundingClientRect() : $('#btnMark').getBoundingClientRect();
+  popEl = document.createElement('div'); popEl.className = 'pop ins-menu edm-menu'; popEl.setAttribute('role', 'menu'); popEl.setAttribute('aria-label', 'Editing marks');
+  popEl.innerHTML = `<div class="mh" role="presentation">Editing marks</div>` + EDM_ORDER.map(k => `<button role="menuitem" data-ek="${k}" title="${esc(EDM[k].tip)}"><b class="em-k">${esc(EDM[k].sym)}</b><span>${esc(EDM[k].name)}</span></button>`).join('');
+  document.body.append(popEl);
+  popEl.style.left = Math.max(8, Math.min(innerWidth - popEl.offsetWidth - 8, r.left)) + 'px'; popEl.style.top = Math.max(8, Math.min(innerHeight - popEl.offsetHeight - 8, r.bottom + 8)) + 'px';
+  const btns = $$('button', popEl); btns[0].focus();
+  popEl.addEventListener('keydown', e => { const i = btns.indexOf(document.activeElement); if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); btns[(i + (e.key === 'ArrowDown' ? 1 : -1) + btns.length) % btns.length].focus(); } if (e.key === 'Escape') closePop(); });
+  popEl.addEventListener('click', e => { const k = e.target.closest('[data-ek]')?.dataset.ek; if (!k) return; closePop(); restoreSelection(); addEditMark(k); });
+}
+document.addEventListener('click', e => { if (popEl && popEl.classList.contains('edm-menu') && !popEl.contains(e.target)) closePop(); });
+$('#markMenu').addEventListener('click', e => { if (e.target.closest('button')?.dataset.m === 'edm') { $('#markMenu').classList.remove('open'); setTimeout(openEdmMenu, 0); } });
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.altKey && !e.shiftKey && e.code === 'KeyM') { e.preventDefault(); if (!document.querySelector('dialog[open]')) openEdmMenu(); }
+});
+COMMANDS.push(['Editing mark on the selection (copyeditor’s marks)', () => openEdmMenu()], ['Make every editing mark’s change', () => $('#emAll').click()]);
+{ const g = KEYS.find(k => k[0] === 'Writing'); if (g) g[1].push(['⌘/Ctrl Alt M', 'Editing mark on the selection']); }
+
+/* ---------- 2.8: the revision pass, chapter by chapter (Research desk → Revision) ---------- */
+const REV_CHECKS = [
+  ['claim', 'The argument is clear by the end of the first page'],
+  ['job', 'Each paragraph does one job, and its first sentence says what'],
+  ['links', 'Transitions carry the reader from paragraph to paragraph'],
+  ['evidence', 'Every claim of fact has a source, and the sources can bear it'],
+  ['quotes', 'Quotations are introduced, accurate and explained'],
+  ['cut', 'Cut what doesn’t serve the argument (aim for a tenth)'],
+  ['lens', 'Went through the revision lens: long sentences, passive voice, hedges, clichés'],
+  ['facts', 'Names, dates, numbers and spellings checked'],
+  ['aloud', 'Read it aloud, start to finish'],
+];
+var revCache = new Map();
+function revStats(d) {
+  const key = d.id === curDocId ? editor.innerHTML : d.html, c = revCache.get(d.id);
+  if (c && c.key === key) return c.s;
+  const box = document.createElement('div'); box.innerHTML = key; $$('.cite,.fn,.flag,nav,figure,del.sg', box).forEach(x => x.remove());
+  const s = lensScan(LENS_BLOCKS(box), false); revCache.set(d.id, { key, s }); return s;
+}
+function deskRevision() {
+  syncEditor();
+  const docs = binderOrder().filter(d => (d.role || 'body') === 'body' || docWords(d) > 150);
+  if (!deskSel || !docs.some(d => d.id === deskSel)) deskSel = (docs.find(d => d.id === curDocId) || docs[0] || {}).id;
+  const per = (n, w) => w ? (n / w * 1000).toFixed(1) : '0';
+  const rows = docs.map(d => ({ d, s: revStats(d), done: Object.keys(d.revision || {}).filter(k => REV_CHECKS.some(c => c[0] === k)).length }));
+  const flag = (v, hi) => v >= hi ? ' class="rv-hi"' : '';
+  const sel = rows.find(r => r.d.id === deskSel);
+  $('#deskTools').innerHTML = `<button data-j="${DJ(() => { closeDesk(); openDoc(deskSel); setTimeout(() => toggleLens(true), 200); })}" ${sel ? '' : 'disabled'}>Open with the lens</button><button data-j="${DJ(() => {
+    const q = v => `"${String(v).replace(/"/g, '""')}"`;
+    download(fileSafe(P.title) + ' - revision.csv', '﻿' + [['Document', 'Words', 'Words a sentence', 'Variety', 'Long sentences', 'Passive per 1,000', 'Hedges per 1,000', 'Clichés', 'Adverbs per 1,000', 'Buried verbs', 'Grade level', 'Checklist'].map(q).join(','), ...rows.map(({ d, s, done }) => [d.title || 'Untitled', s.words, s.mean.toFixed(1), s.sd.toFixed(1), s.N.long, per(s.N.passive, s.words), per(s.N.hedge, s.words), s.N.cliche, per(s.N.adverb, s.words), s.N.nominal, s.grade.toFixed(1), `${done}/${REV_CHECKS.length}`].map(q).join(','))].join('\r\n'), 'text/csv');
+  })}">CSV</button>`;
+  const table = rows.length ? `<table class="cl-table rev-table"><thead><tr><th scope="col">Document</th><th scope="col">Words</th><th scope="col" title="Average words a sentence, and how much they vary">Sentences</th><th scope="col">Long</th><th scope="col" title="Per 1,000 words">Passive</th><th scope="col" title="Per 1,000 words">Hedges</th><th scope="col">Clichés</th><th scope="col" title="Per 1,000 words">Adverbs</th><th scope="col" title="“The implementation of…”">Buried verbs</th><th scope="col" title="Flesch–Kincaid">Grade</th><th scope="col">Checklist</th></tr></thead><tbody>${rows.map(({ d, s, done }) => `<tr class="${d.id === deskSel ? 'on' : ''}" data-j="${DJ(() => { deskSel = d.id; renderDesk(); })}"><th scope="row">${esc(d.title || 'Untitled')}</th><td>${s.words.toLocaleString()}</td><td${flag(s.sd < 4 && s.sents > 8 ? 9 : 0, 9)}>${s.mean.toFixed(0)} <span class="muted">± ${s.sd.toFixed(0)}</span></td><td${flag(s.sents ? s.N.long / s.sents : 0, 0.15)}>${s.N.long}</td><td${flag(+per(s.N.passive, s.words), 8)}>${per(s.N.passive, s.words)}</td><td${flag(+per(s.N.hedge, s.words), 10)}>${per(s.N.hedge, s.words)}</td><td${flag(s.N.cliche, 3)}>${s.N.cliche}</td><td${flag(+per(s.N.adverb, s.words), 12)}>${per(s.N.adverb, s.words)}</td><td${flag(s.N.nominal, 5)}>${s.N.nominal}</td><td>${s.grade.toFixed(1)}</td><td><span class="rev-bar"><i style="width:${Math.round(done / REV_CHECKS.length * 100)}%"></i></span> ${done}/${REV_CHECKS.length}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No documents to revise yet.</p>';
+  const d = sel && sel.d, R = (d && d.revision) || {};
+  const list = d ? `<section class="rev-check"><h3>Revision checklist: ${esc(d.title || 'Untitled')}</h3><ul>${REV_CHECKS.map(([k, t]) => `<li><label><input type="checkbox" data-revk="${k}" ${R[k] ? 'checked' : ''}> ${esc(t)}${R[k] ? ` <span class="muted small">${esc(new Date(R[k] + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' }))}</span>` : ''}</label></li>`).join('')}</ul>${sel.s.pets.length ? `<p class="small muted">Words this chapter leans on: ${sel.s.pets.map(esc).join(', ')}.</p>` : ''}</section>` : '';
+  $('#deskBody').innerHTML = `<div class="desk-main rev-main"><p class="small muted" style="margin:0 0 10px">Each chapter’s writing at a glance. A shaded number is worth a look, not a rule. Choose a row for its checklist; open it with the lens to see each finding in the text.</p>${table}${list}</div>`;
+  $$('#deskBody [data-revk]').forEach(c => c.addEventListener('change', () => { d.revision = d.revision || {}; if (c.checked) d.revision[c.dataset.revk] = todayKey(); else delete d.revision[c.dataset.revk]; markDirty(); renderDesk(); }));
+}
+COMMANDS.push(['Revision: every chapter’s sentences, passive voice, clichés and checklist', () => openDesk('revision')]);
+
+/* ---------- 2.8: a book for print ----------
+   A print-ready PDF for KDP, IngramSpark or a printer: trim size, mirrored margins with a gutter, chapters that open on
+   a right-hand page, running heads (the book's title on the left, the chapter's on the right), page numbers in roman for
+   the front matter, no stranded lines, and the front matter (half title, title page, copyright page, contents) made for you. */
+const TRIMS = [
+  ['5x8', '5 × 8 in', 5, 8], ['5.25x8', '5.25 × 8 in', 5.25, 8], ['5.5x8.5', '5.5 × 8.5 in (digest)', 5.5, 8.5], ['6x9', '6 × 9 in (US trade)', 6, 9],
+  ['6.14x9.21', '6.14 × 9.21 in (royal)', 6.14, 9.21], ['7x10', '7 × 10 in', 7, 10], ['8.5x11', '8.5 × 11 in', 8.5, 11],
+  ['a5', 'A5 (148 × 210 mm)', 5.83, 8.27], ['demy', 'Demy (138 × 216 mm)', 5.43, 8.5], ['royal', 'Royal (156 × 234 mm)', 6.14, 9.21],
+];
+function bookOpts() {
+  const B = P.book = Object.assign({ trim: '6x9', font: 'book', size: '11', lead: '1.4', inside: '0.75', outside: '0.5', top: '0.7', bottom: '0.7', bleed: false, recto: true, heads: true, half: true, titlepage: true, copyright: true, contents: true,
+    title: P.title || '', subtitle: '', author: '', publisher: '', year: String(new Date().getFullYear()), isbn: '', edition: '', notice: '' }, P.book || {});
+  if (!B.author) B.author = (P.docs.find(d => d.meta && d.meta.author) || { meta: {} }).meta.author || PREFS.myName || '';
+  return B;
+}
+const BK_FIELDS = ['trim', 'font', 'size', 'lead', 'inside', 'outside', 'top', 'bottom', 'title', 'subtitle', 'author', 'publisher', 'year', 'isbn', 'edition', 'notice'];
+const BK_CHECKS = ['bleed', 'recto', 'heads', 'half', 'titlepage', 'copyright', 'contents'];
+function copyrightText(B) {
+  return [`Copyright © ${B.year || new Date().getFullYear()} ${B.author || 'the author'}`, 'All rights reserved. No part of this book may be reproduced in any form without written permission from the publisher, except for brief quotations in reviews and scholarly works.', B.publisher ? `Published by ${B.publisher}` : '', B.isbn ? `ISBN ${B.isbn}` : '', B.edition || '', B.notice || ''].filter(Boolean);
+}
+function openBook() {
+  syncEditor(); const B = bookOpts();
+  $('#bkTrim').innerHTML = TRIMS.map(([k, l]) => `<option value="${k}">${esc(l)}</option>`).join('');
+  BK_FIELDS.forEach(k => { const el = $('#bk' + k[0].toUpperCase() + k.slice(1)); if (el) el.value = B[k] || ''; });
+  BK_CHECKS.forEach(k => { const el = $('#bk' + k[0].toUpperCase() + k.slice(1)); if (el) el.checked = !!B[k]; });
+  bookSummary(); $('#bkDlg').showModal();
+}
+function bookRead() { const B = bookOpts(); BK_FIELDS.forEach(k => { const el = $('#bk' + k[0].toUpperCase() + k.slice(1)); if (el) B[k] = el.value.trim(); }); BK_CHECKS.forEach(k => { const el = $('#bk' + k[0].toUpperCase() + k.slice(1)); if (el) B[k] = el.checked; }); return B; }
+function bookDocs() { const rank = d => d.role === 'front' ? 0 : d.role === 'back' ? 2 : 1; return binderOrder().map((d, i) => [d, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(x => x[0]).filter(d => docWords(d) || /<(img|figure|table)/.test(d.html)); }
+function bookSummary() {
+  const B = bookRead(), docs = bookDocs(), words = docs.reduce((a, d) => a + docWords(d), 0), t = TRIMS.find(x => x[0] === B.trim) || TRIMS[3];
+  const wpp = Math.round(((t[2] - (+B.inside || 0.75) - (+B.outside || 0.5)) * (t[3] - (+B.top || 0.7) - (+B.bottom || 0.7)) * 72 * 72) / ((+B.size || 11) * (+B.size || 11) * (+B.lead || 1.4)) * 0.42);
+  const pages = Math.max(1, Math.round(words / Math.max(wpp, 50)) + docs.length + 6);
+  const nf = docs.filter(d => d.role === 'front').length, nb = docs.filter(d => (d.role || 'body') === 'body').length, nk = docs.filter(d => d.role === 'back').length;
+  $('#bkSum').innerHTML = `${nb} ${nb === 1 ? 'chapter' : 'chapters'}${nf ? `, ${nf} front matter` : ''}${nk ? `, ${nk} back matter` : ''} · about ${words.toLocaleString()} words · roughly ${pages} pages at this size. ${pages > 150 ? `KDP asks for an inside margin of at least ${pages > 700 ? '0.875' : pages > 500 ? '0.75' : pages > 300 ? '0.625' : '0.5'} in at this length.` : ''}`;
+}
+$('#bkDlg').addEventListener('input', bookSummary);
+$('#bkCancel').addEventListener('click', () => { bookRead(); markDirty(); $('#bkDlg').close(); });
+$('#bkGo').addEventListener('click', () => { const B = bookRead(); markDirty(); $('#bkDlg').close(); printBook(B); });
+function bookHTML(B) {
+  const docs = bookDocs(); if (!docs.length) return null;
+  const t = TRIMS.find(x => x[0] === B.trim) || TRIMS[3], bl = B.bleed ? 0.125 : 0;
+  const first = docs.find(d => (d.role || 'body') === 'body') || docs[0];
+  // one manuscript, so citations, notes, cross-references and the bibliography run through the whole book
+  let html = '', chN = 0; const titles = [];
+  docs.forEach((d, i) => {
+    const role = d.role || 'body', cls = role === 'front' ? 'bk-fm' : role === 'back' ? 'bk-bm' : 'bk-ch', isFirstBody = d === first;
+    const raw = stripCp(d.html), h1 = /^\s*<h1[^>]*>([\s\S]*?)<\/h1>/.exec(raw), tt = h1 ? h1[1].replace(/<[^>]+>/g, '').trim() || d.title : d.title || 'Untitled';
+    titles.push(tt);
+    if (role === 'body') chN++;
+    html += `<div class="bk-sec ${cls} bk-s${i}${isFirstBody ? ' bk-first' : ''}" data-doc="${esc(d.id)}">${role === 'body' && B.chapterNums !== false ? `<p class="bk-chn">Chapter ${chN}</p>` : ''}<h1 class="chapter-title bk-h">${esc(tt)}</h1>${h1 ? raw.slice(h1[0].length) : raw}</div>`;
+  });
+  const ms = { id: '__book', title: B.title || P.title, html, style: first.style, meta: Object.assign({}, first.meta, { showTitleBlock: false }), layout: Object.assign({}, first.layout, { pdfNotes: 'foot' }), target: 0, lang: first.lang || '' };
+  const x = buildExport(ms, 'paged'), cs = docClassAndStyle(ms);
+  const bib = refsHTML(Object.assign({}, x.out, { notes: [] }), true);
+  const toc = B.contents ? `<nav class="toc bk-toc"><h1 class="toc-title">Contents</h1><ol>${docs.map((d, i) => d.role === 'front' && i < docs.length && /dedication|epigraph/i.test(d.template || d.title) ? '' : `<li class="${d.role === 'front' ? 'toc-fm' : ''}"><a href="#bk-h${i}">${esc(titles[i])}</a></li>`).join('')}${bib ? '<li><a href="#bk-bib">Bibliography</a></li>' : ''}</ol></nav>` : '';
+  const half = B.half ? `<section class="bk-half"><p>${esc(B.title)}</p></section>` : '';
+  const title = B.titlepage ? `<section class="bk-titlep"><h1 class="bk-t">${esc(B.title)}</h1>${B.subtitle ? `<p class="bk-st">${esc(B.subtitle)}</p>` : ''}<p class="bk-a">${esc(B.author)}</p>${B.publisher ? `<p class="bk-pub">${esc(B.publisher)}</p>` : ''}</section>` : '';
+  const copy = B.copyright ? `<section class="bk-copy">${copyrightText(B).map(l => `<p>${esc(l)}</p>`).join('')}</section>` : '';
+  // ids for the contents, and the place where page numbers start again at 1
+  const tmp = document.createElement('div'); tmp.innerHTML = x.body;
+  $$('.bk-sec > h1.bk-h', tmp).forEach((h, i) => { h.id = 'bk-h' + i; });
+  const W = t[2] + bl * 2, H = t[3] + bl * 2;
+  const font = { book: '"Source Serif 4","Source Serif Pro",Georgia,serif', times: '"Times New Roman",Times,serif', sans: '"Atkinson Hyperlegible","Helvetica Neue",Arial,sans-serif' }[B.font] || 'Georgia,serif';
+  const box = (pos, content) => `@${pos}{content:${content};font:9pt ${font};color:#222}`;
+  const nCh = $$('.bk-sec', tmp).length;
+  const perCh = [...Array(nCh)].map((_, i) => `.bk-s${i}{page:s${i}}@page s${i}:first{@top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-right{content:none}${box('bottom-center', 'var(--folio)')}}`).join('\n');
+  const fmPages = '', kinds = $$('.bk-sec', tmp).map(x => x.classList.contains('bk-fm') ? 'f' : 'b').join('');
+  const css = `@page{size:${W}in ${H}in;margin:${+B.top + bl}in ${+B.outside + bl}in ${+B.bottom + bl}in ${+B.inside + bl}in;${B.bleed ? 'bleed:0.125in;marks:crop;' : ''}@footnote{border-top:.5pt solid #999;padding-top:5pt;margin-top:8pt}}
+@page:left{margin-left:${+B.outside + bl}in;margin-right:${+B.inside + bl}in;${box('bottom-left', 'var(--folio)')}${B.heads ? box('top-left', 'string(booktitle)') : ''}}
+@page:right{margin-left:${+B.inside + bl}in;margin-right:${+B.outside + bl}in;${box('bottom-right', 'var(--folio)')}${B.heads ? box('top-right', 'string(chaptitle)') : ''}}
+@page:blank{@top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-right{content:none}@bottom-center{content:none}}
+@page bare{@top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-right{content:none}}
+${perCh}
+${fmPages}
+html,body{margin:0;background:#fff;color:#000}
+article.docbody{--doc-font:${font}!important;--doc-size:${B.size}pt!important;--doc-lh:${B.lead}!important;max-width:none;padding:0;hyphens:auto;text-align:justify}
+.pagedjs_footnote_area{font-family:${font}}
+.docbody p{widows:2;orphans:2;margin:0}.docbody p + p{text-indent:1.5em}
+.docbody h1,.docbody h2,.docbody h3{break-after:avoid;text-align:left;hyphens:manual}
+.docbody figure,.docbody table,.docbody blockquote{break-inside:avoid}
+.docbody .fn-note{float:footnote;font-size:${Math.max(7.5, B.size - 2)}pt!important;line-height:1.3;text-indent:0;text-align:left;margin:0 0 2pt}
+.docbody .fn-note::footnote-marker{font-size:inherit}.docbody ::footnote-call{font-size:70%;vertical-align:super;line-height:0}
+.bk-booktitle{string-set:booktitle content(text);display:block;height:0;overflow:hidden;margin:0;font-size:0}
+.bk-half,.bk-titlep,.bk-copy{page:bare;break-after:page}
+.bk-half p{margin-top:2.2in;text-align:center;font-size:1.4em;letter-spacing:.04em}
+.bk-titlep{text-align:center;break-before:right}.bk-titlep .bk-t{margin-top:1.6in;font-size:2.1em;line-height:1.2;text-align:center}.bk-titlep .bk-st{font-size:1.15em;font-style:italic;text-align:center;text-indent:0}.bk-titlep .bk-a{margin-top:1in;font-size:1.2em;text-align:center;text-indent:0}.bk-titlep .bk-pub{margin-top:2in;font-size:.9em;letter-spacing:.06em;text-align:center;text-indent:0}
+.bk-copy{display:flex;flex-direction:column;justify-content:flex-end;height:${(t[3] - B.top - B.bottom - 0.3).toFixed(2)}in}.bk-copy p{font-size:8.5pt;line-height:1.45;margin:0 0 6pt;text-indent:0;text-align:left}
+.bk-toc{page:bare;break-before:right}.bk-toc .toc-title{text-align:center;font-size:1.4em;margin:1in 0 .4in}.bk-toc ol{list-style:none;padding:0}.bk-toc li{display:flex;margin:0 0 6pt;text-indent:0}.bk-toc li a{flex:1;color:inherit;text-decoration:none}.bk-toc li a::after{content:attr(data-folio);float:right}
+.bk-sec{${B.recto ? 'break-before:right' : 'break-before:page'}}
+.bk-chn{text-indent:0;margin:1.1in 0 0;font-size:.8em;letter-spacing:.14em;text-transform:uppercase;text-align:left}.bk-sec > .bk-chn + h1.bk-h{margin-top:.15in}
+.bk-sec > h1.bk-h{string-set:chaptitle content(text);margin:1.2in 0 .5in;font-size:1.6em;text-align:left;font-weight:600}
+.docbody .refs,.docbody .end-sec{break-before:right}
+.docbody mark{background:#fde68a}
+/* Paged.js justifies the last line of anything split across pages; only paragraphs should be */
+article.docbody[data-split-to],.docbody :is(div,section,nav,ol,ul,blockquote)[data-split-to]{text-align-last:auto}`;
+  return `<!DOCTYPE html><html lang="${esc(docLang(ms))}"><head><meta charset="utf-8"><title>${esc(fileSafe(B.title || P.title))}</title><style>${$('#docCss').textContent}\n${css}</style>
+<script>${IX_PAGES_JS}${BOOK_FOLIO_JS}var BK_KINDS='${kinds}';window.PagedConfig={auto:true,after:function(){try{bkFolios()}catch(e){}try{cpIndexPages()}catch(e){}parent.postMessage({cpPaged:1},'*')}};<\/script><script>${document.getElementById('lib-paged').textContent}<\/script></head>
+<body><article class="${cs.cls}" style="${cs.style}">${(half + title + copy + toc + tmp.innerHTML).replace(/^(<(?:section|nav|div)[^>]*>)/, `$1<span class="bk-booktitle">${esc(B.title)}</span>`)}${bib ? `<div id="bk-bib" class="bk-bib">${bib}</div>` : ''}${x.index || ''}</article></body></html>`;
+}
+/* page numbers in the book: roman through the front matter, then 1 from the first chapter, set once the pages are laid out */
+const BOOK_FOLIO_JS = `function bkRoman(n){var r='',v=[[1000,'m'],[900,'cm'],[500,'d'],[400,'cd'],[100,'c'],[90,'xc'],[50,'l'],[40,'xl'],[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']];for(var i=0;i<v.length;i++)while(n>=v[i][0]){r+=v[i][1];n-=v[i][0];}return r;}
+function bkFolios(){var pages=document.querySelectorAll('.pagedjs_page'),body=false,f=0,b=0;for(var i=0;i<pages.length;i++){var p=pages[i],m=/(?:^| )pagedjs_s(\\d+)_page(?: |$)/.exec(p.className);if(m&&BK_KINDS.charAt(+m[1])==='b')body=true;var lab=body?String(++b):bkRoman(++f);p.style.setProperty('--folio','"'+lab+'"');p.setAttribute('data-folio',lab);}
+document.querySelectorAll('.bk-toc a[href^="#"]').forEach(function(a){var t=document.getElementById(a.getAttribute('href').slice(1));var pg=t&&t.closest('.pagedjs_page');if(pg)a.setAttribute('data-folio',pg.getAttribute('data-folio'));});}`;
+function printBook(B) {
+  if (!bookDocs().length) { toast('There’s nothing to print yet.'); return; }
+  const html = bookHTML(B); if (!html) return;
+  $$('iframe.paged-print').forEach(f => f.remove());
+  const f = document.createElement('iframe'); f.className = 'paged-print';
+  f.style.cssText = 'position:fixed;left:-10000px;top:0;width:9in;height:11in;border:0';
+  toast('Laying out the book: trim size, mirrored margins, chapters on right-hand pages…');
+  const done = e => {
+    if (!e.data || !e.data.cpPaged || e.source !== f.contentWindow) return;
+    window.removeEventListener('message', done);
+    try { f.contentWindow.focus(); f.contentWindow.print(); } catch (err) { toast('Printing isn’t available here. Open Anabasis directly in your browser.'); }
+    setTimeout(() => f.remove(), 120000);
+  };
+  window.addEventListener('message', done);
+  f.srcdoc = html; document.body.appendChild(f);
+  return html;
+}
+COMMANDS.push(['Book for print: PDF at a trim size, with front matter', () => openBook()]);
+
+/* ---------- 2.8: submission packages ----------
+   Everything an outlet asks for, in one .zip: the piece (anonymized for blind review if you like), a separate title page
+   with the word count excluding notes and references, and your cover letter, synopsis or proposal. It goes on the
+   Submissions list too. */
+const SUB_KINDS = {
+  journal: { label: 'Journal article (blind review)', anon: true, title: true, letter: 'cover', extra: '' },
+  magazine: { label: 'Magazine piece or op-ed', anon: false, title: false, letter: 'pitch', extra: '' },
+  proposal: { label: 'Book proposal', anon: false, title: true, letter: 'query', extra: 'proposal' },
+  query: { label: 'Query to an agent or editor', anon: false, title: false, letter: 'query', extra: 'synopsis' },
+};
+const SUB_TPLS = {
+  cover: ['Cover letter', `<p>[Date]</p><p>Dear [Editor’s name],</p><p>I am pleased to submit “[Title],” an original article of [word count] words, for consideration in <i>[Journal]</i>.</p><p>[Two or three sentences: the question, the argument, and what it adds to the conversation the journal hosts.]</p><p>[Why this journal: the debate or recent articles it speaks to.]</p><p>The manuscript is not under consideration elsewhere and has not been published before. [Any conflicts of interest, funding or permissions.]</p><p>Thank you for your consideration.</p><p>Sincerely,<br>[Name]<br>[Affiliation, email]</p>`],
+  pitch: ['Pitch', `<p>Dear [Editor’s name],</p><p>[The hook: the news, anniversary or overlooked fact that makes this timely, in two sentences.]</p><p>[What the piece argues and how: the reporting, sources or expertise behind it. About [word count] words.]</p><p>[Why you: one or two lines on your work, with a link to something you’ve published.]</p><p>[When you can file.]</p><p>Thank you,<br>[Name]</p>`],
+  query: ['Query letter', `<p>Dear [Agent’s name],</p><p>[The hook: one paragraph on what the book is about and why it matters now.]</p><p>[Title] is a [genre] of [word count] words. [What it covers, the argument it makes, and the readers it’s for. Name two or three comparable titles from the last five years.]</p><p>[About you: why you are the person to write it, and the platform you bring.]</p><p>[Why this agent: a book they represent, or something they’ve said they want.]</p><p>Thank you for your time. [The proposal and sample chapters are ready to send.]</p><p>Best,<br>[Name]<br>[Email, website]</p>`],
+  synopsis: ['Synopsis', `<h1>[Title]: Synopsis</h1><p>[One to two pages, in the present tense. The book’s question, its argument, and how it unfolds from beginning to end, including the conclusion.]</p>`],
+  proposal: ['Book proposal', `<h1>[Title]</h1><p><i>A book proposal by [Name]</i></p><h2>Overview</h2><p>[What the book is, its argument, and why now. Two or three pages that read like the book.]</p><h2>About the author</h2><p>[Credentials, platform, previous publications.]</p><h2>The market</h2><p>[Who will read it, and how to reach them.]</p><h2>Comparable titles</h2><p>[Four to six recent books, each with a sentence on how this one differs.]</p><h2>Marketing and promotion</h2><p>[What you can do: newsletter, podcast, speaking, media.]</p><h2>Chapter outline</h2><p>[A paragraph for each chapter.]</p><h2>Specifications</h2><p>[Expected length in words, illustrations, delivery date.]</p><h2>Sample chapters</h2><p>[Attach one to three chapters.]</p>`],
+};
+function openSubPackage(docId) {
+  syncEditor(); const d = P.docs.find(x => x.id === (docId || curDocId)) || curDoc(); if (!d) return;
+  const m = PREFS.msf || {}, k = PREFS.subKind || 'journal';
+  $('#spkDoc').innerHTML = binderOrder().map(x => `<option value="${x.id}">${esc(x.title || 'Untitled')}</option>`).join(''); $('#spkDoc').value = d.id;
+  $('#spkKind').innerHTML = Object.entries(SUB_KINDS).map(([v, K]) => `<option value="${v}">${esc(K.label)}</option>`).join(''); $('#spkKind').value = k;
+  $('#spkName').value = m.name || d.meta.author || PREFS.myName || ''; $('#spkAff').value = m.byline || ''; $('#spkContact').value = m.contact || '';
+  $('#spkOutlet').value = ''; $('#spkTrack').checked = true;
+  spkKindApply(true); spkUpdate(); $('#spkDlg').showModal(); $('#spkOutlet').focus();
+}
+function spkDocOptions(sel, want) {
+  const tpl = SUB_TPLS[want], match = tpl ? binderOrder().find(x => x.title === tpl[0] || (x.template === 'sub-' + want)) : null;
+  sel.innerHTML = `<option value="">None</option>${binderOrder().map(x => `<option value="${x.id}">${esc(x.title || 'Untitled')}</option>`).join('')}${tpl ? `<option value="new:${want}">New ${esc(tpl[0].toLowerCase())} from a template…</option>` : ''}`;
+  sel.value = match ? match.id : '';
+}
+function spkKindApply(first) {
+  const K = SUB_KINDS[$('#spkKind').value] || SUB_KINDS.journal;
+  $('#spkAnon').checked = K.anon; $('#spkTitle').checked = K.title;
+  spkDocOptions($('#spkLetter'), K.letter); spkDocOptions($('#spkExtra'), K.extra || 'synopsis');
+  $('#spkExtraRow').classList.toggle('hidden', !K.extra);
+  $('#spkLetterLab').textContent = SUB_TPLS[K.letter][0]; if (K.extra) $('#spkExtraLab').textContent = SUB_TPLS[K.extra][0];
+}
+function spkUpdate() {
+  const d = P.docs.find(x => x.id === $('#spkDoc').value); if (!d) return;
+  const n = docWords(d), names = [$('#spkName').value.trim()].filter(Boolean), hits = names.reduce((a, nm) => a + (docPlain(d.html).split(nm).length - 1), 0);
+  const files = [`the piece${$('#spkAnon').checked ? ', anonymized,' : ''} as Word`, $('#spkTitle').checked ? 'a separate title page' : '', $('#spkLetter').value ? 'the letter' : '', !$('#spkExtraRow').classList.contains('hidden') && $('#spkExtra').value ? 'the ' + $('#spkExtraLab').textContent.toLowerCase() : ''].filter(Boolean);
+  $('#spkSum').innerHTML = `<b>${n.toLocaleString()} words</b>, not counting notes and references. The package holds ${files.join(', ').replace(/, ([^,]*)$/, ' and $1')}.${$('#spkAnon').checked && hits ? ` Your name appears ${hits} ${hits === 1 ? 'time' : 'times'} in the text; it will read “[Author]”.` : ''}${$('#spkAnon').checked ? ' Margin comments, suggestions, your name in the file’s properties and the title block are left out.' : ''}`;
+}
+['#spkDoc', '#spkAnon', '#spkTitle', '#spkLetter', '#spkExtra', '#spkName'].forEach(s => $(s).addEventListener('change', spkUpdate));
+$('#spkName').addEventListener('input', spkUpdate);
+$('#spkKind').addEventListener('change', () => { spkKindApply(); spkUpdate(); });
+['#spkLetter', '#spkExtra'].forEach(s => $(s).addEventListener('change', e => {
+  const v = e.target.value; if (!v.startsWith('new:')) return;
+  const k = v.slice(4), T = SUB_TPLS[k], d = newDoc(T[0], T[1]); d.template = 'sub-' + k; d.role = 'back'; addDoc(d); d.role = 'back'; renderDocList();
+  spkDocOptions(e.target, k); e.target.value = d.id; spkUpdate();
+  toast(`A ${T[0].toLowerCase()} is in your documents. Fill in the brackets before you send.`);
+}));
+$('#spkCancel').addEventListener('click', () => $('#spkDlg').close());
+$('#subPkg').addEventListener('click', () => { $('#subDlg').close(); openSubPackage(); });
+function anonDoc(d, name) {
+  const t = document.createElement('div'); t.innerHTML = d.id === curDocId ? editor.innerHTML : d.html;
+  $$('span.cmt', t).forEach(e => e.replaceWith(...e.childNodes)); $$('.cmt-pt', t).forEach(e => e.remove());
+  $$('del.sg', t).forEach(e => e.remove()); $$('ins.sg', t).forEach(e => e.replaceWith(...e.childNodes));
+  if (name) { const re = new RegExp(escRe(name), 'g'), w = document.createTreeWalker(t, NodeFilter.SHOW_TEXT); let n; while ((n = w.nextNode())) if (re.test(n.data)) { re.lastIndex = 0; n.data = n.data.replace(re, '[Author]'); } }
+  return Object.assign({}, d, { id: d.id + '-anon', html: t.innerHTML, comments: [], meta: Object.assign({}, d.meta, { author: '', showTitleBlock: false }), layout: Object.assign({}, d.layout, { spacing: '2', pageNums: true, marginalia: 'none' }) });
+}
+$('#spkGo').addEventListener('click', async () => {
+  const d = P.docs.find(x => x.id === $('#spkDoc').value); if (!d) return;
+  const name = $('#spkName').value.trim(), aff = $('#spkAff').value.trim(), contact = $('#spkContact').value.trim(), outlet = $('#spkOutlet').value.trim(), K = SUB_KINDS[$('#spkKind').value];
+  PREFS.msf = Object.assign({}, PREFS.msf || {}, { name, byline: aff, contact }); PREFS.subKind = $('#spkKind').value; savePrefs();
+  $('#spkDlg').close(); toast('Building the package…');
+  const files = [], safe = s => fileSafe(s).slice(0, 60), words = docWords(d);
+  try {
+    const piece = $('#spkAnon').checked ? anonDoc(d, name) : d;
+    files.push({ name: `${safe(d.title || 'Untitled')}${$('#spkAnon').checked ? ' - anonymized' : ''}.docx`, data: new Uint8Array(await (await exportDocx(piece, { returnBlob: true })).arrayBuffer()) });
+    if ($('#spkTitle').checked) {
+      const a = d.meta && d.meta.abstract && (d.meta.abstract.text || '').trim(), kw = d.meta && d.meta.abstract && (d.meta.abstract.keywords || []);
+      const tp = Object.assign(newDoc('Title page'), { id: 'title-page', style: d.style, layout: Object.assign({}, d.layout, { spacing: '1.5', pageNums: false }),
+        html: `<h1>${esc(d.title || 'Untitled')}</h1>${d.meta.subtitle ? `<p><i>${esc(d.meta.subtitle)}</i></p>` : ''}<p>${esc(name)}${aff ? `<br>${esc(aff)}` : ''}</p>${contact ? `<p>${esc(contact).replace(/\n/g, '<br>')}</p>` : ''}<p>Word count: ${words.toLocaleString()} (not counting notes and references)</p>${a ? `<h2>Abstract</h2><p>${esc(a)}</p>` : ''}${kw && kw.length ? `<p><i>Keywords:</i> ${esc(kw.join('; '))}</p>` : ''}` });
+      files.push({ name: 'Title page.docx', data: new Uint8Array(await (await exportDocx(tp, { returnBlob: true })).arrayBuffer()) });
+    }
+    for (const sel of ['#spkLetter', ...($('#spkExtraRow').classList.contains('hidden') ? [] : ['#spkExtra'])]) {
+      const x = P.docs.find(y => y.id === $(sel).value); if (!x) continue;
+      const html = (x.id === curDocId ? editor.innerHTML : x.html).replace(/\[word count\]/gi, words.toLocaleString()).replace(/\[Title\]/g, esc(d.title || '')).replace(/\[Name\]/g, esc(name)).replace(/\[Journal\]|\[Outlet\]/g, esc(outlet));
+      files.push({ name: `${safe(x.title || 'Letter')}.docx`, data: new Uint8Array(await (await exportDocx(Object.assign({}, x, { html }), { returnBlob: true })).arrayBuffer()) });
+    }
+    const left = files.map(f => f.name).join('\n');
+    files.push({ name: 'Read me.txt', data: `Submission package: ${d.title}\n${outlet ? 'For: ' + outlet + '\n' : ''}${K.label}\nWords: ${words.toLocaleString()} (not counting notes and references)\nMade ${new Date().toLocaleDateString()} with Anabasis.\n\nIn this package:\n${left}\n\nBefore you send: fill in anything in [brackets], and check the outlet's guidelines for length, citation style and file format.\n` });
+    download(`${safe(d.title || 'Untitled')} - submission${outlet ? ' to ' + safe(outlet) : ''}.zip`, zipStore(files), 'application/zip');
+    if ($('#spkTrack').checked) { P.subs = P.subs || []; P.subs.unshift({ id: uid('sub'), docId: d.id, outlet: outlet || '(outlet)', editor: '', kind: K.label.startsWith('Query') || K.label.startsWith('Magazine') ? 'pitch' : 'submission', sent: todayKey(), status: 'planned', followUp: '', fee: '', notes: 'Package built ' + todayKey(), closed: '', created: nowISO(), modified: nowISO() }); markDirty(); }
+    toast(`Package saved: ${files.length - 1} ${files.length - 1 === 1 ? 'file' : 'files'} and a read-me.${$('#spkTrack').checked ? ' It’s on your Submissions list as planned.' : ''}`);
+  } catch (e) { console.error(e); toast('Couldn’t build the package: ' + e.message); }
+});
+COMMANDS.push(['Submission package: the piece, a title page and your letter, in one .zip', () => openSubPackage()]);
+
+/* ---------- 2.8: a library file that follows Zotero ----------
+   Zotero doesn't let web pages talk to it, so Anabasis follows a file instead: a Better BibTeX auto-export (CSL JSON or
+   BibTeX) that Zotero rewrites whenever the library changes. Chrome and Edge remember the file and re-read it when you
+   come back to the window; other browsers re-read it when you choose it again. Nothing goes online. */
+const ZLINK_KEY = id => 'zlink:' + id;
+const zStore = { get: id => idbReq('readonly', st => st.get(ZLINK_KEY(id))), set: (id, v) => idbReq('readwrite', st => st.put(v, ZLINK_KEY(id))), del: id => idbReq('readwrite', st => st.delete(ZLINK_KEY(id))) };
+var zHandle = null, zBusy = false;
+const zKeyOf = c => c._key || c.id || c['citation-key'] || (c.DOI ? 'doi:' + String(c.DOI).toLowerCase() : '') || ('t:' + String(c.title || '').toLowerCase().slice(0, 80) + '|' + yearOf(c.issued));
+function zParse(text, name) {
+  text = String(text || '').replace(/^﻿/, '');
+  if (/^\s*[\[{]/.test(text)) { let j = JSON.parse(text); if (!Array.isArray(j)) j = j.items || [j]; return j.filter(x => x && typeof x === 'object').map(it => { const k = it.id || it['citation-key']; const o = cleanCslImport(it); if (k) Object.defineProperty(o, '_key', { value: String(k), enumerable: false }); return o; }); }
+  if (/^\s*TY  - /m.test(text)) return parseRIS(text);
+  return parseBibTeX(text);
+}
+/* bring the project's sources in line with the file: new items are added, changed ones updated; your own notes, ratings
+   and annotations on a source stay. Items gone from the file stay in the project (they may be cited). */
+function zMerge(items) {
+  P.zotero = P.zotero || {};
+  const byKey = new Map(P.sources.filter(s => s.zkey).map(s => [s.zkey, s]));
+  const byDoi = new Map(P.sources.filter(s => s.csl && s.csl.DOI).map(s => [String(s.csl.DOI).toLowerCase(), s]));
+  const tk = c => String(c.title || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 80) + '|' + yearOf(c.issued);
+  const byTitle = new Map(P.sources.filter(s => !s.zkey && s.csl && s.csl.title).map(s => [tk(s.csl), s]));
+  let added = 0, changed = 0;
+  items.forEach(o => {
+    const key = zKeyOf(o); let s = byKey.get(key) || (o.DOI && byDoi.get(String(o.DOI).toLowerCase())) || byTitle.get(tk(o));
+    if (!s) { P.sources.push({ id: uid('s'), csl: o, zkey: key, created: nowISO(), modified: nowISO() }); added++; return; }
+    s.zkey = key;
+    const before = JSON.stringify(s.csl), keep = { annote: s.csl.annote, note: s.csl.note };
+    const next = Object.assign({}, o); if (keep.note && !next.note) next.note = keep.note;
+    if (JSON.stringify(next) !== before) { s.csl = next; s.modified = nowISO(); changed++; }
+  });
+  if (added || changed) { srcVersion++; renderSourceList(); renderRefs(true); markDirty(); }
+  return { added, changed, total: items.length };
+}
+async function zRead(file, quiet) {
+  if (zBusy) return; zBusy = true;
+  try {
+    const items = zParse(await file.text(), file.name);
+    if (!items.length) { toast('No references found in that file. Is it Better BibTeX’s auto-export (CSL JSON or BibTeX)?'); return; }
+    const r = zMerge(items);
+    P.zotero = Object.assign(P.zotero || {}, { file: file.name, read: nowISO(), modified: file.lastModified || 0, count: r.total }); markDirty();
+    if (!quiet || r.added || r.changed) toast(`Zotero library: ${r.total} ${r.total === 1 ? 'reference' : 'references'}${r.added ? `, ${r.added} new` : ''}${r.changed ? `, ${r.changed} updated` : ''}${!r.added && !r.changed ? ', all up to date' : ''}.`);
+    zRender();
+  } catch (e) { toast('Couldn’t read that file: ' + e.message); }
+  finally { zBusy = false; }
+}
+async function zLink() {
+  if (window.showOpenFilePicker) {
+    try {
+      const [h] = await window.showOpenFilePicker({ types: [{ description: 'Zotero library export', accept: { 'application/json': ['.json'], 'application/x-bibtex': ['.bib'], 'text/plain': ['.bib', '.json', '.ris'] } }], multiple: false });
+      zHandle = h; await zStore.set(P.id, h).catch(() => {}); await zRead(await h.getFile());
+    } catch (e) { if (e && e.name !== 'AbortError') toast('Couldn’t open that file.'); }
+  } else $('#zFile').click();
+}
+$('#zFile').addEventListener('change', async e => { const f = e.target.files[0]; e.target.value = ''; if (f) await zRead(f); });
+async function zCheck(quiet = true) {
+  if (!P || !P.zotero || !P.zotero.file) return;
+  if (!zHandle) zHandle = await zStore.get(P.id).catch(() => null);
+  if (!zHandle) { if (!quiet) $('#zFile').click(); return; }
+  try {
+    if (zHandle.queryPermission && (await zHandle.queryPermission({ mode: 'read' })) !== 'granted') { if (quiet) { zRender('Choose Update now to let this browser read the file again.'); return; } if ((await zHandle.requestPermission({ mode: 'read' })) !== 'granted') return; }
+    const f = await zHandle.getFile();
+    if (quiet && f.lastModified && f.lastModified === P.zotero.modified) return;
+    await zRead(f, quiet);
+  } catch (e) { zRender('The file has moved or can’t be read. Link it again.'); }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') zCheck(true); });
+addEventListener('focus', () => zCheck(true));
+function zRender(msg) {
+  const Z = P.zotero || {}, el = $('#zStatus'); if (!el) return;
+  const when = Z.read ? new Date(Z.read).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+  el.innerHTML = Z.file ? `Following <b>${esc(Z.file)}</b>: ${Z.count || 0} references, last read ${esc(when)}.${msg ? ` <span class="warn">${esc(msg)}</span>` : ''}` : 'Not linked yet.';
+  $('#zUpdate').disabled = $('#zUnlink').disabled = !Z.file;
+  $('#zLinked').textContent = P.sources.filter(s => s.zkey).length;
+}
+function openZotero() { zRender(); $('#zDlg').showModal(); }
+$('#zLinkBtn').addEventListener('click', zLink);
+$('#zUpdate').addEventListener('click', () => zCheck(false));
+$('#zUnlink').addEventListener('click', async () => { await zStore.del(P.id).catch(() => {}); zHandle = null; delete P.zotero; markDirty(); zRender(); toast('No longer following the Zotero file. Its sources stay in the project.'); });
+$('#zClose').addEventListener('click', () => $('#zDlg').close());
+COMMANDS.push(['Zotero: follow a library file Zotero keeps up to date', () => openZotero()]);
+
+$('#btnZotero').addEventListener('click', () => openZotero());
+setTimeout(() => zCheck(true), 1500);
 
 /* ================================================================
    Installable app. On the hosted copy (GitHub Pages), Anabasis registers a

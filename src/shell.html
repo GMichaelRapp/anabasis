@@ -371,11 +371,17 @@ body.bd-dragging,body.bd-dragging *{cursor:grabbing!important}
 ::highlight(cp-passive){background:color-mix(in srgb,#3b82f6 25%,transparent)}
 ::highlight(cp-hedge){background:color-mix(in srgb,#a855f7 25%,transparent)}
 ::highlight(cp-repeat){background:color-mix(in srgb,#ef4444 22%,transparent)}
+::highlight(cp-rhythm){background:color-mix(in srgb,#14b8a6 22%,transparent)}
+::highlight(cp-pet){background:color-mix(in srgb,#f97316 26%,transparent)}
+::highlight(cp-cliche){background:color-mix(in srgb,#ec4899 24%,transparent)}
+::highlight(cp-adverb){background:color-mix(in srgb,#22c55e 24%,transparent)}
+::highlight(cp-nominal){background:color-mix(in srgb,#a16207 24%,transparent)}
 .lensbar{display:flex;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
 .lchip{font-size:12px;padding:3px 9px;border-radius:999px}
 .lchip b{margin-left:3px}
 .lchip.l-long{background:color-mix(in srgb,#f59e0b 22%,var(--page))} .lchip.l-passive{background:color-mix(in srgb,#3b82f6 22%,var(--page))}
 .lchip.l-hedge{background:color-mix(in srgb,#a855f7 22%,var(--page))} .lchip.l-repeat{background:color-mix(in srgb,#ef4444 20%,var(--page))}
+.lchip.l-rhythm{background:color-mix(in srgb,#14b8a6 22%,var(--page))} .lchip.l-pet{background:color-mix(in srgb,#f97316 22%,var(--page))} .lchip.l-cliche{background:color-mix(in srgb,#ec4899 20%,var(--page))} .lchip.l-adverb{background:color-mix(in srgb,#22c55e 20%,var(--page))} .lchip.l-nominal{background:color-mix(in srgb,#a16207 20%,var(--page))}
 .lchip.off{background:var(--page);opacity:.55;text-decoration:line-through}
 .lensbar #lensClose{margin-left:auto}
 .diffbox{border:1px solid var(--line);border-radius:6px;padding:10px 12px;background:var(--page);max-height:45vh;overflow:auto;font-family:Georgia,serif;line-height:1.55;margin-top:6px}
@@ -557,7 +563,15 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 #editor figcaption[data-cp-n]::before{content:attr(data-cp-n) "\00a0";font-weight:600;font-style:normal;color:var(--page-ink)}
 #editor figcaption:empty::after,#editor figcaption:has(> br:only-child)::after{content:'Caption';color:#9ca3af;font-style:italic}
 #editor table td:focus-within,#editor table th:focus-within{outline:2px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:-2px}
-#editor nav.lof{border:1px dashed var(--line);border-radius:6px;padding:10px 14px;color:var(--muted);font-family:system-ui,sans-serif;font-size:13px;user-select:none}
+#editor nav.lof,#editor nav.toc,#editor nav.loe{border:1px dashed var(--line);border-radius:6px;padding:10px 14px;color:var(--muted);font-family:system-ui,sans-serif;font-size:13px;user-select:none;margin:0 0 1em}
+#editor nav .nav-h{margin:0 0 6px;font:600 14px/1.3 var(--display,Georgia,serif);color:var(--ink);text-indent:0}
+#editor nav .nav-empty{margin:0;font-style:italic;text-indent:0}
+#editor nav .nav-l{list-style:none;margin:0;padding:0}
+#editor nav .nav-l li{margin:0;text-indent:0;line-height:1.45}
+#editor nav .nav-l .nav-lv2{padding-left:1.2em}#editor nav .nav-l .nav-lv3{padding-left:2.4em;font-size:12.5px}
+#editor nav .nav-go{cursor:pointer;color:var(--ink)}#editor nav .nav-go:hover{text-decoration:underline}
+#editor nav .nav-go code{font-size:11.5px}
+#editor .nav-flash{outline:2px solid var(--sun);outline-offset:3px;border-radius:2px;transition:outline-color .8s}
 .page{position:relative}
 .tblbar{position:absolute;z-index:5;display:flex;gap:3px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:3px;box-shadow:var(--shadow);font-size:12px}
 .tblbar button{padding:3px 8px;font-size:12px}
@@ -2170,6 +2184,36 @@ input[type=time],input[type=email],input[type=tel],input[type=month],input[type=
 :root .help-top a:hover{border-color:var(--muted)}
 /* nothing to empty, nothing to show */
 #trashEmpty:disabled{visibility:hidden}
+.z-steps{margin:8px 0 10px;padding-left:1.3em;font-size:13.5px}.z-steps li{margin:3px 0}
+/* 2.8: revision */
+.rev-main{padding:16px 20px;max-width:1100px}
+.rev-table{table-layout:auto;width:100%}.rev-table thead th{text-align:right;white-space:nowrap}.rev-table thead th:first-child,.rev-table thead th:last-child{text-align:left}
+.rev-table th[scope=row]{font-weight:600;text-align:left;min-width:14em}.rev-table td{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.rev-table td:last-child{text-align:left}
+.rev-table tbody tr{cursor:pointer}.rev-table tbody tr.on{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+.rev-table td.rv-hi{background:color-mix(in srgb,var(--sun) 24%,transparent)}
+.rev-bar{display:inline-block;width:46px;height:6px;border-radius:3px;background:var(--line2);vertical-align:middle;overflow:hidden}.rev-bar i{display:block;height:100%;background:var(--ok,#2f7d4f)}
+.rev-check{margin-top:18px;padding:12px 16px;border:1px solid var(--line2);border-radius:8px;background:var(--panel)}.rev-check h3{margin:0 0 8px;font-size:15px}
+.rev-check ul{list-style:none;margin:0;padding:0}.rev-check li label{display:flex;gap:8px;align-items:center;margin:4px 0;font-size:13.5px;color:var(--ink);font-weight:400}.rev-check li input{width:auto;margin:0}
+/* 2.8: editing marks */
+#editor .edm{background:color-mix(in srgb,var(--sun) 16%,transparent);border-bottom:1.5px solid color-mix(in srgb,var(--sun-ink,#8a5a00) 70%,transparent);cursor:pointer}
+#editor .edm[data-ek="del"]{text-decoration:line-through;text-decoration-color:var(--danger)}
+#editor .edm-end::after{content:attr(data-sym);font:700 9px/1 system-ui,sans-serif;letter-spacing:.02em;color:var(--sun-ink,#8a5a00);vertical-align:super;margin-left:2px;padding:1px 3px;border-radius:3px;background:color-mix(in srgb,var(--sun) 22%,transparent);white-space:nowrap;text-indent:0;font-style:normal}
+#editor .edm-start[data-ek="para"]::before{content:"¶";color:var(--sun-ink,#8a5a00);font:700 11px system-ui;margin-right:2px}
+.em-k{display:inline-block;min-width:2.4em;font:700 10.5px/1.4 system-ui,sans-serif;color:var(--sun-ink,#8a5a00);background:color-mix(in srgb,var(--sun) 20%,transparent);border-radius:3px;padding:0 4px;text-align:center}
+.edm-menu button{display:flex;gap:10px;align-items:center;justify-content:flex-start;width:100%}
+.edm-pop{max-width:340px;padding:10px 12px}.edm-pop textarea{width:100%;margin:4px 0}.edm-b{display:flex;gap:6px;margin-top:8px}.edm-t{margin:6px 0;font-size:13px;background:var(--panel);padding:6px 8px;border-radius:6px}
+#emList li{display:flex;gap:6px;align-items:flex-start}#emList .em-acts{margin-left:auto;display:flex;flex:none}
+.em-tools{margin:0 0 6px}
+.prc-s{border:0;margin:10px 0 0;padding:0}.prc-s legend{font-size:12.5px;font-weight:600;color:var(--ink);padding:0;margin-bottom:4px}
+.prc-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.prc-row input{flex:1 1 12em;min-width:0}.prc-row select{width:auto;flex:none}.prc-row span{font-size:13px;color:var(--muted)}
+.prc-out-w{margin-top:14px;padding:12px 14px;background:var(--panel);border:1px solid var(--line2);border-radius:8px}
+.prc-out{margin:4px 0 6px;font:15px/1.6 var(--display,Georgia,serif);color:var(--ink)}
+/* 2.8: paragraph and line numbers in the page */
+#page{position:relative}
+#lnLayer{position:absolute;inset:0;pointer-events:none;user-select:none}
+#lnLayer span{position:absolute;width:30px;transform:translateY(-50%);text-align:right;font:10px/1 system-ui,sans-serif;color:var(--faint);font-variant-numeric:tabular-nums}
+#lnLayer .pnum{font-weight:600;font-size:10.5px;color:var(--muted)}#lnLayer .pnum.r{text-align:left}
+.ch-q{display:block;width:calc(100% - 20px);margin:0 10px 6px;font-size:13px;min-height:28px}
 .rs-eye{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .rs-th button[aria-pressed=false]{color:var(--faint)}
 /* an empty list doesn't need a window the width of the screen */
@@ -2215,7 +2259,9 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <button data-x="takeback">Take changes back…</button>
       <button data-x="review">PDF for reviewers: line numbers, wide margins</button>
       <button data-x="docxms">Word in manuscript format (for submission)…</button>
+      <button data-x="subpkg">Submission package: the piece, a title page and your letter (.zip)…</button>
       <button data-x="ms">Compile manuscript (several documents)…</button>
+      <button data-x="book">Book for print: trim size, mirrored margins, front matter…</button>
 <div class="mh" role="presentation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/></svg>Other formats</div>
       <button data-x="md">Document as Markdown</button>
       <button data-x="pandoc">Pandoc / Quarto package (.md + .bib + style)</button>
@@ -2267,6 +2313,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <section class="pane" data-pane="outline" id="outlinePane">
       <div class="ol-scroll">
         <h6>Outline <button class="ghost small hl hidden" id="olUndo">Undo move</button><label class="hl"><input type="checkbox" id="olParas"> paragraphs</label></h6><ul class="outline structure" id="outlineList"></ul>
+        <h6 id="emHead" class="hidden">Editing marks <span class="badge" id="emCount"></span></h6><div id="emTools" class="hidden em-tools"><button id="emAll" class="small" title="Make the change for every mark that can be applied; queries, checks and stets stay">Make every change</button></div><ul class="outline hidden" id="emList"></ul>
         <h6>To resolve <span class="badge" id="flagCount"></span></h6><ul class="outline" id="flagList"></ul>
         <h6>Quotes <span class="badge" id="qCount"></span></h6><div class="small muted ol-sum" id="quoteSum"></div><ul class="outline" id="quoteList"></ul>
         <h6>Names &amp; spellings <span class="badge" id="nCount"></span> <button class="ghost small hl" id="btnNames">Manage…</button></h6><ul class="outline" id="nameList"></ul>
@@ -2312,7 +2359,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
         <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
-        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnLibrary" role="menuitem" title="Sources kept in this browser for every project: save them here, add them to any project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16M9 4v16M14 5l4 15M20 20H2"/></svg><span>My library</span></button><button id="btnFtx" role="menuitem" title="Find a word or phrase in the text of every attached PDF, photo transcription and transcript"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/></svg><span>Search inside sources</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnZotero" role="menuitem" title="Follow a library file that Zotero keeps up to date (Better BibTeX auto-export)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14L5 19h14"/></svg><span>Zotero library file</span></button><button id="btnLibrary" role="menuitem" title="Sources kept in this browser for every project: save them here, add them to any project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16M9 4v16M14 5l4 15M20 20H2"/></svg><span>My library</span></button><button id="btnFtx" role="menuitem" title="Find a word or phrase in the text of every attached PDF, photo transcription and transcript"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/></svg><span>Search inside sources</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -2365,7 +2412,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <button id="btnComment" data-tb="comment" data-pri="4" data-label="Margin note" aria-label="Margin note" title="Margin note at the cursor or on the selection (Ctrl/Cmd+Alt+A)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 11.5a8 8 0 0 1-11.7 7.1L4 20l1.3-4.3a8 8 0 1 1 15.2-4.2z"/><path d="M9 10h7M9 13.5h4.5"/></svg></button>
       <button id="btnSuggest" data-tb="suggest" data-pri="4" data-label="Suggest changes" aria-label="Suggest changes" aria-pressed="false" title="Suggest mode: your edits are marked for review, like tracked changes in Word"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/><path d="M15 20h6M18 17v6" transform="translate(0 -2)"/></svg></button>
       <button id="btnMark" class="mark-btn tb-lbl" data-tb="mark" data-pri="1" data-label="Mark: thread, claim, review, question" title="Mark the selection: thread, claim, review key or question (Ctrl/Cmd+Alt+G)" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9.5 12.5 7-7a2.1 2.1 0 0 1 3 3l-7 7"/><path d="m9.5 12.5-3 3 .5 2.5 2.5.5 3-3z"/><path d="M3 21h9"/></svg><span class="lbl">Mark</span><span class="caret" aria-hidden="true">▾</span></button>
-      <button id="btnLens" data-tb="lens" data-pri="6" data-label="Revision lens" aria-label="Revision lens" title="Revision lens: long sentences, passive voice, hedges, repeats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
+      <button id="btnLens" data-tb="lens" data-pri="6" data-label="Revision lens" aria-label="Revision lens" title="Revision lens: long sentences, passive voice, hedges, repeats, clichés, rhythm, pet words"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
       <button id="btnFind" data-tb="find" data-pri="4" data-label="Find &amp; replace" aria-label="Find &amp; replace" title="Find &amp; replace (Ctrl/Cmd+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
       <span class="sep"></span>
       <button data-cmd="undo" data-tb="undo" data-pri="2" data-label="Undo" aria-label="Undo" title="Undo (Ctrl/Cmd+Z)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
@@ -2382,6 +2429,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
         <button data-m="orc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg></span>Consult the Oracle… <kbd>O</kbd></button>
         <button data-m="lang" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">あ</span>Language of this passage…</button>
         <button data-m="tl" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">Ꙗ</span>Transliterate…</button>
+        <button data-m="edm" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">tr</span>Editing mark… <kbd>⌘/Ctrl Alt M</kbd></button>
         <button data-m="slush" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">⇣</span>Move to the slush pile</button>
         <hr>
         <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
@@ -2414,7 +2462,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <div class="board-bar">
         <button id="deskBack" class="ghost">← Back to draft</button>
         <b class="rel-head">Research desk</b>
-        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="lit">Literature grid</button><button role="tab" data-dv="codes">Codes</button><button role="tab" data-dv="translate">Translate</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="lit">Literature grid</button><button role="tab" data-dv="codes">Codes</button><button role="tab" data-dv="translate">Translate</button><button role="tab" data-dv="revision">Revision</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
         <div class="spacer"></div>
         <span id="deskTools" class="desk-tools"></span>
       </div>
@@ -2608,6 +2656,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <div><label>In a manuscript, this is</label><select id="suRole"><option value="front">Front matter</option><option value="body">A chapter</option><option value="back">Back matter</option></select></div>
       <div><label>PDF notes</label><select id="suPdfNotes"><option value="foot">Footnotes (bottom of page)</option><option value="end">Endnotes (Notes section)</option></select></div></div>
     <div class="radio-row" style="margin-top:8px"><label><input type="checkbox" id="suIndex"> Add an index (PDF, Word, ePub, HTML)</label></div>
+    <div class="radio-row"><label title="For policy papers, legal writing and reviews that cite ¶ 12"><input type="checkbox" id="suParaNums"> Number paragraphs <span class="muted">(here and in every export)</span></label><label><input type="checkbox" id="suLineNums"> Number lines <span class="muted">(here, PDF and Word)</span></label></div>
     <div class="radio-row" style="margin-top:8px"><label><input type="checkbox" id="suScript"> This is a video script: show run time and timecodes</label> <label class="inline">at <input id="suWpm" type="number" min="60" max="260" step="5" value="150" style="width:5em"> words per minute</label></div>
     <label>Margin notes in exports</label><select id="suMargin"><option value="word">Word comments in Word files; left out elsewhere</option><option value="page">On a separate Marginalia page at the end (all formats)</option><option value="omit">Leave them out</option></select>
     <div class="radio-row"><label><input type="checkbox" id="suIndent"> Indent first line of paragraphs</label><label><input type="checkbox" id="suPageNums"> Page numbers in PDF</label></div>
@@ -2739,6 +2788,69 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   </div>
   <footer><button id="evDel" class="danger ghost hidden">Remove</button><span class="spacer"></span><button id="evCancel">Cancel</button><button id="evOk" class="primary">Save</button></footer>
 </div></dialog>
+<dialog id="prcDlg" class="wide" aria-labelledby="prcTitle"><div class="dlg">
+  <h3 id="prcTitle">Write a précis</h3>
+  <div class="body">
+    <p class="small muted" style="margin:0 0 10px">A rhetorical précis says, in four sentences, what a source claims, how, why and for whom.</p>
+    <div class="grid2"><div><label for="prcSrc">Source</label><select id="prcSrc"></select></div><div class="grid2" style="margin:0"><div><label for="prcGenre">It’s a</label><input id="prcGenre" placeholder="book, article, report"></div><div><label for="prcCred">Author’s credentials <span class="muted">(optional)</span></label><input id="prcCred" placeholder="a historian at Oxford"></div></div></div>
+    <fieldset class="prc-s"><legend>1. The claim</legend><div class="prc-row"><select id="prcVerb" aria-label="Verb"></select><span>that</span><input id="prcThesis" placeholder="the march is best read as a negotiation with hunger"></div></fieldset>
+    <fieldset class="prc-s"><legend>2. How it’s developed</legend><div class="prc-row"><select id="prcHow" aria-label="How"></select><input id="prcMethod" placeholder="tracing each halt in Xenophon’s narrative against the supplies available"></div></fieldset>
+    <fieldset class="prc-s"><legend>3. The purpose</legend><div class="prc-row"><span>to</span><input id="prcPurpose" placeholder="show how supply shaped decisions"><span>in order to</span><input id="prcAim" placeholder="revise the heroic reading of the retreat"></div></fieldset>
+    <fieldset class="prc-s"><legend>4. Audience and tone</legend><div class="prc-row"><span>writes for</span><input id="prcAudience" placeholder="military historians and classicists"><span>in a</span><input id="prcTone" placeholder="measured, evidential" style="max-width:14em"><span>tone</span></div></fieldset>
+    <div class="prc-out-w"><div class="small muted">Your précis</div><p id="prcOut" class="prc-out"></p><p class="small muted" id="prcLeft" role="status"></p></div>
+  </div>
+  <footer><button id="prcCancel">Cancel</button><span class="spacer"></span><button id="prcInsert">Insert at cursor</button><button id="prcSave" class="primary">Save as note</button></footer>
+</div></dialog>
+<dialog id="bkDlg" class="wide" aria-labelledby="bkHead"><div class="dlg">
+  <h3 id="bkHead">Book for print</h3>
+  <div class="body">
+    <p class="small muted" style="margin:0 0 10px">A print-ready PDF of the whole project, front matter, chapters and back matter in binder order, for KDP, IngramSpark or a printer. Your browser’s print window saves it: choose <b>Save as PDF</b>, margins <b>None</b>, and leave headers and footers off.</p>
+    <h4 class="st-h" style="margin-top:4px">The page</h4>
+    <div class="grid3"><div><label for="bkTrim">Trim size</label><select id="bkTrim"></select></div>
+      <div><label for="bkFont">Typeface</label><select id="bkFont"><option value="book">Book serif</option><option value="times">Times</option><option value="sans">Sans-serif</option></select></div>
+      <div class="grid2" style="margin:0"><div><label for="bkSize">Size (pt)</label><select id="bkSize"><option>10</option><option>10.5</option><option>11</option><option>11.5</option><option>12</option></select></div><div><label for="bkLead">Spacing</label><select id="bkLead"><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option></select></div></div></div>
+    <div class="grid3" style="grid-template-columns:repeat(4,1fr)"><div><label for="bkInside">Inside (gutter), in</label><input id="bkInside" inputmode="decimal"></div><div><label for="bkOutside">Outside, in</label><input id="bkOutside" inputmode="decimal"></div><div><label for="bkTop">Top, in</label><input id="bkTop" inputmode="decimal"></div><div><label for="bkBottom">Bottom, in</label><input id="bkBottom" inputmode="decimal"></div></div>
+    <div class="st-checks" style="flex-direction:row;flex-wrap:wrap;gap:4px 18px"><label><input type="checkbox" id="bkRecto"> Chapters open on a right-hand page</label><label><input type="checkbox" id="bkHeads"> Running heads <span class="muted">(title left, chapter right)</span></label><label><input type="checkbox" id="bkBleed"> Bleed and crop marks <span class="muted">(for images to the edge)</span></label></div>
+    <h4 class="st-h">Front matter, made for you</h4>
+    <div class="st-checks" style="flex-direction:row;flex-wrap:wrap;gap:4px 18px"><label><input type="checkbox" id="bkHalf"> Half title</label><label><input type="checkbox" id="bkTitlepage"> Title page</label><label><input type="checkbox" id="bkCopyright"> Copyright page</label><label><input type="checkbox" id="bkContents"> Contents, with page numbers</label></div>
+    <div class="grid2"><div><label for="bkTitle">Title</label><input id="bkTitle"></div><div><label for="bkSubtitle">Subtitle</label><input id="bkSubtitle"></div>
+      <div><label for="bkAuthor">Author</label><input id="bkAuthor"></div><div><label for="bkPublisher">Publisher <span class="muted">(optional)</span></label><input id="bkPublisher"></div>
+      <div class="grid2" style="margin:0"><div><label for="bkYear">Year</label><input id="bkYear" inputmode="numeric"></div><div><label for="bkIsbn">ISBN</label><input id="bkIsbn" placeholder="978-…"></div></div><div><label for="bkEdition">Edition <span class="muted">(optional)</span></label><input id="bkEdition" placeholder="First edition"></div></div>
+    <label for="bkNotice">More for the copyright page <span class="muted">(credits, permissions, cover design)</span></label><textarea id="bkNotice" rows="2"></textarea>
+    <p class="small" id="bkSum" role="status" style="margin:10px 0 0"></p>
+  </div>
+  <footer><button id="bkCancel">Close</button><span class="spacer"></span><button id="bkGo" class="primary">Lay out and print…</button></footer>
+</div></dialog>
+<dialog id="spkDlg" class="wide" aria-labelledby="spkHead"><div class="dlg">
+  <h3 id="spkHead">Submission package</h3>
+  <div class="body">
+    <div class="grid2"><div><label for="spkDoc">The piece</label><select id="spkDoc"></select></div><div><label for="spkKind">Sending</label><select id="spkKind"></select></div>
+      <div><label for="spkOutlet">To <span class="muted">(journal, magazine, agent, press)</span></label><input id="spkOutlet" placeholder="Journal of Military History"></div><div></div></div>
+    <div class="st-checks" style="flex-direction:row;flex-wrap:wrap;gap:4px 18px"><label><input type="checkbox" id="spkAnon"> Anonymized for blind review</label><label><input type="checkbox" id="spkTitle"> A separate title page</label></div>
+    <div class="grid2"><div><label for="spkLetter" id="spkLetterLab">Cover letter</label><select id="spkLetter"></select></div><div id="spkExtraRow"><label for="spkExtra" id="spkExtraLab">Synopsis</label><select id="spkExtra"></select></div></div>
+    <h4 class="st-h">For the title page and letter</h4>
+    <div class="grid2"><div><label for="spkName">Your name</label><input id="spkName" autocomplete="name"></div><div><label for="spkAff">Affiliation or byline</label><input id="spkAff" placeholder="University of New Mexico"></div></div>
+    <label for="spkContact">Contact details</label><textarea id="spkContact" rows="2" placeholder="Email, phone, address"></textarea>
+    <p class="small" id="spkSum" role="status" style="margin:10px 0 0"></p>
+  </div>
+  <footer><label class="inline small"><input type="checkbox" id="spkTrack"> Add to Submissions</label><span class="spacer"></span><button id="spkCancel">Cancel</button><button id="spkGo" class="primary">Save the package</button></footer>
+</div></dialog>
+<dialog id="zDlg" class="wide" aria-labelledby="zHead"><div class="dlg">
+  <h3 id="zHead">Follow your Zotero library</h3>
+  <div class="body">
+    <p style="margin-top:0">Zotero keeps a file of your library up to date on your computer, and Anabasis follows it: new and changed references come into this project whenever you come back to this window. Your notes and ratings on a source stay. Nothing goes online.</p>
+    <ol class="z-steps">
+      <li>In Zotero, install <b>Better BibTeX</b> (Tools → Plugins), if you haven’t.</li>
+      <li>Right-click the library or collection for this project, choose <b>Export…</b>, pick <b>Better CSL JSON</b> (or Better BibTeX), and tick <b>Keep updated</b>.</li>
+      <li>Save the file somewhere you’ll keep it, then choose <b>Link the file</b> below and pick it.</li>
+    </ol>
+    <p class="small muted">Chrome and Edge remember the file and check it each time you return to Anabasis. In other browsers, choose <b>Update now</b> and pick the file again.</p>
+    <p class="small" id="zStatus" role="status"></p>
+    <p class="small muted">Sources that came from Zotero: <b id="zLinked">0</b>.</p>
+    <input type="file" id="zFile" accept=".json,.bib,.ris,application/json,text/plain" hidden>
+  </div>
+  <footer><button id="zUnlink" class="ghost danger">Stop following</button><span class="spacer"></span><button id="zUpdate">Update now</button><button id="zLinkBtn" class="primary">Link the file…</button><button id="zClose">Done</button></footer>
+</div></dialog>
 <dialog id="slDlg" class="wide" aria-labelledby="slTitle"><div class="dlg">
   <h3 id="slTitle">Slush pile</h3>
   <div class="body">
@@ -2791,6 +2903,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
 </div></dialog>
 <dialog id="spcDlg" class="ch-dlg" aria-labelledby="spcTitle">
   <header title="Drag to move"><h3 id="spcTitle">Special characters</h3><button type="button" class="ghost small" id="spcCaps" aria-pressed="false">Capitals</button><button type="button" class="ghost small" id="spcClose" aria-label="Close special characters">✕</button></header>
+  <input type="search" id="spcQ" class="ch-q" placeholder="Find by name: arrow, degree, sub 2…" aria-label="Find a character by name" autocomplete="off">
   <div class="ch-tabs" id="spcTabs" role="tablist" aria-label="Character sets"></div>
   <div class="ch-grid" id="spcGrid"></div>
   <p class="small muted ch-tip">Click where the character should go, then choose it. The palette stays open while you type (⌘/Ctrl Alt O).</p>
@@ -2812,7 +2925,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   <div class="body"><p class="small" id="subSum"></p>
     <div class="sub-wrap"><table class="cl-table sub-table hidden" id="subTable"><colgroup><col style="width:13%"><col style="width:12%"><col style="width:10%"><col style="width:8.5%"><col style="width:11%"><col style="width:10%"><col style="width:11%"><col style="width:7.5%"><col><col style="width:32px"></colgroup>
       <thead><tr><th scope="col">Piece</th><th scope="col">Outlet</th><th scope="col">Editor</th><th scope="col">Kind</th><th scope="col">Sent</th><th scope="col">Status</th><th scope="col">Follow up</th><th scope="col">Fee</th><th scope="col">Notes</th><th scope="col"><span class="sr-only">Delete</span></th></tr></thead><tbody id="subList"></tbody></table></div></div>
-  <footer><button id="subCsv" class="ghost">CSV</button><span class="spacer"></span><button id="subAdd" autofocus>+ Add a pitch or submission</button><button id="subClose" class="primary">Done</button></footer>
+  <footer><button id="subCsv" class="ghost">CSV</button><button id="subPkg" class="ghost">Build a package…</button><span class="spacer"></span><button id="subAdd" autofocus>+ Add a pitch or submission</button><button id="subClose" class="primary">Done</button></footer>
 </div></dialog>
 <dialog id="rvsDlg" aria-labelledby="rvsTitle"><div class="dlg">
   <h3 id="rvsTitle">Send for review</h3>
@@ -3549,7 +3662,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>Source audit</b> (Sources tab → Tools). Citations and share per source, a warning when one chapter leans on a single source, quoted words per source for permissions, sources missing details, and sources you haven’t used.</li>
       <li><b>Timeline.</b> Give notes an <i>event date</i> (when it happened), then set the board to Timeline to see them in order. Templates → Chronology turns them into a document.</li>
       <li><b>Comments.</b> Select text and click 💬. Comments are listed under Outline and travel to Word as real margin comments. They’re left out of PDF, ePub and other exports.</li>
-      <li><b>Revision lens.</b> Highlights long sentences (35+ words), passive voice, hedges and filler, and repeated words, and shows grade level. It runs on your device, so nothing is sent anywhere.</li>
+      <li><b>Revision lens.</b> Highlights long sentences (35+ words), passive voice, hedges and filler, and repeated words, and shows grade level; more checks are under Revising &amp; copyediting. It runs on your device, so nothing is sent anywhere.</li>
       <li><b>Templates</b> for front and back matter: dedication, epigraph, preface, acknowledgments, a note on sources, glossary, about the author. Also an annotated bibliography built from each source’s <i>Annotation</i> field.</li>
       <li><b>Record.</b> Words added per day, your streak, and each chapter’s status and deadline (also shown in the binder).</li>
       <li><b>Transcripts.</b> On a source, click Transcript…, paste a transcript, select lines, and make quote or paraphrase notes with the timestamp as the locator.</li>
@@ -3577,7 +3690,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <ul>
       <li><b>Export → PDF for reviewers</b> numbers every line (starting again on each page), widens the outer margin for handwritten notes, and marks each page “Review copy” with the date, so comments can say “p. 4, line 12”.</li>
       <li><b>Export → Word in manuscript format</b> sets what agents and editors expect: Times New Roman 12, double-spaced, one-inch margins, indented paragraphs, # for section breaks, “Surname / Short title / page” at the top of each page after the first, and a first page with your name, contact details, rounded word count, title and byline. Footnotes stay; margin notes are left out. It’s also an output in <b>Compile manuscript</b>.</li>
-      <li><b>Export → For a reviewer…</b> makes one web page of the open document, with a note to the reader if you like. Send it to anyone: they open it in any browser, with nothing to install, select words and choose <b>Comment</b> or <b>Suggest a change</b>, and press <b>Save my review</b> to download a small file to send back. Their notes survive closing the page.</li>
+      <li><b>Export → For a reviewer…</b> makes one web page of the open document, with a note to the reader if you like. Send it to anyone: they open it in any browser, with nothing to install, select words and choose <b>Comment</b> or <b>Suggest a change</b>, and press <b>Save my review</b> to download a small file to send back. Their notes survive closing the page. A copyeditor can also choose <b>Editing mark…</b> on the page; marks come back as editing marks.</li>
       <li><b>Export → Import a review…</b> takes that file. Comments go in the margin under the reviewer’s name; changes go in as suggestions you accept or reject, as in Suggest mode. Each note is found by its words and what’s around them, so it lands in the right place even after you’ve kept writing. A draft is saved first, and any note whose words have gone is listed so nothing is lost.</li>
     </ul>
     <h4>Equations</h4>
@@ -3649,7 +3762,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>Page setup → Language</b> sets the document’s language. Spell-checking, quotation marks (“ ” „ “ « » 「 」), Proofread, word counts (Chinese and Japanese count characters), reading aloud and the citation terms (“Hrsg.”, “trad.”, “éd.”) follow it, and Arabic, Hebrew, Persian and Urdu run right to left. Word, web page and e-book exports carry it.</li>
       <li><b>Mark → Language of this passage…</b> marks a quotation or a name in another language, so it’s spell-checked and read aloud in that language and runs in its own direction.</li>
       <li><b>Mark → Transliterate…</b> romanizes selected text by a standard table: Russian (ALA-LC, BGN/PCGN or simple), Ukrainian (national or ALA-LC), Bulgarian, Serbian, Greek (modern ELOT or ancient) and Arabic (ALA-LC, without vowels that aren’t written). Replace the selection, or keep both.</li>
-      <li><b>Special characters</b> (<kbd>⌘/Ctrl Alt O</kbd>) stays open while you type: accented letters, Greek with breathings and accents, Cyrillic, transliteration marks (ā ḥ ṣ ʿ ʾ), punctuation and symbols. Click to insert where you were typing, in the page or any field.</li>
+      <li><b>Special characters</b> (<kbd>⌘/Ctrl Alt O</kbd>) stays open while you type: accented letters, Greek with breathings and accents, Cyrillic, transliteration marks (ā ḥ ṣ ʿ ʾ), punctuation, math (± ≤ ∑ ∫ ∂ ∇), logic and sets (∀ ∃ ∈ ⊆ ℝ), superscripts and subscripts (² ₂), units and science (µ Å ℃ ⇌) and scholarly marks (§ ¶ † ‡ ⁂, thin and hair spaces). Type a name in the search box (“integral”, “subscript 2”, “therefore”) and press Enter to insert the first match. Click to insert where you were typing, in the page or any field.</li>
     </ul>
     <h4>Translating</h4>
     <ul>
@@ -3708,6 +3821,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li>The style menu next to the title has 55 styles grouped by field: Chicago (17th and 18th, notes or author-date, with ibid. or archives cited place first), APA, MLA, MHRA, New Hart’s Rules, SBL, Harvard, APSA, ASA, ISA, OSCOLA and Bluebook, AMA, NLM/Vancouver, CSE, IEEE, Nature, Science, ISO 690 and more.</li>
       <li><b>Sources → Export…</b> saves your sources as BibTeX, RIS or CSL-JSON for Zotero, EndNote, Mendeley or JabRef, all of them or only those cited in the open document. Each source gets a readable key such as <code>tuchman1962guns</code>.</li>
       <li><b>Export → Pandoc / Quarto package</b> gives the document as Markdown with citations as <code>[@key, p. 12]</code>, its bibliography and the citation style file, ready for <code>pandoc --citeproc</code>. <b>LaTeX package</b> gives a <code>main.tex</code> with BibLaTeX <code>\autocite</code> commands and the .bib file, ready for Overleaf or <code>latexmk -xelatex</code>.</li>
+      <li><b>Follow a Zotero library</b> (Sources → Tools → Zotero library file). Zotero doesn’t let web pages talk to it, so Anabasis follows a file instead: in Zotero, right-click a library or collection, choose <i>Export…</i>, pick <i>Better CSL JSON</i> or <i>Better BibTeX</i> and tick <i>Keep updated</i> (this needs the free Better BibTeX add-on). Then choose that file here. New references are added and changed ones updated, matched by citation key, DOI or title and year; your notes on a source stay. Chrome and Edge re-read the file when you come back to the window; in other browsers choose <b>Update now</b>. Nothing goes online.</li>
     </ul>
     <h4>Example projects</h4>
     <ul>
@@ -3722,6 +3836,19 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>House style</b> (Outline tab → Rules…) checks numbers, percent, US or U.S., the serial comma, date order, em dashes, curly quotes, ellipses, double spaces and your preferred spellings (Kyiv, not Kiev). Each rule has a Fix all button. Rules are saved with the project.</li>
       <li><b>Accessibility</b> (Outline tab) flags figures without alt text, headings that skip a level, tables without a header row, and links that say “here” or show a bare address. Exporting to HTML, ePub or Word reminds you if anything is left.</li>
       <li><b>Find and replace in all documents</b> (the find bar → All documents…, or the command palette) searches every document and, if you like, your notes. Tick the matches to change. Citations and footnotes are never touched, and each changed document gets a safety copy in Drafts first.</li>
+    </ul>
+    <h4>Revising &amp; copyediting</h4>
+    <ul>
+      <li><b>The revision lens</b> (the Revision lens button on the toolbar) shades what to look at again: long sentences, passive voice, hedges and filler, repeated words, and now clichés, runs of sentences all the same length, pet words this document leans on, <i>-ly</i> adverbs and buried verbs (“the implementation of”). Click a chip to show or hide each kind; the quieter ones start hidden.</li>
+      <li><b>Research desk → Revision</b> shows every chapter at once: words, sentence length and variety, long sentences, passive voice and hedges per thousand words, clichés, adverbs, buried verbs and a grade level. A shaded number is worth a look, not a rule. Choose a row for its <b>revision checklist</b> (the argument is clear on page one, each paragraph does one job, every claim has a source, read it aloud…); ticked items are dated and kept with the project. <b>Open with the lens</b> shows each finding in the text; <b>CSV</b> takes the table to a spreadsheet.</li>
+      <li><b>Editing marks</b> (<kbd>⌘/Ctrl Alt M</kbd>, or Mark → Editing mark…) are the copyeditor’s set: query to author (AQ), verify, stet, delete, replace with, transpose, close up, add space, capitalize, lowercase, italic, roman, bold, spell out, new paragraph and run in. Each is signed with your name (Settings) and dated, and listed in the Outline tab. The author clicks a mark to accept it, which makes the change, or reject it; <b>Make every change</b> does all that can be done automatically and leaves queries and checks for you. An answered query is kept as a margin comment. Exports leave the marks out.</li>
+    </ul>
+    <h4>Contents, numbering, books &amp; submission packages</h4>
+    <ul>
+      <li><b>Insert → Lists</b> adds a <b>Contents</b>, a <b>List of figures</b>, a <b>List of tables</b> or a <b>List of equations</b> wherever the cursor is. Each fills itself in as you write, and a click goes to the entry. In exports they become links; PDFs add page numbers and Word gets a real Contents field that fills in when the file opens.</li>
+      <li><b>Page setup → Number paragraphs</b> puts ¶ numbers beside each paragraph, in the page and in every export, for policy papers, legal writing and reviews that cite “¶ 12”. <b>Number lines</b> numbers every line in the page, in PDF and in Word.</li>
+      <li><b>Export → Book for print…</b> makes a print-ready PDF for KDP, IngramSpark or a printer: ten trim sizes (5 × 8 to 8.5 × 11, A5, Demy, Royal), mirrored margins with a gutter, optional bleed, chapters that open on a right-hand page with “Chapter 1” above the title, running heads (the book’s title on the left, the chapter’s on the right), roman page numbers in the front matter and 1 from the first chapter, and no stranded lines. It makes the half title, title page, copyright page (with your ISBN, publisher and edition) and contents with page numbers. Documents marked front or back matter go in their places. The summary estimates the page count and the inside margin KDP asks for at that length.</li>
+      <li><b>Export → Submission package…</b> (or Submissions → Build a package…) builds everything an outlet asks for in one .zip: the piece as Word, anonymized for blind review if you like (your name becomes “[Author]”; comments, suggestions and the title block are left out), a separate title page with your affiliation and the word count without notes and references, and your cover letter, pitch, query, synopsis or proposal, started from a template with the title, word count and outlet filled in. It goes on your Submissions list as planned.</li>
     </ul>
     <h4>Checkpoints, transcripts &amp; promotion</h4>
     <ul>
@@ -3824,7 +3951,8 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li>Enter details by hand, or quick-add by DOI (via doi.org / Crossref) or ISBN (via Open Library). Lookups need an internet connection. Everything else works offline.</li>
       <li>Type titles the way they should print. CSL styles can’t reliably convert title case to APA’s sentence case.</li>
       <li><b>Copy citation</b> on a source copies its citation or bibliography entry, with italics, in any style and with a page if you give one: for an email, a message or someone else’s document. To cite in your own draft, use <b>Cite at cursor</b> so the bibliography keeps track.</li>
-      <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here. Sources export back out the same way.</li>
+      <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here, or follow a Better BibTeX auto-export so changes come in by themselves (see Citation styles, Zotero, Pandoc &amp; LaTeX). Sources export back out the same way.</li>
+      <li><b>Précis…</b> (a source’s ⋯ menu) writes a rhetorical précis in Woodworth’s four sentences: who said what, with an exact verb (argues, contends, questions…) and a <i>that</i> clause; how the author develops it; the purpose, with an <i>in order to</i>; and the audience and tone. Fill in the parts and it reads as you go. It is saved as a summary note on the source (tagged précis), so it also goes into the annotated bibliography. <b>Insert</b> puts it in the page with a citation; the command palette’s <b>Précis of every source</b> makes one document of them all, each under its bibliography entry.</li>
       <li><b>Reading list.</b> Set a source’s <b>Reading</b> to To read, Reading or Read, and tick <b>Read this first</b> for the ones that matter most. Chips at the top of the Sources tab filter the list, and Project home shows what’s waiting.</li>
       <li><b>Check for retractions</b> (Sources → Tools) asks Crossref, which includes the Retraction Watch database, whether any source with a DOI has been retracted, withdrawn or corrected, or has an expression of concern. Only the DOIs are sent, and only when you choose Check. Retracted sources are marked in the list and on Project home.</li>
       <li><b>Find duplicates</b> (Sources → Tools) finds the same work added twice, by DOI, ISBN, web address, or title, author and year. Merging keeps the record you choose, fills its empty details from the other, and moves every citation, note, photo and grid cell across.</li>

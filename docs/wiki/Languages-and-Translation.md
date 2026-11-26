@@ -34,7 +34,9 @@ Anabasis picks a system from the script it sees, or the one you've recorded in t
 
 ## Special characters
 
-**Special characters** (**⌘/Ctrl Alt O**, or *Special characters* in the command search) opens a palette that stays open while you work. Its tabs hold accented Latin letters, Greek (with a builder for breathings, accents and iota subscripts), Cyrillic, transliteration marks such as ā ḥ ṣ ʿ ʾ, punctuation and symbols. Click a character to insert it where you were typing, in the page or in any field. Capitals switches the case.
+**Special characters** (**⌘/Ctrl Alt O**, or *Special characters* in the command search) opens a palette that stays open while you work. Its tabs hold accented Latin letters, Greek (with a builder for breathings, accents and iota subscripts), Cyrillic, transliteration marks such as ā ḥ ṣ ʿ ʾ, punctuation, and for scientific and academic writing: math (± ≤ ∑ ∫ ∂ ∇), logic and sets (∀ ∃ ∈ ⊆ ℝ), superscripts and subscripts (² ₂), units and science (µ Å ℃ ⇌ ↑) and scholarly marks (§ ¶ † ‡ ⁂, and thin, hair and figure spaces, shown with a visible stand-in). Click a character to insert it where you were typing, in the page or in any field. Capitals switches the case.
+
+Type a name in the search box at the top, such as *integral*, *subscript 2*, *therefore* or *angstrom*, to find a character in any tab; Enter inserts the first match.
 
 ## Translation notes
 

@@ -20,6 +20,7 @@
 
 **Finishing**
 - [Checking the draft](Checking-the-Draft)
+- [Revising and copyediting](Revising-and-Copyediting)
 - [Exporting](Exporting)
 
 **Elsewhere**

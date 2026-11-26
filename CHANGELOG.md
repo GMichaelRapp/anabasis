@@ -4,6 +4,23 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.8.0] — 2026-11-26
+
+### Added
+- **The revision pass.** The revision lens also shades clichés, runs of four or more sentences of about the same length, pet words the document leans on, *-ly* adverbs and buried verbs (“the implementation of”); the quieter checks start hidden. **Research desk → Revision** sets every chapter side by side (words, sentence length and variety, long sentences, passive voice and hedges per thousand words, clichés, adverbs, buried verbs, grade level), with a nine-item revision checklist for each chapter whose ticks are dated and kept with the project. Open a chapter with the lens on, or take the table out as CSV.
+- **Editing marks** (⌘/Ctrl Alt M, or Mark → Editing mark…): the copyeditor’s set of query to author, verify, stet, delete, replace with, transpose, close up, add space, capitalize, lowercase, italic, roman, bold, spell out, new paragraph and run in. Each mark is signed with your name and dated, tagged in the text and listed in the Outline tab. Accept makes the change; reject clears the mark; **Make every change** does all that can be done automatically and leaves queries and checks. An answered query is kept as a margin comment. The page made for a reviewer has an Editing mark menu, and imported reviews bring the marks in. Exports leave marks out.
+- **Contents and lists.** Insert → Lists adds a contents, a list of figures, a list of tables or a list of equations that fills itself in as you write; a click goes to the entry. Exports make them links, PDFs add page numbers, and Word gets a Contents field that fills in when the file opens.
+- **Paragraph and line numbers** (Page setup): paragraph numbers in the page and in every export ([12] in Word and Markdown); line numbers in the page, in PDF and in Word.
+- **Book for print** (Export): a print-ready PDF at one of ten trim sizes, with mirrored margins and a gutter, optional bleed, chapters on right-hand pages under “Chapter 1”, running heads with the book’s and the chapter’s titles, roman page numbers through the front matter and arabic from the first chapter, and no stranded lines. The half title, title page, copyright page (publisher, ISBN, edition) and a contents page with page numbers are made for you; front and back matter go in their places. Settings are kept with the project.
+- **Submission package** (Export, or Submissions → Build a package…): one .zip with the piece as Word (anonymized for blind review if you like: your name becomes [Author], and comments, suggestions and the title block are left out), a separate title page with your affiliation and the word count without notes and references, and a cover letter, pitch, query, synopsis or proposal from a template with the title, word count and outlet filled in. It goes on the Submissions list as planned.
+- **Précis** (a source’s Précis…): a rhetorical précis in Woodworth’s four sentences, built a part at a time with a choice of exact verbs, saved as a summary note tagged précis (so it feeds the annotated bibliography), inserted with a citation, or gathered with every other précis into one document under the bibliography entries.
+- **Follow a Zotero library** (Sources → Tools → Zotero library file): link the file Better BibTeX keeps up to date (CSL JSON or BibTeX) and new and changed references come in, matched by citation key, DOI, or title and year, keeping your own notes on a source. Chrome and Edge re-read the file when you come back to the window. Zotero doesn’t let web pages connect to it, so nothing goes online.
+- **Special characters for scientific and academic writing**: new tabs for math, logic and sets, superscripts and subscripts, units and science, and scholarly marks (with thin, hair and figure spaces shown visibly), and a search by name; Enter inserts the first match.
+- The e-book’s package now carries the document’s language, the publisher and ISBN from Book for print, and accessibility metadata.
+
+### Changed
+- **Faster start.** The citation engine is built after the window first appears instead of before, and builds in about half the time (Chicago: about 0.8 s down to 0.45 s on a desktop; four times that on a slow laptop), with exactly the same citations.
+
 ## [2.7.3] — 2026-11-26
 
 ### Changed

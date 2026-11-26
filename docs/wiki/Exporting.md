@@ -5,7 +5,7 @@ The **Export** menu turns a document into whatever comes next: a Word file for a
 The menu is grouped by what you're doing:
 
 - **Share and print**: Word, PDF, web page, e-book, formatted text, Substack, promo kit.
-- **Review, co-write and submit**: send a copy, take changes back, the reviewer PDF, manuscript format, compile.
+- **Review, co-write and submit**: send a copy, take changes back, the reviewer PDF, manuscript format, compile, a submission package, a book for print.
 - **Other formats**: Markdown, Pandoc, LaTeX, notes, the annotated bibliography and your sources.
 - **The project file**: save as, the plain-file archive, the abstract and keywords, checkpoints, lock and GitHub backup. See [Projects, saving and privacy](Projects-and-Saving).
 
@@ -97,6 +97,37 @@ Sets what agents and editors expect: Times New Roman 12, double-spaced, one-inch
 
 **Compile manuscript…** joins documents in binder order into one Word file, Word in manuscript format, PDF, reviewer PDF, Markdown, ePub, HTML or a new document in the project. Choose which documents to include, the manuscript's title and its citation style. Notes number continuously, short forms carry across chapters, and figures and cross-references are renumbered for the whole book, so a chapter's Figure 1 becomes whatever it is in the manuscript.
 
+### Submission package
+
+**Export → Submission package…** (or **Build a package…** in Submissions) builds everything an outlet asks for in one .zip:
+
+- **The piece as Word.** For blind review, tick *Anonymize*: your name in the text becomes "[Author]", and comments, suggestions, the title block and your name in the file's properties are left out. The summary says how many times your name appears.
+- **A title page**, as a separate file: the title, your name, affiliation and contact details, the word count without notes and references, and the abstract and keywords if the document has them.
+- **Your letter**: a cover letter, pitch or query, and for a book proposal or query a synopsis or proposal. Choose a document you've written, or *New … from a template*; the template's [Title], [word count], [Name] and [Journal] are filled in for you.
+- **A read-me** listing what's in the package.
+
+Choose the kind (journal article, magazine piece or op-ed, book proposal, query to an agent) and the right pieces are ticked. The package goes on your Submissions list as *planned*, so you can mark it sent when it goes.
+
+### Book for print
+
+**Export → Book for print…** lays out the whole project as a print-ready PDF for KDP, IngramSpark or a printer:
+
+- **Trim size**: 5 × 8, 5.25 × 8, 5.5 × 8.5, 6 × 9, 6.14 × 9.21, 7 × 10 or 8.5 × 11 in, A5, Demy or Royal, with optional 0.125 in bleed.
+- **Mirrored margins** with a wider inside margin for the gutter. The summary estimates the page count and says the inside margin KDP asks for at that length.
+- **Chapters open on a right-hand page**, with "Chapter 1" above the title. Documents marked front matter come first and back matter last.
+- **Running heads** with the book's title on left-hand pages and the chapter's on right-hand pages, left off each chapter's first page.
+- **Page numbers** in roman numerals through the front matter, starting again at 1 with the first chapter.
+- **Made for you**: a half title, a title page, a copyright page (with publisher, ISBN, edition and any notice) and a contents page with page numbers.
+- Footnotes at the foot of the page, the bibliography at the end, and no stranded first or last lines.
+
+Choose the font, size and leading, and print to PDF from the browser's dialog. The settings are kept with the project.
+
+## Contents, lists and numbering
+
+**Insert → Lists** has a **Contents**, a **List of figures**, a **List of tables** and a **List of equations**. Put one where the cursor is and it fills itself in as you write: headings by level, or each figure, table or numbered equation with its caption. A click goes to the entry. In web pages and e-books they become links, PDFs add the page numbers, and Word gets a Contents field that fills in when the file opens.
+
+**Page setup → Number paragraphs** numbers each paragraph, in the page and in every export (as [12] in Word and Markdown), for policy papers, legal writing and reviews that cite "¶ 12". **Number lines** numbers every line in the page, in PDF and in Word, where numbering starts again on each page.
+
 ## Other formats
 
 ### Markdown
@@ -174,3 +205,4 @@ Exporting to a web page, an e-book or Word reminds you if the **Accessibility** 
 - [Projects, saving and privacy](Projects-and-Saving)
 - [Citations and styles](Citations-and-Styles)
 - [Checking the draft](Checking-the-Draft)
+- [Revising and copyediting](Revising-and-Copyediting)

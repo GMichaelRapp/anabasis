@@ -26,7 +26,8 @@ Anabasis is a word processor for research writing that runs as a single web page
 ## Finishing
 
 - **[Checking the draft](Checking-the-Draft)**: close to your notes, Proofread, house style, corroboration, acronyms, estimative language, accessibility, and flags left to resolve.
-- **[Exporting](Exporting)**: Word, PDF, web page, e-book, Substack, Markdown, Pandoc and LaTeX, a page for reviewers and importing their review, plus the abstract and keywords, and pseudonyms.
+- **[Revising and copyediting](Revising-and-Copyediting)**: the revision lens, every chapter on the Research desk with a revision checklist, and the copyeditor's editing marks to accept or reject.
+- **[Exporting](Exporting)**: Word, PDF, web page, e-book, Substack, Markdown, Pandoc and LaTeX, a page for reviewers and importing their review, a book for print, submission packages, contents and lists, paragraph and line numbers, plus the abstract and keywords, and pseudonyms.
 
 ## Where else to look
 

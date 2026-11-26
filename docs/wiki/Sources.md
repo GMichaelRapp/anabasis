@@ -70,6 +70,17 @@ The **Annotation** field holds what the source is, what it argues and how you us
 
 Set a source's **Reading** to *To read*, *Reading* or *Read*, and tick **Read this first** for the ones that matter most. The chips at the top of the Sources tab filter the list to what's waiting, with the read-first sources at the top, and **Project home** lists them under *To read*. Mark a source *Read* and it leaves the list.
 
+### A précis
+
+**Précis…** (in the more row at the foot of a source) writes a rhetorical précis in Margaret Woodworth's four sentences:
+
+1. Who said what: the author (and a credential, if you like), the genre and title, the year, an exact verb (*argues*, *contends*, *questions*, *demonstrates*…) and a *that* clause with the claim.
+2. How the author develops it (*supports this claim by…*).
+3. The purpose, with *in order to*.
+4. The audience and the tone.
+
+Fill in the parts and the précis reads as you go, saying what's still to fill in. **Save** keeps it as a summary note on the source, tagged *précis*, so it also feeds the annotated bibliography; **Insert** puts it in the page with a citation, and keeps the note too. **Edit précis** on the note opens it again. **Précis of every source** in the command search makes one document of them all, each under its bibliography entry, for a reading journal or a seminar.
+
 ## Working from a source
 
 The buttons at the foot of a source:

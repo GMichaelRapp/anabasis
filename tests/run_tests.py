@@ -56,6 +56,8 @@ SUITES = {
     't49': 'writing in other languages, transliteration, special characters, translation notes and the translation journal',
     't50': 'the translation workspace, search inside sources, my library, submissions, the review round-trip and offline OCR',
     't51': 'the slush pile: cutting passages to it, deleted documents, searching it and putting pieces back',
+    't52': 'special characters by name, contents and lists, paragraph and line numbers, the précis, editing marks',
+    't53': 'the revision desk, a book for print, submission packages, a Zotero library file, reviewer marks, the faster citation engine',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

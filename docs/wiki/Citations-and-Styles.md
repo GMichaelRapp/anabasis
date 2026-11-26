@@ -96,6 +96,16 @@ If the writing will finish somewhere else:
 
 Each source gets a readable key such as `tuchman1962guns`. See [Exporting](Exporting).
 
+## Following a Zotero library
+
+Zotero doesn't let web pages talk to it, so Anabasis follows a file that Zotero keeps up to date:
+
+1. In Zotero, install the free **Better BibTeX** add-on.
+2. Right-click your library or a collection, choose **Export…**, pick **Better CSL JSON** (or **Better BibTeX**) and tick **Keep updated**. Save the file somewhere you'll find it.
+3. In Anabasis, choose **Sources → Tools → Zotero library file**, then **Link the file…**, and choose that file.
+
+New references are added and changed ones updated, matched by citation key, then DOI, then title and year, so sources you added before aren't doubled. Your own notes, ratings and annotations on a source stay. References removed from Zotero stay in the project, because you may have cited them. Chrome and Edge remember the file and re-read it whenever you come back to the Anabasis window; in other browsers choose **Update now** and pick the file again. Nothing goes online.
+
 ## Tips
 
 - **Cite while you draft, not afterwards.** A citation takes a few seconds as you write, and the [checks](Checking-the-Draft) can then tell you which paragraphs have no source or lean on only one.
