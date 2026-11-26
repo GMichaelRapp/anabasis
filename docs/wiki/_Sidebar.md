@@ -10,6 +10,7 @@
 - [Notes and the board](Notes-and-the-Board)
 - [Reading PDFs](Reading-PDFs)
 - [Archive photos](Archive-Photos)
+- [Languages and translation](Languages-and-Translation)
 
 **Thinking it through**
 - [The research journal](Research-Journal)

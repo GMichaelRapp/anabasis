@@ -71,6 +71,20 @@ Drafts what goes around a published piece: a numbered thread for X, Bluesky, Thr
 
 **Send a copy for review or co-writing…** saves a copy of the whole project as a file, with a note for your collaborator. They open it in Anabasis (the web page or the downloaded file; no account), work as usual, save, and send the file back. **Take changes back…** compares their file with what you sent and what you've written since: their edits come in as suggestions under their name, ready to accept or reject, and their notes, sources, margin notes and images are added. Where you both changed the same paragraph, you see the two side by side and choose. Everything passes through files you send yourself; nothing goes through a server.
 
+### For a reviewer: a page anyone can comment on
+
+When a reader doesn't have Anabasis, and you don't want them to need it, use **Export → For a reviewer…**. It makes one web page of the open document, with a note to the reader if you like ("Thanks for reading this. I'm most worried about the second section."). Send the file however you like.
+
+The reviewer opens it in any browser, on any computer, with nothing to install. They select words and choose **Comment**, or **Suggest a change** to replace or delete them (or click a spot to suggest an insertion). Their notes are listed beside the text, and they survive closing the page, so they can read in more than one sitting. **Save my review** downloads a small file to send back to you.
+
+**Export → Import a review…** takes that file:
+
+- **Comments** go in the margin under the reviewer's name.
+- **Changes** go in as suggestions by the reviewer, to accept or reject as in Suggest mode.
+- Each note is found by its words and the words around them, so it lands in the right place **even after you've kept writing**.
+- A draft is saved before anything changes, so you can always go back.
+- Any note whose words have gone from the document is listed, with what it said, so nothing is lost.
+
 ### PDF for reviewers
 
 Numbers every line (starting again on each page), widens the outer margin for handwritten notes, and marks each page "Review copy" with the date, so comments can say "p. 4, line 12".

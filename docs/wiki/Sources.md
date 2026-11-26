@@ -136,6 +136,28 @@ For investigative and open-source work, it can matter later that a screenshot, a
 
 Keep the files themselves somewhere safe; the fingerprint proves a copy is unchanged, but it can't bring back a lost file.
 
+## Search inside sources
+
+**Sources → Search inside sources** (or *Search inside sources* in the command search) finds words in the full text of what you've gathered, not just in titles and notes:
+
+- the text of every **PDF** linked to a source, page by page;
+- the transcriptions of your [archive photos](Archive-Photos);
+- interview **transcripts**;
+- annotations and abstracts.
+
+Capitals and accents don't matter, so *moltke* finds "Moltke" and *Etat* finds "État". Each hit shows the source, where it is (p. 2; box 3, folder 12, item 4; 00:02:05) and the words around it. Click a hit to open the PDF at that page, the photo, or the transcript.
+
+The first search reads each PDF's text, which can take a moment for a large project; after that it's kept in this browser so searches are instant. The text is never put in your project file. A **scanned PDF** has pictures of pages and no text, so it's listed as scanned: open it in the reader and choose **Read text** to read its pages on this computer (see [Reading PDFs](Reading-PDFs#scanned-pdfs-read-text)), and it can be searched from then on.
+
+## My library: sources for every project
+
+A project file holds the sources for that project. **Sources → My library** is a shelf that every project can use, kept in this browser.
+
+- **Save to library**, at the foot of a source, puts it on the shelf with its notes. **Save all** in My library shelves every source in the project.
+- In another project, open **My library**, search it, tick the sources you want and choose **Add**. Leave *Add their notes too* ticked to bring their notes as well. Sources already in the project are marked, so you don't add one twice.
+- The shelf doesn't keep the same source twice. It matches by DOI, then ISBN, then title, year and first author, and saving a source again updates it and adds any new notes.
+- **Export** saves the whole shelf as a file, to keep or to take to another computer or browser; **Import** adds one in. The library is never sent anywhere, and it isn't in any project file unless you add sources to a project.
+
 ## Taking sources elsewhere
 
 **Export…** in the Sources tab saves your sources as **BibTeX**, **RIS** or **CSL-JSON**, for Zotero, EndNote, Mendeley or JabRef: either all of them, or only those cited in the open document. Each source gets a readable key such as `tuchman1962guns`, the same key the Pandoc and LaTeX exports use.

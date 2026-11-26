@@ -6,7 +6,9 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 |---|---|---|---|---|
 | [citeproc-js](https://github.com/Juris-M/citeproc-js) | 2.4.63 | © 2009–2019 Frank Bennett | CPAL-1.0 or AGPL-3.0-or-later (used here under the AGPL) | formatting citations and bibliographies |
 | [CSL styles](https://github.com/citation-style-language/styles): 54 styles, from Chicago, APA and MLA to IEEE, AMA, Vancouver, OSCOLA and Bluebook; each file is listed in vendor/manifest.json | 2026 snapshots (latest: 23 November 2026, commit 7fa488b) | their respective authors | CC BY-SA 3.0 | citation styles |
-| [CSL locale en-US](https://github.com/citation-style-language/locales) | 2026 snapshot | their respective authors | CC BY-SA 3.0 | citation terms |
+| [Tesseract.js](https://github.com/naptha/tesseract.js) 7.0.0 and [tesseract.js-core](https://github.com/naptha/tesseract.js-core) 6.1.2 | 2026 | Jerome Wu, the Tesseract OCR authors | Apache-2.0 | offline OCR (read only when used) |
+| [Tesseract English model](https://github.com/tesseract-ocr/tessdata) (eng, best_int, via @tesseract.js-data/eng 1.0.0) | 4.0.0 | Google, the Tesseract OCR authors | Apache-2.0 | offline OCR |
+| [CSL locales](https://github.com/citation-style-language/locales): en-US, en-GB, ar, cs-CZ, de-DE, el-GR, es-ES, fa-IR, fr-FR, he-IL, it-IT, ja-JP, ko-KR, la, nl-NL, pl-PL, pt-BR, pt-PT, ru-RU, sv-SE, tr-TR, uk-UA, vi-VN, zh-CN, zh-TW | 2026 snapshot | their respective authors | CC BY-SA 3.0 | citation terms in each language |
 | [OSINT Citation Generator](https://gmichaelrapp.github.io/OSINT_Cites/) core and OSINT Style Guide | 3.2.1 / 1.5 | © 2026 G. Michael Rapp | MIT (code), CC BY 4.0 (guide content) | OSINT citations |
 | [DOMPurify](https://github.com/cure53/DOMPurify) | 3.5.0 | © Cure53 and contributors | Apache-2.0 or MPL-2.0 (used here under Apache-2.0) | cleaning opened files |
 | [marked](https://github.com/markedjs/marked) | 15.0.12 | © MarkedJS; © 2011–2018 Christopher Jeffrey | MIT | Markdown to HTML |
@@ -25,6 +27,6 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 | [Alegreya](https://www.huertatipografica.com/en/fonts/alegreya-ht-pro) | 5.3.0 (Fontsource) | © 2011 The Alegreya Project Authors (Juan Pablo del Peral, Huerta Tipográfica) | SIL Open Font License 1.1 | titles and headings |
 | [Atkinson Hyperlegible Next](https://www.brailleinstitute.org/freefont/) | 5.3.0 (Fontsource) | © Braille Institute of America | SIL Open Font License 1.1 | interface typeface |
 
-The CSL styles and locale are distributed unmodified under CC BY-SA 3.0. That license covers those files only; it doesn’t extend to the rest of Anabasis.
+The CSL styles and locales are distributed unmodified under CC BY-SA 3.0. That license covers those files only; it doesn’t extend to the rest of Anabasis.
 
 The test suite (not part of the app) includes [axe-core](https://github.com/dequelabs/axe-core) 4.14.1, © Deque Systems, under MPL-2.0.

@@ -41,6 +41,12 @@ Project home is the launch pad for the project that's open. Click the Anabasis l
 - **From your notes**: a note you haven't touched in a month, a different one each day. **Another** shows the next; click it to open the note. A good way to find the idea you'd forgotten you had.
 - **Recent files**, which reopen in one click in Chrome and Edge. Other browsers ask you to pick the file.
 
+### Submissions
+
+The **Submissions** card on Project home (or *Submissions* in the command search) tracks where each piece has gone. For each submission, record the outlet, the editor, whether it was a pitch or the full piece, the date you sent it, its status (planned, sent, followed up, accepted, published, declined or withdrawn), any fee, a follow-up date and notes.
+
+**Add** starts one for the open document, sent today, with a follow-up in two weeks. The summary shows what's out, what's been accepted, the fees agreed and the next follow-up. Follow-ups appear on the calendar and in its .ics export, and **CSV** saves the list. Submissions are kept in the project file.
+
 ### The calendar
 
 ![The calendar on Project home: days shaded by words written, marks for visits, deadlines and journal entries, and the chosen day's details below](images/calendar.png)

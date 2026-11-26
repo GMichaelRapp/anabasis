@@ -4,6 +4,26 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.7.0] — 2026-11-26
+
+### Added
+- **Writing in other languages.** Page setup → Language sets a document's language from 27: spell-checking, quotation marks („ “, « », 「 」), Proofread, smart quotes, word counts (characters for Chinese and Japanese), reading aloud and citation terms (CSL locales: "Hrsg.", "trad.") follow it; Arabic, Hebrew, Persian and Urdu run right to left. Word, web and e-book exports carry the language and direction. **Mark → Language of this passage** marks a quotation or name in another language.
+- **Transliteration** (Mark → Transliterate…): Russian (ALA-LC, BGN/PCGN, simple), Ukrainian (national, ALA-LC), Bulgarian, Serbian, modern Greek (ELOT 743), ancient Greek and Arabic (ALA-LC).
+- **Special characters** (⌘/Ctrl Alt O): a palette that stays open, with accented letters, polytonic Greek, Cyrillic, transliteration marks, punctuation and symbols.
+- **Translation notes**: a note kind holding the original, its language and transliteration, and the translator; inserted with the original in the note, in brackets, in the text, or not at all, with "My translation." or "Trans. X." added.
+- **Translation in the research journal**: languages, transliteration system, how notes are inserted, and a **glossary** of terms and renderings, with renderings decided against flagged in the draft (Outline → Glossary, with Replace). **Note on translation** writes the front-matter note; the glossary exports as a document or CSV.
+- **Translation workspace** (Research desk → Translate): the original split into paragraph or sentence segments, translated beside it with transliteration and glossary checks as you type; ⌘/Ctrl Enter marks a segment done; join segments, filter to what's left, make a note from a segment, and finish as a document, side by side, or CSV.
+- **Search inside sources** (Sources → Search inside sources): the full text of linked PDFs, archive photo transcriptions, transcripts and abstracts, ignoring case and accents; a hit opens the PDF at its page, the photo or the transcript. PDF text is kept in the browser, not the project file.
+- **Offline OCR**: **Read the text** on an archive photo fills its transcription, and **Read text** in the PDF reader reads a scanned PDF's pages so they can be searched and quoted. Tesseract runs in the browser; nothing is sent anywhere.
+- **My library** (Sources → My library): sources and their notes kept in this browser for use in every project, matched by DOI, ISBN or title, year and author; export and import the shelf as a file.
+- **Submissions** (Project home, or the command search): outlet, editor, pitch or piece, date sent, status, fee, follow-up and notes; follow-ups go on the calendar and in the .ics export; CSV export.
+- **Review round-trip**: Export → For a reviewer makes one web page anyone can comment on and suggest changes to in a browser; Export → Import a review puts their comments in the margin and their changes in as suggestions under their name, located by context so they land correctly after further edits, with a draft saved first and unplaced notes listed.
+
+### Changed
+- The page's content security policy allows WebAssembly (`'wasm-unsafe-eval'`), which the offline text reader needs. The addresses it may connect to are unchanged.
+- The file is larger (about 22 MB) because it carries the text reader and its English model, and 24 citation locales.
+- Margin comments show their author when it isn't you.
+
 ## [2.6.3] — 2026-11-26
 
 ### Fixed

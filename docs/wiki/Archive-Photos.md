@@ -36,6 +36,10 @@ Then type the **transcription** beside the image. A few conventions help later:
 
 The strip on the left groups photos by box and folder, and ticks the ones you've transcribed. **← →** move between photos. **Actual size** shows the image at full resolution for hard-to-read hands, and **Rotate** turns a sideways photo.
 
+### Read the text
+
+For a typed or printed document, **Read the text** beside the transcription reads the photo on this computer and fills in the transcription, for you to correct against the image. Nothing is sent anywhere. It reads English, and handwriting comes out poorly, so it's a start for a typescript or a printed page rather than a substitute for reading.
+
 ## Notes from a photo
 
 - Select words in the transcription and choose **Quote note**. The note quotes them and cites the collection, with **"box 3, folder 12, item 4"** as its locator. Chicago style prints that after the collection's details, as archival citations usually do.

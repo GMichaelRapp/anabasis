@@ -33,6 +33,8 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Cross-references to figures, tables, equations, headings and chapters that renumber themselves and become links in Word, PDF and e-books.
 - Credit lines and permission status for every figure and table, with a permissions log for your editor; a link check against the Wayback Machine that keeps archived copies of your web sources.
 - A PDF for reviewers with numbered lines, and Word in standard manuscript format for submissions.
+- **Reviews from anyone**: send a reviewer one web page they can comment on and suggest changes to in any browser, with nothing to install, then import their review: comments in your margin, changes as suggestions, placed correctly even after you've kept writing.
+- **Write in 27 languages**: spell-checking, quotation marks, citation terms, word counts and reading aloud follow the document's language, Arabic, Hebrew, Persian and Urdu run right to left, and a quotation can be marked in a language of its own.
 - Equations written in TeX, in a sentence or on their own line and numbered, drawn offline by MathJax. They go into Word as real, editable Word equations and come back from Word as TeX; LaTeX, Markdown and Pandoc keep the TeX.
 - Citations in 55 styles: Chicago (notes or author-date), APA, MLA, MHRA, Harvard, APSA, ASA, OSCOLA, Bluebook, AMA, Vancouver, CSE, IEEE, Nature and more, plus the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
 - Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero's CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating.
@@ -56,11 +58,15 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Sources marked primary, secondary or tertiary, with notes that inherit the type and a bibliography that can be grouped by it.
 - **A research guide** in the journal: what each stage of a project is for and how to tell when it's done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary.
 - **A literature grid** that sets your sources against your questions and themes, and drafts a **literature review** from it, a cited section for each theme; and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
-- **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image, and make quote notes that cite the box and folder.
+- **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image (or have a typed page read for you, offline), and make quote notes that cite the box and folder.
+- **Translation**: translation notes that keep the original beside your translation, a glossary checked as you write, standard transliteration for Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic, a special-characters palette, and a workspace for translating a passage segment by segment.
+- **Search inside sources**: the full text of your PDFs, photo transcriptions and interview transcripts, opened at the page. Scanned PDFs are read on your computer (Tesseract), never uploaded.
+- **My library**: a shelf of sources and their notes in your browser, to add to any project.
 - A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
 - Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
 - **A calendar** on Project home: the words you wrote each day, deadlines, journal entries, and your archive visits and interviews, exported as an .ics file for any calendar app.
 - **A scratch pad** for jotting now and sorting later, turned into notes (or a journal entry) a passage at a time; **note templates** for interview logs, archive visits, source summaries, field notes and meetings, plus your own; a **note trash** that keeps deleted notes 30 days; **copy citation** in any style; and **⌘/Ctrl E** for the documents, notes and sources you opened last.
+- **Submissions**: where each piece has gone, its status and fee, with follow-ups on the calendar.
 - Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
 
 **Figures**
@@ -121,7 +127,7 @@ On phones and tablets the layout adapts: the sidebar becomes a drawer, toolbar b
 
 ## Your data
 
-Your project lives in two places: the `.json` file you save, and a working copy in your browser so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: to look up a source, check links or retractions, or back up to GitHub. [More about privacy](docs/privacy.md).
+Your project lives in two places: the `.json` file you save, and a working copy in your browser so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: to look up a source, check links or retractions, or back up to GitHub. Reading scanned pages, searching your sources and your library all happen on your computer. [More about privacy](docs/privacy.md).
 
 The project file is plain JSON, documented in [docs/file-format.md](docs/file-format.md), so your work is never locked in.
 

@@ -26,7 +26,7 @@
 <meta charset="utf-8">
 <!-- What this page may load or contact. Anabasis runs entirely in the browser: it reaches the network only to look up
      a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org https://archive.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org https://archive.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -2023,6 +2023,93 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
 .sw-list li .m{font-size:11.5px;color:var(--muted);flex:none}
 .sw-list li .m:first-child{width:4.5em}
 @media (max-width:640px){.trash-list li{grid-template-columns:1fr auto auto}.trash-list li > .small{grid-column:1/-1}}
+/* 2.7: languages, translation, special characters */
+#editor span[lang]{text-decoration:underline dotted color-mix(in srgb,var(--accent) 45%,transparent);text-underline-offset:4px;text-decoration-thickness:1px}
+#editor span[dir=rtl]{unicode-bidi:isolate}
+#page.rtl .docbody,#page.rtl #editor{text-align:right}
+::highlight(cp-gloss){background:var(--bad-bg);text-decoration:underline wavy var(--bad-ink);text-underline-offset:3px}
+.mk-lang{font:600 12px/1 var(--ui);display:inline-grid;place-items:center}
+.tr-set{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px 14px;align-items:end;margin:10px 0 4px;padding:12px;border:1px solid var(--line2);border-radius:8px;background:var(--panel)}
+.tr-set label.inline{grid-column:1/-1}
+.j-sub{margin:18px 0 6px;font-size:13px;display:flex;gap:8px;align-items:baseline}
+.tr-add{display:grid;grid-template-columns:1.1fr 1fr 1.3fr 1fr auto;gap:6px;margin-bottom:8px}
+.tr-add.tr-dec{grid-template-columns:1fr auto}
+.tr-gl{table-layout:fixed;width:100%}
+.tr-gl input{width:100%;min-width:0}
+.tr-eg{margin:-2px 0 8px}
+.tr-gl td.tr-bad{color:var(--bad-ink)}
+.tr-decs{list-style:none;padding:0;margin:0}
+.tr-decs li{padding:6px 0;border-bottom:1px solid var(--line2);font-size:14px}
+.tr-orig{border-left:3px solid var(--accent-soft);padding-left:10px;margin:6px 0 4px}
+.note-orig{min-height:84px;font-family:var(--serif,Georgia),serif}
+#tgList li{display:flex;gap:6px;align-items:center;justify-content:space-between}
+dialog#spcDlg{position:fixed;inset:auto 18px 18px auto;left:auto;top:auto;transform:none;max-height:none;margin:0;width:min(460px,calc(100vw - 24px));padding:0;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);box-shadow:var(--shadow),0 16px 40px -12px rgba(0,0,0,.35);z-index:70}
+dialog#spcDlg[open]{display:flex;flex-direction:column;animation:none}
+.ch-dlg header{display:flex;align-items:center;gap:6px;padding:8px 10px 8px 14px;border-bottom:1px solid var(--line2);cursor:move;touch-action:none;user-select:none}
+.ch-dlg header h3{margin:0;font-size:14px;flex:1}
+.ch-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px 0}
+.ch-tabs button{border:0;background:none;padding:5px 9px;border-radius:6px 6px 0 0;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.ch-tabs button.on{background:var(--panel);color:var(--ink);font-weight:600}
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(34px,1fr));gap:3px;padding:8px;max-height:240px;overflow:auto;background:var(--panel)}
+.chb{height:34px;min-width:34px;padding:0;font:18px/1 Georgia,"Times New Roman",serif;border:1px solid var(--line2);border-radius:5px;background:var(--page);color:var(--ink)}
+.chb:hover,.chb:focus-visible{border-color:var(--accent);background:var(--accent-soft)}
+.chb.big{font-size:28px;height:48px;min-width:56px}
+.ch-poly{grid-column:1/-1;display:grid;gap:6px}
+.ch-poly .row{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.chp{padding:4px 8px;font-size:13px;border:1px solid var(--line2);border-radius:5px;background:var(--page);color:var(--ink)}
+.chp.on{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.ch-tip{margin:0;padding:6px 12px 9px}
+@media (max-width:640px){.tr-add{grid-template-columns:1fr 1fr}.tr-add button{grid-column:1/-1}}
+/* 2.7: the translation workspace */
+.tw-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:6px}
+.tw-title{font:600 20px/1.2 var(--serif,Georgia),serif;border:0;background:transparent;padding:2px 0;min-width:12em;flex:1}
+.tw-prog{flex:0 0 160px;height:8px;border-radius:99px;background:var(--line2);overflow:hidden}
+.tw-prog i{display:block;height:100%;background:var(--ok-ink,#2f7a4f)}
+.tw-tip{margin:0 0 10px}
+.tw-segs{display:grid;gap:8px}
+.tw-seg{display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1fr);gap:10px;padding:10px;border:1px solid var(--line2);border-radius:8px;background:var(--page)}
+.tw-seg.st-done{background:color-mix(in srgb,var(--ok-bg,#e6f2ea) 55%,var(--page))}
+.tw-st{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--line);background:var(--page);font-size:12px;font-variant-numeric:tabular-nums;padding:0}
+.st-draft .tw-st{border-color:var(--sun);background:color-mix(in srgb,var(--sun) 18%,var(--page))}
+.st-done .tw-st{border-color:var(--ok-ink,#2f7a4f);background:var(--ok-ink,#2f7a4f);color:#fff}
+.tw-otext{font:15.5px/1.55 var(--serif,Georgia),serif;white-space:pre-wrap}
+.tw-tl{margin-top:4px;font-style:italic}
+.tw-hints{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tw-h{font-size:11.5px;padding:1px 7px;border-radius:99px;background:var(--line2)}
+.tw-h.ok{background:var(--ok-bg);color:var(--ok-ink)} .tw-h.bad{background:var(--bad-bg);color:var(--bad-ink);font-weight:600}
+.tw-acts{display:flex;gap:4px;margin-top:4px;opacity:.55}
+.tw-seg:hover .tw-acts,.tw-seg:focus-within .tw-acts{opacity:1}
+.tw-t{min-height:64px;resize:vertical;font:15.5px/1.55 var(--serif,Georgia),serif}
+.tw-more{margin-top:14px}
+.tw-more summary{cursor:pointer;font-size:13px;color:var(--muted)}
+.tw-form{max-width:760px;text-align:left}
+.tw-new{text-align:left}
+@media (max-width:900px){.tw-seg{grid-template-columns:34px 1fr}.tw-seg .tw-t{grid-column:2}}
+.ftx-list{max-height:60vh;overflow:auto}
+.ftx-src h4{margin:12px 0 4px;font-size:14px}
+.ftx-src ul{list-style:none;padding:0;margin:0}
+.ftx-hit{display:grid;grid-template-columns:7em 1fr;gap:10px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line2);background:none;padding:7px 4px;font-size:13.5px;line-height:1.45;color:var(--ink)}
+.ftx-hit:hover,.ftx-hit:focus-visible{background:var(--accent-soft)}
+.ftx-where{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.ftx-hit mark{background:var(--sun-soft,#f6e3a8);color:inherit;padding:0 1px}
+.lib-list{list-style:none;padding:0;margin:0;max-height:52vh;overflow:auto;border-top:1px solid var(--line2)}
+.lib-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line2)}
+.lib-list li.here{opacity:.7}
+.lib-t{font-size:14px;line-height:1.4}
+.lib-here{color:var(--ok-ink)}
+dialog#subDlg{width:min(1180px,96vw)}
+.sub-wrap{overflow-x:auto}
+.sub-table{table-layout:fixed;width:100%;min-width:920px}
+.sub-table input,.sub-table select{width:100%;min-width:0;font-size:13px}
+.sub-table td.sub-late input{border-color:var(--danger);color:var(--danger)}
+.sub-table tr.sub-accepted td,.sub-table tr.sub-published td{background:color-mix(in srgb,var(--ok-bg) 60%,transparent)}
+.sub-table tr.sub-rejected td,.sub-table tr.sub-withdrawn td{opacity:.65}
+.hm-list .m.late{color:var(--danger);font-weight:600}
+dialog#ocrDlg{position:fixed;inset:auto auto 18px 18px;margin:0;width:min(460px,calc(100vw - 24px));max-height:none;padding:0;border:1px solid var(--line);border-radius:10px;background:var(--page);color:var(--ink);box-shadow:var(--shadow),0 16px 40px -12px rgba(0,0,0,.35);z-index:70}
+dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
+#ocrDlg header{display:flex;align-items:center;padding:8px 10px 6px 14px;border-bottom:1px solid var(--line2)}#ocrDlg header h3{flex:1;margin:0;font-size:14px}
+#ocrDlg p{margin:6px 14px}#ocrDlg textarea{margin:0 12px;min-height:200px;font:14px/1.5 var(--serif,Georgia),serif}
+#ocrDlg footer{display:flex;gap:6px;padding:8px 12px}
 </style>
 <style id="pageRule"></style>
 </head>
@@ -2061,6 +2148,8 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <button data-x="pandoc">Pandoc / Quarto package (.md + .bib + style)</button>
       <button data-x="latex">LaTeX package (.tex + .bib)</button>
       <button data-x="notesmd">All notes as Markdown</button>
+      <button data-x="rvsend">For a reviewer: comments and suggestions in any browser…</button>
+      <button data-x="rvimport">Import a review…</button>
       <button data-x="annot">Annotated bibliography (new document)</button>
       <button data-x="litrev">Literature review draft (new document)</button>
       <button data-x="refs">Sources as BibTeX, RIS or CSL-JSON…</button>
@@ -2113,6 +2202,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
         <h6>Estimative language <span class="badge" id="estCount"></span> <label class="hl"><input type="checkbox" id="estToggle"> check</label></h6><ul class="outline" id="estList"></ul>
         <h6>Corroboration <span class="badge" id="corCount"></span> <label class="hl"><input type="checkbox" id="corToggle"> check</label></h6><ul class="outline" id="corList"></ul>
         <h6>Close to your notes <span class="badge" id="pxCount"></span> <label class="hl"><input type="checkbox" id="pxToggle"> check</label></h6><ul class="outline" id="pxList"></ul>
+        <h6 id="tgHead" class="hidden">Translation glossary <span class="badge" id="tgCount"></span></h6><ul class="outline hidden" id="tgList"></ul>
         <h6>House style <span class="badge" id="hsCount"></span> <button class="ghost small hl" id="btnHouse">Rules…</button></h6><ul class="outline" id="hsList"></ul>
         <h6>Accessibility <span class="badge" id="a11yCount"></span></h6><ul class="outline" id="a11yList"></ul>
         <h6>Margin notes <span class="badge" id="cmtCount"></span></h6><ul class="outline" id="cmtList"></ul>
@@ -2149,7 +2239,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
         <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
         <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
-        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
+        <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnLibrary" role="menuitem" title="Sources kept in this browser for every project: save them here, add them to any project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16M9 4v16M14 5l4 15M20 20H2"/></svg><span>My library</span></button><button id="btnFtx" role="menuitem" title="Find a word or phrase in the text of every attached PDF, photo transcription and transcript"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/></svg><span>Search inside sources</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
       </div>
       <ul class="list" id="sourceList"></ul>
     </section>
@@ -2217,6 +2307,8 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
         <button data-m="q" role="menuitem"><span class="mk-i mk-q" aria-hidden="true">?</span>Link to a question… <kbd>Q</kbd></button>
         <button data-m="soc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.5 5.5 8 7.6h8l2.5-2.1V14a6.5 6.5 0 0 1-13 0z"/><circle cx="9.3" cy="11" r="2"/><circle cx="14.7" cy="11" r="2"/><path d="m11.2 13.6.8 1.3.8-1.3"/></svg></span>Ask Socrates… <kbd>S</kbd></button>
         <button data-m="orc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg></span>Consult the Oracle… <kbd>O</kbd></button>
+        <button data-m="lang" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">あ</span>Language of this passage…</button>
+        <button data-m="tl" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">Ꙗ</span>Transliterate…</button>
         <hr>
         <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
       </div>
@@ -2248,7 +2340,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <div class="board-bar">
         <button id="deskBack" class="ghost">← Back to draft</button>
         <b class="rel-head">Research desk</b>
-        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="lit">Literature grid</button><button role="tab" data-dv="codes">Codes</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
+        <nav class="desk-tabs" id="deskTabs" role="tablist" aria-label="Research desk views"><button role="tab" data-dv="threads">Threads</button><button role="tab" data-dv="claims">Claims</button><button role="tab" data-dv="grid">Evidence grid</button><button role="tab" data-dv="lit">Literature grid</button><button role="tab" data-dv="codes">Codes</button><button role="tab" data-dv="translate">Translate</button><button role="tab" data-dv="review">Review</button><button role="tab" data-dv="questions">Questions</button><button role="tab" data-dv="journal">Journal</button><button role="tab" data-dv="data">Data</button><button role="tab" data-dv="about">Everything about…</button></nav>
         <div class="spacer"></div>
         <span id="deskTools" class="desk-tools"></span>
       </div>
@@ -2374,7 +2466,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <button class="ghost icon" id="rdPrev" title="Previous page">‹</button><input id="rdPage" aria-label="Page" value="1"><span class="small muted" id="rdOf">/ 0</span><button class="ghost icon" id="rdNext" title="Next page">›</button>
       <span class="sep"></span><button class="ghost icon" id="rdZoomOut" title="Zoom out">−</button><span class="small" id="rdZoom">100%</span><button class="ghost icon" id="rdZoomIn" title="Zoom in">+</button><button class="ghost small" id="rdFit" title="Fit width">Fit</button>
       <span class="sep"></span><input type="search" id="rdFind" placeholder="Find (Enter)"><span class="small muted" id="rdFindN"></span>
-      <label class="rd-off" title="If PDF page 15 is printed page 1, enter 14">Page offset <input id="rdOffset" inputmode="numeric" placeholder="0"></label>
+      <button class="ghost small" id="rdOcr" title="Read the text of a scanned PDF, on this computer, so you can search and quote it">Read text</button><label class="rd-off" title="If PDF page 15 is printed page 1, enter 14">Page offset <input id="rdOffset" inputmode="numeric" placeholder="0"></label>
     </div>
     <div class="rd-pages" id="rdPages"><div class="rd-empty">Open a PDF, or drop one anywhere on this window.<br><br>Select a passage to turn it into a quote note with the page number filled in. PDFs linked to a source are kept in this browser, not in your project file.</div></div>
     <div class="rd-selbar hidden" id="rdSelBar"><button class="primary" data-k="quote">Quote note</button><button data-k="paraphrase">Paraphrase note</button><span class="small muted" id="rdSelPage"></span></div>
@@ -2436,6 +2528,8 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <div><label>Paper (PDF)</label><select id="suPaper"><option value="letter">US Letter</option><option value="A4">A4</option></select></div>
       <div><label>Bibliography lists</label><select id="suBib"><option value="cited">Only sources cited</option><option value="all">Every source in project</option><option value="none">No bibliography</option></select><label class="inline small" style="margin-top:4px"><input type="checkbox" id="suBibSplit"> Group by source type (primary, secondary…)</label></div>
     </div>
+    <div class="grid2"><div><label for="suLang">Language</label><select id="suLang" aria-describedby="suLangNote"></select></div>
+      <div class="small muted" id="suLangNote" style="align-self:end">Sets spell-checking (with your browser’s dictionary for it), quotation marks, citation terms such as “edited by”, and right-to-left for Arabic, Hebrew, Persian and Urdu.</div></div>
     <div class="grid3"><div><label>Word target</label><input id="suTarget" inputmode="numeric" placeholder="e.g. 2500"></div>
       <div><label>In a manuscript, this is</label><select id="suRole"><option value="front">Front matter</option><option value="body">A chapter</option><option value="back">Back matter</option></select></div>
       <div><label>PDF notes</label><select id="suPdfNotes"><option value="foot">Footnotes (bottom of page)</option><option value="end">Endnotes (Notes section)</option></select></div></div>
@@ -2543,7 +2637,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
     <div class="ph-side" id="phSide">
       <div class="grid3"><div><label for="ph_box">Box</label><input id="ph_box"></div><div><label for="ph_folder">Folder</label><input id="ph_folder"></div><div><label for="ph_item">Item or page</label><input id="ph_item"></div></div>
       <div class="grid2"><div><label for="ph_date">Date of the document</label><input id="ph_date" placeholder="e.g. 3 May 1680"></div><div><label for="ph_caption">What it is</label><input id="ph_caption" placeholder="e.g. Letter, Otermín to the viceroy"></div></div>
-      <label for="phText">Transcription</label><textarea id="phText" rows="9" spellcheck="true" placeholder="Type what the document says. Mark doubtful readings [?] and gaps […]."></textarea>
+      <label for="phText" style="display:flex;justify-content:space-between;align-items:end">Transcription <button type="button" class="ghost small" id="phOcr" title="Read the text in the photo, on this computer (printed text works best)">Read the text</button></label><textarea id="phText" rows="9" spellcheck="true" placeholder="Type what the document says. Mark doubtful readings [?] and gaps […]."></textarea>
       <div class="row"><button id="phQuote" title="Save the words you've selected in the transcription as a quote note">Quote note</button><button id="phIdea">Note on this</button><button id="phDel" class="ghost danger" style="margin-left:auto">Remove</button></div>
       <h6>Notes from this photo</h6><ul class="ph-notes" id="phNotes"></ul>
       <p class="small muted ph-meta" id="phMeta"></p>
@@ -2593,6 +2687,61 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
 <dialog id="swDlg" class="wide pal" aria-label="Recent documents, notes and sources"><div class="dlg">
   <div class="body" style="padding-top:14px"><input id="swQ" placeholder="Recent documents, notes and sources: type to filter" autocomplete="off" aria-controls="swList"><ul class="pick sw-list" id="swList" role="listbox"></ul></div>
 </div></dialog>
+<dialog id="lmDlg" aria-labelledby="lmTitle"><div class="dlg">
+  <h3 id="lmTitle">Language of this passage</h3>
+  <div class="body"><label for="lmLang">Language</label><select id="lmLang"></select>
+    <p class="small muted" style="margin:8px 0 0">The browser spell-checks the passage in that language (if it has the dictionary), screen readers pronounce it properly, and Word and web exports carry it.</p></div>
+  <footer><button id="lmRemove" class="danger ghost hidden">Remove the mark</button><span class="spacer"></span><button id="lmCancel">Cancel</button><button id="lmOk" class="primary">Mark</button></footer>
+</div></dialog>
+<dialog id="trlDlg" class="wide" aria-labelledby="trlTitle"><div class="dlg">
+  <h3 id="trlTitle">Transliterate</h3>
+  <div class="body">
+    <label for="trlSys">System</label><select id="trlSys"></select>
+    <div class="grid2"><div><label for="trlIn">Original</label><textarea id="trlIn" rows="4" dir="auto" placeholder="Paste a name, a title or a passage"></textarea></div>
+      <div><label for="trlOut">Transliteration</label><textarea id="trlOut" rows="4" readonly></textarea></div></div>
+    <p class="small tip hidden" id="trlNote"></p>
+    <label for="trlForm">Put in the text</label><select id="trlForm"><option value="only">The transliteration</option><option value="both">Transliteration (original)</option><option value="orig">Original (transliteration)</option></select>
+    <p class="small muted" style="margin:8px 0 0">Tables follow the published standards. Names with a familiar English form (Tchaikovsky, Yeltsin, Athens) usually keep it, so check before you replace.</p>
+  </div>
+  <footer><button id="trlCopy">Copy</button><span class="spacer"></span><button id="trlClose">Close</button><button id="trlReplace" class="primary">Replace the selection</button></footer>
+</div></dialog>
+<dialog id="spcDlg" class="ch-dlg" aria-labelledby="spcTitle">
+  <header title="Drag to move"><h3 id="spcTitle">Special characters</h3><button type="button" class="ghost small" id="spcCaps" aria-pressed="false">Capitals</button><button type="button" class="ghost small" id="spcClose" aria-label="Close special characters">✕</button></header>
+  <div class="ch-tabs" id="spcTabs" role="tablist" aria-label="Character sets"></div>
+  <div class="ch-grid" id="spcGrid"></div>
+  <p class="small muted ch-tip">Click where the character should go, then choose it. The palette stays open while you type (⌘/Ctrl Alt O).</p>
+</dialog>
+<dialog id="ftxDlg" class="wide" aria-labelledby="ftxTitle"><div class="dlg">
+  <h3 id="ftxTitle">Search inside sources</h3>
+  <div class="body"><input id="ftxQ" type="search" placeholder="A name, a place, a phrase" aria-label="Search inside sources" autocomplete="off"><p class="small muted" id="ftxStatus" role="status"></p><div id="ftxList" class="ftx-list"></div></div>
+  <footer><span class="spacer"></span><button id="ftxClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="libDlg" class="wide" aria-labelledby="libTitle"><div class="dlg">
+  <h3 id="libTitle">My library</h3>
+  <div class="body"><input id="libQ" type="search" placeholder="Find by author, title, journal or project" aria-label="Find in the library" autocomplete="off">
+    <p class="small muted" id="libCount"></p><ul class="lib-list" id="libList"></ul>
+    <label class="inline small"><input type="checkbox" id="libNotes" checked> Add their notes too</label></div>
+  <footer><button id="libImport" class="ghost">Import…</button><button id="libExport" class="ghost">Export…</button><input type="file" id="libFile" accept=".json,application/json" hidden><span class="spacer"></span><button id="libSaveAll">Save this project’s sources</button><button id="libAddSel" class="primary" disabled>Add to this project</button><button id="libClose">Done</button></footer>
+</div></dialog>
+<dialog id="subDlg" class="xwide" aria-labelledby="subTitle"><div class="dlg">
+  <h3 id="subTitle">Submissions</h3>
+  <div class="body"><p class="small" id="subSum"></p>
+    <div class="sub-wrap"><table class="cl-table sub-table hidden" id="subTable"><colgroup><col style="width:13%"><col style="width:12%"><col style="width:10%"><col style="width:8.5%"><col style="width:11%"><col style="width:10%"><col style="width:11%"><col style="width:7.5%"><col><col style="width:32px"></colgroup>
+      <thead><tr><th scope="col">Piece</th><th scope="col">Outlet</th><th scope="col">Editor</th><th scope="col">Kind</th><th scope="col">Sent</th><th scope="col">Status</th><th scope="col">Follow up</th><th scope="col">Fee</th><th scope="col">Notes</th><th scope="col"><span class="sr-only">Delete</span></th></tr></thead><tbody id="subList"></tbody></table></div></div>
+  <footer><button id="subCsv" class="ghost">CSV</button><span class="spacer"></span><button id="subAdd">+ Add a pitch or submission</button><button id="subClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="rvsDlg" aria-labelledby="rvsTitle"><div class="dlg">
+  <h3 id="rvsTitle">Send for review</h3>
+  <div class="body"><p class="small">Anabasis makes one file. Your reviewer opens it in any browser, with nothing to install or sign up for, selects words to comment on them or suggest a change, and sends back the small file it saves. <b>Import a review…</b> then puts their comments in the margin and their changes in as suggestions you can accept or reject.</p>
+    <label for="rvsMsg">A note at the top <span class="muted">(optional)</span></label><textarea id="rvsMsg" rows="4"></textarea><input type="file" id="rviFile" accept=".json,application/json" hidden></div>
+  <footer><button id="rvsCancel">Cancel</button><button id="rvsGo" class="primary">Save the review file</button></footer>
+</div></dialog>
+<dialog id="ocrDlg" class="ocr-dlg" aria-labelledby="ocrTitle">
+  <header><h3 id="ocrTitle">Text of the page</h3><button type="button" class="ghost small" id="ocrClose" aria-label="Close">✕</button></header>
+  <p class="small muted" id="ocrStatus" role="status"></p>
+  <textarea id="ocrText" rows="12" aria-label="Text read from the page"></textarea>
+  <footer><button type="button" class="small" id="ocrStopBtn">Stop</button><span class="spacer"></span><button type="button" class="small" id="ocrCopy">Copy</button><button type="button" class="small primary" id="ocrQuote">Quote note from the selection</button></footer>
+</dialog>
 <dialog id="dupDlg" class="wide" aria-labelledby="dupTitle"><div class="dlg">
   <h3 id="dupTitle">Duplicate sources</h3>
   <div class="body">
@@ -3341,6 +3490,8 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
     <ul>
       <li><b>Export → PDF for reviewers</b> numbers every line (starting again on each page), widens the outer margin for handwritten notes, and marks each page “Review copy” with the date, so comments can say “p. 4, line 12”.</li>
       <li><b>Export → Word in manuscript format</b> sets what agents and editors expect: Times New Roman 12, double-spaced, one-inch margins, indented paragraphs, # for section breaks, “Surname / Short title / page” at the top of each page after the first, and a first page with your name, contact details, rounded word count, title and byline. Footnotes stay; margin notes are left out. It’s also an output in <b>Compile manuscript</b>.</li>
+      <li><b>Export → For a reviewer…</b> makes one web page of the open document, with a note to the reader if you like. Send it to anyone: they open it in any browser, with nothing to install, select words and choose <b>Comment</b> or <b>Suggest a change</b>, and press <b>Save my review</b> to download a small file to send back. Their notes survive closing the page.</li>
+      <li><b>Export → Import a review…</b> takes that file. Comments go in the margin under the reviewer’s name; changes go in as suggestions you accept or reject, as in Suggest mode. Each note is found by its words and what’s around them, so it lands in the right place even after you’ve kept writing. A draft is saved first, and any note whose words have gone is listed so nothing is lost.</li>
     </ul>
     <h4>Equations</h4>
     <ul>
@@ -3404,6 +3555,26 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <li>File each photo by <b>box</b>, <b>folder</b> and <b>item</b>, and note the document’s date and what it is. New photos take the box and folder of the photo you’re on, so a run of pictures from one folder is filed in one go. <kbd>←</kbd> <kbd>→</kbd> move between photos.</li>
       <li>Type a <b>transcription</b> beside the image. Select words in it and choose <b>Quote note</b>: the note cites the collection, with the box, folder and item as its locator.</li>
       <li>Photos are kept in this browser (like PDFs), resized to 2,400 pixels; the transcriptions, notes and a SHA-256 fingerprint of each original file are in the project file. On another computer, add the photos again to see them.</li>
+      <li><b>Read the text</b> reads a typed or printed document in the photo and puts it in the transcription for you to correct. It runs on this computer (Tesseract, for English), so nothing is sent anywhere. Handwriting reads poorly; check every line against the image.</li>
+    </ul>
+    <h4>Other languages &amp; transliteration</h4>
+    <ul>
+      <li><b>Page setup → Language</b> sets the document’s language. Spell-checking, quotation marks (“ ” „ “ « » 「 」), Proofread, word counts (Chinese and Japanese count characters), reading aloud and the citation terms (“Hrsg.”, “trad.”, “éd.”) follow it, and Arabic, Hebrew, Persian and Urdu run right to left. Word, web page and e-book exports carry it.</li>
+      <li><b>Mark → Language of this passage…</b> marks a quotation or a name in another language, so it’s spell-checked and read aloud in that language and runs in its own direction.</li>
+      <li><b>Mark → Transliterate…</b> romanizes selected text by a standard table: Russian (ALA-LC, BGN/PCGN or simple), Ukrainian (national or ALA-LC), Bulgarian, Serbian, Greek (modern ELOT or ancient) and Arabic (ALA-LC, without vowels that aren’t written). Replace the selection, or keep both.</li>
+      <li><b>Special characters</b> (<kbd>⌘/Ctrl Alt O</kbd>) stays open while you type: accented letters, Greek with breathings and accents, Cyrillic, transliteration marks (ā ḥ ṣ ʿ ʾ), punctuation and symbols. Click to insert where you were typing, in the page or any field.</li>
+    </ul>
+    <h4>Translating</h4>
+    <ul>
+      <li>A <b>translation note</b> (a note of kind Translation) holds the original, its language and transliteration beside your translation, and who translated it. When you insert it, your translation goes in the text with the original in the note, the original in brackets after it, or not at all; or the original goes in the text with your translation in the note (choose in the journal’s Translation section). The note adds “My translation.” or “Trans. X.” for you.</li>
+      <li><b>Research → Journal → Translation</b> records the languages, the system you transliterate by, and a <b>glossary</b>: each term, its rendering, and renderings you’ve decided against. The glossary is checked as you write (Outline → Glossary): a term rendered the way you decided against is highlighted, with Replace. <b>Note on translation</b> writes the front-matter note from what you’ve recorded.</li>
+      <li><b>Research desk → Translate</b> is a workspace for a longer passage: paste the original, split it into paragraphs or sentences, and translate each segment beside it, with its transliteration and the glossary’s renderings shown and checked as you type. <kbd>⌘/Ctrl Enter</kbd> marks a segment done and moves on. Join segments, filter to what’s left, make a translation note from a segment, and finish with <b>Make a document</b> (untranslated segments highlighted), <b>Side by side</b>, or a CSV.</li>
+    </ul>
+    <h4>My library, searching sources &amp; submissions</h4>
+    <ul>
+      <li><b>Sources → My library</b> is a shelf in this browser that every project can use. <b>Save to library</b> on a source (or <b>Save all</b>) keeps it with its notes; in another project, pick sources and choose <b>Add</b>, with or without their notes. The same source isn’t kept twice: it’s matched by DOI, ISBN or title, year and author. <b>Export</b> saves the shelf as a file for another computer or browser; <b>Import</b> brings one in.</li>
+      <li><b>Sources → Search inside sources</b> finds words in the full text of your PDFs, your archive photo transcriptions, interview transcripts and abstracts, without minding capitals or accents. Click a hit to open the PDF at its page, the photo or the transcript. The PDF text is kept in this browser, not in the project file. A scanned PDF has no text to search: open it and choose <b>Read text</b> in the reader to read its pages on this computer first.</li>
+      <li><b>Submissions</b> (on Project home, or from the command search) tracks where each piece has gone: the outlet, the editor, pitch or full piece, the date sent, its status and a fee. A new one takes the open document, today’s date and a follow-up in two weeks. Follow-ups appear on the calendar and in the .ics export, and <b>CSV</b> saves the list.</li>
     </ul>
     <h4>Settings for the screen</h4>
     <ul>
@@ -3526,6 +3697,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
       <li>Select a passage, then click <b>Quote note</b> (saved with the page number) or <b>Paraphrase note</b> (opens so you can rewrite it). If the PDF’s page numbers differ from the printed ones, set the <b>page offset</b> (PDF page 15 = printed 1 → 14). PDFs with built-in page labels are handled automatically.</li>
       <li>Quote and paraphrase notes made in the reader leave a <b>highlight</b> on the PDF, yellow for quotes and blue for paraphrases, with a marker in the margin that opens the note (or finds it in the note pad). The highlights are kept with the notes, so they come back whenever you open the PDF.</li>
       <li>Link the PDF to a source with the menu at the top, or choose <i>New source from this PDF</i>. That uses the PDF’s DOI when it has one, otherwise its title, author and date. Linked PDFs are kept in this browser so they reopen from the source, but they’re never put in your project file.</li>
+      <li><b>Read text</b> (in the reader’s top bar) reads a scanned PDF’s pages on this computer, so they can be searched and quoted. It takes a few seconds a page; you can stop it, copy the text, or quote what it read.</li>
     </ul>
     <h4>Index</h4>
     <ul>

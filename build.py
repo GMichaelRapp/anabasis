@@ -75,8 +75,17 @@ def build():
     lazy += '<script type="application/json" id="data-admin1">' + safe(read(DATA / 'admin1.json')) + '</script>\n'
     lazy += '<script type="application/json" id="data-rivers">' + safe(read(DATA / 'rivers.json')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-math">/*! MathJax 3.2.2 | Apache-2.0 | (c) The MathJax Consortium | mathjax.org */' + safe(read(VJ / 'mathjax-tex-svg-full.js')) + '</script>\n'
+    # 2.7: offline OCR (Tesseract.js, its WebAssembly core, and the English model), read only when used
+    OCR = ROOT / 'vendor' / 'ocr'
+    lazy += '<script type="text/plain" id="lib-ocr">/*! Tesseract.js 7.0.0 | Apache-2.0 | github.com/naptha/tesseract.js */' + safe(read(OCR / 'tesseract.min.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-ocr-worker">/*! Tesseract.js worker 7.0.0 | Apache-2.0 */' + safe(read(OCR / 'worker.min.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-ocr-core">/*! tesseract.js-core 6.1.2 (Tesseract OCR, simd-lstm) | Apache-2.0 */' + safe(read(OCR / 'tesseract-core-simd-lstm.wasm.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-ocr-eng">' + base64.b64encode((OCR / 'eng.traineddata.gz').read_bytes()).decode() + '</script>\n'
     lazy += '<script type="text/plain" id="lib-paged">/*! Paged.js 0.4.3 | MIT | pagedjs.org */' + read(VJ / 'paged.min.js') + '</script>\n'
     lazy += f'<script type="text/plain" id="csl-locale">{read(CSL / "locales-en-US.xml")}</script>\n'
+    for f in sorted(CSL.glob('locales-*.xml')):  # 2.7: citation terms for documents written in other languages
+        code = f.stem[len('locales-'):]
+        if code != 'en-US': lazy += f'<script type="text/plain" id="csl-locale-{code}">{read(f)}</script>\n'
     vendor = '\n'.join(read(VJ / f) for f in EAGER)
     for name, chunk in (('vendor', vendor), ('app', app)):
         if '</script' in chunk.lower(): sys.exit(f'{name} code contains "</script", which would break the page')

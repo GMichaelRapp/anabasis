@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.6.3';
+const APP_VERSION = '2.7.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -143,7 +143,8 @@ function normalize(p) {
   out.notes = Array.isArray(out.notes) ? out.notes : [];
   out.sources = Array.isArray(out.sources) ? out.sources : [];
   out.docs = out.docs.map(x => { const b = newDoc(); return Object.assign(b, x, { meta: Object.assign(b.meta, x.meta || {}), layout: Object.assign(b.layout, x.layout || {}) }); })
-    .map(x => (STYLES[x.style] ? x : Object.assign(x, { style: DEFAULT_STYLE })));
+    .map(x => (STYLES[x.style] ? x : Object.assign(x, { style: DEFAULT_STYLE })))
+    .map(x => { if (x.lang && !LANG_OK(x.lang)) x.lang = ''; return x; });
   out.notes = out.notes.map(x => Object.assign(newNote(), x, { tags: Array.isArray(x.tags) ? x.tags : [], stype: ST_OK.has(x.stype) || x.stype === 'none' ? x.stype : '' }, x.pdfHl ? { pdfHl: cleanHl(x.pdfHl) } : {}));
   out.notes.forEach(n => { if (n.pdfHl && !n.pdfHl.length) delete n.pdfHl; });
   out.sources.forEach(x => { if (!x.photos) return; x.photos = Array.isArray(x.photos) ? x.photos.filter(f => f && f.id).map(f => ({ id: asStr(f.id), name: asStr(f.name), box: asStr(f.box), folder: asStr(f.folder), item: asStr(f.item), date: asStr(f.date), caption: asStr(f.caption), text: asStr(f.text), sha256: /^[0-9a-f]{64}$/.test(f.sha256) ? f.sha256 : '', size: +f.size || 0, taken: asStr(f.taken), added: asStr(f.added), rot: [0, 90, 180, 270].includes(+f.rot) ? +f.rot : 0 })) : []; if (!x.photos.length) delete x.photos; });
@@ -200,6 +201,9 @@ function normalize(p) {
       searches: arr(J.searches).map(x => ({ id: String(x.id), date: dayOk(x.date) || todayISOof(x.created), where: rstr(x.where), terms: rstr(x.terms), filters: rstr(x.filters), results: num(x.results), kept: num(x.kept), notes: rstr(x.notes), created: rstr(x.created) || nowISO() })),
     };
     { const c = J.checks; out.journal.checks = c && typeof c === 'object' && !Array.isArray(c) ? Object.fromEntries(Object.entries(c).filter(([, v]) => v && typeof v === 'object').map(([k, v]) => [asStr(k), Object.fromEntries(Object.entries(v).map(([i, d]) => [asStr(i), asStr(d)]))])) : {}; }
+    { const t = J.trans && typeof J.trans === 'object' && !Array.isArray(J.trans) ? J.trans : {}, L = v => (LANG_OK(v) ? v : ''); // 2.7: the translation journal
+      out.journal.trans = { from: L(t.from), to: L(t.to), system: typeof t.system === 'string' && /^[a-z-]{2,12}$/.test(t.system) ? t.system : '', insert: ['note', 'brackets', 'orig', 'none'].includes(t.insert) ? t.insert : 'note', mine: t.mine !== false,
+        glossary: (Array.isArray(t.glossary) ? t.glossary : []).filter(g => g && typeof g === 'object' && g.term).map(g => ({ id: asStr(g.id) || uid('tg'), term: asStr(g.term), lang: L(g.lang), render: asStr(g.render), avoid: (Array.isArray(g.avoid) ? g.avoid : String(g.avoid || '').split(',')).map(x => asStr(x).trim()).filter(Boolean), note: asStr(g.note), translit: asStr(g.translit), created: asStr(g.created) || nowISO() })) }; }
   }
   out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {},
     Array.isArray(s.photos) && s.photos.length ? { photos: s.photos } : {}, Array.isArray(s.evidence) && s.evidence.length ? { evidence: s.evidence } : {}, s.read ? { read: s.read } : {}, s.prio ? { prio: 1 } : {}, s.rc ? { rc: s.rc } : {},
@@ -209,6 +213,15 @@ function normalize(p) {
     out.datasets = arr(out.datasets).filter(obj).map(d => ({ id: rstr(d.id) || uid('ds'), name: rstr(d.name) || 'Data', cols: arr(d.cols).map(rstr).slice(0, 500), rows: arr(d.rows).filter(Array.isArray).slice(0, 100000).map(r => r.slice(0, 500).map(rstr)), sourceId: rstr(d.sourceId), note: rstr(d.note), created: rstr(d.created) || nowISO(), modified: rstr(d.modified) || nowISO() }));
     out.dashboards = arr(out.dashboards).filter(obj).map(b => ({ id: rstr(b.id) || uid('db'), title: rstr(b.title) || 'Dashboard', subtitle: rstr(b.subtitle), created: rstr(b.created) || nowISO(), modified: rstr(b.modified) || nowISO(),
       tiles: arr(b.tiles).map(normTile).filter(Boolean) }));
+  }
+  { // 2.7: submissions
+    const ST = new Set(['planned', 'sent', 'followed', 'accepted', 'published', 'rejected', 'withdrawn']);
+    out.subs = (Array.isArray(out.subs) ? out.subs : []).filter(x => x && typeof x === 'object').map(x => ({ id: String(x.id || uid('sub')), docId: rstr(x.docId), outlet: rstr(x.outlet), editor: rstr(x.editor), kind: x.kind === 'submission' ? 'submission' : 'pitch', sent: dayOk(x.sent) || '', status: ST.has(x.status) ? x.status : 'sent', followUp: dayOk(x.followUp) || '', fee: x.fee === '' || x.fee == null ? '' : Math.max(0, +x.fee || 0), notes: rstr(x.notes), closed: dayOk(x.closed) || '', created: rstr(x.created) || nowISO(), modified: rstr(x.modified) || nowISO() }));
+  }
+  { // 2.7: the translation workspace
+    const L = v => (LANG_OK(v) ? v : '');
+    out.trw = (Array.isArray(out.trw) ? out.trw : []).filter(w => w && typeof w === 'object' && Array.isArray(w.segs)).map(w => ({ id: String(w.id || uid('tw')), title: rstr(w.title), from: L(w.from), to: L(w.to) || 'en-US', sourceId: rstr(w.sourceId), created: rstr(w.created) || nowISO(), modified: rstr(w.modified) || nowISO(),
+      segs: w.segs.filter(x => x && typeof x === 'object').map(x => ({ id: String(x.id || uid('sg')), o: rstr(x.o), t: rstr(x.t), st: ['draft', 'done'].includes(x.st) ? x.st : '', n: rstr(x.n), p: Number.isInteger(x.p) ? x.p : 0 })) }));
   }
   { // 2.6.2: the calendar, the scratch pad and the note trash
     const EVK = { visit: 1, interview: 1, meeting: 1, deadline: 1, other: 1 };
@@ -433,16 +446,16 @@ function itemFor(id) {
   if (s.citeArchive && s.osint && /^https:\/\//.test(s.osint.archiveUrl || '')) it.URL = s.osint.archiveUrl; // the page is gone: cite the saved copy
   return it;
 }
-function makeEngine(style) {
-  return new CSL.Engine({ retrieveLocale: () => LOCALE, retrieveItem: itemFor }, cslXml(style), 'en-US');
+function makeEngine(style, lang = 'en-US') {
+  return new CSL.Engine({ retrieveLocale: l => cslLocaleText(l), retrieveItem: itemFor }, cslXml(style), lang, lang !== 'en-US');
 }
 /* Parsing a CSL style takes a large fraction of a second, so each engine is built once per style.
    When sources change (srcVersion), the engine's item cache is cleared so it re-reads them. */
-function getEngine(style, cache = engines) {
-  const c = cache[style];
-  if (!c) { const e = makeEngine(style); cache[style] = { e, v: srcVersion }; return e; }
+function getEngine(style, cache = engines, lang = 'en-US') {
+  const key = style + '|' + lang, c = cache[key];
+  if (!c) { const e = makeEngine(style, lang); cache[key] = { e, v: srcVersion }; return e; }
   if (c.v !== srcVersion) {
-    try { c.e.updateItems([]); if (c.e.updateUncitedItems) c.e.updateUncitedItems([]); } catch (err) { c.e = makeEngine(style); }
+    try { c.e.updateItems([]); if (c.e.updateUncitedItems) c.e.updateUncitedItems([]); } catch (err) { c.e = makeEngine(style, lang); }
     c.v = srcVersion;
   }
   return c.e;
@@ -457,11 +470,11 @@ function cleanCiteItem(it) {
 }
 function previewCluster(style, items) {
   if (STYLES[style].custom) return osintCluster(items, new Set());
-  try { const e = getEngine(style, previewEngines); e.updateItems([...new Set(items.map(it => it.id))]); return e.makeCitationCluster(items.map(cleanCiteItem)); } catch (e) { console.warn(e); return ''; }
+  try { const e = getEngine(style, previewEngines, docCslLang()); e.updateItems([...new Set(items.map(it => it.id))]); return e.makeCitationCluster(items.map(cleanCiteItem)); } catch (e) { console.warn(e); return ''; }
 }
 function previewBib(style, id) {
   if (STYLES[style].custom) return '';
-  try { const e = getEngine(style, previewEngines); e.updateItems([id]); const b = e.makeBibliography(); return b ? b[1].join('') : ''; } catch (e) { console.warn(e); return ''; }
+  try { const e = getEngine(style, previewEngines, docCslLang()); e.updateItems([id]); const b = e.makeBibliography(); return b ? b[1].join('') : ''; } catch (e) { console.warn(e); return ''; }
 }
 
 /* ---------------- markers ---------------- */
@@ -485,7 +498,7 @@ function inlineMd(s) { return sanitize(marked.parseInline(String(s || ''))); }
    reused until its citations, its style or any source changes (moving between chapters, exporting). */
 const REFS_CACHE = new Map();
 function computeRefs(doc, markers) {
-  const key = [doc.id, doc.style, doc.layout.bib, !!doc.layout.bibSplit, srcVersion, P.sources.length,
+  const key = [doc.id, doc.style, docLang(doc), doc.layout.bib, !!doc.layout.bibSplit, srcVersion, P.sources.length,
     markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   const hit = REFS_CACHE.get(key);
   if (hit) { REFS_CACHE.delete(key); REFS_CACHE.set(key, hit); return Object.assign({}, hit, { disp: hit.disp.map((d, i) => Object.assign({}, d, { m: markers[i] })) }); }
@@ -496,7 +509,7 @@ function computeRefs(doc, markers) {
 }
 function computeRefsNow(doc, markers) {
   if (STYLES[doc.style].custom) return computeOsint(doc, markers);
-  const style = doc.style, isNote = STYLES[style].note, eng = getEngine(style);
+  const style = doc.style, isNote = STYLES[style].note, eng = getEngine(style, engines, docCslLang(doc));
   let n = 0; const citations = [], byId = new Map(), notes = [], disp = [];
   markers.forEach((m, i) => {
     if (m.classList.contains('fn')) { n++; disp.push({ m, type: 'fn', n }); notes.push({ n, html: inlineMd(m.dataset.text) }); return; }
@@ -681,7 +694,7 @@ function syncEditor() {
 function renderRefs(force = false) {
   const doc = curDoc(); if (!doc) return;
   const markers = $$('.cite,.fn', editor);
-  const sig = [doc.style, srcVersion, doc.layout.bib, !!doc.layout.bibSplit, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
+  const sig = [doc.style + '|' + docLang(doc), srcVersion, doc.layout.bib, !!doc.layout.bibSplit, markers.map(m => (m.classList.contains('fn') ? 'f' + m.dataset.text : 'c' + m.dataset.items + '¶' + (m.dataset.cnote || ''))).join('§')].join('|');
   if (!force && sig === lastSig) return;
   lastSig = sig;
   const out = computeRefs(doc, markers);
@@ -696,7 +709,7 @@ function applyLayout(el, doc) {
   el.classList.toggle('bib-ds', !!STYLES[doc.style].ds && L.spacing === '2');
   el.style.setProperty('--doc-size', L.size + 'pt');
   el.style.setProperty('--doc-lh', L.spacing);
-  if (el.id === 'page') applyScreen(L);
+  if (el.id === 'page') { applyScreen(L); applyDocLang(doc); }
 }
 /* screen-only reading comfort: never touches exports, print or Page setup */
 function applyScreen(L) {
@@ -734,7 +747,7 @@ function openDoc(id, skipSync = false) {
   if (!$('#findBar').classList.contains('hidden')) runFind();
   $('#scroller').scrollTop = 0; tipCheck();
   document.body.classList.remove('side-open');
-  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
+  renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderGlossaryCheck(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
 function updateWordCount() {
   const clone = editor.cloneNode(true);
@@ -882,6 +895,10 @@ function sanitize(html) {
       const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum') || ch.classList.contains('xref'));
       if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
         const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
+        walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
+      }
+      if (tag === 'SPAN' && !isMarker && LANG_OK(ch.getAttribute('lang')) && !ch.classList.length) { // a passage in another language (2.7)
+        const keep = doc.createElement('span'), code = ch.getAttribute('lang'); keep.setAttribute('lang', code); if (langOf(code).rtl) keep.setAttribute('dir', 'rtl');
         walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
       }
       // Google Docs / Word: bold & italic arrive as inline styles on spans
@@ -1211,6 +1228,7 @@ $('#btnPageSetup').addEventListener('click', () => {
   const d = curDoc(), m = d.meta, L = d.layout;
   $('#suTitleBlock').checked = m.showTitleBlock; $('#suAuthor').value = m.author; $('#suDate').value = m.date; $('#suSubtitle').value = m.subtitle;
   $('#suFont').value = L.font; $('#suSize').value = L.size; $('#suSpacing').value = L.spacing; $('#suPaper').value = L.paper; $('#suBib').value = L.bib; $('#suBibSplit').checked = !!L.bibSplit;
+  $('#suLang').innerHTML = langOptions(d.lang || 'en-US');
   $('#suIndent').checked = !!L.indent; $('#suPageNums').checked = !!L.pageNums; $('#suTarget').value = d.target || ''; $('#suRole').value = d.role || 'body'; $('#suPdfNotes').value = L.pdfNotes || 'foot'; $('#suIndex').checked = !!L.index; $('#suMargin').value = L.marginalia || 'word'; $('#suScript').checked = !!(L.script && L.script.on); $('#suWpm').value = (L.script && L.script.wpm) || 150;
   $('#setupDlg').showModal();
 });
@@ -1220,6 +1238,7 @@ $('#suOk').addEventListener('click', () => {
   Object.assign(d.meta, { showTitleBlock: $('#suTitleBlock').checked, author: $('#suAuthor').value.trim(), date: $('#suDate').value.trim(), subtitle: $('#suSubtitle').value.trim() });
   Object.assign(d.layout, { font: $('#suFont').value, size: $('#suSize').value, spacing: $('#suSpacing').value, paper: $('#suPaper').value, bib: $('#suBib').value, bibSplit: $('#suBibSplit').checked, indent: $('#suIndent').checked, pageNums: $('#suPageNums').checked });
   d.target = Math.max(0, parseInt($('#suTarget').value, 10) || 0); d.role = $('#suRole').value; d.layout.pdfNotes = $('#suPdfNotes').value; d.layout.index = $('#suIndex').checked; d.layout.marginalia = $('#suMargin').value; d.layout.script = { on: $('#suScript').checked, wpm: Math.max(60, Math.min(260, parseInt($('#suWpm').value, 10) || 150)) }; setTimeout(updateScript, 0);
+  { const v = $('#suLang').value; if ((d.lang || 'en-US') !== v) { d.lang = v === 'en-US' ? '' : v; lastSig = ''; } }
   $('#setupDlg').close(); updateTargets(); renderDocList();
   $('#titleBlock').innerHTML = titleBlockHTML(d); applyLayout($('#page'), d); renderRefs(true); markDirty();
 });
@@ -1468,7 +1487,7 @@ function openSource(id, focusTitle = false) {
   $('#panel').classList.remove('hidden');
   $('#panelTitle').textContent = 'Source';
   renderSourcePanel(s);
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="savelib" title="Keep this source (and its notes) on your library shelf, for every project">Save to library</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
   renderSourceList();
   if (focusTitle) setTimeout(() => $('#panelBody [data-f="title"]')?.focus(), 30);
 }
@@ -1606,6 +1625,7 @@ $('#panelFoot').addEventListener('click', async e => {
     if (a === 'pdf') { readSourcePdf(s.id); return; }
     if (a === 'photos') { openPhotos(s.id); return; }
     if (a === 'copycite') { openCopyCite(s.id); return; }
+    if (a === 'savelib') { libAdd([s]).then(r => toast(r.added ? 'Saved to your library, with its notes. Add it to any project from Sources → My library.' : 'Updated in your library.')).catch(() => toast('This browser couldn’t save to the library.')); return; }
     if (a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: s.id }])); toast('Citation inserted. Click it to add a page number.'); }
     if (a === 'note') { const n = newNote(); n.sourceId = s.id; n.kind = 'quote'; P.notes.unshift(n); renderNoteList(); openNote(n.id); switchTab('notes'); markDirty(); }
     if (a === 'del') {
@@ -1846,7 +1866,7 @@ function exportOsintList() {
 }
 
 /* ---------------- notes ---------------- */
-const KINDS = [['quote', 'Quote'], ['paraphrase', 'Paraphrase'], ['summary', 'Summary'], ['idea', 'Idea']];
+const KINDS = [['quote', 'Quote'], ['paraphrase', 'Paraphrase'], ['summary', 'Summary'], ['idea', 'Idea'], ['translation', 'Translation']];
 /* Source types: set on a source, inherited by its notes; a note can override. */
 const noteSType = n => { if (!n) return ''; if (n.stype === 'none') return ''; if (n.stype) return n.stype; const s = n.sourceId && P.sources.find(x => x.id === n.sourceId); return (s && s.stype) || ''; };
 const stBadge = (t, inh) => t ? `<span class="stype st-${t}" title="${ST_NAME[t]} source${inh ? ' (from its source)' : ''}">${ST_NAME[t]}</span>` : '';
@@ -1900,7 +1920,8 @@ function openNote(id, focus = false) {
     <div class="grid2"><div><label>Kind</label><select data-n="kind">${KINDS.map(([k, l]) => `<option value="${k}" ${k === n.kind ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
     <div><label>Tags <span class="muted">(comma-separated)</span></label><input data-n="tags" value="${esc(n.tags.join(', '))}" placeholder="chapter 3, proxies"></div></div>
     <div class="n-codes" id="nCodes">${noteCodesHTML(n)}</div>
-    <label style="display:flex;justify-content:space-between;align-items:end">Note <span><button class="ghost small" data-a="mdtoggle" style="padding:1px 6px">Preview</button></span></label>
+    ${n.kind === 'translation' ? trNoteFields(n) : ''}
+    <label style="display:flex;justify-content:space-between;align-items:end">${n.kind === 'translation' ? 'Translation' : 'Note'} <span><button class="ghost small" data-a="mdtoggle" style="padding:1px 6px">Preview</button></span></label>
     <textarea class="note-body" data-n="body" placeholder="Markdown: **bold**, *italic*, - lists, > quotes">${esc(n.body)}</textarea>
     <div class="md-preview hidden" id="mdPreview"></div>
     <div class="grid2" style="grid-template-columns:1fr 150px"><div><label>Source</label><select data-n="sourceId"><option value="">— none —</option>${opts}</select></div>
@@ -1922,6 +1943,8 @@ const commitNote = debounce(() => {
   if (panelState?.kind !== 'note') return;
   const n = P.notes.find(x => x.id === panelState.id); if (!n) return;
   const g = k => $(`#panelBody [data-n="${k}"]`).value;
+  const kindWas = n.kind;
+  if ($('#panelBody [data-n="orig"]')) { n.orig = g('orig'); n.origLang = g('origLang'); n.transBy = g('transBy'); n.translator = g('translator').trim(); n.translit = g('translit'); }
   const srcWas = n.sourceId; n.title = g('title').trim(); n.kind = g('kind'); n.body = g('body'); n.sourceId = g('sourceId'); n.stype = g('stype'); n.label = g('label'); n.locator = g('locator').trim();
   n.tags = g('tags').split(',').map(t => t.trim().replace(/^#/, '')).filter(Boolean).filter((t, i, a) => a.indexOf(t) === i);
   n.pile = g('pile'); n.date = g('date').trim();
@@ -1930,6 +1953,7 @@ const commitNote = debounce(() => {
   $('#noteLinks').innerHTML = noteLinksHTML(n);
   if (srcWas !== n.sourceId) { const sel = $('#nStype'), s2 = n.sourceId && P.sources.find(x => x.id === n.sourceId), inh = s2 && s2.stype ? ST_NAME[s2.stype] : ''; if (sel) sel.options[0].textContent = inh ? 'From source: ' + inh : 'Not set'; }
   renderNoteList(); renderBoardSoon(); markDirty();
+  if ((kindWas === 'translation') !== (n.kind === 'translation')) { const f = document.activeElement?.dataset?.n; openNote(n.id); if (f) $(`#panelBody [data-n="${f}"]`)?.focus(); }
 }, 250);
 function noteBodyClick(e) {
   const wl = e.target.closest('a[href^="#note:"]'); if (wl) { e.preventDefault(); followNoteLink(decodeURIComponent(wl.getAttribute('href').slice(6))); return; }
@@ -1959,6 +1983,7 @@ function noteToHTML(n, { withCite = true, heading = '' } = {}) {
   const cite = hasSrc ? citeHTML([Object.assign({ id: n.sourceId }, n.locator ? { locator: n.locator, label: n.label || 'page' } : {})]) : '';
   let h = heading ? `<h2>${esc(heading)}</h2>` : '';
   const body = stripWikiLinks(n.body).trim();
+  if (n.kind === 'translation' && body) return h + trNoteHTML(n, hasSrc ? [Object.assign({ id: n.sourceId }, n.locator ? { locator: n.locator, label: n.label || 'page' } : {})] : null);
   if (n.kind === 'quote' && body) {
     const words = body.split(/\s+/).length;
     let plain = body.replace(/^\s*>\s?/gm, '').trim();
@@ -2098,7 +2123,7 @@ function buildExport(doc, mode = 'html', opt = {}) {
 function exportStandaloneHTML(doc) {
   const x = buildExport(doc, 'html'), cs = docClassAndStyle(doc);
   const css = $('#docCss').textContent + `\nbody{margin:0;background:#fff;color:#111}.docbody{max-width:6.5in;margin:1in auto;padding:0 .3in}@page{size:${doc.layout.paper === 'A4' ? 'A4' : 'letter'};margin:1in}`;
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(doc.title)}</title><style>${css}</style></head><body><article class="${cs.cls}" style="${cs.style}">${x.title ? `<header class="title-block">${x.title}</header>` : ''}${x.body}${refsHTML(x.out, true)}${x.index || ''}${x.marginalia || ''}</article></body></html>`;
+  return `<!DOCTYPE html><html lang="${esc(docLang(doc))}"${langOf(docLang(doc)).rtl ? ' dir="rtl"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(doc.title)}</title><style>${css}</style></head><body><article class="${cs.cls}" style="${cs.style}">${x.title ? `<header class="title-block">${x.title}</header>` : ''}${x.body}${refsHTML(x.out, true)}${x.index || ''}${x.marginalia || ''}</article></body></html>`;
 }
 function exportPDF(doc = curDoc()) {
   if (!doc) return;
@@ -2171,6 +2196,8 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'epub') exportEpub(doc);
   if (x === 'annot') annotatedBibliography();
   if (x === 'litrev') lgReview();
+  if (x === 'rvsend') openReviewSend();
+  if (x === 'rvimport') openReviewImport();
   if (x === 'osintlist') download(fileSafe(P.title) + ' - OSINT sources.json', exportOsintList(), 'application/json');
   if (x === 'csl') download(fileSafe(P.title) + ' - sources.json', toCSLJSON(), 'application/json');
   if (x === 'refs') openRefExport();
@@ -2415,7 +2442,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Draft a literature review from the literature grid', () => lgReview()], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Calendar: what you wrote each day, what’s due, archive visits and interviews', () => openCalendar()], ['Add to the calendar…', () => openEvent('', todayKey())], ['Export the calendar (.ics)', () => calIcs()], ['Scratch pad (⌘/Ctrl Alt N)', () => padOpen(true)], ['Note trash: restore deleted notes', () => openTrash()], ['New note from a template…', () => openNoteTpls()], ['Recent documents, notes and sources (⌘/Ctrl E)', () => openSwitcher()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Calendar: what you wrote each day, what’s due, archive visits and interviews', () => openCalendar()], ['Add to the calendar…', () => openEvent('', todayKey())], ['Export the calendar (.ics)', () => calIcs()], ['Scratch pad (⌘/Ctrl Alt N)', () => padOpen(true)], ['Note trash: restore deleted notes', () => openTrash()], ['New note from a template…', () => openNoteTpls()], ['Recent documents, notes and sources (⌘/Ctrl E)', () => openSwitcher()], ['Special characters: accents, Greek, Cyrillic, transliteration marks (⌘/Ctrl Alt O)', () => openChars()], ['Transliterate…: Russian, Ukrainian, Greek, Arabic and more', () => openTranslit()], ['Language of this passage…', () => openLangMark()], ['Translation journal: glossary, decisions, a note on translation', () => { openJournal('trans'); }], ['Translate: original and translation side by side, a segment at a time', () => openDesk('translate')], ['Search inside sources: the text of your PDFs, photo transcriptions and transcripts', () => openFtx()], ['My library: sources shared by all your projects', () => openLibrary()], ['Submissions: pitches, editors, dates, fees and follow-ups', () => openSubs()], ['Send for review: a file a colleague comments on and suggests changes in, in any browser', () => openReviewSend()], ['Import a review: their comments and suggested changes into the draft', () => openReviewImport()], ['Read the text of a scanned PDF (OCR), in the reader', () => { if (!R.doc) { showReader(true); toast('Open the scanned PDF, then choose Read text.'); } else ocrPdf(); }], ['Add a pitch or submission', () => { openSubs(); $('#subAdd').click(); }], ['Save all of this project’s sources to my library', () => libAdd(P.sources).then(r => toast(`${r.added} added to the library${r.updated ? `, ${r.updated} updated` : ''}.`))], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Close to your notes: wording repeated without quotation marks', () => { PREFS.pxOn = true; savePrefs(); switchTab('outline'); renderCloseToNotes(); $('#pxList').scrollIntoView({ block: 'center' }); }], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -2674,7 +2701,7 @@ async function exportDocx(doc, opt = {}) {
   const wdoc = new D.Document({
     creator: doc.meta.author || 'Anabasis', title: doc.title, ...(x.index || (x.mg && x.mg.length) ? { features: { updateFields: true } } : {}),
     styles: {
-      default: { document: { run: { font, size } }, heading1: hstyle(size + 8), heading2: hstyle(size + 4), heading3: hstyle(size + 2, true) },
+      default: { document: { run: Object.assign({ font, size, language: { value: docLang(doc), ...(langOf(docLang(doc)).rtl ? { bidirectional: docLang(doc) } : {}), ...(langOf(docLang(doc)).cjk ? { eastAsia: docLang(doc) } : {}) } }, langOf(docLang(doc)).rtl ? { rightToLeft: true } : {}), ...(langOf(docLang(doc)).rtl ? { paragraph: { bidirectional: true } } : {}) }, heading1: hstyle(size + 8), heading2: hstyle(size + 4), heading3: hstyle(size + 2, true) },
     },
     numbering: { config: [
       { reference: 'ul', levels: [0, 1, 2].map(l => ({ level: l, format: D.LevelFormat.BULLET, text: bullets[l], alignment: D.AlignmentType.LEFT, style: { paragraph: { indent: { left: 720 * (l + 1), hanging: 360 } } } })) },
@@ -2743,7 +2770,8 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (ch.nodeType === 3) {
         const t = ch.data.replace(/\s+/g, ' '); if (!t) return;
         if (f.track) { const o = Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz }, f.ta); r.push(f.track === 'INS' ? new D.InsertedTextRun(o) : new D.DeletedTextRun(o)); return; }
-        r.push(new D.TextRun({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz, color: f.link ? '1F4E9A' : undefined, highlight: f.mark ? 'yellow' : undefined }));
+        r.push(new D.TextRun(Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz, color: f.link ? '1F4E9A' : undefined, highlight: f.mark ? 'yellow' : undefined },
+          f.lang ? { language: { value: f.lang, ...(langOf(f.lang).rtl ? { bidirectional: f.lang } : {}) }, ...(langOf(f.lang).rtl ? { rightToLeft: true } : {}) } : {})));
         return;
       }
       if (ch.nodeType === 1 && ch.nodeName === 'A' && ch.classList.contains('mg-a')) { r.push(new D.Bookmark({ id: ch.id.replace(/-/g, '_'), children: [new D.TextRun({ text: '' })] })); return; }
@@ -2759,6 +2787,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (tag === 'A' && /^https?:|^mailto:/i.test(ch.getAttribute('href') || '')) { r.push(new D.ExternalHyperlink({ link: ch.getAttribute('href'), children: runs(ch, Object.assign({}, f, { u: true, link: true }), sz) })); return; }
       if (/^(UL|OL|P|DIV|BLOCKQUOTE|H[1-6])$/.test(tag) && opt.inlineOnly) { r.push(...runs(ch, f, sz)); return; }
       const g = Object.assign({}, f);
+      if (tag === 'SPAN' && LANG_OK(ch.getAttribute('lang'))) g.lang = ch.getAttribute('lang');
       if (tag === 'B' || tag === 'STRONG') g.b = true; if (tag === 'I' || tag === 'EM' || tag === 'CITE') g.i = true; if (tag === 'U') g.u = true;
       if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') g.s = true; if (tag === 'SUP') g.sup = true; if (tag === 'SUB') g.sub = true; if (tag === 'MARK') g.mark = true;
       r.push(...runs(ch, g, sz));
@@ -3206,7 +3235,8 @@ async function renderStorageStatus() {
    ================================================================ */
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const todayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-const wc = t => String(t || '').trim().split(/\s+/).filter(Boolean).length;
+const CJK_RE = /[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff66-\uff9f]/g; // Chinese and Japanese are counted by character
+const wc = t => { const s = String(t || ''), k = (s.match(CJK_RE) || []).length; return k + (k ? s.replace(CJK_RE, ' ') : s).trim().split(/\s+/).filter(Boolean).length; };
 
 /* ---------- book-style PDF (Paged.js): footnotes at the foot of each page ---------- */
 function pagedCSS(doc) {
@@ -5747,6 +5777,8 @@ async function renderHome() {
     <p class="small muted" style="margin:10px 0 0">Notes leave the inbox when you link them to a plan item or drop them in a board pile.</p>
   </div>
 
+  ${subsHomeHTML()}
+
   ${resurfaceHTML()}
 
   <div class="hm-card">
@@ -7213,7 +7245,7 @@ function renderMargin(focusId = null) {
     const ta = card.querySelector('textarea');
     if (document.activeElement !== ta && ta.value !== c.text) ta.value = c.text;
     card.querySelector('.mg-n').textContent = i + 1;
-    card.querySelector('.mg-when').textContent = relTime(c.date);
+    card.querySelector('.mg-when').textContent = (c.author && c.author !== (PREFS.myName || '') && c.author !== (curDoc()?.meta?.author || '') ? c.author + ' · ' : '') + relTime(c.date);
     card.classList.toggle('mg-collapsed', mgMode === 'narrow' && document.activeElement !== ta && !card.classList.contains('mg-open'));
     autoGrow(ta);
     const top = el.getBoundingClientRect().top - pr.top - 4;
@@ -7657,7 +7689,7 @@ function openFigureMenu() {
    ================================================================ */
 const INSERT_ITEMS = [
   ['Figures', [['img', 'Image from a file…', '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m21 16-5-5-9 9"/>'], ['chart', 'Chart from data…', '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'], ['map', 'Map…', '<path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3z"/><path d="M9 3v15M15 6v15"/>'], ['timeline', 'Timeline from dated notes…', '<path d="M3 12h18"/><circle cx="7" cy="12" r="2"/><circle cx="14" cy="12" r="2"/><path d="M7 5v5M14 14v5"/>'], ['network', 'Relationship map…', '<circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="11" cy="18" r="2.5"/><path d="m8.3 7 7.4 1M7.3 8.2l2.7 7.6M16.6 10.1 12.5 16"/>']]],
-  ['In the text', [['table', 'Table…', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'], ['eq', 'Equation…', '<path d="M17 5H7l5 7-5 7h10"/>', 'Alt+='], ['xref', 'Cross-reference…', '<path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/>', 'Ctrl+Alt+R'], ['index', 'Index entry…', '<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>', 'Ctrl+Alt+X']]],
+  ['In the text', [['table', 'Table…', '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M9 4v16M15 4v16"/>'], ['chars', 'Special characters…', '<path d="M6 19h4v-2.5A6 6 0 0 1 7 11a5 5 0 0 1 10 0 6 6 0 0 1-3 5.5V19h4"/>', '⌘/Ctrl Alt O'], ['eq', 'Equation…', '<path d="M17 5H7l5 7-5 7h10"/>', 'Alt+='], ['xref', 'Cross-reference…', '<path d="M4 12h11M11 7l5 5-5 5"/><path d="M19 5v14"/>', 'Ctrl+Alt+R'], ['index', 'Index entry…', '<path d="M5 4h11l3 3v13H5z"/><path d="M9 9h6M9 13h6M9 17h3"/>', 'Ctrl+Alt+X']]],
   ['Lists', [['lof', 'List of figures and tables', '<path d="M9 6h12M9 12h12M9 18h12"/><rect x="3" y="4" width="3" height="4"/><rect x="3" y="10" width="3" height="4"/><rect x="3" y="16" width="3" height="4"/>'], ['abbr', 'List of abbreviations', '<path d="M4 7h4M4 12h4M4 17h4M11 7h9M11 12h9M11 17h9"/>']]],
 ];
 function openInsertMenu(viaKeys) {
@@ -7673,7 +7705,7 @@ function openInsertMenu(viaKeys) {
   popEl.addEventListener('click', e => {
     const k = e.target.closest('[data-i]')?.dataset.i; if (!k) return; closePop(); specTarget = null; restoreSelection();
     ({ img: () => $('#fileFigure').click(), chart: () => openChart(), map: () => openMap(), timeline: () => openTimelineFig(), network: () => openRel(true),
-       table: () => $('#btnTable').click(), eq: () => openEq(), xref: () => openXref(), index: () => openIndexMark(),
+       table: () => $('#btnTable').click(), eq: () => openEq(), chars: () => openChars(editor), xref: () => openXref(), index: () => openIndexMark(),
        lof: () => { insertBlocksAtCursor(lofPlaceholder()); onEdit(); }, abbr: () => { insertBlocksAtCursor(abbrPlaceholder()); onEdit(); } })[k]();
   });
 }
@@ -9010,7 +9042,8 @@ function pxQuoted(text) {
   const q = []; let open = -1, ch = '';
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
-    if (open < 0 && (c === '“' || (c === '"' && (i === 0 || /[\s(\[—–-]/.test(text[i - 1]))))) { open = i; ch = c === '“' ? '”' : '"'; }
+    const pair = { '“': '”', '„': '“', '«': '»', '»': '«', '‹': '›', '「': '」', '『': '』', '”': '”' }; // English, German, French, Russian, Japanese, Swedish…
+    if (open < 0 && (pair[c] && (c !== '”' || /^sv/.test(docLang())) || (c === '"' && (i === 0 || /[\s(\[—–-]/.test(text[i - 1]))))) { open = i; ch = c === '"' ? '"' : c === '„' && /^pl/.test(docLang()) ? '”' : pair[c]; }
     else if (open >= 0 && c === ch) { q.push([open, i + 1]); open = -1; }
   }
   if (open >= 0) q.push([open, text.length]);
@@ -9060,12 +9093,12 @@ function pxQuote(i) {
   const r = x.r, n = x.n;
   const end = r.cloneRange(); end.collapse(false);
   const hasCite = n.sourceId && $$('.cite', x.el).some(m => markerItems(m).some(it => it.id === n.sourceId));
-  const close = document.createTextNode('”'); end.insertNode(close);
+  const Q = docQuotes(), close = document.createTextNode(Q.close); end.insertNode(close);
   if (!hasCite && n.sourceId && P.sources.some(s => s.id === n.sourceId)) {
     const tmp = document.createElement('span'); tmp.innerHTML = citeHTML([Object.assign({ id: n.sourceId }, n.locator ? { locator: n.locator, label: n.label || 'page' } : {})]);
     close.after(...tmp.childNodes);
   }
-  const start = r.cloneRange(); start.collapse(true); start.insertNode(document.createTextNode('“'));
+  const start = r.cloneRange(); start.collapse(true); start.insertNode(document.createTextNode(Q.open));
   x.el.normalize(); onEdit(); renderCloseToNotes(); toast(hasCite || !n.sourceId ? 'Quotation marks added.' : 'Quotation marks and a citation added.');
 }
 function pxCompare(i) {
@@ -9109,7 +9142,7 @@ function hsRules() {
   if (c.dates === 'intl') add('dates', 'Dates as “D Month YYYY”', new RegExp(`\\b(${HS_MONTHS}) (\\d{1,2}), (\\d{4})\\b`, 'g'), mt => `${mt[2]} ${mt[1]} ${mt[3]}`);
   if (c.dash === 'closed') add('dash', 'Em dash without spaces', /\s+(?:—|--)\s+/g, () => '—');
   if (c.dash === 'spaced') add('dash', 'Em dash with spaces', /(?<=\S)(?:—|--)(?=\S)/g, () => ' — ');
-  if (c.quotes) add('quotes', 'Straight quotes → curly', /["']/g, (mt, text) => { const i = mt.index, prev = text[i - 1] || ' '; if (mt[0] === "'") return /[\p{L}\p{N}.,!?;:)\]]/u.test(prev) ? '’' : '‘'; return /[\s([{—–-]/.test(prev) || i === 0 ? '“' : '”'; });
+  if (c.quotes) { const Q = docQuotes(); add('quotes', `Straight quotes → ${Q.open.trim()} ${Q.close.trim()}`, /["']/g, (mt, text) => { const i = mt.index, prev = text[i - 1] || ' '; if (mt[0] === "'") return /[\p{L}\p{N}.,!?;:)\]]/u.test(prev) ? '’' : Q.inOpen; return /[\s([{—–-]/.test(prev) || i === 0 ? Q.open : Q.close; }); }
   if (c.ellipsis === 'char') add('ellipsis', 'Ellipsis character', /\.\s?\.\s?\./g, () => '…');
   if (c.ellipsis === 'spaced') add('ellipsis', 'Spaced ellipsis (. . .)', /…|(?<!\.\s)\.\.\.(?!\s\.)/g, () => '. . .');
   if (c.doubleSpace) add('space', 'Double spaces', / {2,}/g, () => ' ');
@@ -9426,6 +9459,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.7.0': ['Write in other languages: set a document’s language in Page setup for spell-checking, quotation marks, citation terms (“Hrsg.”, “trad.”) and right-to-left for Arabic, Hebrew, Persian and Urdu. Mark → Language of this passage does the same for a quotation or a name.', 'Translation notes hold the original beside your translation; insert one with the original in the note and “My translation.” in the citation. The research journal has a Translation section: a glossary that flags renderings you’ve decided against, recorded decisions, and a Note on translation for the front matter.', 'Transliterate Russian, Ukrainian, Bulgarian, Serbian, Greek (modern and ancient) and Arabic by the standard tables (Mark → Transliterate…), and type accents, Greek with breathings and accents, Cyrillic and transliteration marks from Special characters (⌘/Ctrl Alt O).', 'Research desk → Translate: paste an original and translate it segment by segment beside it, with its transliteration, your glossary’s renderings checked as you type, progress, and the result as a document or side by side. ⌘/Ctrl Enter finishes a segment.', 'Sources → Search inside sources finds words in the text of your PDFs, archive photo transcriptions and interview transcripts, and opens the page. Scanned pages and photos can now be read on this computer (Read the text), with nothing sent anywhere.', 'Sources → My library keeps sources and their notes in this browser so you can add them to any project. Submissions (on Project home and in the command search) tracks where each piece has gone, with follow-ups on the calendar.', 'Export → For a reviewer makes one web page anyone can comment on in a browser; Import a review puts their comments in your margin and their changes in as suggestions, even after you’ve kept writing.'],
   '2.6.3': ['The new buttons in the Notes tab (Scratch pad, Templates…, Trash) fit the sidebar again; “From a template…” is now “Templates…”.'],
   '2.6.2': ['A calendar on Project home: the words you wrote each day, what’s due, your journal entries, and archive visits, interviews and meetings you add. Export it as an .ics file for Google, Apple or Outlook calendars.', 'A scratch pad (⌘/Ctrl Alt N) for jotting now and sorting later: turn a passage into a note, split the pad into notes, or send a passage to the journal.', 'Deleted notes go to a trash for 30 days, with Undo. Copy citation on a source copies it in any style. Notes → Templates… starts an interview log, archive visit, source summary, field notes or meeting notes. ⌘/Ctrl E lists what you opened last.'],
   '2.6.1': ['Draft a literature review from the literature grid (research desk → Literature grid, Templates, or Export → Other formats): a section for each theme or research question with every source’s summary cited, prompts to compare them, the sources that have notes but no summary, and the ones silent on each theme. Plan → templates has a Literature review outline too.'],
@@ -11490,7 +11524,7 @@ function renderDesk() {
   deskJ = [];
   $$('#deskTabs [data-dv]').forEach(b => { b.classList.toggle('on', b.dataset.dv === deskView); b.setAttribute('aria-selected', b.dataset.dv === deskView); });
   $('#deskTools').innerHTML = '';
-  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, lit: deskLit, codes: deskCodes, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
+  const fn = { threads: deskThreads, claims: deskClaims, grid: deskGrid, lit: deskLit, codes: deskCodes, translate: deskTranslate, review: deskReview, questions: deskQuestions, journal: deskJournal, data: deskData, about: deskAbout }[deskView] || deskThreads;
   fn();
 }
 $('#deskBody').addEventListener('click', e => {
@@ -11978,15 +12012,15 @@ function deskJournal() {
   const J = jr(), sec = PREFS.jSec || 'design';
   const hs = J.hypotheses, counts = Object.keys(H_ST).map(k => [k, hs.filter(h => h.status === k).length]).filter(x => x[1]);
   const nOpen = J.log.filter(e => e.kind === 'next' && !e.done).length;
-  const nav = [['week', 'This week', nOpen ? nOpen + ' to do' : ''], ['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || ''], ['guide', 'Research guide', gdChecksLeft() || '']];
+  const nav = [['week', 'This week', nOpen ? nOpen + ' to do' : ''], ['design', 'Research design', ''], ['hyp', 'Hypotheses', hs.length || ''], ['log', 'Log', J.log.length || ''], ['search', 'Searches', J.searches.length || ''], ['guide', 'Research guide', gdChecksLeft() || ''], ['trans', 'Translation', (P.journal.trans && P.journal.trans.glossary.length) || '']];
   $('#deskTools').innerHTML = `<button data-j="${DJ(() => journalDoc('memo'))}" title="A document summing up the research so far">Research memo</button><button data-j="${DJ(() => journalDoc('appendix'))}" title="Methods, sources, searches and limitations, as back matter">Methods appendix</button>`;
   const side = `<aside class="desk-side j-side"><button class="primary j-today" data-j="${DJ(() => jSection('log', true))}">＋ Today’s entry</button>
     <ul class="desk-list" role="tablist" aria-label="Journal sections">${nav.map(([k, l, n]) => `<li role="tab" aria-selected="${k === sec}" class="${k === sec ? 'on' : ''}" data-j="${DJ(() => jSection(k))}"><span class="t">${l}</span><em>${n}</em></li>`).join('')}</ul>
     ${hs.length ? `<p class="small muted j-sum">${counts.map(([k, n]) => `<span class="h-chip h-${k}">${n} ${H_ST[k].toLowerCase()}</span>`).join(' ')}</p>` : ''}
     ${J.log.length ? `<p class="small muted">Last entry ${esc(relDay(J.log.reduce((a, e) => (e.date > a ? e.date : a), '')))}</p>` : ''}</aside>`;
-  const main = { week: jWeek, design: jDesign, hyp: jHyps, log: jLogView, search: jSearches, guide: jGuide }[sec] || jDesign;
+  const main = { week: jWeek, design: jDesign, hyp: jHyps, log: jLogView, search: jSearches, guide: jGuide, trans: jTrans }[sec] || jDesign;
   $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main j-main">${main()}</div></div>`;
-  jWire(sec);
+  jWire(sec); if (sec === 'trans') trWire();
 }
 /* ---------- Research guide (2.6): stage guides, due-diligence checklists, method guides and a glossary,
    from data/guide.txt. Read once, when first opened. Ticks are kept in the project (journal.checks). ---------- */
@@ -12882,7 +12916,7 @@ const TTS = { on: false, paused: false, list: [], i: 0, voices: [] };
 const ttsOK = () => 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
 function ttsLoadVoices() {
   if (!ttsOK()) return;
-  const all = speechSynthesis.getVoices(); const lang = (document.documentElement.lang || 'en').slice(0, 2);
+  const all = speechSynthesis.getVoices(); let lang = 'en'; try { lang = docLang().split('-')[0]; } catch (e) { /* no project yet */ }
   TTS.voices = all.filter(v => (v.lang || '').toLowerCase().startsWith(lang)).sort((a, b) => (b.localService - a.localService) || a.name.localeCompare(b.name));
   const sel = $('#ttsVoice'); if (!sel) return;
   sel.innerHTML = '<option value="">Default voice</option>' + TTS.voices.map(v => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === PREFS.ttsVoice ? 'selected' : ''}>${esc(v.name)}${v.localService ? '' : ' (online)'}</option>`).join('');
@@ -12931,7 +12965,7 @@ function ttsSpeak() {
   if (!s) { ttsStop(); toast('Finished reading.'); return; }
   ttsMark(s.r); $('#ttsPos').textContent = `${TTS.i + 1} / ${TTS.list.length}`;
   const u = new SpeechSynthesisUtterance(s.say);
-  u.rate = +PREFS.ttsRate || 1; u.lang = 'en';
+  u.rate = +PREFS.ttsRate || 1; u.lang = docLang() === 'en-US' ? 'en' : docLang();
   const v = TTS.voices.find(x => x.voiceURI === PREFS.ttsVoice); if (v) u.voice = v;
   const my = TTS.gen;
   u.onend = () => { if (TTS.on && !TTS.paused && my === TTS.gen) { TTS.i++; ttsSpeak(); } };
@@ -13648,6 +13682,7 @@ const KEYS = [
   ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Alt R', 'Cross-reference'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
   ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then K', 'Code the selection'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
   ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
+  ['Languages', [['⌘/Ctrl Alt O', 'Special characters'], ['Mark → Language of this passage…', 'Spell-check and export a passage in another language'], ['Mark → Transliterate…', 'Romanize the selection']]],
   ['Notes', [['⌘/Ctrl Alt N', 'Scratch pad'], ['⌘/Ctrl Shift E', 'Selection to a note'], ['⌘/Ctrl E', 'Recent documents, notes and sources']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
 ];
@@ -13738,6 +13773,7 @@ function calIndex() {
   P.docs.forEach(d => { if (d.deadline && d.status !== 'final') at(d.deadline).due.push({ t: `${d.title || 'Untitled document'} due`, go: () => { closeHome(); openDoc(d.id); } }); });
   if (P.goal && P.goal.deadline) at(P.goal.deadline).due.push({ t: 'Project deadline', go: null });
   (P.reviewKeys || []).forEach(r => { if (r.due && !r.done) at(r.due).due.push({ t: `Review due: ${r.reason}`, go: () => openDesk('review') }); });
+  (P.subs || []).forEach(x => { if (subDue(x)) at(x.followUp).due.push({ t: `Follow up: ${x.outlet || 'a submission'}`, go: () => openSubs(x.id) }); });
   jr().log.forEach(e => { if (e.date && e.kind !== 'auto') at(e.date).j.push(e); });
   P.notes.forEach(n => at(todayISOof(n.created)).notes.push(n));
   return ix;
@@ -13839,6 +13875,7 @@ function calIcsText() {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const items = [...(P.events || []).map(e => ({ uid: e.id, k: e.date, time: e.time, sum: e.title || EV_NAME[e.kind], desc: [EV_NAME[e.kind], e.note].filter(Boolean).join('. ') })),
     ...P.docs.filter(d => d.deadline && d.status !== 'final').map(d => ({ uid: 'due-' + d.id, k: d.deadline, sum: `Due: ${d.title || 'Untitled document'}`, desc: P.title })),
+    ...(P.subs || []).filter(subDue).map(x => ({ uid: 'sub-' + x.id, k: x.followUp, sum: `Follow up: ${x.outlet || 'submission'}`, desc: [x.editor, ((P.docs.find(d => d.id === x.docId) || {}).title || '')].filter(Boolean).join(', ') })),
     ...(P.goal && P.goal.deadline ? [{ uid: 'goal-' + P.id, k: P.goal.deadline, sum: `Deadline: ${P.title}`, desc: P.goal.target ? `${nf(P.goal.target)} words` : '' }] : [])];
   const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Zero History//Anabasis//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${tx(P.title || 'Anabasis')}`];
   items.forEach(it => {
@@ -14126,6 +14163,1133 @@ document.addEventListener('keydown', e => {
   if (mod && e.altKey && !e.shiftKey && e.code === 'KeyN') { e.preventDefault(); if (!dlgOpen) padOpen(); }
   if (mod && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); if (!dlgOpen) openSwitcher(); }
 });
+
+/* ================================================================
+   2.7: writing in other languages, translation notes and the translation
+   journal, a glossary that checks the draft, transliteration, and a palette
+   of special characters. All of it works offline; nothing is machine-translated.
+   ================================================================ */
+
+/* ---------- languages ---------- */
+// [code, name, CSL locale, quotation marks (open, close, inner open, inner close), right-to-left, counted by character]
+const LANGS = [
+  ['en-US', 'English (US)', 'en-US', '“”‘’'], ['en-GB', 'English (UK)', 'en-GB', '‘’“”'],
+  ['ar', 'Arabic', 'ar', '«»“”', 1], ['zh-Hans', 'Chinese (simplified)', 'zh-CN', '“”‘’', 0, 1], ['zh-Hant', 'Chinese (traditional)', 'zh-TW', '「」『』', 0, 1],
+  ['cs', 'Czech', 'cs-CZ', '„“‚‘'], ['nl', 'Dutch', 'nl-NL', '“”‘’'], ['fr', 'French', 'fr-FR', '«»“”'], ['de', 'German', 'de-DE', '„“‚‘'],
+  ['grc', 'Greek (ancient)', 'en-US', '“”‘’'], ['el', 'Greek (modern)', 'el-GR', '«»“”'], ['he', 'Hebrew', 'he-IL', '“”‘’', 1],
+  ['it', 'Italian', 'it-IT', '«»“”'], ['ja', 'Japanese', 'ja-JP', '「」『』', 0, 1], ['ko', 'Korean', 'ko-KR', '“”‘’'], ['la', 'Latin', 'la', '“”‘’'],
+  ['fa', 'Persian', 'fa-IR', '«»“”', 1], ['pl', 'Polish', 'pl-PL', '„”«»'], ['pt-BR', 'Portuguese (Brazil)', 'pt-BR', '“”‘’'], ['pt-PT', 'Portuguese (Portugal)', 'pt-PT', '«»“”'],
+  ['ru', 'Russian', 'ru-RU', '«»„“'], ['es', 'Spanish', 'es-ES', '«»“”'], ['sv', 'Swedish', 'sv-SE', '””’’'], ['tr', 'Turkish', 'tr-TR', '“”‘’'],
+  ['uk', 'Ukrainian', 'uk-UA', '«»„“'], ['ur', 'Urdu', 'en-US', '“”‘’', 1], ['vi', 'Vietnamese', 'vi-VN', '“”‘’'],
+];
+const LANG = Object.fromEntries(LANGS.map(([code, name, csl, q, rtl, cjk]) => [code, { code, name, csl, q, rtl: !!rtl, cjk: !!cjk }]));
+const LANG_OK = c => /^[a-z]{2,3}(-[A-Za-z0-9]{2,8}){0,2}$/.test(String(c || ''));
+function langOf(code) {
+  if (!code) return LANG['en-US'];
+  if (LANG[code]) return LANG[code];
+  const base = String(code).split('-')[0], k = Object.keys(LANG).find(x => x.split('-')[0] === base);
+  return k ? Object.assign({}, LANG[k], { code }) : { code, name: code, csl: 'en-US', q: '“”‘’', rtl: /^(ar|he|fa|ur|yi|ps|sd|ug|dv|ckb)$/.test(base), cjk: /^(zh|ja)$/.test(base) };
+}
+const langName = c => langOf(c).name;
+const docLang = (d = curDoc()) => (d && d.lang) || 'en-US';
+function langOptions(cur, blank = '') {
+  return (blank ? `<option value="">${esc(blank)}</option>` : '') + LANGS.map(([c, n]) => `<option value="${c}" ${c === cur ? 'selected' : ''}>${esc(n)}</option>`).join('') +
+    (cur && !LANG[cur] && LANG_OK(cur) ? `<option value="${esc(cur)}" selected>${esc(cur)}</option>` : '');
+}
+/* the citation terms (“edited by”, “accessed”, month names) in the document's language */
+function cslLocaleText(lang) { const el = document.getElementById('csl-locale-' + lang); return el ? el.textContent : LOCALE; }
+const docCslLang = (d = curDoc()) => langOf(docLang(d)).csl;
+/* the editor follows the document's language: spell-checking, hyphenation, right-to-left */
+function applyDocLang(doc) {
+  const L = langOf(docLang(doc));
+  editor.setAttribute('lang', doc && doc.lang ? doc.lang : 'en');
+  editor.dir = L.rtl ? 'rtl' : 'ltr';
+  const tb = $('#titleBlock'); if (tb) tb.dir = L.rtl ? 'rtl' : 'ltr';
+  $('#page')?.classList.toggle('rtl', L.rtl);
+  try { ttsLoadVoices(); } catch (e) { /* not set up yet */ }
+}
+/* quotation marks for the document's language (French puts a no-break space inside) */
+function docQuotes(d = curDoc()) {
+  const L = langOf(docLang(d)), q = [...L.q], fr = /^fr/.test(L.code);
+  return { open: q[0] + (fr ? '\u00a0' : ''), close: (fr ? '\u00a0' : '') + q[1], inOpen: q[2], inClose: q[3], fr };
+}
+
+/* Mark → Language of this passage: a span with lang (and dir for right-to-left), kept by the sanitizer */
+let langRange = null;
+function openLangMark() {
+  const s = getSelection();
+  const r = s.rangeCount && editor.contains(s.anchorNode) ? s.getRangeAt(0).cloneRange() : savedRange && editor.contains(savedRange.startContainer) ? savedRange.cloneRange() : null;
+  const inSpan = r && (r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer).closest?.('#editor span[lang]');
+  if (!r || (r.collapsed && !inSpan)) { toast('Select the passage in another language first.'); return; }
+  langRange = r;
+  $('#lmLang').innerHTML = langOptions(inSpan ? inSpan.getAttribute('lang') : (PREFS.lastPassageLang || jr().trans?.from || 'fr'));
+  $('#lmRemove').classList.toggle('hidden', !inSpan);
+  $('#lmDlg').showModal();
+}
+function langSpanAt(r) { const n = r.startContainer.nodeType === 3 ? r.startContainer.parentElement : r.startContainer; return n && n.closest ? n.closest('#editor span[lang]') : null; }
+$('#lmOk').addEventListener('click', () => {
+  const code = $('#lmLang').value, r = langRange; $('#lmDlg').close(); if (!r) return;
+  const L = langOf(code), cur = langSpanAt(r);
+  if (cur && r.collapsed) { cur.setAttribute('lang', code); if (L.rtl) cur.dir = 'rtl'; else cur.removeAttribute('dir'); }
+  else {
+    const sp = document.createElement('span'); sp.setAttribute('lang', code); if (L.rtl) sp.dir = 'rtl';
+    try { sp.append(r.extractContents()); r.insertNode(sp); } catch (e) { toast('That selection crosses paragraphs: mark one paragraph at a time.'); return; }
+    sp.querySelectorAll('span[lang]').forEach(x => x.replaceWith(...x.childNodes));
+  }
+  PREFS.lastPassageLang = code; savePrefs(); onEdit(); toast(`Marked as ${L.name}. Spell-checking and exports follow it.`);
+});
+$('#lmRemove').addEventListener('click', () => { const sp = langRange && langSpanAt(langRange); $('#lmDlg').close(); if (sp) { sp.replaceWith(...sp.childNodes); onEdit(); toast('Language mark removed.'); } });
+$('#lmCancel').addEventListener('click', () => $('#lmDlg').close());
+
+/* ---------- transliteration: standard tables, offline ---------- */
+const TL_RU_ALA = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'ë', ж: 'zh', з: 'z', и: 'i', й: 'ĭ', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 't\u0361s', ч: 'ch', ш: 'sh', щ: 'shch', ъ: 'ʺ', ы: 'y', ь: 'ʹ', э: 'ė', ю: 'i\u0361u', я: 'i\u0361a', і: 'ī', ѣ: 'i\u0361e', ѳ: 'ḟ', ѵ: 'ẏ' };
+const TL_RU_BGN = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'ë', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '”', ы: 'y', ь: '’', э: 'e', ю: 'yu', я: 'ya' };
+const TL_RU_SIMPLE = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
+const TL_UK_NAT = { а: 'a', б: 'b', в: 'v', г: 'h', ґ: 'g', д: 'd', е: 'e', є: 'ie', ж: 'zh', з: 'z', и: 'y', і: 'i', ї: 'i', й: 'i', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'shch', ь: '', ю: 'iu', я: 'ia', '’': '', "'": '', 'ʼ': '' };
+const TL_UK_ALA = { а: 'a', б: 'b', в: 'v', г: 'h', ґ: 'g', д: 'd', е: 'e', є: 'i\u0361e', ж: 'zh', з: 'z', и: 'y', і: 'i', ї: 'ï', й: 'ĭ', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'kh', ц: 't\u0361s', ч: 'ch', ш: 'sh', щ: 'shch', ь: 'ʹ', ю: 'i\u0361u', я: 'i\u0361a', '’': 'ʺ', "'": 'ʺ', 'ʼ': 'ʺ' };
+const TL_BG = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ж: 'zh', з: 'z', и: 'i', й: 'y', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sht', ъ: 'a', ь: 'y', ю: 'yu', я: 'ya' };
+const TL_SR = { а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', ђ: 'đ', е: 'e', ж: 'ž', з: 'z', и: 'i', ј: 'j', к: 'k', л: 'l', љ: 'lj', м: 'm', н: 'n', њ: 'nj', о: 'o', п: 'p', р: 'r', с: 's', т: 't', ћ: 'ć', у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'č', џ: 'dž', ш: 'š' };
+const isUp = c => c !== c.toLowerCase() && c === c.toUpperCase();
+/* letter-by-letter, with the case of the original: Щ → Shch, but ЩИ → SHCHI */
+function tlTable(text, T, rule) {
+  const out = []; const ch = [...text];
+  for (let i = 0; i < ch.length; i++) {
+    const c = ch[i], lo = c.toLowerCase();
+    let v = rule ? rule(ch, i, lo) : undefined;
+    if (v === undefined) v = T[lo];
+    if (v === undefined) { out.push(c); continue; }
+    if (isUp(c)) { const nb = ch[i + 1] || '', pb = ch[i - 1] || ''; v = (isUp(nb) || (!/\p{L}/u.test(nb) && isUp(pb))) ? v.toUpperCase() : capFirst(v); }
+    out.push(v);
+  }
+  return out.join('');
+}
+const wordStart = (ch, i) => i === 0 || !/[\p{L}’'ʼ]/u.test(ch[i - 1]);
+const VOW_RU = 'аеёиоуыэюяъьй';
+const TL = {
+  'ru-ala': { lang: 'ru', name: 'Russian: Library of Congress (ALA-LC)', fn: t => tlTable(t, TL_RU_ALA) },
+  'ru-bgn': { lang: 'ru', name: 'Russian: BGN/PCGN (maps, the press)', fn: t => tlTable(t, TL_RU_BGN, (ch, i, lo) => {
+    if (lo === 'е' || lo === 'ё') { const p = (ch[i - 1] || '').toLowerCase(); if (wordStart(ch, i) || VOW_RU.includes(p)) return lo === 'е' ? 'ye' : 'yë'; }
+  }) },
+  'ru-simple': { lang: 'ru', name: 'Russian: simplified, no diacritics', fn: t => tlTable(t, TL_RU_SIMPLE, (ch, i, lo) => {
+    if (lo === 'е') { const p = (ch[i - 1] || '').toLowerCase(); if (wordStart(ch, i) || 'аеёиоуыэюяъь'.includes(p)) return 'ye'; }
+    if (lo === 'и' && (ch[i + 1] || '').toLowerCase() === 'й') return 'i';
+  }) },
+  'uk-nat': { lang: 'uk', name: 'Ukrainian: national system (2010)', fn: t => tlTable(t, TL_UK_NAT, (ch, i, lo) => {
+    if (wordStart(ch, i) && ({ є: 'ye', ї: 'yi', й: 'y', ю: 'yu', я: 'ya' })[lo]) return ({ є: 'ye', ї: 'yi', й: 'y', ю: 'yu', я: 'ya' })[lo];
+    if (lo === 'г' && (ch[i - 1] || '').toLowerCase() === 'з') return 'gh';
+  }) },
+  'uk-ala': { lang: 'uk', name: 'Ukrainian: Library of Congress (ALA-LC)', fn: t => tlTable(t, TL_UK_ALA) },
+  'bg': { lang: 'bg', name: 'Bulgarian: official system (2009)', fn: t => tlTable(t, TL_BG, (ch, i, lo) => { if (lo === 'я' && (ch[i - 1] || '').toLowerCase() === 'и' && !/\p{L}/u.test(ch[i + 1] || '')) return 'a'; }) }, // София → Sofia
+  'sr': { lang: 'sr', name: 'Serbian: Cyrillic to Latin', fn: t => tlTable(t, TL_SR) },
+  'el': { lang: 'el', name: 'Greek (modern): ELOT 743', fn: t => tlGreekModern(t) },
+  'grc': { lang: 'grc', name: 'Greek (ancient): Library of Congress (ALA-LC)', fn: t => tlGreekAncient(t) },
+  'ar': { lang: 'ar', name: 'Arabic: Library of Congress (ALA-LC)', fn: t => tlArabic(t), note: 'Arabic is usually written without short vowels. Where the text has none, the transliteration has only the letters on the page, so check names against a reference work.' },
+};
+const TL_DEFAULT = { ru: 'ru-ala', uk: 'uk-nat', bg: 'bg', sr: 'sr', el: 'el', grc: 'grc', ar: 'ar' };
+function tlFor(lang) { const base = String(lang || '').split('-')[0]; return TL_DEFAULT[base] || TL_DEFAULT[lang] || ''; }
+function tlGuess(text) {
+  if (/[\u0600-ۿ]/.test(text)) return 'ar';
+  if (/[ἀ-῿]|[Ͱ-Ͽ][\u0313\u0314\u0342\u0345]/.test(text.normalize('NFD'))) return 'grc';
+  if (/[Ͱ-Ͽ]/.test(text)) return 'el';
+  if (/[ґєії]/i.test(text)) return 'uk-nat';
+  if (/[ђјљњћџ]/i.test(text)) return 'sr';
+  if (/[Ѐ-ӿ]/.test(text)) return 'ru-ala';
+  return '';
+}
+function transliterate(text, sys) { const S = TL[sys]; return S ? S.fn(String(text || '')).normalize('NFC') : String(text || ''); }
+
+/* Greek: decompose, read each letter with its marks, then rebuild */
+function greekUnits(text) {
+  const out = [];
+  for (const c of text.normalize('NFD')) {
+    if (/[\u0300-\u036f]/.test(c) && out.length) { out[out.length - 1].m += c; continue; }
+    out.push({ c, m: '' });
+  }
+  return out;
+}
+const GR_VOW = 'αεηιουω', GR_VOICED = 'βγδζλμνρ', GR_VOICELESS = 'θκξπστφχψ';
+function tlGreekModern(text) {
+  const U = greekUnits(text), out = [];
+  const lo = u => u ? u.c.toLowerCase() : '', isG = u => u && /[Ͱ-Ͽ]/.test(u.c), dia = u => u && u.m.includes('\u0308');
+  const single = { α: 'a', β: 'v', γ: 'g', δ: 'd', ε: 'e', ζ: 'z', η: 'i', θ: 'th', ι: 'i', κ: 'k', λ: 'l', μ: 'm', ν: 'n', ξ: 'x', ο: 'o', π: 'p', ρ: 'r', σ: 's', ς: 's', τ: 't', υ: 'y', φ: 'f', χ: 'ch', ψ: 'ps', ω: 'o' };
+  for (let i = 0; i < U.length; i++) {
+    const u = U[i], a = lo(u), b = lo(U[i + 1]), n2 = U[i + 1], startW = !isG(U[i - 1]), endW = !isG(U[i + 2]);
+    if (!single[a]) { out.push(u.c); continue; }
+    let v = null, take = 1;
+    if (n2 && !dia(n2)) {
+      if (a + b === 'ου') v = 'ou';
+      else if (['αι', 'ει', 'οι', 'υι'].includes(a + b)) v = (a === 'υ' ? 'y' : single[a]) + 'i';
+      else if (['αυ', 'ευ', 'ηυ'].includes(a + b)) { const nx = lo(U[i + 2]); v = single[a] + (nx && (GR_VOW.includes(nx) || GR_VOICED.includes(nx)) ? 'v' : 'f'); }
+      else if (a + b === 'μπ') v = startW || endW ? 'b' : 'mp';
+      else if (a + b === 'ντ') v = startW || endW ? 'd' : 'nt';
+      else if (a + b === 'γγ') v = 'ng';
+      else if (a + b === 'γκ') v = startW || endW ? 'g' : 'nk';
+      else if (a + b === 'γξ') v = 'nx';
+      else if (a + b === 'γχ') v = 'nch';
+      if (v) take = 2;
+    }
+    if (!v) v = single[a];
+    if (isUp(u.c)) v = (isUp((U[i + take] || {}).c || '') ? v.toUpperCase() : capFirst(v));
+    out.push(v); i += take - 1;
+  }
+  return out.join('');
+}
+function tlGreekAncient(text) {
+  const U = greekUnits(text), out = [];
+  const lo = u => u ? u.c.toLowerCase() : '', isG = u => u && /[Ͱ-Ͽ]/.test(u.c);
+  const single = { α: 'a', β: 'b', γ: 'g', δ: 'd', ε: 'e', ζ: 'z', η: 'ē', θ: 'th', ι: 'i', κ: 'k', λ: 'l', μ: 'm', ν: 'n', ξ: 'x', ο: 'o', π: 'p', ρ: 'r', σ: 's', ς: 's', τ: 't', υ: 'y', φ: 'ph', χ: 'ch', ψ: 'ps', ω: 'ō', ϝ: 'w' };
+  const rough = u => u && u.m.includes('\u0314'), sub = u => u && u.m.includes('\u0345'), dia = u => u && u.m.includes('\u0308');
+  for (let i = 0; i < U.length; i++) {
+    const u = U[i], a = lo(u), n2 = U[i + 1], b = lo(n2);
+    if (!single[a]) { out.push(u.c); continue; }
+    let v, take = 1, h = rough(u);
+    if (a === 'ρ') { v = h || !isG(U[i - 1]) || lo(U[i - 1]) === 'ρ' ? 'rh' : 'r'; h = false; } // ῥήτωρ → rhētōr, ἄρρην → arrhēn
+    else if (a === 'γ' && 'γκξχ'.includes(b)) v = 'n';
+    else if (n2 && !dia(n2) && ['αυ', 'ευ', 'ηυ', 'ου', 'αι', 'ει', 'οι', 'υι'].includes(a + b)) { v = (a === 'υ' ? 'y' : single[a]) + (b === 'υ' ? 'u' : 'i'); take = 2; h = h || rough(n2); }
+    else { v = single[a]; if (sub(u)) v += 'i'; }
+    if (h) v = 'h' + v;
+    if (isUp(u.c)) v = isUp((U[i + take] || {}).c || '') ? v.toUpperCase() : capFirst(v);
+    out.push(v); i += take - 1;
+  }
+  return out.join('');
+}
+function tlArabic(text) {
+  const C = { ب: 'b', ت: 't', ث: 'th', ج: 'j', ح: 'ḥ', خ: 'kh', د: 'd', ذ: 'dh', ر: 'r', ز: 'z', س: 's', ش: 'sh', ص: 'ṣ', ض: 'ḍ', ط: 'ṭ', ظ: 'ẓ', ع: 'ʿ', غ: 'gh', ف: 'f', ق: 'q', ك: 'k', ک: 'k', ل: 'l', م: 'm', ن: 'n', ه: 'h', ء: 'ʾ', ؤ: 'ʾ', ئ: 'ʾ', پ: 'p', چ: 'ch', ژ: 'zh', گ: 'g' };
+  const V = { '\u064e': 'a', '\u0650': 'i', '\u064f': 'u', '\u064b': 'an', '\u064d': 'in', '\u064c': 'un' };
+  const ch = [...text], out = []; let lastCons = '';
+  const cons = v => { out.push(v); lastCons = v; };
+  const isAr = c => c && /[ء-يٱ-ۓ]/.test(c), mark = c => c && /[\u064b-\u0652\u0670]/.test(c);
+  const nextBase = i => { let j = i + 1; while (mark(ch[j])) j++; return j; };
+  for (let i = 0; i < ch.length; i++) {
+    const c = ch[i], start = !isAr(ch[i - 1]) && !mark(ch[i - 1]);
+    if (mark(c)) {
+      if (c === '\u0651') { if (!lastCons) continue; if (/^(a|i|u|an|in|un)$/.test(out[out.length - 1] || '')) out.splice(out.length - 1, 0, lastCons); else out.push(lastCons); continue; } // a doubled consonant
+      if (V[c]) { const nb = ch[nextBase(i)]; if (c === '\u064e' && nb === 'ا') continue; if (c === '\u064f' && nb === 'و' && !mark(ch[nextBase(i) + 1])) continue; if (c === '\u0650' && nb === 'ي' && !mark(ch[nextBase(i) + 1])) continue; out.push(V[c]); }
+      continue;
+    }
+    if (start && c === 'ا' && ch[i + 1] === 'ل' && isAr(ch[i + 2])) { out.push('al-'); lastCons = 'l'; i += 1; if (mark(ch[i + 1])) i++; continue; }
+    if (c === 'ا' || c === 'ٱ') { out.push(start ? 'a' : 'ā'); continue; }
+    if (c === 'أ') { if (start) { if (ch[i + 1] === '\u064f') { out.push('u'); i++; } else { out.push('a'); if (ch[i + 1] === '\u064e') i++; } } else cons('ʾ'); continue; }
+    if (c === 'إ') { out.push(start ? 'i' : 'ʾi'); if (ch[i + 1] === '\u0650') i++; continue; }
+    if (c === 'آ') { out.push(start ? 'ā' : 'ʾā'); continue; }
+    if (c === 'ى') { out.push('á'); continue; }
+    if (c === 'ة') { out.push(isAr(ch[i + 1]) ? 't' : 'h'); continue; }
+    if (c === 'و' || c === 'ي' || c === 'ی') {
+      const prevMark = ch[i - 1], nb = ch[i + 1], cn = c === 'و' ? 'w' : 'y', long = c === 'و' ? 'ū' : 'ī';
+      if (start || (mark(nb) && nb !== '\u0652') || prevMark === '\u064e') cons(cn);
+      else out.push(prevMark === (c === 'و' ? '\u064f' : '\u0650') || !mark(prevMark) ? long : cn);
+      continue;
+    }
+    if (C[c] !== undefined) { cons(C[c]); continue; }
+    out.push(c);
+  }
+  return out.join('').replace(/^ʾ/, '');
+}
+
+/* Transliterate… : the selection (or anything you paste), into the draft or onto the clipboard */
+let tlRange = null;
+function openTranslit(text = null) {
+  const s = getSelection();
+  tlRange = s.rangeCount && editor.contains(s.anchorNode) && !s.isCollapsed ? s.getRangeAt(0).cloneRange() : null;
+  const src = text != null ? text : tlRange ? tlRange.toString() : '';
+  const sys = tlGuess(src) || jr().trans?.system || PREFS.tlSys || 'ru-ala';
+  $('#trlSys').innerHTML = Object.entries(TL).map(([k, v]) => `<option value="${k}" ${k === sys ? 'selected' : ''}>${esc(v.name)}</option>`).join('');
+  $('#trlIn').value = src; $('#trlForm').value = PREFS.tlForm || 'only';
+  tlRun(); $('#trlReplace').disabled = !tlRange; $('#trlDlg').showModal(); setTimeout(() => (src ? $('#trlSys') : $('#trlIn')).focus(), 30);
+}
+function tlRun() {
+  const sys = $('#trlSys').value, out = transliterate($('#trlIn').value, sys);
+  $('#trlOut').value = out; $('#trlNote').textContent = TL[sys]?.note || ''; $('#trlNote').classList.toggle('hidden', !TL[sys]?.note);
+}
+const tlFormatted = () => { const o = $('#trlOut').value, i = $('#trlIn').value.trim(), f = $('#trlForm').value; return f === 'both' ? `${o} (${i})` : f === 'orig' ? `${i} (${o})` : o; };
+$('#trlIn').addEventListener('input', tlRun); $('#trlSys').addEventListener('change', () => { PREFS.tlSys = $('#trlSys').value; savePrefs(); tlRun(); });
+$('#trlForm').addEventListener('change', () => { PREFS.tlForm = $('#trlForm').value; savePrefs(); });
+$('#trlReplace').addEventListener('click', () => {
+  const r = tlRange; if (!r) return; const t = tlFormatted(); $('#trlDlg').close();
+  editor.focus(); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('insertText', false, t); onEdit();
+  toast('Transliterated.');
+});
+$('#trlCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText(tlFormatted()); $('#trlCopy').textContent = 'Copied'; setTimeout(() => { $('#trlCopy').textContent = 'Copy'; }, 1300); } catch (e) { $('#trlOut').select(); toast('Select the text and copy it.'); } });
+$('#trlClose').addEventListener('click', () => $('#trlDlg').close());
+
+/* ---------- special characters: a palette that types into whatever you were typing in ---------- */
+const CH_SETS = [
+  ['latin', 'Accents', 'àáâãäåāăąæçćčďđèéêëēėęěğģìíîïīįıķľłñńňņòóôõöøōőœŕřśšşșßťţțùúûüūůűųýÿźžżþð'],
+  ['punct', 'Punctuation', '–—…«»‹›„“”‚‘’¡¿§¶†‡•·°′″‰№©®™×÷±≈≠≤≥€£¥₽₴¢\u00a0\u202f'],
+  ['translit', 'Transliteration', 'ʹʺʾʿāēīōūȳăĕĭŏŭėȯżḥḫṣḍṭẓṯḏġẖṅṇṃśṛḷñǧčšžẏḟ\u0361\u0304\u0306'],
+  ['greek', 'Greek', 'αβγδεζηθικλμνξοπρσςτυφχψωΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩϝϙϛϡ'],
+  ['cyr', 'Cyrillic', 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяґєіїўђјљњћџѓќѕѣѳѵѫѧ'],
+];
+const CH_NAME = { '\u00a0': 'no-break space', '\u202f': 'narrow no-break space (French)', '\u0361': 'tie (for t\u0361s, i\u0361a)', '\u0304': 'macron above', '\u0306': 'breve above' };
+let chTarget = null, chRange = null, chCaps = false;
+function chShow(c) { return c === '\u00a0' ? '⍽' : c === '\u202f' ? '⍽ₙ' : /[\u0300-\u036f]/.test(c) ? '◌' + c : c; }
+function openChars(target) {
+  const a = target || document.activeElement;
+  if (a && (a.matches?.('textarea, input[type=text], input:not([type])') || a === editor)) { chTarget = a; chRange = a === editor && getSelection().rangeCount ? getSelection().getRangeAt(0).cloneRange() : null; }
+  else if (savedRange && editor.contains(savedRange.startContainer)) { chTarget = editor; chRange = savedRange.cloneRange(); }
+  else chTarget = null;
+  chRender(); const d = $('#spcDlg'); if (!d.open) d.show(); chPlace();
+}
+function chPlace() { const d = $('#spcDlg'), pos = PREFS.chPos; if (pos) { d.style.left = Math.max(6, Math.min(pos.x, innerWidth - d.offsetWidth - 6)) + 'px'; d.style.top = Math.max(6, Math.min(pos.y, innerHeight - 80)) + 'px'; } }
+function chRender() {
+  const set = PREFS.chSet || 'latin', recent = (PREFS.chRecent || []).slice(0, 16);
+  $('#spcTabs').innerHTML = [['recent', 'Recent'], ...CH_SETS.map(([k, n]) => [k, n]), ['poly', 'Polytonic']].map(([k, n]) => `<button type="button" role="tab" aria-selected="${k === set}" class="${k === set ? 'on' : ''}" data-chset="${k}">${n}</button>`).join('');
+  const chars = set === 'recent' ? recent : set === 'poly' ? [] : [...(CH_SETS.find(x => x[0] === set) || CH_SETS[0])[2]];
+  const shown = chars.map(c => chCaps && set !== 'punct' && set !== 'translit' && set !== 'recent' ? (c === 'ß' ? 'ẞ' : c.toUpperCase()) : c).filter((c, i, a) => a.indexOf(c) === i);
+  $('#spcGrid').innerHTML = set === 'poly' ? chPolyHTML() : shown.length ? shown.map(c => `<button type="button" class="chb" data-ch="${esc(c)}" title="${esc(CH_NAME[c] || 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0'))}">${esc(chShow(c))}</button>`).join('') : '<p class="small muted">Characters you use show up here.</p>';
+  $('#spcCaps').classList.toggle('hidden', set === 'punct' || set === 'translit' || set === 'recent'); $('#spcCaps').setAttribute('aria-pressed', chCaps);
+}
+/* polytonic Greek: a vowel, then breathing, accent, iota subscript or diaeresis, composed into one letter */
+const POLY = { v: 'α', br: '', ac: '', io: false, di: false };
+function chPolyCompose() {
+  let s = chCaps ? POLY.v.toUpperCase() : POLY.v;
+  if (POLY.di && 'ιυ'.includes(POLY.v)) s += '\u0308';
+  if (POLY.br) s += POLY.br; if (POLY.ac) s += POLY.ac; if (POLY.io && 'αηω'.includes(POLY.v)) s += '\u0345';
+  return s.normalize('NFC');
+}
+function chPolyHTML() {
+  const B = (k, v, lab, on) => `<button type="button" class="chp ${on ? 'on' : ''}" data-poly="${k}" data-v="${esc(v)}" aria-pressed="${on}">${lab}</button>`;
+  return `<div class="ch-poly">
+    <div class="row">${[...'αεηιουωρ'].map(v => B('v', v, chCaps ? v.toUpperCase() : v, POLY.v === v)).join('')}</div>
+    <div class="row">${B('br', '', 'no breathing', !POLY.br)}${B('br', '\u0313', 'smooth ᾿', POLY.br === '\u0313')}${B('br', '\u0314', 'rough ῾', POLY.br === '\u0314')}</div>
+    <div class="row">${B('ac', '', 'no accent', !POLY.ac)}${B('ac', '\u0301', 'acute ´', POLY.ac === '\u0301')}${B('ac', '\u0300', 'grave `', POLY.ac === '\u0300')}${B('ac', '\u0342', 'circumflex ῀', POLY.ac === '\u0342')}</div>
+    <div class="row">${B('io', '1', 'iota subscript \u0345', POLY.io)}${B('di', '1', 'diaeresis ¨', POLY.di)}<button type="button" class="chb big" data-ch="${esc(chPolyCompose())}" title="Insert">${esc(chPolyCompose())}</button></div></div>`;
+}
+function chInsert(c) {
+  const t = chTarget;
+  if (!t || !document.contains(t)) { toast('Click where the character should go, then choose it.'); return; }
+  if (t === editor) {
+    editor.focus(); const s = getSelection();
+    if (!(s.rangeCount && editor.contains(s.anchorNode)) && chRange) { s.removeAllRanges(); s.addRange(chRange); }
+    document.execCommand('insertText', false, c); chRange = getSelection().getRangeAt(0).cloneRange(); onEdit();
+  } else {
+    t.focus(); const a = t.selectionStart ?? t.value.length, b = t.selectionEnd ?? a;
+    if (!document.execCommand('insertText', false, c)) { t.value = t.value.slice(0, a) + c + t.value.slice(b); t.selectionStart = t.selectionEnd = a + c.length; t.dispatchEvent(new Event('input', { bubbles: true })); }
+  }
+  PREFS.chRecent = [c, ...(PREFS.chRecent || []).filter(x => x !== c)].slice(0, 24); savePrefs();
+}
+$('#spcDlg').addEventListener('mousedown', e => { if (e.target.closest('.chb, .chp, #spcCaps, #spcTabs button')) e.preventDefault(); }); // keep the caret where it was
+$('#spcDlg').addEventListener('click', e => {
+  const t = e.target.closest('[data-chset]'); if (t) { PREFS.chSet = t.dataset.chset; savePrefs(); chRender(); return; }
+  const p = e.target.closest('[data-poly]');
+  if (p) { const k = p.dataset.poly; if (k === 'io' || k === 'di') POLY[k] = !POLY[k]; else POLY[k] = p.dataset.v; chRender(); return; }
+  const b = e.target.closest('[data-ch]'); if (b) { chInsert(b.dataset.ch); if (PREFS.chSet === 'recent') chRender(); return; }
+  if (e.target.id === 'chCaps') { chCaps = !chCaps; chRender(); }
+  if (e.target.id === 'chClose') $('#spcDlg').close();
+});
+document.addEventListener('focusin', e => { // follow the caret: the palette types into the last place you were typing
+  const a = e.target; if (!$('#spcDlg').open || $('#spcDlg').contains(a)) return;
+  if (a === editor || a.matches?.('textarea, input[type=text], input:not([type])')) chTarget = a;
+});
+editor.addEventListener('keyup', () => { if ($('#spcDlg').open && getSelection().rangeCount) chRange = getSelection().getRangeAt(0).cloneRange(); });
+editor.addEventListener('mouseup', () => { if ($('#spcDlg').open && getSelection().rangeCount) chRange = getSelection().getRangeAt(0).cloneRange(); });
+{
+  let drag = null; const h = $('#spcDlg header');
+  h.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const r = $('#spcDlg').getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top }; h.setPointerCapture(e.pointerId); e.preventDefault(); });
+  h.addEventListener('pointermove', e => { if (!drag) return; const d = $('#spcDlg'); d.style.left = Math.max(6, Math.min(e.clientX - drag.dx, innerWidth - d.offsetWidth - 6)) + 'px'; d.style.top = Math.max(6, Math.min(e.clientY - drag.dy, innerHeight - 60)) + 'px'; });
+  h.addEventListener('pointerup', () => { if (!drag) return; drag = null; const r = $('#spcDlg').getBoundingClientRect(); PREFS.chPos = { x: Math.round(r.left), y: Math.round(r.top) }; savePrefs(); });
+}
+$('#spcDlg').addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); $('#spcDlg').close(); chTarget?.focus?.(); } });
+
+/* ---------- translation journal: settings, the glossary, decisions ---------- */
+const TR_INSERT = [['note', 'Translation in the text, the original in the note'], ['brackets', 'Translation, then the original in brackets'], ['orig', 'Original in the text, translation in the note'], ['none', 'Translation only']];
+const trj = () => { const J = jr(); if (!J.trans) J.trans = { from: '', to: '', system: '', insert: 'note', mine: true, glossary: [] }; return J.trans; };
+function jTrans() {
+  const T = trj(), G = T.glossary, d = curDoc();
+  const notes = P.notes.filter(n => n.kind === 'translation'), dec = jr().log.filter(e => e.tags.includes('translation')).sort((a, b) => b.date.localeCompare(a.date) || b.created.localeCompare(a.created));
+  const sysFor = T.system || tlFor(T.from);
+  $('#deskTools').insertAdjacentHTML('beforeend', `<button data-j="${DJ(() => trNoteDoc())}" title="A front-matter note on your translation conventions, from this page">Note on translation</button><button data-j="${DJ(() => trGlossaryDoc())}" ${G.length ? '' : 'disabled'} title="Your glossary as back matter">Glossary</button><button data-j="${DJ(() => trCsv())}" ${G.length ? '' : 'disabled'}>CSV</button>`);
+  const counts = trCounts();
+  return `<div class="j-head"><h5>Translation</h5></div>
+    <p class="small muted">Keep the decisions a translation turns on: how you render a term, which transliteration you use, and why. The glossary checks your drafts for the renderings you’ve decided against.</p>
+    <div class="tr-set">
+      <div><label for="trFrom">Translating from</label><select id="trFrom" data-tr="from">${langOptions(T.from, 'Choose a language')}</select></div>
+      <div><label for="trTo">Into</label><select id="trTo" data-tr="to">${langOptions(T.to || 'en-US')}</select></div>
+      <div><label for="trSys">Transliteration</label><select id="trSys" data-tr="system"><option value="">None</option>${Object.entries(TL).map(([k, v]) => `<option value="${k}" ${k === sysFor ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}</select></div>
+      <div><label for="trIns">Inserting a translation note</label><select id="trIns" data-tr="insert">${TR_INSERT.map(([k, l]) => `<option value="${k}" ${k === T.insert ? 'selected' : ''}>${esc(l)}</option>`).join('')}</select></div>
+      <label class="inline small"><input type="checkbox" id="trMine" ${T.mine ? 'checked' : ''}> Say “my translation” in the citation of translations that are yours</label>
+    </div>
+    <h6 class="j-sub">Glossary <span class="muted small">${G.length ? `${G.length} ${G.length === 1 ? 'term' : 'terms'}` : ''}</span></h6>
+    <form class="tr-add" id="trAdd">
+      <input id="tgTerm" placeholder="Term in the original" aria-label="Term in the original" lang="${esc(T.from || '')}">
+      <input id="tgRender" placeholder="Your rendering" aria-label="Your rendering">
+      <input id="tgAvoid" placeholder="Renderings to avoid, with commas" aria-label="Renderings to avoid">
+      <input id="tgNote" placeholder="Why (optional)" aria-label="Why">
+      <button class="primary small" type="submit">Add</button>
+    </form>
+    <p class="small muted tr-eg">For example: <i>самодержавие</i>, rendered “autocracy”, avoiding “absolutism, tsarism”.</p>
+    ${G.length ? `<table class="cl-table tr-gl"><colgroup><col style="width:17%"><col style="width:14%"><col style="width:17%"><col style="width:22%"><col style="width:18%"><col style="width:9%"><col style="width:3%"></colgroup><thead><tr><th scope="col">Original</th><th scope="col">Transliteration</th><th scope="col">Rendering</th><th scope="col">Avoid</th><th scope="col">Why</th><th scope="col">In drafts</th><th scope="col"><span class="sr-only">Delete</span></th></tr></thead><tbody>
+      ${G.map(g => { const c = counts[g.id] || { use: 0, avoid: 0, notes: 0 }; return `<tr data-tg="${esc(g.id)}">
+        <td><input data-tgf="term" value="${esc(g.term)}" aria-label="Term" lang="${esc(g.lang || T.from || '')}" dir="auto"></td>
+        <td class="small">${esc(g.translit || (sysFor ? transliterate(g.term, sysFor) : '')) || '<span class="muted">—</span>'}</td>
+        <td><input data-tgf="render" value="${esc(g.render)}" aria-label="Rendering"></td>
+        <td><input data-tgf="avoid" value="${esc(g.avoid.join(', '))}" aria-label="Avoid"></td>
+        <td><input data-tgf="note" value="${esc(g.note)}" aria-label="Why"></td>
+        <td class="small ${c.avoid || c.notes ? 'tr-bad' : ''}">${c.use ? `${c.use}× as chosen` : ''}${c.avoid ? `${c.use ? '; ' : ''}<b>${c.avoid}× avoided form</b>` : ''}${c.notes ? `${c.use || c.avoid ? '; ' : ''}<b>${c.notes} ${c.notes === 1 ? 'note' : 'notes'} differ</b>` : ''}${!c.use && !c.avoid && !c.notes ? '<span class="muted">—</span>' : ''}</td>
+        <td><button class="ghost small danger" type="button" data-tgdel="${esc(g.id)}" aria-label="Delete ${esc(g.term)}">✕</button></td></tr>`; }).join('')}</tbody></table>
+      <p class="small muted">“In drafts” counts every document. The Outline lists where the open document uses an avoided form, with a Replace button; a translation note “differs” when its original has the term but its translation lacks your rendering.</p>` : '<p class="small muted">No terms yet. Add the words you’ll translate the same way every time, especially the ones with more than one plausible rendering.</p>'}
+    <h6 class="j-sub">Decisions</h6>
+    <form class="tr-add tr-dec" id="trDec"><input id="tdText" placeholder="A choice you made and why (e.g. Kept “oblast” untranslated: “region” loses the administrative sense)" aria-label="Decision"><button class="small" type="submit">Record</button></form>
+    ${dec.length ? `<ul class="tr-decs">${dec.map(e => `<li><span class="small muted">${esc(relDay(e.date))}</span> ${esc(e.text)}</li>`).join('')}</ul>` : '<p class="small muted">Decisions go in the research log too, tagged <i>translation</i>.</p>'}
+    <h6 class="j-sub">Translation notes <span class="muted small">${notes.length || ''}</span></h6>
+    ${notes.length ? `<ul class="desk-list tr-notes">${notes.slice(0, 40).map(n => `<li data-j="${DJ(() => { switchTab('notes'); openNote(n.id); })}"><span class="t">${esc(noteTitle(n) || 'Untitled')}</span><em>${esc(langName(n.origLang || T.from) || '')}</em></li>`).join('')}</ul>` : `<p class="small muted">A translation note holds the original and your translation side by side. Make one with <b>+ New</b> in Notes and choose the kind <i>Translation</i>.</p>`}`;
+}
+/* how often each term's rendering, and the renderings to avoid, appear in the drafts and notes */
+const trFold = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase();
+const trHas = (text, term) => trWordRe(trFold(term)).test(trFold(text)); // a term in the original, whatever its accents (Greek ἐπιμελητής / ἐπιμελητὴς)
+const trWordRe = w => new RegExp(`(?<![\\p{L}\\p{N}])${escRe(w.trim())}(?![\\p{L}\\p{N}])`, 'giu');
+function trCounts() {
+  const G = trj().glossary, out = {}; if (!G.length) return out;
+  const text = P.docs.map(d => d.id === curDocId ? editor.innerText : htmlToText(d.html || '')).join('\n');
+  G.forEach(g => {
+    const c = { use: 0, avoid: 0, notes: 0 };
+    if (g.render) c.use = (text.match(trWordRe(g.render)) || []).length;
+    g.avoid.forEach(a => { if (a) c.avoid += (text.match(trWordRe(a)) || []).length; });
+    if (g.term && g.render) P.notes.forEach(n => { if (n.kind === 'translation' && trHas(n.orig || '', g.term) && !trWordRe(g.render).test(n.body || '')) c.notes++; });
+    out[g.id] = c;
+  });
+  return out;
+}
+function trWire() {
+  const B = $('#deskBody'), T = trj();
+  $$('[data-tr]', B).forEach(s => s.addEventListener('change', () => { T[s.dataset.tr] = s.value; markDirty(); if (s.dataset.tr !== 'insert') renderDesk(); }));
+  $('#trMine')?.addEventListener('change', e => { T.mine = e.target.checked; markDirty(); });
+  $('#trAdd')?.addEventListener('submit', ev => {
+    ev.preventDefault(); const term = $('#tgTerm').value.trim(), render = $('#tgRender').value.trim();
+    if (!term || !render) { toast('Give the term and your rendering.'); (term ? $('#tgRender') : $('#tgTerm')).focus(); return; }
+    T.glossary.push({ id: uid('tg'), term, lang: T.from || '', render, avoid: $('#tgAvoid').value.split(',').map(x => x.trim()).filter(Boolean), note: $('#tgNote').value.trim(), translit: '', created: nowISO() });
+    markDirty(); renderDesk(); renderGlossaryCheck(); setTimeout(() => $('#tgTerm')?.focus(), 20);
+  });
+  $$('[data-tgf]', B).forEach(f => f.addEventListener('change', () => {
+    const g = T.glossary.find(x => x.id === f.closest('tr').dataset.tg); if (!g) return;
+    g[f.dataset.tgf] = f.dataset.tgf === 'avoid' ? f.value.split(',').map(x => x.trim()).filter(Boolean) : f.value.trim(); markDirty(); renderGlossaryCheck();
+  }));
+  $$('[data-tgdel]', B).forEach(b => b.addEventListener('click', () => {
+    const i = T.glossary.findIndex(x => x.id === b.dataset.tgdel); if (i < 0) return; const [g] = T.glossary.splice(i, 1);
+    markDirty(); renderDesk(); renderGlossaryCheck(); toast(`Removed “${g.term}”.`, { label: 'Undo', fn: () => { T.glossary.splice(i, 0, g); markDirty(); renderDesk(); renderGlossaryCheck(); } });
+  }));
+  $('#trDec')?.addEventListener('submit', ev => { ev.preventDefault(); const t = $('#tdText').value.trim(); if (!t) return; jLog('decided', t, { tags: ['translation'] }); renderDesk(); toast('Decision recorded.'); });
+}
+function trNoteDoc() {
+  const T = trj(), from = T.from ? langName(T.from) : '', sys = T.system || tlFor(T.from), G = T.glossary.filter(g => g.render);
+  const mk = t => `<mark>[${esc(t)}]</mark>`;
+  let h = `<h1>A Note on Translation</h1>`;
+  h += T.mine ? `<p>Translations from the ${from ? esc(from) : mk('language')} are my own unless otherwise noted.</p>` : `<p>${mk('Whose translations you quote, and where they come from.')}</p>`;
+  h += sys ? `<p>${esc(TL[sys].lang === 'grc' || TL[sys].lang === 'el' ? 'Greek' : langName(TL[sys].lang))} names and terms are transliterated by the ${esc(TL[sys].name.split(': ')[1] || TL[sys].name)} system, except for names that have a familiar English form. ${mk('Name the exceptions, e.g. Tchaikovsky, Yeltsin.')}</p>` : '';
+  if (G.length) h += `<p>Some terms have no settled English equivalent. I have rendered them as follows:</p><ul>${G.map(g => `<li><i>${esc(sys ? transliterate(g.term, sys) : g.term)}</i>${sys && transliterate(g.term, sys) !== g.term ? ` (${esc(g.term)})` : ''}: “${esc(g.render)}”${g.note ? `. ${esc(g.note)}` : ''}</li>`).join('')}</ul>`;
+  const dec = jr().log.filter(e => e.tags.includes('translation'));
+  if (dec.length) h += `<p>${mk(`Other conventions, from your ${dec.length} recorded ${dec.length === 1 ? 'decision' : 'decisions'}: say which matter to a reader.`)}</p>`;
+  h += `<p>${mk('Dates (old or new style), names of places that have changed, and anything a reader needs before the first quotation.')}</p>`;
+  const d = newDoc('A Note on Translation', h); d.role = 'front'; d.lang = curDoc()?.lang || ''; d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList(); closeDesk();
+  toast('A Note on Translation added as front matter. Fill in the highlighted parts.');
+}
+function trGlossaryDoc() {
+  const T = trj(), sys = T.system || tlFor(T.from), G = [...T.glossary].sort((a, b) => (sys ? transliterate(a.term, sys) : a.term).localeCompare(sys ? transliterate(b.term, sys) : b.term));
+  const h = `<h1>Glossary</h1>${G.map(g => `<p><b><i>${esc(sys ? transliterate(g.term, sys) : g.term)}</i></b>${sys ? ` (${esc(g.term)})` : ''}: ${esc(g.render)}${g.note ? `. ${esc(g.note)}` : ''}</p>`).join('')}`;
+  const d = newDoc('Glossary', h); d.role = 'back'; d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList(); closeDesk(); toast('Glossary added as back matter.');
+}
+function trCsv() {
+  const T = trj(), sys = T.system || tlFor(T.from), q = v => `"${String(v || '').replace(/"/g, '""')}"`;
+  const rows = [['term', 'language', 'transliteration', 'rendering', 'avoid', 'why'], ...T.glossary.map(g => [g.term, g.lang || T.from, sys ? transliterate(g.term, sys) : '', g.render, g.avoid.join('; '), g.note])];
+  download(fileSafe(P.title || 'Anabasis') + ' - translation glossary.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+}
+
+/* the glossary in the Outline: where this document uses a rendering you've decided against */
+let TG = [];
+function renderGlossaryCheck() {
+  const box = $('#tgList'); if (!box || !curDoc()) return;
+  const G = P.journal && P.journal.trans ? P.journal.trans.glossary.filter(g => g.avoid.length && g.render) : [];
+  $('#tgHead').classList.toggle('hidden', !G.length); box.classList.toggle('hidden', !G.length);
+  const hl = window.CSS && CSS.highlights && window.Highlight;
+  TG = [];
+  if (G.length) $$(':scope > p, :scope > blockquote, :scope > blockquote > p, :scope > ul > li, :scope > ol > li, :scope > h1, :scope > h2, :scope > h3', editor).forEach(el => {
+    if (el.matches('blockquote') && el.querySelector('p')) return;
+    const { text, range } = blockMap(el);
+    G.forEach(g => g.avoid.forEach(a => { const re = trWordRe(a); let m; while ((m = re.exec(text))) { const r = range(m.index, m.index + m[0].length); if (r) TG.push({ g, a: m[0], r, el }); } }));
+  });
+  TG.sort((a, b) => a.r.compareBoundaryPoints(Range.START_TO_START, b.r)); // in reading order
+  if (hl) { if (TG.length) CSS.highlights.set('cp-gloss', new Highlight(...TG.map(x => x.r))); else CSS.highlights.delete('cp-gloss'); }
+  $('#tgCount').textContent = TG.length || '';
+  box.innerHTML = TG.length ? TG.map((x, i) => `<li data-tgi="${i}"><span>“${esc(x.a)}” → <b>${esc(x.g.render)}</b> <span class="muted small">(${esc(x.g.term)})</span></span><button class="ghost small" data-tgfix="${i}">Replace</button></li>`).join('')
+    : '<li class="muted small none">This document uses your glossary’s renderings throughout.</li>';
+}
+editor.addEventListener('input', debounce(() => { if (!homeOn && !boardOn && !planOn) renderGlossaryCheck(); }, 1200));
+$('#tgList')?.addEventListener('click', e => {
+  const f = e.target.closest('[data-tgfix]');
+  if (f) { const x = TG[+f.dataset.tgfix]; if (!x) return; const s = getSelection(); s.removeAllRanges(); s.addRange(x.r); const rep = isUp(x.a[0]) ? capFirst(x.g.render) : x.g.render; editor.focus(); document.execCommand('insertText', false, rep); onEdit(); renderGlossaryCheck(); toast(`“${x.a}” → “${rep}”.`); return; }
+  const li = e.target.closest('[data-tgi]'); if (!li) return; const x = TG[+li.dataset.tgi]; if (!x) return;
+  x.el.scrollIntoView({ block: 'center', behavior: 'smooth' }); const s = getSelection(); s.removeAllRanges(); s.addRange(x.r);
+});
+
+/* ---------- translation notes ---------- */
+function trNoteFields(n) {
+  const T = trj(), lang = n.origLang || T.from || '', sys = tlFor(lang) || T.system;
+  return `<div class="tr-orig">
+    <div class="grid2"><div><label for="nOrigLang">Original language</label><select data-n="origLang" id="nOrigLang">${langOptions(lang, 'Choose')}</select></div>
+    <div><label for="nTransBy">Translated by</label><select data-n="transBy" id="nTransBy"><option value="me" ${n.transBy !== 'other' ? 'selected' : ''}>Me</option><option value="other" ${n.transBy === 'other' ? 'selected' : ''}>Someone else</option></select></div></div>
+    <div class="${n.transBy === 'other' ? '' : 'hidden'}" id="nTransWho"><label for="nTranslator">Translator <span class="muted">(for the citation: “trans. Rex Warner”)</span></label><input data-n="translator" id="nTranslator" value="${esc(n.translator || '')}"></div>
+    <label for="nOrig" style="display:flex;justify-content:space-between;align-items:end">Original <span><button class="ghost small" type="button" data-a="chars" title="Special characters (⌘/Ctrl Alt O)">Ω</button></span></label>
+    <textarea data-n="orig" id="nOrig" class="note-orig" lang="${esc(lang)}" dir="${langOf(lang).rtl ? 'rtl' : 'auto'}" placeholder="The passage as written">${esc(n.orig || '')}</textarea>
+    <label for="nTranslit" style="display:flex;justify-content:space-between;align-items:end"><span>Transliteration <span class="muted">(optional)</span></span><span><button class="ghost small" type="button" data-a="translit" ${sys ? '' : 'disabled'}>Transliterate the original</button></span></label>
+    <textarea data-n="translit" id="nTranslit" rows="2">${esc(n.translit || '')}</textarea></div>`;
+}
+/* inserted into the draft: your translation, with the original where the journal says */
+function trNoteHTML(n, items) {
+  const T = trj(), body = stripWikiLinks(n.body || '').trim().replace(/\s*\n\s*/g, ' '), orig = String(n.orig || '').trim().replace(/\s*\n\s*/g, ' ');
+  const Q = docQuotes(), mine = n.transBy !== 'other';
+  const credit = mine ? (T.mine ? 'My translation.' : '') : n.translator ? `Trans. ${n.translator}.` : '';
+  const ol = n.origLang || T.from, lattr = ol ? ` lang="${esc(ol)}"${langOf(ol).rtl ? ' dir="rtl"' : ''}` : '';
+  const mode = T.insert || 'note';
+  const citeWith = note => items ? citeHTML(items, note) : (note ? fnHTML(note) : '');
+  const md = s => s.replace(/([*_`\\])/g, '\\$1');
+  if (mode === 'orig' && orig) return `<p>${Q.open}<span${lattr}>${esc(orig)}</span>${Q.close}${citeWith([credit, `Translation: “${md(body)}”`].filter(Boolean).join(' '))}</p>`;
+  if (mode === 'brackets' && orig) return `<p>${Q.open}<span class="qlink" data-qn="${n.id}">${esc(body)}</span>${Q.close} [<span${lattr}>${esc(orig)}</span>]${citeWith(credit)}</p>`;
+  if (mode === 'none' || !orig) return `<p>${Q.open}<span class="qlink" data-qn="${n.id}">${esc(body)}</span>${Q.close}${citeWith(credit)}</p>`;
+  return `<p>${Q.open}<span class="qlink" data-qn="${n.id}">${esc(body)}</span>${Q.close}${citeWith([credit, `Original: ${Q.open}${md(orig)}${Q.close}`].filter(Boolean).join(' '))}</p>`;
+}
+
+/* ---------- the translation workspace: original and translation side by side, a segment at a time ---------- */
+const TW_ST = { '': 'Not started', draft: 'Draft', done: 'Done' };
+let twFilter = 'all', twAdding = false;
+const twCur = () => { const L = P.trw || []; return L.find(x => x.id === PREFS.trwCur) || L[0] || null; };
+function twSplit(text, how, lang) {
+  const paras = String(text || '').replace(/\r/g, '').split(/\n\s*\n/).map(p => p.replace(/\s*\n\s*/g, ' ').trim()).filter(Boolean);
+  const singles = paras.length === 1 && /\n/.test(String(text).trim()) ? String(text).split(/\n/).map(x => x.trim()).filter(Boolean) : paras; // pasted with single line breaks
+  const out = [];
+  singles.forEach((p, pi) => {
+    if (how !== 'sent' || typeof Intl === 'undefined' || !Intl.Segmenter) { out.push({ o: p, p: pi }); return; }
+    let seg; try { seg = new Intl.Segmenter(lang || undefined, { granularity: 'sentence' }); } catch (e) { seg = new Intl.Segmenter(undefined, { granularity: 'sentence' }); }
+    [...seg.segment(p)].map(s => s.segment.trim()).filter(Boolean).forEach(s => out.push({ o: s, p: pi }));
+  });
+  return out.map(x => ({ id: uid('sg'), o: x.o, t: '', st: '', n: '', p: x.p }));
+}
+function twProgress(w) {
+  const S = w.segs, done = S.filter(s => s.st === 'done').length, words = S.reduce((a, s) => a + wc(s.o), 0), wdone = S.filter(s => s.st === 'done').reduce((a, s) => a + wc(s.o), 0);
+  return { done, n: S.length, words, wdone, pct: S.length ? Math.round(done / S.length * 100) : 0 };
+}
+/* the glossary, segment by segment: which terms are in the original, and whether the translation follows them */
+function twHints(seg) {
+  const G = (P.journal.trans && P.journal.trans.glossary) || [], out = [];
+  G.forEach(g => {
+    if (!g.term || !g.render || !trHas(seg.o, g.term)) return;
+    const used = trWordRe(g.render).test(seg.t), bad = g.avoid.find(a => trWordRe(a).test(seg.t));
+    out.push({ g, used, bad });
+  });
+  return out;
+}
+function deskTranslate() {
+  const L = P.trw || (P.trw = []), w = twCur();
+  if (!L.length || twAdding) { twAdding = false; $('#deskBody').innerHTML = `<div class="desk-empty tw-new">${twNewForm(!L.length)}</div>`; twWireNew(); return; }
+  const pr = twProgress(w), T = trj(), sys = T.system || tlFor(w.from);
+  $('#deskTools').innerHTML = `<label class="inline small">Show <select id="twFilter"><option value="all">All segments</option><option value="todo">Not done</option><option value="draft">Drafts</option><option value="done">Done</option></select></label>
+    <button class="small" data-j="${DJ(() => { twAdding = true; renderDesk(); })}">+ New translation</button>
+    <button class="small" data-j="${DJ(() => twDoc(w, 'trans'))}" title="Your translation as a new document">Make a document</button>
+    <button class="small" data-j="${DJ(() => twDoc(w, 'both'))}" title="Original and translation in two columns">Side by side</button>
+    <button class="small" data-j="${DJ(() => twCsv(w))}">CSV</button>`;
+  $('#twFilter').value = twFilter;
+  const side = `<aside class="desk-side"><ul class="desk-list" role="tablist" aria-label="Translations">${L.map(x => { const p = twProgress(x); return `<li role="tab" aria-selected="${x === w}" class="${x === w ? 'on' : ''}" data-j="${DJ(() => { PREFS.trwCur = x.id; savePrefs(); renderDesk(); })}"><span class="t">${esc(x.title || 'Untitled')}</span><em>${p.pct}%</em></li>`; }).join('')}</ul></aside>`;
+  const shown = w.segs.map((s, i) => [s, i]).filter(([s]) => twFilter === 'all' || (twFilter === 'todo' ? s.st !== 'done' : s.st === twFilter));
+  const src = w.sourceId && P.sources.find(s => s.id === w.sourceId);
+  const main = `<div class="tw-head">
+      <input class="tw-title" id="twTitle" value="${esc(w.title)}" aria-label="Translation title">
+      <span class="small muted">${esc(langName(w.from))} → ${esc(langName(w.to))}${src ? ` · ${esc(srcShort(src))}` : ''}</span>
+      <div class="tw-prog" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pr.pct}" aria-label="Segments done"><i style="width:${pr.pct}%"></i></div>
+      <span class="small"><b>${pr.done}</b> of ${pr.n} segments done · ${nf(pr.wdone)} of ${nf(pr.words)} words</span>
+    </div>
+    <p class="small muted tw-tip"><kbd>⌘/Ctrl Enter</kbd> marks a segment done and moves to the next. Terms from your glossary show under the original; a red one means the translation uses a rendering you’ve decided against.</p>
+    <div class="tw-segs" id="twSegs">${shown.length ? shown.map(([s, i]) => twSegHTML(w, s, i, sys)).join('') : '<p class="muted">No segments match.</p>'}</div>
+    <details class="tw-more"><summary>Add more of the original, or change this translation</summary>
+      <label for="twAddText">More of the original</label><textarea id="twAddText" rows="4" lang="${esc(w.from)}" dir="auto"></textarea>
+      <div class="row"><select id="twAddHow" aria-label="Split into"><option value="para">A segment per paragraph</option><option value="sent">A segment per sentence</option></select><button class="small" id="twAddGo">Add segments</button>
+      <span class="spacer"></span><button class="ghost small danger" id="twDel">Delete this translation</button></div></details>`;
+  $('#deskBody').innerHTML = `<div class="desk-split">${side}<div class="desk-main tw-main">${main}</div></div>`;
+  twWire(w);
+}
+function twSegHTML(w, s, i, sys) {
+  const H = twHints(s), L = langOf(w.from);
+  return `<div class="tw-seg st-${s.st || 'none'}" data-seg="${s.id}">
+    <div class="tw-n"><button class="tw-st" data-twst="${s.id}" title="${TW_ST[s.st]}: click to change" aria-label="Segment ${i + 1}: ${TW_ST[s.st]}">${i + 1}</button></div>
+    <div class="tw-o"><div class="tw-otext" lang="${esc(w.from)}" dir="${L.rtl ? 'rtl' : 'auto'}">${esc(s.o)}</div>
+      ${H.length ? `<div class="tw-hints">${H.map(h => `<span class="tw-h ${h.bad ? 'bad' : h.used ? 'ok' : ''}" title="${h.bad ? `Uses “${esc(h.bad)}”, which you’ve decided against` : h.used ? 'Translated as decided' : 'Your rendering'}${h.g.note ? ': ' + esc(h.g.note) : ''}">${esc(h.g.term)} → ${esc(h.g.render)}${h.bad ? ` (not “${esc(h.bad)}”)` : ''}</span>`).join('')}</div>` : ''}
+      ${sys ? `<div class="tw-tl small muted">${esc(transliterate(s.o, sys).slice(0, 400))}</div>` : ''}
+      <div class="tw-acts"><button class="ghost small" data-twnote="${s.id}" title="Make a translation note from this segment">Note</button>${i < w.segs.length - 1 ? `<button class="ghost small" data-twmerge="${s.id}" title="Join with the next segment">Join next</button>` : ''}</div></div>
+    <textarea class="tw-t" data-twt="${s.id}" lang="${esc(w.to)}" dir="${langOf(w.to).rtl ? 'rtl' : 'auto'}" aria-label="Translation of segment ${i + 1}" placeholder="Your translation">${esc(s.t)}</textarea></div>`;
+}
+function twNewForm(first) {
+  const T = trj();
+  return `${first ? '<p><b>Translate a document, a passage or a source, a segment at a time.</b></p><p class="muted">Paste the original. Each paragraph (or sentence) becomes a segment with room for your translation beside it. Your glossary follows you through it, and the result can become a document.</p>' : '<p><b>New translation</b></p>'}
+    <div class="tw-form"><label for="twnTitle">Title</label><input id="twnTitle" placeholder="e.g. Order No. 227, or Anabasis 4.5">
+    <div class="grid3"><div><label for="twnFrom">From</label><select id="twnFrom">${langOptions(T.from, 'Choose')}</select></div><div><label for="twnTo">Into</label><select id="twnTo">${langOptions(T.to || 'en-US')}</select></div>
+    <div><label for="twnSrc">Source <span class="muted">(optional)</span></label><select id="twnSrc"><option value="">None</option>${sortedSources().map(s => `<option value="${s.id}">${esc(srcShort(s).slice(0, 60))}</option>`).join('')}</select></div></div>
+    <label for="twnText">The original</label><textarea id="twnText" rows="8" dir="auto" placeholder="Paste the text to translate"></textarea>
+    <div class="row"><select id="twnHow" aria-label="Split into"><option value="para">A segment per paragraph</option><option value="sent">A segment per sentence</option></select><span class="spacer"></span>${first ? '' : '<button id="twnCancel">Cancel</button>'}<button class="primary" id="twnGo">Start translating</button></div></div>`;
+}
+function twWireNew() {
+  $('#twnFrom').addEventListener('change', e => { $('#twnText').lang = e.target.value; });
+  $('#twnCancel')?.addEventListener('click', () => renderDesk());
+  $('#twnGo').addEventListener('click', () => {
+    const text = $('#twnText').value, from = $('#twnFrom').value;
+    if (!text.trim()) { toast('Paste the original first.'); $('#twnText').focus(); return; }
+    const w = { id: uid('tw'), title: $('#twnTitle').value.trim() || firstLine(text).slice(0, 60), from, to: $('#twnTo').value, sourceId: $('#twnSrc').value, segs: twSplit(text, $('#twnHow').value, from), created: nowISO(), modified: nowISO() };
+    (P.trw = P.trw || []).push(w); PREFS.trwCur = w.id; savePrefs(); if (from && !trj().from) trj().from = from; markDirty(); renderDesk();
+    toast(`${w.segs.length} ${w.segs.length === 1 ? 'segment' : 'segments'} ready.`); setTimeout(() => $('#twSegs .tw-t')?.focus(), 40);
+  });
+}
+const twSave = debounce(() => markDirty(), 500);
+function twWire(w) {
+  const B = $('#deskBody'), seg = id => w.segs.find(s => s.id === id);
+  $('#twFilter').addEventListener('change', e => { twFilter = e.target.value; renderDesk(); });
+  $('#twTitle').addEventListener('change', e => { w.title = e.target.value.trim(); w.modified = nowISO(); markDirty(); renderDesk(); });
+  $$('.tw-t', B).forEach(t => {
+    const fit = () => { t.style.height = 'auto'; t.style.height = Math.max(t.scrollHeight + 2, 64) + 'px'; }; fit();
+    t.addEventListener('input', () => { const s = seg(t.dataset.twt); s.t = t.value; if (!s.st && t.value.trim()) { s.st = 'draft'; twSegRefresh(w, s); } w.modified = nowISO(); fit(); twSave(); twHintRefresh(w, s); });
+    t.addEventListener('keydown', e => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+        e.preventDefault(); const s = seg(t.dataset.twt); s.t = t.value; s.st = s.t.trim() ? 'done' : s.st; w.modified = nowISO(); markDirty(); twSegRefresh(w, s); twHeadRefresh(w);
+        const all = $$('.tw-t', B), i = all.indexOf(t); const nx = all.slice(i + 1).find(x => !seg(x.dataset.twt).t.trim()) || all[i + 1]; if (nx) { nx.focus(); nx.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+      }
+    });
+  });
+  $('#twAddGo').addEventListener('click', () => { const t = $('#twAddText').value; if (!t.trim()) return; const base = Math.max(-1, ...w.segs.map(s => s.p || 0)) + 1; const add = twSplit(t, $('#twAddHow').value, w.from).map(s => Object.assign(s, { p: s.p + base })); w.segs.push(...add); w.modified = nowISO(); markDirty(); renderDesk(); toast(`${add.length} segments added.`); });
+  $('#twDel').addEventListener('click', async () => {
+    if (!(await ask('Delete this translation?', `“${w.title}” and its ${w.segs.length} segments are removed. Documents made from it stay.`, 'Delete'))) return;
+    const i = P.trw.indexOf(w); P.trw.splice(i, 1); markDirty(); renderDesk(); toast('Translation deleted.', { label: 'Undo', fn: () => { P.trw.splice(i, 0, w); markDirty(); renderDesk(); } });
+  });
+}
+function twClick(e) {
+  const w = twCur(); if (!w || deskView !== 'translate') return;
+  const st = e.target.closest('[data-twst]');
+  if (st) { const s = w.segs.find(x => x.id === st.dataset.twst); s.st = s.st === 'done' ? (s.t.trim() ? 'draft' : '') : s.st === 'draft' ? 'done' : (s.t.trim() ? 'done' : 'draft'); w.modified = nowISO(); markDirty(); twSegRefresh(w, s); twHeadRefresh(w); return; }
+  const mg = e.target.closest('[data-twmerge]');
+  if (mg) { const i = w.segs.findIndex(x => x.id === mg.dataset.twmerge), a = w.segs[i], b = w.segs[i + 1]; if (!b) return; a.o = a.o + ' ' + b.o; a.t = [a.t, b.t].filter(Boolean).join(' '); a.st = a.t ? 'draft' : ''; w.segs.splice(i + 1, 1); markDirty(); renderDesk(); return; }
+  const nt = e.target.closest('[data-twnote]');
+  if (nt) {
+    const s = w.segs.find(x => x.id === nt.dataset.twnote); if (!s.t.trim()) { toast('Translate the segment first.'); return; }
+    const n = Object.assign(newNote(), { kind: 'translation', title: (w.title + ' ' + (w.segs.indexOf(s) + 1)).slice(0, 80), orig: s.o, origLang: w.from, body: s.t, sourceId: w.sourceId || '', transBy: 'me' });
+    P.notes.unshift(n); renderNoteList(); markDirty(); toast('Translation note made.', { label: 'Open', fn: () => { closeDesk(); switchTab('notes'); openNote(n.id); } });
+  }
+}
+function twSegRefresh(w, s) { const el = $(`#twSegs [data-seg="${s.id}"]`); if (!el) return; el.className = `tw-seg st-${s.st || 'none'}`; const b = el.querySelector('.tw-st'); b.title = `${TW_ST[s.st]}: click to change`; b.setAttribute('aria-label', `Segment ${w.segs.indexOf(s) + 1}: ${TW_ST[s.st]}`); }
+function twHintRefresh(w, s) {
+  const el = $(`#twSegs [data-seg="${s.id}"] .tw-hints`); if (!el) return;
+  el.innerHTML = twHints(s).map(h => `<span class="tw-h ${h.bad ? 'bad' : h.used ? 'ok' : ''}">${esc(h.g.term)} → ${esc(h.g.render)}${h.bad ? ` (not “${esc(h.bad)}”)` : ''}</span>`).join('');
+}
+function twHeadRefresh(w) {
+  const p = twProgress(w), h = $('.tw-head'); if (!h) return;
+  h.querySelector('.tw-prog i').style.width = p.pct + '%'; h.querySelector('.tw-prog').setAttribute('aria-valuenow', p.pct);
+  h.querySelector('span.small:last-child').innerHTML = `<b>${p.done}</b> of ${p.n} segments done · ${nf(p.wdone)} of ${nf(p.words)} words`;
+  const li = $('.desk-side li.on em'); if (li) li.textContent = p.pct + '%';
+}
+/* as a document: the translation alone (segments rejoined into their paragraphs), or both in two columns */
+function twDoc(w, mode) {
+  const L = langOf(w.from), la = `lang="${esc(w.from)}"${L.rtl ? ' dir="rtl"' : ''}`;
+  const paras = []; w.segs.forEach(s => { const k = s.p ?? paras.length; (paras[k] = paras[k] || []).push(s); });
+  const ps = paras.filter(Boolean);
+  let h = `<h1>${esc(w.title)}</h1>`;
+  if (mode === 'trans') h += ps.map(g => `<p>${g.map(s => s.t.trim() ? esc(s.t.trim()) : `<mark>[${esc(s.o)}]</mark>`).join(' ')}</p>`).join('');
+  else h += `<table><thead><tr><th>${esc(langName(w.from))}</th><th>${esc(langName(w.to))}</th></tr></thead><tbody>${ps.map(g => `<tr><td><span ${la}>${esc(g.map(s => s.o).join(' '))}</span></td><td>${esc(g.map(s => s.t.trim()).filter(Boolean).join(' '))}</td></tr>`).join('')}</tbody></table>`;
+  const d = newDoc(mode === 'trans' ? w.title : `${w.title}: original and translation`, h); d.lang = w.to === 'en-US' ? '' : w.to; d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList(); closeDesk();
+  const left = w.segs.filter(s => !s.t.trim()).length;
+  toast(left && mode === 'trans' ? `Document made. ${left} untranslated ${left === 1 ? 'segment is' : 'segments are'} highlighted in it.` : 'Document made.');
+}
+function twCsv(w) {
+  const q = v => `"${String(v || '').replace(/"/g, '""')}"`;
+  const rows = [['segment', 'original', 'translation', 'status'], ...w.segs.map((s, i) => [i + 1, s.o, s.t, TW_ST[s.st]])];
+  download(fileSafe(w.title || 'translation') + '.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+}
+
+$('#deskBody').addEventListener('click', twClick);
+
+/* ---------- search inside sources: the text of every attached PDF, photo transcription and transcript ----------
+   PDF text is read once with the reader's own pdf.js and kept in this browser (IndexedDB, 'ftx:' + source id),
+   beside the PDF itself; it's re-read when the PDF changes. Nothing leaves the computer. */
+const FTX = {};
+const ftxStore = {
+  get: id => idbReq('readonly', st => st.get('ftx:' + id)),
+  set: (id, v) => idbReq('readwrite', st => st.put(v, 'ftx:' + id)),
+};
+async function ftxIndex(onProgress) {
+  let keys = []; try { keys = (await pdfStore.keys() || []).map(String).filter(k => k.startsWith('pdf:')).map(k => k.slice(4)); } catch (e) { return { n: 0, scanned: [] }; }
+  const ids = keys.filter(id => P.sources.some(s => s.id === id)), scanned = [];
+  let lib = null;
+  for (let i = 0; i < ids.length; i++) {
+    const id = ids[i];
+    if (FTX[id] && FTX[id].ok) continue;
+    const rec = await pdfStore.get(id).catch(() => null); if (!rec || !rec.buf) continue;
+    const size = rec.buf.byteLength;
+    const have = await ftxStore.get(id).catch(() => null);
+    if (have && have.size === size && have.name === rec.name) { FTX[id] = Object.assign(have, { ok: true }); if (have.scanned) scanned.push(id); continue; }
+    onProgress && onProgress(i + 1, ids.length, rec.name);
+    try {
+      lib = lib || await loadPdfjs();
+      const doc = await lib.getDocument({ data: new Uint8Array(rec.buf.slice(0)), isEvalSupported: false, enableXfa: false }).promise;
+      let labels = null; try { labels = await doc.getPageLabels(); } catch (e) { /* none */ }
+      const pages = [];
+      for (let p = 1; p <= doc.numPages; p++) { const tc = await (await doc.getPage(p)).getTextContent(); pages.push(tc.items.map(t => t.str + (t.hasEOL ? '\n' : '')).join('').replace(/[ \t]+/g, ' ')); }
+      const chars = pages.reduce((a, t) => a + t.trim().length, 0), isScan = doc.numPages > 0 && chars / doc.numPages < 40;
+      const v = { name: rec.name, size, pages, labels, scanned: isScan, at: nowISO() };
+      FTX[id] = Object.assign(v, { ok: true }); ftxStore.set(id, v).catch(() => {}); if (isScan) scanned.push(id);
+      try { doc.destroy(); } catch (e) { /* done */ }
+    } catch (e) { console.warn('index', id, e); }
+  }
+  return { n: ids.length, scanned };
+}
+/* every place a phrase occurs, accent- and case-insensitive, with a snippet either side */
+function ftxFind(text, q) {
+  const T = trFold(text), Q = trFold(q).trim(); if (!Q) return [];
+  const hits = []; let i = 0;
+  while ((i = T.indexOf(Q, i)) >= 0 && hits.length < 50) { hits.push(i); i += Q.length; }
+  return hits.map(at => {
+    const a = Math.max(0, at - 80), b = Math.min(text.length, at + Q.length + 80);
+    return { at, pre: (a ? '…' : '') + text.slice(a, at).replace(/\s+/g, ' '), hit: text.slice(at, at + Q.length), post: text.slice(at + Q.length, b).replace(/\s+/g, ' ') + (b < text.length ? '…' : '') };
+  });
+}
+function ftxSearch(q) {
+  const out = [];
+  P.sources.forEach(s => {
+    const R = [];
+    const ix = FTX[s.id];
+    if (ix) ix.pages.forEach((t, i) => ftxFind(t, q).forEach(h => R.push(Object.assign(h, { kind: 'pdf', page: i + 1, label: ix.labels && ix.labels[i] ? ix.labels[i] : String(i + 1) }))));
+    (s.photos || []).forEach(ph => ftxFind(ph.text || '', q).forEach(h => R.push(Object.assign(h, { kind: 'photo', photo: ph.id, where: [ph.box && 'box ' + ph.box, ph.folder && 'folder ' + ph.folder, ph.item && 'item ' + ph.item].filter(Boolean).join(', ') || ph.name }))));
+    if (s.transcript) ftxFind(s.transcript, q).forEach(h => { const line = s.transcript.slice(0, h.at).split('\n').length, ts = (s.transcript.split('\n')[line - 1] || '').match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/); R.push(Object.assign(h, { kind: 'tr', where: ts ? ts[0] : 'line ' + line })); });
+    ftxFind([s.annotation, s.csl && s.csl.abstract].filter(Boolean).join('\n'), q).forEach(h => R.push(Object.assign(h, { kind: 'meta' })));
+    if (R.length) out.push({ s, R });
+  });
+  return out.sort((a, b) => b.R.length - a.R.length);
+}
+let FTXR = [];
+async function openFtx(q = '') {
+  $('#ftxQ').value = q || $('#ftxQ').value; $('#ftxDlg').showModal(); setTimeout(() => $('#ftxQ').select(), 20);
+  $('#ftxStatus').textContent = 'Reading the text of your PDFs…';
+  const r = await ftxIndex((i, n, name) => { $('#ftxStatus').textContent = `Reading PDF ${i} of ${n}: ${name}…`; });
+  const nPh = P.sources.reduce((a, s) => a + (s.photos || []).filter(p => (p.text || '').trim()).length, 0), nTr = P.sources.filter(s => (s.transcript || '').trim()).length;
+  $('#ftxStatus').innerHTML = `Searching ${r.n} ${r.n === 1 ? 'PDF' : 'PDFs'}, ${nPh} photo ${nPh === 1 ? 'transcription' : 'transcriptions'} and ${nTr} ${nTr === 1 ? 'transcript' : 'transcripts'}.` +
+    (r.scanned.length ? ` <b>${r.scanned.length} scanned ${r.scanned.length === 1 ? 'PDF has' : 'PDFs have'} no text to search</b>${typeof ocrAvailable === 'function' ? ' (open one and choose <i>Read text</i> in the reader)' : ''}.` : '') +
+    (r.n ? '' : ' Attach PDFs by opening them in the reader with a source chosen.');
+  ftxRun();
+}
+function ftxRun() {
+  const q = $('#ftxQ').value.trim();
+  if (q.length < 2) { $('#ftxList').innerHTML = '<p class="muted small">Type a word or phrase: a name, a place, a term. Accents and capitals don’t matter.</p>'; return; }
+  FTXR = ftxSearch(q);
+  const total = FTXR.reduce((a, x) => a + x.R.length, 0);
+  $('#ftxList').innerHTML = FTXR.length ? `<p class="small muted">${total} ${total === 1 ? 'place' : 'places'} in ${FTXR.length} ${FTXR.length === 1 ? 'source' : 'sources'}</p>` + FTXR.map((x, si) => `<section class="ftx-src"><h4>${esc(srcShort(x.s))} <span class="muted small">${x.R.length}</span></h4><ul>${x.R.slice(0, 12).map((h, hi) =>
+    `<li><button class="ftx-hit" data-ftx="${si}:${hi}"><span class="ftx-where">${h.kind === 'pdf' ? 'p. ' + esc(h.label) : h.kind === 'photo' ? esc(h.where) : h.kind === 'tr' ? esc(h.where) : 'notes'}</span><span>${esc(h.pre)}<mark>${esc(h.hit)}</mark>${esc(h.post)}</span></button></li>`).join('')}${x.R.length > 12 ? `<li class="muted small">${x.R.length - 12} more</li>` : ''}</ul></section>`).join('')
+    : `<p class="muted">“${esc(q)}” isn’t in any PDF, transcription or transcript.</p>`;
+}
+$('#ftxQ').addEventListener('input', debounce(ftxRun, 200));
+$('#ftxQ').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#ftxList .ftx-hit')?.click(); } });
+$('#ftxList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-ftx]'); if (!b) return;
+  const [si, hi] = b.dataset.ftx.split(':').map(Number), x = FTXR[si], h = x && x.R[hi]; if (!h) return;
+  $('#ftxDlg').close();
+  if (h.kind === 'pdf') { const rec = await pdfStore.get(x.s.id).catch(() => null); if (!rec) return; await openPdfData(rec.buf, rec.name || 'document.pdf', x.s.id); setTimeout(() => { goPage(h.page); const f = $('#rdFind'); if (f) f.value = h.hit; }, 400); }
+  else if (h.kind === 'photo') { PH.src = x.s.id; PH.cur = h.photo; openPhotos(x.s.id); }
+  else if (h.kind === 'tr') openTranscript(x.s.id);
+  else { switchTab('sources'); openSource(x.s.id); }
+});
+$('#ftxClose').addEventListener('click', () => $('#ftxDlg').close());
+$('#btnFtx').addEventListener('click', () => { $('#srcMoreMenu')?.classList.remove('open'); openFtx(); });
+
+/* ---------- my library: sources (and their notes) kept in this browser, for every project ----------
+   Projects stay self-contained files; the library is a shelf beside them. Adding from it copies a source into
+   the open project, so a project file still carries everything it cites. Export and import move the shelf. */
+const LIB_KEY = 'lib:v1';
+const libStore = { get: () => idbReq('readonly', st => st.get(LIB_KEY)), set: v => idbReq('readwrite', st => st.put(v, LIB_KEY)) };
+let LIB = null, libSel = new Set();
+async function libLoad() { if (LIB) return LIB; const v = await libStore.get().catch(() => null); LIB = v && Array.isArray(v.items) ? v : { items: [] }; return LIB; }
+async function libSave() { await libStore.set({ items: LIB.items, saved: nowISO() }); }
+function libKey(src) {
+  const c = src.csl || {}, doi = String(c.DOI || '').toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, '');
+  if (doi) return 'doi:' + doi;
+  const isbn = String(c.ISBN || '').replace(/[^0-9xX]/g, ''); if (isbn.length >= 10) return 'isbn:' + isbn.slice(-10).toLowerCase();
+  const a = ((c.author || c.editor || [])[0] || {}), y = (((c.issued || {})['date-parts'] || [[]])[0] || [])[0] || '';
+  return 't:' + trFold(c.title || '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim() + '|' + y + '|' + trFold(a.family || a.literal || '');
+}
+const LIB_NOTE_KEYS = ['title', 'kind', 'body', 'locator', 'label', 'tags', 'orig', 'origLang', 'translit', 'transBy', 'translator', 'date'];
+function libItemFrom(s) {
+  const notes = P.notes.filter(n => n.sourceId === s.id).map(n => Object.fromEntries(LIB_NOTE_KEYS.filter(k => n[k] !== undefined && n[k] !== '').map(k => [k, Array.isArray(n[k]) ? [...n[k]] : n[k]])));
+  return { lid: uid('lb'), key: libKey(s), csl: JSON.parse(JSON.stringify(s.csl || {})), ...(s.osint ? { osint: JSON.parse(JSON.stringify(s.osint)) } : {}), stype: s.stype || '', annotation: s.annotation || '', notes, from: P.title || 'Untitled project', added: nowISO(), modified: nowISO() };
+}
+/* save one source, or all of them; a source already on the shelf is updated, keeping notes from other projects */
+async function libAdd(sources) {
+  await libLoad(); let added = 0, updated = 0;
+  sources.forEach(s => {
+    const it = libItemFrom(s), have = LIB.items.find(x => x.key === it.key);
+    if (!have) { LIB.items.push(it); added++; return; }
+    const seen = new Set(have.notes.map(n => trFold((n.body || '') + '|' + (n.locator || ''))));
+    it.notes.forEach(n => { const k = trFold((n.body || '') + '|' + (n.locator || '')); if (!seen.has(k)) { have.notes.push(n); seen.add(k); } });
+    Object.assign(have, { csl: it.csl, stype: it.stype || have.stype, annotation: it.annotation || have.annotation, modified: nowISO() }); if (it.osint) have.osint = it.osint;
+    updated++;
+  });
+  await libSave(); return { added, updated };
+}
+/* copy library items into the open project, with their notes if asked; a source the project already has is skipped */
+function libIntoProject(items, withNotes) {
+  const have = new Map(P.sources.map(s => [libKey(s), s])); let added = 0, skipped = 0, notes = 0;
+  items.forEach(it => {
+    if (have.has(it.key)) { skipped++; return; }
+    const s = Object.assign({ id: uid('s'), csl: JSON.parse(JSON.stringify(it.csl)), created: nowISO(), modified: nowISO() }, it.osint ? { osint: JSON.parse(JSON.stringify(it.osint)) } : {}, it.stype ? { stype: it.stype } : {}, it.annotation ? { annotation: it.annotation } : {});
+    P.sources.push(s); have.set(it.key, s); added++;
+    if (withNotes) it.notes.forEach(n => { P.notes.push(Object.assign(newNote(), JSON.parse(JSON.stringify(n)), { sourceId: s.id, tags: Array.isArray(n.tags) ? [...n.tags] : [] })); notes++; });
+  });
+  if (added) { srcVersion++; renderSourceList(); renderNoteList(); markDirty(); }
+  return { added, skipped, notes };
+}
+async function openLibrary() {
+  await libLoad(); libSel = new Set(); $('#libQ').value = ''; libRender(); $('#libDlg').showModal(); setTimeout(() => $('#libQ').focus(), 30);
+}
+function libLabel(it) {
+  const c = it.csl || {}, a = (c.author || c.editor || [])[0] || {}, y = (((c.issued || {})['date-parts'] || [[]])[0] || [])[0] || 'n.d.';
+  return { who: `${a.family || a.literal || ''}${a.family || a.literal ? ' ' : ''}${y}`, title: c.title || 'Untitled' };
+}
+function libRender() {
+  const q = trFold($('#libQ').value.trim()), inProj = new Set(P.sources.map(libKey));
+  const list = LIB.items.filter(it => !q || trFold([libLabel(it).who, libLabel(it).title, it.csl['container-title'], it.from, it.annotation].join(' ')).includes(q))
+    .sort((a, b) => libLabel(a).who.localeCompare(libLabel(b).who));
+  $('#libCount').textContent = `${LIB.items.length} ${LIB.items.length === 1 ? 'source' : 'sources'} on the shelf, kept in this browser for every project.`;
+  $('#libList').innerHTML = list.length ? list.map(it => { const L = libLabel(it), here = inProj.has(it.key); return `<li class="${here ? 'here' : ''}">
+    <label class="lib-pick"><input type="checkbox" data-lib="${it.lid}" ${libSel.has(it.lid) ? 'checked' : ''} ${here ? 'disabled' : ''} aria-label="Choose ${esc(L.title)}"></label>
+    <div class="lib-t"><b>${esc(L.who)}</b> ${esc(L.title)}<div class="small muted">${it.notes.length ? `${it.notes.length} ${it.notes.length === 1 ? 'note' : 'notes'} · ` : ''}from ${esc(it.from)}${here ? ' · <span class="lib-here">in this project</span>' : ''}</div></div>
+    <button class="small" data-libadd="${it.lid}" ${here ? 'disabled' : ''}>Add</button><button class="ghost small danger" data-libdel="${it.lid}" aria-label="Remove ${esc(L.title)} from the library">✕</button></li>`; }).join('')
+    : `<li class="muted">${LIB.items.length ? 'Nothing on the shelf matches.' : 'The shelf is empty. Save a source with <b>Save to library</b> on the source, or all of this project’s sources below.'}</li>`;
+  $('#libAddSel').disabled = !libSel.size; $('#libAddSel').textContent = libSel.size ? `Add ${libSel.size} to this project` : 'Add to this project';
+}
+$('#libQ').addEventListener('input', debounce(libRender, 120));
+$('#libList').addEventListener('change', e => { const c = e.target.closest('[data-lib]'); if (!c) return; if (c.checked) libSel.add(c.dataset.lib); else libSel.delete(c.dataset.lib); libRender(); });
+$('#libList').addEventListener('click', async e => {
+  const a = e.target.closest('[data-libadd]');
+  if (a) { const it = LIB.items.find(x => x.lid === a.dataset.libadd); const r = libIntoProject([it], $('#libNotes').checked); libRender(); toast(r.added ? `Added to this project${r.notes ? ` with ${r.notes} ${r.notes === 1 ? 'note' : 'notes'}` : ''}.` : 'This project already has it.'); return; }
+  const d = e.target.closest('[data-libdel]');
+  if (d) {
+    const i = LIB.items.findIndex(x => x.lid === d.dataset.libdel); if (i < 0) return; const [gone] = LIB.items.splice(i, 1); libSel.delete(gone.lid); await libSave(); libRender();
+    toast('Removed from the library. Projects that have it keep it.', { label: 'Undo', fn: async () => { LIB.items.splice(i, 0, gone); await libSave(); if ($('#libDlg').open) libRender(); } });
+  }
+});
+$('#libAddSel').addEventListener('click', () => { const items = LIB.items.filter(x => libSel.has(x.lid)); const r = libIntoProject(items, $('#libNotes').checked); libSel.clear(); libRender(); toast(`${r.added} added to this project${r.notes ? `, with ${r.notes} ${r.notes === 1 ? 'note' : 'notes'}` : ''}${r.skipped ? `; ${r.skipped} already here` : ''}.`); });
+$('#libSaveAll').addEventListener('click', async () => { if (!P.sources.length) { toast('This project has no sources yet.'); return; } const r = await libAdd(P.sources); libRender(); toast(`${r.added} added to the library${r.updated ? `, ${r.updated} updated` : ''}.`); });
+$('#libExport').addEventListener('click', async () => { await libLoad(); download('Anabasis library ' + todayKey() + '.json', JSON.stringify({ app: 'Anabasis library', version: 1, saved: nowISO(), items: LIB.items }, null, 1), 'application/json'); });
+$('#libImport').addEventListener('click', () => $('#libFile').click());
+$('#libFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  let j; try { j = JSON.parse(await f.text()); } catch (err) { toast('That file isn’t an Anabasis library.'); return; }
+  if (!j || !Array.isArray(j.items)) { toast('That file isn’t an Anabasis library.'); return; }
+  await libLoad(); let added = 0, merged = 0;
+  j.items.filter(it => it && typeof it === 'object' && it.csl && typeof it.csl === 'object').forEach(raw => {
+    const it = { lid: uid('lb'), key: '', csl: raw.csl, ...(raw.osint && typeof raw.osint === 'object' ? { osint: raw.osint } : {}), stype: ST_OK.has(raw.stype) ? raw.stype : '', annotation: asStr(raw.annotation), notes: (Array.isArray(raw.notes) ? raw.notes : []).filter(n => n && typeof n === 'object').map(n => Object.fromEntries(LIB_NOTE_KEYS.filter(k => n[k] !== undefined).map(k => [k, k === 'tags' ? (Array.isArray(n.tags) ? n.tags.map(asStr) : []) : asStr(n[k])]))), from: asStr(raw.from) || 'an imported library', added: asStr(raw.added) || nowISO(), modified: asStr(raw.modified) || nowISO() };
+    it.key = libKey(it); const have = LIB.items.find(x => x.key === it.key);
+    if (!have) { LIB.items.push(it); added++; } else if ((it.modified || '') > (have.modified || '')) { Object.assign(have, it, { lid: have.lid }); merged++; }
+  });
+  await libSave(); libRender(); toast(`${added} added to the library${merged ? `, ${merged} updated` : ''}.`);
+});
+$('#libClose').addEventListener('click', () => $('#libDlg').close());
+$('#btnLibrary').addEventListener('click', () => { $('#srcMoreMenu')?.classList.remove('open'); openLibrary(); });
+
+/* ---------- submissions: pitches and submissions for each piece, with follow-ups on the calendar ---------- */
+const SUB_ST = [['planned', 'Planned'], ['sent', 'Sent'], ['followed', 'Followed up'], ['accepted', 'Accepted'], ['published', 'Published'], ['rejected', 'Declined'], ['withdrawn', 'Withdrawn']], SUB_NAME = Object.fromEntries(SUB_ST);
+const SUB_OPEN = new Set(['planned', 'sent', 'followed']);
+const subsOf = () => P.subs || (P.subs = []);
+function subDue(x) { return SUB_OPEN.has(x.status) && x.followUp ? x.followUp : ''; }
+function subsSummary() {
+  const S = subsOf(), by = k => S.filter(x => x.status === k).length, out = by('sent') + by('followed');
+  const fees = S.filter(x => (x.status === 'accepted' || x.status === 'published') && +x.fee > 0).reduce((a, x) => a + +x.fee, 0);
+  const next = S.filter(subDue).sort((a, b) => subDue(a).localeCompare(subDue(b)))[0];
+  return { n: S.length, out, acc: by('accepted') + by('published'), dec: by('rejected'), fees, next };
+}
+function openSubs(focusId) { subsRender(); $('#subDlg').showModal(); if (focusId) setTimeout(() => $(`#subList [data-sub="${focusId}"] input`)?.focus(), 40); }
+function subsRender() {
+  const S = subsOf().slice().sort((a, b) => (SUB_OPEN.has(b.status) - SUB_OPEN.has(a.status)) || (b.sent || b.created).localeCompare(a.sent || a.created));
+  const sm = subsSummary(), cur = PREFS.currency || '$', today = todayKey();
+  $('#subSum').innerHTML = sm.n ? `<b>${sm.out}</b> out · <b>${sm.acc}</b> accepted · ${sm.dec} declined${sm.fees ? ` · ${esc(cur)}${nf(sm.fees)} in accepted fees` : ''}${sm.next ? ` · next follow-up ${esc(fmtDay(calDate(subDue(sm.next))))}: ${esc(sm.next.outlet || 'untitled')}` : ''}` : 'Track where each piece has gone: pitches and submissions, editors, dates, fees. Follow-up dates show on the calendar.';
+  const docOpts = cur2 => `<option value="">—</option>${P.docs.map(d => `<option value="${d.id}" ${d.id === cur2 ? 'selected' : ''}>${esc((d.title || 'Untitled').slice(0, 50))}</option>`).join('')}`;
+  $('#subList').innerHTML = S.length ? S.map(x => { const late = subDue(x) && subDue(x) <= today; return `<tr data-sub="${x.id}" class="sub-${x.status}">
+    <td><select data-sf="docId" aria-label="Piece">${docOpts(x.docId)}</select></td>
+    <td><input data-sf="outlet" value="${esc(x.outlet)}" aria-label="Outlet" placeholder="Outlet"></td>
+    <td><input data-sf="editor" value="${esc(x.editor)}" aria-label="Editor" placeholder="Editor"></td>
+    <td><select data-sf="kind" aria-label="Kind"><option value="pitch" ${x.kind === 'pitch' ? 'selected' : ''}>Pitch</option><option value="submission" ${x.kind === 'submission' ? 'selected' : ''}>Submission</option></select></td>
+    <td><input type="date" data-sf="sent" value="${esc(x.sent)}" aria-label="Sent"></td>
+    <td><select data-sf="status" aria-label="Status">${SUB_ST.map(([k, l]) => `<option value="${k}" ${k === x.status ? 'selected' : ''}>${l}</option>`).join('')}</select></td>
+    <td class="${late ? 'sub-late' : ''}"><input type="date" data-sf="followUp" value="${esc(x.followUp)}" aria-label="Follow up on"${late ? ' title="Due"' : ''}></td>
+    <td><input type="number" min="0" step="any" data-sf="fee" value="${x.fee === '' ? '' : esc(x.fee)}" aria-label="Fee" placeholder="${esc(cur)}"></td>
+    <td><input data-sf="notes" value="${esc(x.notes)}" aria-label="Notes" placeholder="Notes, word count, rights"></td>
+    <td><button class="ghost small danger" data-subdel="${x.id}" aria-label="Delete">✕</button></td></tr>`; }).join('') : '';
+  $('#subTable').classList.toggle('hidden', !S.length);
+}
+$('#subAdd').addEventListener('click', () => {
+  const x = { id: uid('sub'), docId: curDocId || '', outlet: '', editor: '', kind: 'pitch', sent: todayKey(), status: 'sent', followUp: (() => { const d = new Date(); d.setDate(d.getDate() + 14); return todayKey(d); })(), fee: '', notes: '', created: nowISO(), modified: nowISO() };
+  subsOf().push(x); markDirty(); subsRender(); setTimeout(() => $(`#subList [data-sub="${x.id}"] [data-sf=outlet]`)?.focus(), 30);
+});
+$('#subList').addEventListener('change', e => {
+  const f = e.target.closest('[data-sf]'); if (!f) return; const x = subsOf().find(s => s.id === f.closest('tr').dataset.sub); if (!x) return;
+  const k = f.dataset.sf; x[k] = k === 'fee' ? (f.value === '' ? '' : Math.max(0, +f.value || 0)) : f.value.trim(); x.modified = nowISO();
+  if (k === 'status' && !SUB_OPEN.has(x.status)) x.closed = todayKey();
+  if (k === 'status' && x.status === 'followed') { const d = new Date(); d.setDate(d.getDate() + 14); x.followUp = todayKey(d); }
+  markDirty(); if (k === 'status' || k === 'followUp' || k === 'fee') subsRender(); if (homeOn) renderHomeSoon();
+});
+$('#subList').addEventListener('click', e => {
+  const d = e.target.closest('[data-subdel]'); if (!d) return; const S = subsOf(), i = S.findIndex(x => x.id === d.dataset.subdel); if (i < 0) return;
+  const [gone] = S.splice(i, 1); markDirty(); subsRender(); toast('Deleted.', { label: 'Undo', fn: () => { S.splice(i, 0, gone); markDirty(); if ($('#subDlg').open) subsRender(); } });
+});
+$('#subCsv').addEventListener('click', () => {
+  const q = v => `"${String(v ?? '').replace(/"/g, '""')}"`, title = id => (P.docs.find(d => d.id === id) || {}).title || '';
+  const rows = [['piece', 'outlet', 'editor', 'kind', 'sent', 'status', 'follow up', 'fee', 'notes'], ...subsOf().map(x => [title(x.docId), x.outlet, x.editor, x.kind, x.sent, SUB_NAME[x.status], x.followUp, x.fee, x.notes])];
+  download(fileSafe(P.title || 'Anabasis') + ' - submissions.csv', '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n'), 'text/csv');
+});
+$('#subClose').addEventListener('click', () => $('#subDlg').close());
+function subsHomeHTML() {
+  const S = subsOf(); if (!S.length) return '';
+  const sm = subsSummary(), J = fn => { hmJump.push(fn); return hmJump.length - 1; };
+  const open = S.filter(x => SUB_OPEN.has(x.status)).sort((a, b) => (subDue(a) || '9').localeCompare(subDue(b) || '9')).slice(0, 4);
+  return `<div class="hm-card" id="hmSubs"><h5>Submissions <span class="count">${sm.out}</span><button class="ghost small" data-j="${J(() => openSubs())}">Open</button></h5>
+    <p class="small muted">${sm.out} out · ${sm.acc} accepted · ${sm.dec} declined${sm.fees ? ` · ${esc(PREFS.currency || '$')}${nf(sm.fees)} in fees` : ''}</p>
+    ${open.length ? `<ul class="hm-list">${open.map(x => `<li data-j="${J(() => openSubs(x.id))}"><span class="t">${esc(x.outlet || 'Untitled')}${x.docId ? ` <span class="muted">· ${esc(((P.docs.find(d => d.id === x.docId) || {}).title || '').slice(0, 40))}</span>` : ''}</span><span class="m${subDue(x) && subDue(x) <= todayKey() ? ' late' : ''}">${subDue(x) ? 'follow up ' + esc(relDay(subDue(x))) : esc(SUB_NAME[x.status])}</span></li>`).join('')}</ul>` : ''}</div>`;
+}
+
+/* ---------- review round-trip: a file a colleague opens in any browser to comment and suggest; their review
+   comes back as a small file that becomes margin comments and tracked suggestions in the draft ----------
+   Each reviewer selection is anchored to a block of the draft and to its text (the same text model as blockMap:
+   citation, footnote and flag markers don't count), with a few words either side to find it again if the draft
+   has moved on. */
+const RV_SKIP = '.cite,.fn,.flag,.rv-ins,.rv-tag';
+const rvBlocks = root => [...root.children].filter(el => !el.matches('style,script'));
+function rvHash(t) { let h = 0; for (const c of t) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h.toString(36); }
+function rvBlockText(el) { const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest(RV_SKIP) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); let t = ''; while (w.nextNode()) t += w.currentNode.data; return t; }
+/* the reviewer's page: plain HTML, a little CSS and a little script; it works offline from the file itself */
+const RV_PAGE_JS = String.raw`(function(){
+var D=document,KEY='anabasis-review-'+R.id,ops=[],me='';
+try{var s=JSON.parse(localStorage.getItem(KEY)||'null');if(s){ops=s.ops||[];me=s.me||'';}}catch(e){}
+var SKIP='.cite,.fn,.flag,.rv-ins,.rv-tag';
+function save(){try{localStorage.setItem(KEY,JSON.stringify({ops:ops,me:me}));}catch(e){}}
+function tw(el){return D.createTreeWalker(el,NodeFilter.SHOW_TEXT,{acceptNode:function(n){return n.parentElement.closest(SKIP)?NodeFilter.FILTER_REJECT:NodeFilter.FILTER_ACCEPT;}});}
+function text(el){var w=tw(el),t='';while(w.nextNode())t+=w.currentNode.data;return t;}
+function off(el,node,o){var w=tw(el),n=0,x;if(node.nodeType!==3){var r=D.createRange();r.setStart(node,o);r.collapse(true);while((x=w.nextNode())){var q=D.createRange();q.selectNode(x);if(q.compareBoundaryPoints(Range.START_TO_START,r)>=0)return n;n+=x.data.length;}return n;}
+ while((x=w.nextNode())){if(x===node)return n+o;n+=x.data.length;}return n;}
+function rng(el,a,b){var w=tw(el),n=0,x,r=D.createRange(),s=0,e=0;while((x=w.nextNode())){var L=x.data.length;if(!s&&a<=n+L){r.setStart(x,a-n);s=1;}if(!e&&b<=n+L){r.setEnd(x,b-n);e=1;break;}n+=L;}return s&&e?r:null;}
+function blk(n){while(n&&!(n.dataset&&n.dataset.b!==undefined))n=n.parentNode;return n;}
+function sel(){var s=getSelection();if(!s.rangeCount)return null;var r=s.getRangeAt(0),b1=blk(r.startContainer),b2=blk(r.endContainer);if(!b1)return null;if(b1!==b2)return{err:'Select within one paragraph at a time.'};
+ var t=text(b1),a=off(b1,r.startContainer,r.startOffset),z=off(b1,r.endContainer,r.endOffset);if(z<a){var k=a;a=z;z=k;}return{b:+b1.dataset.b,h:b1.dataset.h,a:a,z:z,quote:t.slice(a,z),prefix:t.slice(Math.max(0,a-40),a),suffix:t.slice(z,z+40)};}
+function who(){if(!me){me=(prompt('Your name, so the author knows whose comments these are:','')||'').trim();save();}return me||'Reviewer';}
+function paint(){D.querySelectorAll('.rv-c').forEach(function(m){var p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);m.remove();p.normalize();});D.querySelectorAll('.rv-ins,.rv-tag').forEach(function(x){x.remove();});
+ ops.slice().sort(function(x,y){return y.b-x.b||y.a-x.a;}).forEach(function(o,i){var el=D.querySelector('[data-b="'+o.b+'"]');if(!el)return;var r=rng(el,o.a,o.z);if(!r)return;
+  var n=ops.indexOf(o)+1;if(o.type==='change'&&o.with){var ins=D.createElement('span');ins.className='rv-ins';ins.textContent=o.with;var e=r.cloneRange();e.collapse(false);e.insertNode(ins);}
+  if(!r.collapsed){var nodes=[],w=tw(el),x;while((x=w.nextNode()))if(r.intersectsNode(x))nodes.push(x);nodes.forEach(function(t){var s=t===r.startContainer?r.startOffset:0,f=t===r.endContainer?r.endOffset:t.data.length;if(f<=s)return;if(f<t.data.length)t.splitText(f);var u=s?t.splitText(s):t;var m=D.createElement('span');m.className='rv-c '+(o.type==='change'?(o.with?'rv-rep':'rv-del'):'rv-cm');m.dataset.op=o.id;u.parentNode.insertBefore(m,u);m.appendChild(u);});}
+  var tag=D.createElement('sup');tag.className='rv-tag';tag.textContent=n;var q=r.cloneRange();q.collapse(false);var after=D.querySelector('.rv-ins');q.insertNode(tag);});
+ var L=D.getElementById('rvList');L.innerHTML=ops.length?ops.map(function(o,i){return '<li><b>'+(i+1)+'.</b> '+(o.type==='comment'?esc(o.text):(o.with?(o.quote?'Change “'+esc(o.quote)+'” to “'+esc(o.with)+'”':'Insert “'+esc(o.with)+'”'):'Delete “'+esc(o.quote)+'”'))+(o.type==='comment'&&o.quote?'<div class="q">on “'+esc(o.quote.slice(0,80))+'”</div>':'')+' <button data-del="'+o.id+'" aria-label="Remove">✕</button></li>';}).join(''):'<li class="muted">Select some text, then Comment or Suggest a change.</li>';
+ D.getElementById('rvN').textContent=ops.length?ops.length+(ops.length===1?' note':' notes'):'';}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function add(o){o.id='o'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);o.at=new Date().toISOString();ops.push(o);save();paint();getSelection().removeAllRanges();}
+D.getElementById('rvComment').onclick=function(){var s=sel();if(!s){alert('Select the words you want to comment on.');return;}if(s.err){alert(s.err);return;}var t=prompt('Your comment:','');if(!t||!t.trim())return;who();s.type='comment';s.text=t.trim();add(s);};
+D.getElementById('rvChange').onclick=function(){var s=sel();if(!s){alert('Select the words to change, or click where text should go.');return;}if(s.err){alert(s.err);return;}
+ var t=prompt(s.quote?'Replace “'+s.quote.slice(0,60)+(s.quote.length>60?'…':'')+'” with (leave empty to delete it):':'Text to insert here:',s.quote);if(t===null)return;if(t===s.quote)return;if(!s.quote&&!t)return;who();s.type='change';s.with=t;add(s);};
+D.getElementById('rvList').onclick=function(e){var b=e.target.closest('[data-del]');if(!b)return;ops=ops.filter(function(o){return o.id!==b.dataset.del;});save();paint();};
+D.getElementById('rvSave').onclick=function(){if(!ops.length){alert('There’s nothing to send yet.');return;}who();var blob=new Blob([JSON.stringify({app:'Anabasis review',v:1,id:R.id,docId:R.docId,title:R.title,reviewer:me,made:new Date().toISOString(),ops:ops},null,1)],{type:'application/json'});
+ var a=D.createElement('a');a.href=URL.createObjectURL(blob);a.download=R.title.replace(/[\\/:*?"<>|]+/g,' ').slice(0,80)+' - review by '+(me||'reviewer').replace(/[\\/:*?"<>|]+/g,' ')+'.json';D.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);
+ D.getElementById('rvDone').hidden=false;};
+D.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.altKey&&(e.code==='KeyM')){e.preventDefault();D.getElementById('rvComment').click();}});
+paint();})();`;
+function openReviewSend() {
+  const d = curDoc(); if (!d) return; syncEditor();
+  $('#rvsTitle').textContent = `Send “${d.title || 'Untitled'}” for review`;
+  $('#rvsMsg').value = PREFS.rvMsg || 'Thanks for reading this. Select any words to comment on them or suggest a change, then press “Save my review” and send me the file it makes.';
+  $('#rvsDlg').showModal();
+}
+function reviewPageHTML(d, msg) {
+  const tmp = document.createElement('div'); tmp.innerHTML = editor.innerHTML;
+  $$('[contenteditable]', tmp).forEach(e => e.removeAttribute('contenteditable'));
+  $$('.cite,.fn,.flag', tmp).forEach(e => { e.removeAttribute('title'); [...e.attributes].filter(a => a.name.startsWith('data-') && a.name !== 'data-text').forEach(a => e.removeAttribute(a.name)); });
+  $$('.fn', tmp).forEach(f => { f.textContent = '*'; f.title = f.getAttribute('data-text') || ''; f.removeAttribute('data-text'); });
+  // your own margin comments and research marks stay with you: keep their words, drop the marks
+  $$('span.cmt, span.rm, span.qlink', tmp).forEach(e => e.replaceWith(...e.childNodes));
+  $$('[data-cmt],[data-rm],[data-ref],[data-qn]', tmp).forEach(e => ['data-cmt', 'data-rm', 'data-ref', 'data-qn', 'data-k'].forEach(a => e.removeAttribute(a)));
+  const blocks = rvBlocks(tmp);
+  blocks.forEach((el, i) => { el.dataset.b = i; el.dataset.h = rvHash(rvBlockText(el)); });
+  const id = uid('rv'), L = langOf(docLang(d)), me = PREFS.myName || d.meta.author || '';
+  const R = { id, docId: d.id, title: d.title || 'Untitled' };
+  const css = `body{margin:0;font:17px/1.65 Georgia,"Times New Roman",serif;color:#1d232b;background:#f5f2ec}
+main{max-width:680px;margin:0 auto;padding:110px 28px 160px;background:#fff;min-height:100vh;box-shadow:0 0 0 1px #e4ded3}
+header.rv{position:fixed;top:0;left:0;right:0;z-index:5;background:#1d2d44;color:#fff;font:14px/1.4 system-ui,sans-serif;padding:10px 18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+header.rv b{font-size:15px}header.rv .sp{flex:1}
+header.rv button{font:600 14px system-ui,sans-serif;border:0;border-radius:6px;padding:8px 12px;background:#fff;color:#1d2d44;cursor:pointer}
+header.rv button.go{background:#e0b04f;color:#1d2d44}
+aside.rv{position:fixed;right:14px;top:70px;width:290px;max-height:calc(100vh - 90px);overflow:auto;background:#fff;border:1px solid #d8d1c4;border-radius:10px;font:13.5px/1.45 system-ui,sans-serif;padding:10px 12px}
+aside.rv ol{padding:0;margin:0;list-style:none}aside.rv li{position:relative;padding:7px 24px 7px 0;border-bottom:1px solid #eee}aside.rv li .q{color:#777;font-size:12px}aside.rv li button{position:absolute;right:0;top:6px;border:0;background:none;color:#a3271b;cursor:pointer}
+.msg{font:15px/1.5 system-ui,sans-serif;background:#f4efe3;border-left:4px solid #e0b04f;padding:10px 14px;margin:0 0 28px}
+.rv-cm{background:#fdf0c4}.rv-rep,.rv-del{background:#f9d8d3;text-decoration:line-through;text-decoration-color:#a3271b}.rv-ins{color:#1f6b45;text-decoration:underline;background:#ddf1e4}
+.rv-tag{font:700 10px system-ui,sans-serif;color:#1d2d44;background:#e0b04f;border-radius:8px;padding:0 4px;margin-left:1px}
+.cite{color:#24456e;font-size:.82em}.fn{color:#24456e;vertical-align:super;font-size:.7em}.flag{background:#eee;font:11px system-ui;padding:0 3px;border-radius:3px}
+del.sg{color:#a3271b}ins.sg{color:#1f6b45}h1,h2,h3{line-height:1.25}img{max-width:100%}table{border-collapse:collapse}td,th{border:1px solid #ccc;padding:4px 8px}
+#rvDone{background:#ddf1e4;color:#1f6b45;padding:8px 12px;border-radius:6px;font:14px system-ui}
+@media (max-width:1100px){aside.rv{position:static;width:auto;margin:0 auto;max-width:680px;border-radius:0}main{padding-top:120px}}
+@media print{header.rv,aside.rv{display:none}main{padding:0;box-shadow:none}}`;
+  return `<!DOCTYPE html><html lang="${esc(docLang(d))}"${L.rtl ? ' dir="rtl"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(R.title)}: for review</title><meta name="generator" content="Anabasis ${APP_VERSION}"><style>${css}</style></head><body>
+<header class="rv"><b>${esc(R.title)}</b><span>for review${me ? ' · from ' + esc(me) : ''}</span><span class="sp"></span><span id="rvN"></span><button id="rvComment" title="Select words first (Ctrl/Cmd Alt M)">Comment</button><button id="rvChange" title="Select words to change, or click where to insert">Suggest a change</button><button id="rvSave" class="go">Save my review</button></header>
+<aside class="rv" aria-label="Your notes"><ol id="rvList"></ol><p id="rvDone" hidden>Saved. Send the file that downloaded to ${me ? esc(me) : 'the author'}.</p></aside>
+<main>${msg ? `<p class="msg">${esc(msg).replace(/\n/g, '<br>')}</p>` : ''}<div class="doc">${titleBlockHTML(d)}${tmp.innerHTML}</div></main>
+<script>var R=${JSON.stringify(R).replace(/</g, '\\u003c')};${RV_PAGE_JS}</scr` + `ipt></body></html>`;
+}
+$('#rvsGo').addEventListener('click', () => {
+  const d = curDoc(), msg = $('#rvsMsg').value.trim(); PREFS.rvMsg = msg; savePrefs(); $('#rvsDlg').close();
+  download(fileSafe(d.title || 'Untitled') + ' - for review.html', reviewPageHTML(d, msg), 'text/html');
+  toast('Review file saved. Send it to your reviewer; they open it in any browser, and send back the file it makes. Then use Import a review.');
+});
+$('#rvsCancel').addEventListener('click', () => $('#rvsDlg').close());
+/* importing: find each note's place again, then add it as a comment or a tracked suggestion by the reviewer */
+function rvLocate(op) {
+  const blocks = rvBlocks(editor);
+  const exact = blocks[op.b] && (() => { const { text } = blockMap(blocks[op.b]); return text.slice(op.a, op.z) === op.quote && text.slice(Math.max(0, op.a - op.prefix.length), op.a) === op.prefix ? { el: blocks[op.b], a: op.a, z: op.z } : null; })();
+  if (exact) return exact;
+  let best = null;
+  blocks.forEach(el => {
+    const { text } = blockMap(el); let a = -1, score = 0;
+    const k = text.indexOf(op.prefix + op.quote + op.suffix);
+    if (k >= 0) { a = k + op.prefix.length; score = 3; }
+    else if (op.quote) {
+      const p = op.prefix.slice(-12), k2 = text.indexOf(p + op.quote);
+      if (k2 >= 0) { a = k2 + p.length; score = 2; }
+      else if (op.quote.length >= 12) { const j = text.indexOf(op.quote); if (j >= 0 && text.indexOf(op.quote, j + 1) < 0) { a = j; score = 1; } }
+    } else { const p = op.prefix.slice(-20), s = op.suffix.slice(0, 20), k3 = (p || s) ? text.indexOf(p + s) : -1; if (k3 >= 0) { a = k3 + p.length; score = 2; } }
+    if (a >= 0 && (!best || score > best.score)) best = { el, a, z: a + op.quote.length, score };
+  });
+  return best;
+}
+function rvApply(rev, doc) {
+  const who = String(rev.reviewer || 'Reviewer').slice(0, 60), placed = [], lost = [];
+  const ops = rev.ops.filter(o => o && typeof o === 'object' && (o.type === 'comment' || o.type === 'change')).map(o => ({ type: o.type, b: +o.b || 0, a: +o.a || 0, z: +o.z || 0, quote: String(o.quote || ''), prefix: String(o.prefix || ''), suffix: String(o.suffix || ''), text: String(o.text || '').slice(0, 4000), with: String(o.with ?? '').slice(0, 4000), at: String(o.at || nowISO()) }));
+  const located = ops.map(o => ({ o, L: rvLocate(o) }));
+  located.filter(x => !x.L).forEach(x => lost.push(x.o));
+  // apply from the end of the draft backwards, so earlier places don't shift
+  const blocks = rvBlocks(editor);
+  located.filter(x => x.L).sort((x, y) => (blocks.indexOf(y.L.el) - blocks.indexOf(x.L.el)) || (y.L.a - x.L.a)).forEach(({ o, L }) => {
+    const { range } = blockMap(L.el), r = range(L.a, L.z); if (!r) { lost.push(o); return; }
+    if (o.type === 'comment') {
+      const id = uid('c'); doc.comments.push({ id, text: o.text, author: who, date: o.at });
+      const span = document.createElement('span'); span.className = 'cmt'; span.dataset.cmt = id;
+      if (!r.collapsed && !r.cloneContents().querySelector('figure,table,.cmt,.cite,.fn')) { span.append(r.extractContents()); r.insertNode(span); }
+      else { r.collapse(false); span.classList.add('cmt-pt'); span.setAttribute('contenteditable', 'false'); r.insertNode(span); }
+    } else {
+      const id = uid('sg'), mk = tag => { const e = document.createElement(tag); e.className = 'sg'; e.dataset.sg = id; e.dataset.by = who; e.dataset.at = o.at; return e; };
+      const end = r.cloneRange(); end.collapse(false);
+      if (o.with) { const ins = mk('ins'); ins.textContent = o.with; end.insertNode(ins); }
+      if (!r.collapsed) {
+        const nodes = [], w = document.createTreeWalker(L.el, NodeFilter.SHOW_TEXT, { acceptNode: n => n.parentElement.closest('.cite,.fn,.flag,ins.sg') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT }); let t;
+        while ((t = w.nextNode())) if (r.intersectsNode(t)) nodes.push(t);
+        nodes.forEach(t => { const s = t === r.startContainer ? r.startOffset : 0, f = t === r.endContainer ? r.endOffset : t.data.length; if (f <= s) return; if (f < t.data.length) t.splitText(f); const u = s ? t.splitText(s) : t; const del = mk('del'); u.parentNode.insertBefore(del, u); del.append(u); });
+      }
+    }
+    placed.push(o);
+  });
+  return { placed, lost, who };
+}
+$('#rviFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  let rev; try { rev = JSON.parse(await f.text()); } catch (err) { toast('That file isn’t a review from Anabasis.'); return; }
+  if (!rev || rev.app !== 'Anabasis review' || !Array.isArray(rev.ops)) { toast('That file isn’t a review from Anabasis.'); return; }
+  let doc = P.docs.find(d => d.id === rev.docId);
+  if (!doc) { if (!(await ask('Import into this document?', `The review is of “${rev.title || 'a document'}”, which isn’t in this project. Place its notes in “${curDoc().title}” where the text matches?`, 'Import here'))) return; doc = curDoc(); }
+  if (doc.id !== curDocId) openDoc(doc.id);
+  syncEditor(); try { snapshot(curDoc(), `Before ${rev.reviewer || 'a reviewer'}’s review`); } catch (err) { /* drafts unavailable */ }
+  const { placed, lost, who } = rvApply(rev, curDoc());
+  onEdit(); syncEditor(); markDirty(); try { renderMargin(); } catch (err) { /* margin not shown */ }
+  const nC = placed.filter(o => o.type === 'comment').length, nS = placed.length - nC;
+  toast(`${who}’s review: ${nC} ${nC === 1 ? 'comment' : 'comments'} and ${nS} suggested ${nS === 1 ? 'change' : 'changes'} added.${lost.length ? ` ${lost.length} couldn’t be placed.` : ''}`);
+  if (lost.length) infoDialog(`${lost.length} ${lost.length === 1 ? 'note' : 'notes'} from ${esc(who)} couldn’t be placed`, `<p>The text they refer to has changed since you sent the draft. Here they are, so nothing is lost:</p><ul>${lost.map(o => `<li>${o.type === 'comment' ? `<b>Comment</b> on “${esc(o.quote.slice(0, 120))}”: ${esc(o.text)}` : `<b>Change</b> “${esc(o.quote.slice(0, 120))}” to “${esc(o.with)}”`}</li>`).join('')}</ul>`);
+});
+function openReviewImport() { $('#rviFile').click(); }
+
+/* ---------- offline OCR: read the text in archive photos and scanned PDFs, on this computer ----------
+   Tesseract (via Tesseract.js) with its English model, all inside this file. It loads the first time it's used. */
+let OCRW = null, OCRP = null;
+const ocrAvailable = () => !!document.getElementById('lib-ocr-core');
+function ocrWorker(progress) {
+  if (OCRW) return Promise.resolve(OCRW);
+  if (OCRP) return OCRP;
+  OCRP = (async () => {
+    useLib('lib-ocr');
+    // one worker script holding both the core and the worker: a worker started from this local file can't load a second blob
+    const txt = id => document.getElementById(id).textContent;
+    // Tesseract.js 7 names a language passed as data by its bytes when it initializes; name it by its code
+    const worker = txt('lib-ocr-worker').replace('"string"==typeof t?t:t.data})).join("+")', '"string"==typeof t?t:t.code})).join("+")');
+    const wrap = URL.createObjectURL(new Blob([txt('lib-ocr-core'), '\n;self.importScripts=function(){};\n', worker], { type: 'text/javascript' }));
+    const b64 = document.getElementById('lib-ocr-eng').textContent.trim(), bin = new Uint8Array(b64.length * 3 / 4 - (b64.endsWith('==') ? 2 : b64.endsWith('=') ? 1 : 0));
+    { const raw = atob(b64); for (let i = 0; i < raw.length; i++) bin[i] = raw.charCodeAt(i); }
+    OCRW = await Tesseract.createWorker([{ code: 'eng', data: bin }], 1, { workerPath: wrap, corePath: 'https://ocr.invalid/core', workerBlobURL: false, cacheMethod: 'none', gzip: true, logger: m => OCRLOG && OCRLOG(m) });
+    return OCRW;
+  })().catch(e => { OCRP = null; throw e; });
+  return OCRP;
+}
+let OCRLOG = null;
+async function ocrRead(image, onProgress) { OCRLOG = onProgress; try { const w = await ocrWorker(); const { data } = await w.recognize(image); return (data.text || '').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim(); } finally { OCRLOG = null; } }
+const ocrStatus = m => m && m.status ? (/loading|initializ/.test(m.status) ? 'Starting the text reader…' : m.status === 'recognizing text' ? `Reading… ${Math.round((m.progress || 0) * 100)}%` : '') : '';
+/* archive photos: Read the text fills the transcription */
+$('#phOcr').addEventListener('click', async () => {
+  const f = phCur(); if (!f) return;
+  const rec = await photoStore.get(f.id).catch(() => null); if (!rec) { toast('This photo isn’t stored in this browser.'); return; }
+  if ($('#phText').value.trim() && !(await ask('Replace the transcription?', 'Reading the photo replaces what’s in the transcription now.', 'Replace'))) return;
+  const b = $('#phOcr'), was = b.textContent; b.disabled = true;
+  try {
+    const t = await ocrRead(new Blob([rec.buf], { type: rec.type || 'image/jpeg' }), m => { const s = ocrStatus(m); if (s) b.textContent = s; });
+    $('#phText').value = t; $('#phText').dispatchEvent(new Event('input', { bubbles: true }));
+    toast(t ? 'Read. Check it against the photo: machine reading gets handwriting, faded type and unusual names wrong.' : 'No text found in this photo.');
+  } catch (e) { console.warn(e); toast('The text reader couldn’t start in this browser.'); }
+  finally { b.disabled = false; b.textContent = was; }
+});
+/* scanned PDFs: read every page, so Search inside sources can find them, and show the current page's text */
+let ocrStop = false;
+async function ocrPdf() {
+  if (!R.doc) { toast('Open a PDF first.'); return; }
+  const N = R.doc.numPages, id = R.sourceId, texts = [];
+  ocrStop = false; if (!$('#ocrDlg').open) $('#ocrDlg').show(); $('#ocrStatus').textContent = 'Starting the text reader…'; $('#ocrText').value = ''; $('#ocrStopBtn').classList.remove('hidden');
+  try {
+    for (let n = 1; n <= N && !ocrStop; n++) {
+      $('#ocrStatus').textContent = `Reading page ${n} of ${N}…`;
+      const page = await R.doc.getPage(n), vp = page.getViewport({ scale: 2 }), c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      texts[n - 1] = await ocrRead(c, m => { const s = ocrStatus(m); if (s && /Reading…/.test(s)) $('#ocrStatus').textContent = `Reading page ${n} of ${N}… ${s.replace('Reading… ', '')}`; });
+      if (n === +($('#rdPage').value || 1)) $('#ocrText').value = texts[n - 1];
+    }
+  } catch (e) { console.warn(e); $('#ocrStatus').textContent = 'The text reader couldn’t start in this browser.'; return; }
+  const done = texts.filter(t => t !== undefined).length;
+  if (id) { const rec = await pdfStore.get(id).catch(() => null); const v = { name: rec ? rec.name : R.name, size: rec ? rec.buf.byteLength : 0, pages: Array.from({ length: N }, (_, i) => texts[i] || ''), labels: R.labels, scanned: false, ocr: true, at: nowISO() }; FTX[id] = Object.assign({}, v, { ok: true }); ftxStore.set(id, v).catch(() => {}); }
+  R.ocr = texts; $('#ocrStopBtn').classList.add('hidden');
+  const cur = +($('#rdPage').value || 1); $('#ocrText').value = texts[cur - 1] || '';
+  $('#ocrStatus').textContent = `Read ${done} of ${N} pages${id ? '. Search inside sources can find them now' : ''}. This is page ${cur}; check quotations against the scan.`;
+}
+$('#rdOcr').addEventListener('click', ocrPdf);
+$('#ocrStopBtn').addEventListener('click', () => { ocrStop = true; });
+$('#ocrCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#ocrText').value); toast('Copied.'); } catch (e) { $('#ocrText').select(); } });
+$('#ocrQuote').addEventListener('click', () => {
+  const t = $('#ocrText'), sel = t.value.slice(t.selectionStart, t.selectionEnd).trim(); if (!sel) { toast('Select the passage to quote first.'); return; }
+  const n = Object.assign(newNote(), { kind: 'quote', body: sel, sourceId: R.sourceId || '', locator: R.sourceId ? String(+($('#rdPage').value || 1) - (+($('#rdOffset').value) || 0)) : '' });
+  P.notes.unshift(n); renderNoteList(); markDirty(); toast('Quote note made. Check it against the scan.', { label: 'Open', fn: () => { $('#ocrDlg').close(); switchTab('notes'); openNote(n.id); } });
+});
+$('#ocrClose').addEventListener('click', () => { ocrStop = true; $('#ocrDlg').close(); });
+$('#rdPage').addEventListener('change', () => { if ($('#ocrDlg').open && R.ocr) $('#ocrText').value = R.ocr[(+$('#rdPage').value || 1) - 1] || ''; });
+
+/* ---------- wiring ---------- */
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey, dlgOpen = !!document.querySelector('dialog[open]:modal');
+  if (mod && e.altKey && !e.shiftKey && e.code === 'KeyO') { e.preventDefault(); if (!dlgOpen) { if ($('#spcDlg').open) $('#spcDlg').close(); else openChars(); } }
+});
+$('#panelBody').addEventListener('change', e => {
+  if (panelState?.kind !== 'note') return;
+  if (e.target.id === 'nOrigLang') { const L = langOf(e.target.value), o = $('#nOrig'); o.lang = e.target.value; o.dir = L.rtl ? 'rtl' : 'auto'; const b = $('#panelBody [data-a="translit"]'); if (b) b.disabled = !tlFor(e.target.value) && !trj().system; }
+  if (e.target.id === 'nTransBy') $('#nTransWho').classList.toggle('hidden', e.target.value !== 'other');
+});
+$('#panelBody').addEventListener('click', e => {
+  if (panelState?.kind !== 'note') return;
+  const a = e.target.closest('[data-a]')?.dataset.a;
+  if (a === 'chars') openChars($('#nOrig'));
+  if (a === 'translit') {
+    const o = $('#nOrig').value.trim(); if (!o) { toast('Type or paste the original first.'); $('#nOrig').focus(); return; }
+    const sys = tlFor($('#nOrigLang').value) || trj().system || tlGuess(o); if (!sys) { toast('There’s no transliteration for this language yet.'); return; }
+    $('#nTranslit').value = transliterate(o, sys); $('#nTranslit').dispatchEvent(new Event('input', { bubbles: true })); toast(`Transliterated: ${TL[sys].name}.`);
+  }
+});
+$('#markMenu').addEventListener('click', e => {
+  const a = e.target.closest('button')?.dataset.m; if (a !== 'lang' && a !== 'tl') return;
+  e.stopImmediatePropagation(); $('#markMenu').classList.remove('open');
+  if (a === 'lang') openLangMark(); else openTranslit();
+}, true);
 
 /* ================================================================
    Installable app. On the hosted copy (GitHub Pages), Anabasis registers a

@@ -10,6 +10,10 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **PDFs and archive photos** you open are kept in the same browser storage, not in the project file. Photos are resized to 2,400 pixels. The project file keeps their transcriptions, the notes made from them, and a SHA-256 fingerprint of each original file.
 - **Evidence fingerprints** are worked out in the browser from the file you choose. The file itself is never stored or sent anywhere.
 - **Preferences**, such as theme and check settings, are kept in localStorage, as are note templates you save and where you put the scratch pad. So are the name and contact details you give for Word’s manuscript format, which never go into the project file.
+- **Search inside sources** reads the text of your PDFs in the browser and keeps it in the same browser storage, so later searches are quick. It never goes into the project file. Clearing your browser’s site data removes it.
+- **Reading the text of a scan** (Read the text on an archive photo, Read text in the PDF reader) runs Tesseract, an open-source text reader built into the file, inside the page. The image never leaves your computer, and the reader downloads nothing: its English model is in the file too. Running it needs WebAssembly, so the page’s security policy allows `'wasm-unsafe-eval'`; that lets the page run compiled code it already contains, and opens no new connections.
+- **My library** is kept in the same browser storage, shared by the projects you open in this browser. A source goes into a project file only when you add it to that project. **Export** writes the library to a file you choose.
+- **Submissions** (outlets, editors, dates, fees and notes) are kept in the project file.
 - **The calendar** is kept in the project file. **Export .ics** writes a file to your computer for you to import into a calendar app; Anabasis doesn’t connect to Google, Apple or Microsoft calendars.
 
 - **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.
@@ -55,6 +59,10 @@ A project file is data, but a crafted one could try to smuggle in code. Anabasis
 ## Co-writing
 
 Send a copy and Take changes back work entirely through files you pass along yourself, by email, a shared drive or a USB stick. Nothing goes through a server. The project keeps a record of the last five copies you sent (the text as it was when you sent it, the collaborator's name and your note) so it can tell their changes from yours; the copy you send carries only who it's from, who it's for and the note. A returned file is cleaned like any other file from someone else before anything in it reaches the page.
+
+## Reviews
+
+**Export → For a reviewer** writes one web page with the open document’s text and footnotes (your margin comments and research marks are left out), the title, your name as you’ve set it in Settings, and the note you add. Send it however you like. The page makes no connections: the reviewer’s comments are kept in their own browser until they press **Save my review**, which downloads a small file with their name, their comments and suggested changes, and the words around each one. **Import a review** cleans that file like any other before anything in it reaches the page.
 
 ## Socrates, the Oracle and the archive
 

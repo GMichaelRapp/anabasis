@@ -63,6 +63,10 @@ Format 2 is frozen for Anabasis 2.x. Every 2.x release opens every file written 
 | `events` (2.6.2) | Calendar items: `{ id, date ("YYYY-MM-DD"), time ("HH:MM" or ""), title, kind (visit, interview, meeting, deadline or other), note, created, modified }`. |
 | `scratch` (2.6.2) | The scratch pad’s text. |
 | `trash` (2.6.2) | Deleted notes: `{ at, note }`, the note as it was. Entries older than 30 days are dropped when the project is opened. |
+| `notes` (2.7) | A note of `kind: "translation"` carries `orig` (the original text), `origLang` (its language, a code such as `grc` or `de`), `translit`, `transBy` (`me` or `other`) and `translator`. Its `body` is the translation. |
+| `journal.trans` (2.7) | The translation journal: `{ from, to, system, insert, mine, glossary }`. `from` and `to` are language codes; `system` a transliteration table (`ru-ala`, `ru-bgn`, `ru-simple`, `uk-nat`, `uk-ala`, `bg`, `sr`, `el`, `grc`, `ar`); `insert` how translation notes go into the text (`note`, `brackets`, `orig` or `none`); `mine` whether to add “My translation.”. `glossary`: `{ id, term, lang, render, avoid: [renderings decided against], note, translit, created }`. |
+| `trw` (2.7) | Translations in the translation workspace: `{ id, title, from, to, sourceId, created, modified, segs }`, each segment `{ id, o (the original), t (the translation), st ("", "draft" or "done"), n (a note), p (the paragraph it came from, from 0) }`. |
+| `subs` (2.7) | Submissions: `{ id, docId, outlet, editor, kind (pitch or submission), sent, status, followUp, fee, notes, closed, created, modified }`, dates as `YYYY-MM-DD`. `status` is `planned`, `sent`, `followed`, `accepted`, `published`, `rejected` (shown as Declined) or `withdrawn`. |
 
 Unknown fields are kept when Anabasis saves, so add-ons and future versions can store their own data.
 
@@ -72,7 +76,7 @@ Unknown fields are kept when Anabasis saves, so add-ons and future versions can 
 {
   "id": "d_…", "title": "Chapter 1", "html": "<h1>…</h1><p>…</p>",
   "style": "chicago-notes-bibliography",
-  "partId": "", "order": 0, "role": "body", "status": "", "target": 0,
+  "partId": "", "order": 0, "role": "body", "status": "", "target": 0, "lang": "",
   "meta": { "author": "", "subtitle": "", "date": "", "showTitleBlock": false,
             "abstract": { "shape": "humanities", "parts": {}, "text": "", "keywords": [], "limit": 250, "include": true, "auto": true } },
   "layout": { "font": "book", "size": "12", "spacing": "2", "paper": "letter", "pdfNotes": "foot", "marginalia": "page" },
@@ -80,6 +84,8 @@ Unknown fields are kept when Anabasis saves, so add-ons and future versions can 
   "comments": [ { "id": "…", "text": "…" } ]
 }
 ```
+
+`lang` (since 2.7.0) is the document’s language as a BCP 47 code such as `de` or `pt-BR`; empty means English (US). It sets spell-checking, quotation marks, citation terms and direction.
 
 `html` is a small, fixed subset of HTML. Anabasis’s own markup inside it:
 
@@ -98,6 +104,7 @@ Unknown fields are kept when Anabasis saves, so add-ons and future versions can 
 | `<span class="cmt" data-cmt="c_…">…</span>` | Text a margin note is attached to (an empty `cmt cmt-pt` marks a point). The note itself is in `comments`. |
 | `<ins class="sg" data-sg="sg_…" data-by="Name" data-at="ISO date">…</ins>`, `<del class="sg" …>…</del>` | A suggested insertion or deletion, waiting to be accepted or rejected. Pieces of one suggestion share `data-sg`. Word exports write them as tracked changes; every other export shows them as accepted. Since 1.3. |
 | `<span class="rm" data-rm="m_…" data-k="th" data-ref="th_…">…</span>` | A research mark. One passage can be split into several spans (one per run of text, across paragraphs and around citations) that share `data-rm`. `data-k` is `th` (thread; `data-ref` is the thread id), `cl` (claim; `data-rm` is the id in `claims`), `rv` (review key; `data-rm` is the id in `reviewKeys`) or `q` (question; `data-ref` is a plan item id). Marks are removed from every export. |
+| `<span lang="de" dir="ltr">…</span>` | Since 2.7.0. A passage in another language (Mark → Language of this passage). `dir` is `rtl` for Arabic, Hebrew, Persian and Urdu. |
 
 Anything outside this subset is removed when a file is opened (see [privacy](privacy.md#files-from-other-people)).
 

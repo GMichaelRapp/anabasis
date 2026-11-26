@@ -82,6 +82,12 @@ Under the pad, **Notes** lists every note on this PDF's source, in page order. C
 
 **Back to writing** closes the pad and returns to your draft, with the PDF still open beside it.
 
+## Scanned PDFs: Read text
+
+Some PDFs are pictures of pages, scanned or photographed, with no text in them: you can't select a passage, and [Search inside sources](Sources#search-inside-sources) lists them as scanned. **Read text** in the reader's top bar reads every page **on this computer**, with Tesseract, and nothing is sent anywhere. It takes a few seconds a page; a window shows its progress and the text as it goes, and you can stop it at any time.
+
+When it's done, the PDF's text can be searched, and you can **Copy** the text or **Quote note** from it. Printed and typed pages read well; check what it read against the page before you quote it, and expect handwriting and poor scans to come out badly. It reads English.
+
 ## PDFs with no notes yet
 
 **Loose ends** on Project home lists sources with a PDF attached and no notes yet, so a PDF you meant to read doesn't sit forgotten.
