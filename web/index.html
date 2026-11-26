@@ -173,6 +173,36 @@ section{padding:96px 0 0}
 .sheets figcaption{font-size:16px;margin-top:12px}
 .sheets figcaption b{font-style:normal;font-weight:700;color:var(--ink)}
 
+/* new in 2.6 */
+#new .head{max-width:760px}
+.kicker{font:italic 600 18px/1.3 var(--display);color:var(--accent);margin-bottom:10px}
+.n26{display:grid;grid-template-columns:repeat(2,1fr);gap:48px 36px;margin-top:48px}
+.n26 figure.lead{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:36px;align-items:center}
+.n26 figure.lead figcaption{font-size:18px;margin-top:0}
+.n26 figure.lead figcaption b{display:block;font-size:30px;line-height:1.15;margin-bottom:10px}
+.n26 figure.lead figcaption span{display:block;font:400 16.5px/1.6 var(--ui);font-style:normal;color:var(--ink);margin-top:12px}
+.n26 img{width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top left;display:block}
+.n26 .frame{background:var(--page);padding:6px;border:1px solid var(--neat);box-shadow:var(--page-shadow)}
+.n26 figcaption{font-size:16px;margin-top:12px}
+.n26 figcaption b{font-style:normal;font-weight:700;color:var(--ink)}
+.also26{list-style:none;padding:0;margin:56px 0 0;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line)}
+.also26 li{padding:22px 24px 24px 0;border-bottom:1px solid var(--line)}
+.also26 li:nth-child(3n+2),.also26 li:nth-child(3n+3){padding-left:24px;border-left:1px solid var(--line)}
+.also26 h3{font-size:21px}
+.also26 p{margin-top:6px;font-size:15.5px;color:var(--muted)}
+.n26-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+@media (max-width:980px){
+  .n26 figure.lead{grid-template-columns:1fr;gap:16px}
+  .also26{grid-template-columns:1fr 1fr}
+  .also26 li:nth-child(n){padding:20px 20px 20px 0;border-left:0}
+  .also26 li:nth-child(2n){padding-left:20px;border-left:1px solid var(--line)}
+}
+@media (max-width:640px){
+  .n26{grid-template-columns:1fr;gap:36px}
+  .also26{grid-template-columns:1fr}
+  .also26 li:nth-child(n){padding:18px 0;border-left:0}
+}
+
 /* promises */
 .promises{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:48px;background:var(--panel);border:1px solid var(--neat);outline:1px solid var(--neat);outline-offset:4px}
 .promises div{padding:30px 28px}
@@ -244,6 +274,7 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
+      <a href="#new">New in 2.6</a>
       <a href="#route">What it does</a>
       <a href="#yours">Your work</a>
       <a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
@@ -279,9 +310,54 @@ section{padding:96px 0 0}
         <figcaption>The editor. Citations format as you type, and the notes and bibliography rebuild as you write.</figcaption>
       </figure>
 
-      <p class="new"><b>New in 2.6</b> <span>A research guide in the journal walks through each stage of a project, with checklists, method guides and a glossary. A literature grid and qualitative coding on the research desk. Archive photos filed by box and folder and transcribed beside the image. Catch copied wording that isn’t in quotation marks, check sources for retractions, merge duplicates, fingerprint evidence files, and use pseudonyms in every export. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a> · <a href="https://github.com/gmichaelrapp/anabasis/wiki">The guide</a></span></p>
+      <p class="new"><b>New in 2.6</b> <span>A guide to every stage of a research project, a literature grid, qualitative codes, archive photos filed by box and folder, and checks for copied wording, retractions and duplicates. <a href="#new">See what’s new</a></span></p>
     </div>
   </div>
+
+  <section id="new" aria-labelledby="new-h">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">New in version 2.6</p>
+        <h2 id="new-h">For the long middle of a project</h2>
+        <p>Most research happens between the first search and the first draft: reading, sorting, coding, checking. Version 2.6 is for that stretch, with a guide to every stage and new tools for the material you gather on the way.</p>
+      </div>
+      <div class="n26">
+        <figure class="lead">
+          <div class="frame"><img src="img/guide-detail.png" loading="lazy" width="1100" height="688" alt="The research guide in the journal: the research question stage, with what to do, an example, what to watch for and how to tell when it’s done."></div>
+          <figcaption><b>A guide to every stage</b>Open it from the journal.<span>Twelve stages of a project, from the first question to the last check, each with what to do, what to watch for and how to tell when it’s done. Checklists for sources, quotes and numbers, ethics and consent, data, open-source work and the pass before you submit. Short guides to eight methods, from archival work and interviews to case studies and reporting, and a glossary of 64 research terms.</span></figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/grid-detail.png" loading="lazy" width="1100" height="688" alt="The literature grid: sources down the side, questions across the top, a line of notes in each cell."></div>
+          <figcaption><b>A literature grid.</b> Sources down the side, your questions or themes across the top. Notes tagged to a column turn up in its cell. Make it a document or a CSV.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/codes-detail.png" loading="lazy" width="1100" height="688" alt="The codebook overview: counts of codes and coded passages, a matrix of codes by document, and the codes that turn up together."></div>
+          <figcaption><b>Qualitative codes.</b> Code passages in interviews, documents and notes with one key. See each code by source, which codes turn up together, and export a codebook.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/archive-detail.png" loading="lazy" width="1100" height="688" alt="Archive photos: thumbnails filed under box 3, folder 12, a handwritten letter, and its transcription beside it."></div>
+          <figcaption><b>Archive photos.</b> Bring in a day’s phone photos, file them by box, folder and item, and transcribe beside the image. Quote straight from the transcription with the box and folder in the citation.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/close-detail.png" loading="lazy" width="1100" height="688" alt="The outline panel flags 13 words in the draft that match a quotation note but aren’t in quotation marks."></div>
+          <figcaption><b>Close to your notes.</b> Finds wording in the draft that matches a quotation you noted but isn’t in quotation marks, and adds the marks and the citation in one click.</figcaption>
+        </figure>
+      </div>
+      <ul class="also26">
+        <li><h3>A retraction check</h3><p>Asks Crossref, Retraction Watch’s records included, whether any source has been retracted or corrected. Only the DOIs are sent.</p></li>
+        <li><h3>Duplicates merged</h3><p>Finds the same work added twice and merges it, with every citation and note moved across.</p></li>
+        <li><h3>A reading list</h3><p>To read, reading and read, with priorities, and what to read next waiting on Project home.</p></li>
+        <li><h3>Evidence fingerprints</h3><p>A SHA-256 fingerprint for each screenshot, video or document, so you can show later that a copy is unchanged.</p></li>
+        <li><h3>Pseudonyms and consent</h3><p>Real names stay in your project; every export uses the pseudonym. Consent is recorded and checked before you publish.</p></li>
+        <li><h3>Highlights that stay</h3><p>Quotes and paraphrases taken from a PDF stay highlighted in it, with a marker in the margin that opens the note.</p></li>
+      </ul>
+      <div class="n26-links">
+        <a class="btn primary" href="app/">Try 2.6 in your browser</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki">Read the guide</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
+      </div>
+    </div>
+  </section>
 
   <section id="route" aria-labelledby="route-h">
     <div class="wrap">
