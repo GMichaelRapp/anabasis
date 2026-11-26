@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.6.2';
+const APP_VERSION = '2.6.3';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -1914,7 +1914,7 @@ function openNote(id, focus = false) {
     </div>
     <div class="note-links" id="noteLinks">${noteLinksHTML(n)}</div>
     <div class="muted small" style="margin-top:12px">Created ${new Date(n.created).toLocaleString()} · edited ${relTime(n.modified)} · Link notes with [[Note title]]</div>`;
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button data-a="dupn">Duplicate</button><button data-a="savetpl" title="Use this note’s layout to start new notes (Notes → From a template)">Save as template</button><span class="spacer"></span><button class="danger" data-a="deln">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button data-a="dupn">Duplicate</button><button data-a="savetpl" title="Use this note’s layout to start new notes (Notes → Templates…)">Save as template</button><span class="spacer"></span><button class="danger" data-a="deln">Delete</button>`;
   renderNoteList();
   if (focus) setTimeout(() => $('#panelBody [data-n=title]').focus(), 30);
 }
@@ -9426,7 +9426,8 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
-  '2.6.2': ['A calendar on Project home: the words you wrote each day, what’s due, your journal entries, and archive visits, interviews and meetings you add. Export it as an .ics file for Google, Apple or Outlook calendars.', 'A scratch pad (⌘/Ctrl Alt N) for jotting now and sorting later: turn a passage into a note, split the pad into notes, or send a passage to the journal.', 'Deleted notes go to a trash for 30 days, with Undo. Copy citation on a source copies it in any style. Notes → From a template starts an interview log, archive visit, source summary, field notes or meeting notes. ⌘/Ctrl E lists what you opened last.'],
+  '2.6.3': ['The new buttons in the Notes tab (Scratch pad, Templates…, Trash) fit the sidebar again; “From a template…” is now “Templates…”.'],
+  '2.6.2': ['A calendar on Project home: the words you wrote each day, what’s due, your journal entries, and archive visits, interviews and meetings you add. Export it as an .ics file for Google, Apple or Outlook calendars.', 'A scratch pad (⌘/Ctrl Alt N) for jotting now and sorting later: turn a passage into a note, split the pad into notes, or send a passage to the journal.', 'Deleted notes go to a trash for 30 days, with Undo. Copy citation on a source copies it in any style. Notes → Templates… starts an interview log, archive visit, source summary, field notes or meeting notes. ⌘/Ctrl E lists what you opened last.'],
   '2.6.1': ['Draft a literature review from the literature grid (research desk → Literature grid, Templates, or Export → Other formats): a section for each theme or research question with every source’s summary cited, prompts to compare them, the sources that have notes but no summary, and the ones silent on each theme. Plan → templates has a Literature review outline too.'],
   '2.6.0': ['A research guide in the journal: what each stage of a project is for and when it’s done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary of research terms.',
     'Close to your notes (Outline) finds sentences that repeat a note’s wording without quotation marks, and adds the marks and citation in one click. Quote and paraphrase notes made in the PDF reader now leave a highlight in the PDF, with a marker that opens the note.',
@@ -14054,7 +14055,7 @@ $('#ntClose').addEventListener('click', () => $('#ntDlg').close());
 function saveNoteAsTpl(n) {
   const name = (n.title || firstLine(n.body) || 'My template').replace(/:\s*$/, '').slice(0, 60);
   PREFS.noteTpls = [...(PREFS.noteTpls || []).filter(t => t.name !== name), { id: uid('nt'), name, hint: 'Your template', kind: n.kind, tags: [...n.tags], title: n.title, body: n.body }].slice(-40);
-  savePrefs(); toast(`Saved “${name}” as a note template. It’s under Notes → From a template, in every project.`);
+  savePrefs(); toast(`Saved “${name}” as a note template. It’s under Notes → Templates…, in every project.`);
 }
 
 /* ---------- recent items (⌘/Ctrl E) and a note resurfaced on Project home ---------- */

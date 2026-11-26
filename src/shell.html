@@ -2004,6 +2004,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
 .pad footer{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid var(--line2)}
 .pad .tip{padding:0 14px 6px;margin:0}
 /* trash, copy citation, templates, recent */
+.notes-more{flex-wrap:wrap}
 .trash-list{list-style:none;padding:0;margin:0}
 .trash-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2)}
 .trash-list .t{min-width:0}
@@ -2138,7 +2139,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
         <div class="row"><input type="search" id="qNotes" placeholder="Search notes"><button id="btnNewNote" class="primary">+ New</button></div>
         <div class="chips" id="tagChips"></div>
         <div class="row"><button id="btnBoard" class="primary-soft" style="flex:1" title="Cards on a board: piles, tags, sources, or free arrangement">▦ Board</button><button id="btnCompile" style="flex:1">Compile…</button><button id="btnImportMd" title="Import Markdown notes, e.g. from Notecards">Import .md</button></div>
-        <div class="row"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">From a template…</button><button id="btnTrash" class="ghost" title="Deleted notes wait here for 30 days">Trash</button></div>
+        <div class="row notes-more"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">Templates…</button><button id="btnTrash" class="ghost" title="Deleted notes wait here for 30 days">Trash</button></div>
       </div>
       <ul class="list" id="noteList"></ul>
     </section>
@@ -3552,7 +3553,7 @@ i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{b
     <ul>
       <li>Notes are written in Markdown and can be tagged, typed (quote, paraphrase, summary, idea) and linked to a source and page.</li>
       <li>The <b>scratch pad</b> (<kbd>⌘/Ctrl Alt N</kbd>, or Notes → Scratch pad) is for jotting now and sorting later, and it’s kept with the project. Put the cursor in a passage, or select one, and choose <b>Make a note</b>; <b>Split into notes</b> makes a note of each passage between blank lines; <b>To the journal</b> adds it to today’s journal. <code>#tags</code> become note tags, and a passage of lines starting with <code>&gt;</code> becomes a quotation. Each comes out of the pad, with Undo. Drag the pad by its title to move it; double-click the title to put it back.</li>
-      <li><b>From a template…</b> starts an interview log, archive visit, source summary, field notes or meeting notes, with today’s date filled in. <b>Save as template</b> at the foot of any note adds your own layout to the list, in every project.</li>
+      <li><b>Templates…</b> (Notes tab) starts an interview log, archive visit, source summary, field notes or meeting notes, with today’s date filled in. <b>Save as template</b> at the foot of any note adds your own layout to the list, in every project.</li>
       <li>Deleting a note moves it to the <b>trash</b> (Notes → Trash), with Undo straight away. It waits there 30 days, with everything it was linked to, until you restore it or empty the trash.</li>
       <li><kbd>⌘/Ctrl E</kbd> lists the documents, notes and sources you opened most recently; type to filter, Enter to open.</li>
       <li><b>Insert at cursor</b> drops a note into the current document with its citation. Quotes of 100+ words become block quotes, shorter ones get quotation marks.</li>

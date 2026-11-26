@@ -4,6 +4,11 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.6.3] — 2026-11-26
+
+### Fixed
+- The Notes tab's new row of buttons (Scratch pad, Templates…, Trash) overflowed the sidebar, cutting off Trash. **From a template…** is now **Templates…**, and the row wraps if it has to.
+
 ## [2.6.2] — 2026-11-25
 
 ### Added

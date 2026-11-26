@@ -12,7 +12,7 @@ Open the **Notes** tab and choose **+ New**. There are quicker ways too:
 - **Freewrite** in the Plan saves a timed sprint as a note, linked to the plan item it was about.
 - **The Oracle** files a note when you say `note: …` to it.
 - **The scratch pad** (below) turns jottings into notes when they're worth keeping.
-- **From a template…** starts a laid-out note (below).
+- **Templates…** starts a laid-out note (below).
 
 ### The scratch pad
 
@@ -32,14 +32,14 @@ The pad floats over the writing. Drag it by its title to move it out of the way 
 
 ### Templates
 
-**Notes → From a template…** starts a note already laid out, with today's date filled in:
+**Notes → Templates…** starts a note already laid out, with today's date filled in:
 
 - **Interview log**: interviewee or pseudonym, date and place, consent, the recording, key points, quotations to check against the recording, follow-up.
 - **Archive visit**: repository, collection, boxes and folders requested, what you found, what you photographed, what to request next time.
 - **Source summary**: main argument, evidence and method, key findings, limits and gaps, how you'll use it (the [literature grid](Literature-Grid-and-Codes)'s columns). Started with a source open, it's linked to that source.
 - **Field notes** and **meeting notes**.
 
-To make your own, lay out a note the way you like it and choose **Save as template** at the foot of the note. Your templates are kept in this browser and offered in every project; **✕** removes one.
+To make your own, lay out a note the way you like it and choose **Save as template** at the foot of the note. Your templates are kept in this browser and offered in every project, under Templates…; **✕** removes one.
 
 ![A quotation note with its source, locator and tags](images/note.png)
 

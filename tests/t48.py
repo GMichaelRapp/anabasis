@@ -179,9 +179,12 @@ async def main():
         await pg.evaluate("$('#ccDlg').close()")
 
         # ---------- note templates ----------
+        await pg.evaluate("switchTab('notes')"); await pg.wait_for_timeout(150)
+        r = await pg.evaluate("(() => { const row = $('#btnTrash').parentElement, sb = $('#sidebar').getBoundingClientRect(); return [row.scrollWidth <= row.clientWidth, [...row.children].every(b => b.getBoundingClientRect().right <= sb.right + 0.5), $('#btnNoteTpl').textContent]; })()")
+        check('the Notes tab’s Scratch pad, Templates… and Trash buttons fit the sidebar', r[0] and r[1] and r[2] == 'Templates…', r)
         await pg.evaluate("$('#btnNoteTpl').click()"); await pg.wait_for_timeout(150)
         names = await pg.evaluate("$$('#ntList [data-nt] b').map(b => b.textContent)")
-        check('Notes → From a template: interview log, archive visit, source summary, field notes, meeting notes', names == ['Interview log', 'Archive visit', 'Source summary', 'Field notes', 'Meeting notes'], names)
+        check('Notes → Templates…: interview log, archive visit, source summary, field notes, meeting notes', names == ['Interview log', 'Archive visit', 'Source summary', 'Field notes', 'Meeting notes'], names)
         await pg.click('#ntList [data-nt=interview]'); await pg.wait_for_timeout(250)
         r = await pg.evaluate("({ n: P.notes[0], open: panelState?.id === P.notes[0].id, today: new Date().toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' }) })")
         check('…an interview log: tagged, laid out, today’s date filled in, open to write',
