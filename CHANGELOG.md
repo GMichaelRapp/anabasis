@@ -4,6 +4,14 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.7.2] — 2026-11-26
+
+### Added
+- **Slush pile**: select a passage and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile) to cut it from the draft into the pile, with Undo; *Copy the selection to the slush pile* keeps it in the draft too. Deleted documents go to the pile with their title, style and language. Open it from the Docs tab or the command search to search it, add a note to a piece, filter by document, and put a piece back at the cursor or make it a document or a note. Kept in the project file; never exported.
+
+### Fixed
+- A message with an Undo button shown while a window was open sat behind the window's backdrop, where it couldn't be clicked. It now shows over the window.
+
 ## [2.7.1] — 2026-11-26
 
 ### Fixed

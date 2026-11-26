@@ -55,6 +55,7 @@ SUITES = {
     't48': 'the calendar and .ics export, the scratch pad, the note trash, copy citation, note templates, recent items and a resurfaced note',
     't49': 'writing in other languages, transliteration, special characters, translation notes and the translation journal',
     't50': 'the translation workspace, search inside sources, my library, submissions, the review round-trip and offline OCR',
+    't51': 'the slush pile: cutting passages to it, deleted documents, searching it and putting pieces back',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

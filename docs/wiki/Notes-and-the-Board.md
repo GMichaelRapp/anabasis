@@ -71,6 +71,21 @@ Write `[[Another note]]`, using the other note's title, to link to it. Links and
 
 **Delete** at the foot of a note (or on several cards on the board) moves it to the **trash**, with **Undo** in the message straight away. **Notes → Trash** lists what's there and how many days each note has left: **Restore** brings it back with its source, tags, codes and links intact, and **Delete now** or **Empty trash** removes notes for good. After 30 days a note leaves the trash by itself.
 
+## The slush pile: what you cut
+
+Writers keep a file of the passages they cut, because a paragraph that doesn't belong in chapter 2 often belongs in chapter 5. The **slush pile** is that file.
+
+- **Cutting a passage.** Select it and press **⌘/Ctrl Alt J**, or choose **Mark → Move to the slush pile**. The words leave the draft and go to the pile, citations and all; **Undo** in the message (or ⌘/Ctrl Z) puts them back. *Copy the selection to the slush pile*, in the command search, keeps them in the draft as well.
+- **Deleting a document.** A document you delete goes to the pile with its title, style and language, so you can bring it back whole. An empty document is simply deleted.
+- **Using it.** Open the pile from the **Docs** tab (**Slush pile**), the command search, or ⌘/Ctrl Alt J with nothing selected. Each piece shows where it came from, when, and how long it is; click it to read it all. Search it by its words or by the note you add ("Might work in the conclusion"), or show only one document's cuts or only deleted documents. Then:
+  - **Insert at the cursor** puts it back in the writing where you left the cursor, inside the sentence if it's a phrase.
+  - **New document** makes it a document again.
+  - **Make a note** turns it into an idea note.
+  - **Copy** copies it with its formatting.
+  - **Delete** removes it for good, with Undo.
+
+A piece you use leaves the pile, unless you tick **Keep a copy here when I use a piece**. The pile is kept in the project file and never exported.
+
 ## Finding notes
 
 The search box at the top of the Notes tab filters the list as you type. The chips under it filter by source type and tag. **Ctrl+K** searches notes along with everything else, and **Ctrl+E** (**⌘E** on a Mac) lists the documents, notes and sources you opened most recently, to jump back to one: type to filter, Enter to open.

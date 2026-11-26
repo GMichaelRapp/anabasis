@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.7.1';
+const APP_VERSION = '2.7.2';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -227,6 +227,8 @@ function normalize(p) {
     const EVK = { visit: 1, interview: 1, meeting: 1, deadline: 1, other: 1 };
     out.events = arr(out.events).map(e => ({ id: String(e.id), date: dayOk(e.date), time: /^\d\d:\d\d$/.test(e.time || '') ? e.time : '', title: rstr(e.title), kind: EVK[e.kind] ? e.kind : 'other', note: rstr(e.note), created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.date);
     out.scratch = rstr(out.scratch).slice(0, 500000);
+    out.slush = (Array.isArray(out.slush) ? out.slush : []).filter(x => x && typeof x === 'object' && typeof x.html === 'string').slice(0, 2000).map(x => ({ id: String(x.id || uid('sl')), html: scrubHTML(x.html), title: rstr(x.title), from: rstr(x.from), fromTitle: rstr(x.fromTitle),
+      kind: ['cut', 'copy', 'doc'].includes(x.kind) ? x.kind : 'cut', at: rstr(x.at) || nowISO(), note: rstr(x.note), ...(x.doc && typeof x.doc === 'object' ? { doc: { style: rstr(x.doc.style), lang: LANG_OK(x.doc.lang) ? x.doc.lang : '', role: rstr(x.doc.role) } } : {}) }));
     const keep = 30 * 864e5;
     out.trash = (Array.isArray(out.trash) ? out.trash : []).filter(t => t && typeof t === 'object' && t.note && typeof t.note === 'object' && t.note.id && !(Date.now() - new Date(t.at || 0) > keep))
       .map(t => ({ at: rstr(t.at) || nowISO(), note: Object.assign(newNote(), t.note, { id: String(t.note.id), tags: Array.isArray(t.note.tags) ? t.note.tags.map(rstr).filter(Boolean) : [] }) })).slice(0, 1000);
@@ -1184,7 +1186,10 @@ $('#docList').addEventListener('click', async e => {
   }
   if (a === 'dup') { syncEditor(); const c = JSON.parse(JSON.stringify(d)); c.id = uid('d'); c.title = d.title + ' (copy)'; c.created = c.modified = nowISO(); c.order = d.order + 0.5; P.docs.push(c); renumber(c.partId || ''); openDoc(c.id); markDirty(); return; }
   if (a === 'del') {
-    if (!(await ask('Delete document?', `“${d.title || 'Untitled'}” will be removed from the project. Your notes and sources are not affected.`, 'Delete'))) return;
+    if (curDocId === id) syncEditor();
+    const keepText = !!slushText(d.html);
+    if (!(await ask('Delete document?', `“${d.title || 'Untitled'}” will be removed from the project${keepText ? ', and its text kept in the slush pile in case you want it back' : ''}. Your notes and sources are not affected.`, 'Delete'))) return;
+    if (keepText) slushAdd({ html: d.html, title: d.title || 'Untitled document', from: d.id, fromTitle: d.title || 'Untitled', kind: 'doc', doc: { style: d.style || '', lang: d.lang || '', role: d.role || '' } });
     P.docs = P.docs.filter(x => x.id !== id); renumber(d.partId || '');
     if (!P.docs.length) P.docs.push(newDoc());
     if (curDocId === id) openDoc(binderOrder()[0].id, true); else renderDocList();
@@ -2225,6 +2230,9 @@ $('#infoOk').addEventListener('click', () => $('#infoDlg').close());
 let toastT;
 function toast(msg, action) {
   const t = $('#toast'); t.textContent = msg; t.classList.toggle('has-act', !!action);
+  // over an open dialog, the toast goes inside it so it shows above the backdrop and its button can be clicked
+  let host = document.body; try { host = [...document.querySelectorAll('dialog[open]')].filter(d => d.matches(':modal')).pop() || document.body; } catch (e) { /* :modal unsupported */ }
+  if (t.parentElement !== host) { host.append(t); if (host !== document.body) host.addEventListener('close', () => { const up = [...document.querySelectorAll('dialog[open]')].filter(d => d.matches(':modal')).pop() || document.body; up.append(t); }, { once: true }); }
   if (action) { const b = document.createElement('button'); b.className = 'toast-act'; b.textContent = action.label; b.addEventListener('click', () => { t.classList.remove('show'); action.fn(); }); t.append(b); }
   t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), action ? 6000 : 2800);
 }
@@ -2269,7 +2277,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
 
-function renderAll() { try { padSync(); trashCount(); } catch (e) { /* set up below */ } $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
+function renderAll() { try { padSync(); trashCount(); slushCount(); } catch (e) { /* set up below */ } $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
 
 /* ================================================================
    Drafting & research tools
@@ -9459,6 +9467,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.7.2': ['A slush pile for passages you cut but might want later: select them and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile). Documents you delete go there too. Open it from the Docs tab to search, put a piece back where the cursor is, or make it a document or a note.'],
   '2.7.1': ['Search inside sources lays out long places, such as “box 3, folder 12, item 4”, on lines of their own instead of over the found words.'],
   '2.7.0': ['Write in other languages: set a document’s language in Page setup for spell-checking, quotation marks, citation terms (“Hrsg.”, “trad.”) and right-to-left for Arabic, Hebrew, Persian and Urdu. Mark → Language of this passage does the same for a quotation or a name.', 'Translation notes hold the original beside your translation; insert one with the original in the note and “My translation.” in the citation. The research journal has a Translation section: a glossary that flags renderings you’ve decided against, recorded decisions, and a Note on translation for the front matter.', 'Transliterate Russian, Ukrainian, Bulgarian, Serbian, Greek (modern and ancient) and Arabic by the standard tables (Mark → Transliterate…), and type accents, Greek with breathings and accents, Cyrillic and transliteration marks from Special characters (⌘/Ctrl Alt O).', 'Research desk → Translate: paste an original and translate it segment by segment beside it, with its transliteration, your glossary’s renderings checked as you type, progress, and the result as a document or side by side. ⌘/Ctrl Enter finishes a segment.', 'Sources → Search inside sources finds words in the text of your PDFs, archive photo transcriptions and interview transcripts, and opens the page. Scanned pages and photos can now be read on this computer (Read the text), with nothing sent anywhere.', 'Sources → My library keeps sources and their notes in this browser so you can add them to any project. Submissions (on Project home and in the command search) tracks where each piece has gone, with follow-ups on the calendar.', 'Export → For a reviewer makes one web page anyone can comment on in a browser; Import a review puts their comments in your margin and their changes in as suggestions, even after you’ve kept writing.'],
   '2.6.3': ['The new buttons in the Notes tab (Scratch pad, Templates…, Trash) fit the sidebar again; “From a template…” is now “Templates…”.'],
@@ -15291,6 +15300,143 @@ $('#markMenu').addEventListener('click', e => {
   e.stopImmediatePropagation(); $('#markMenu').classList.remove('open');
   if (a === 'lang') openLangMark(); else openTranslit();
 }, true);
+
+/* ---------- the slush pile: passages you cut and documents you deleted, kept for another day (2.7.2) ----------
+   Each piece is { id, html, title, from (document id), fromTitle, kind: cut | copy | doc, at, note, doc? }.
+   It lives in the project file. Nothing in it is exported. */
+const SLUSH_MAX = 2000;
+function slushText(html) { const d = document.createElement('div'); d.innerHTML = html || ''; $$('.fn', d).forEach(f => f.remove()); return d.textContent.replace(/\s+/g, ' ').trim(); }
+function slushHead(x) { if (x.kind === 'doc') return x.title || 'Untitled document'; const w = slushText(x.html).split(' '); return w.slice(0, 9).join(' ') + (w.length > 9 ? '…' : ''); }
+function slushAdd(x) {
+  const html = String(x.html || '');
+  if (!slushText(html) && !/<(img|figure|table)\b/i.test(html)) return null;
+  const it = { id: uid('sl'), html, title: x.title || '', from: x.from || '', fromTitle: x.fromTitle || '', kind: x.kind || 'cut', at: nowISO(), note: '' };
+  if (x.doc) it.doc = x.doc;
+  P.slush = [it, ...(P.slush || [])].slice(0, SLUSH_MAX);
+  slushCount(); markDirty(); return it;
+}
+function slushCount() { const n = (P.slush || []).length, b = $('#slushN'); if (b) b.textContent = n ? String(n) : ''; }
+/* a selection in the writing, cut (or copied) to the pile; the browser's own undo brings a cut back */
+function slushSelection(keep) {
+  const sel = getSelection();
+  if (!sel.rangeCount || sel.isCollapsed || !editor.contains(sel.anchorNode) || !editor.contains(sel.focusNode)) {
+    toast('Select the words you’re cutting first. Here’s the slush pile.'); openSlush(); return;
+  }
+  const r = sel.getRangeAt(0), box = document.createElement('div'); box.append(r.cloneContents());
+  $$('span.cmt', box).forEach(e => e.replaceWith(...e.childNodes)); // margin notes stay with the draft
+  if (keep) $$('span.rm', box).forEach(e => e.replaceWith(...e.childNodes)); // a copy doesn't carry a second set of research marks
+  let html = box.innerHTML;
+  if (!box.querySelector('p,h1,h2,h3,h4,blockquote,ul,ol,figure,table,pre,div')) html = '<p>' + html + '</p>';
+  const d = curDoc();
+  const it = slushAdd({ html, from: d ? d.id : '', fromTitle: d ? d.title || 'Untitled' : '', kind: keep ? 'copy' : 'cut' });
+  if (!it) { toast('There’s nothing in the selection to keep.'); return; }
+  if (!keep) { editor.focus(); document.execCommand('delete'); syncEditor(); markDirty(); }
+  const n = wc(slushText(html));
+  toast(`${n} ${n === 1 ? 'word' : 'words'} ${keep ? 'copied' : 'moved'} to the slush pile.`, { label: 'Undo', fn: () => {
+    P.slush = (P.slush || []).filter(x => x !== it); slushCount(); markDirty();
+    if (!keep) { editor.focus(); document.execCommand('undo'); syncEditor(); }
+    if ($('#slDlg').open) slushRender();
+  } });
+}
+function openSlush() { if (!$('#slDlg').open) { $('#slQ').value = ''; $('#slFrom').value = ''; } slushRender(); if (!$('#slDlg').open) $('#slDlg').showModal(); setTimeout(() => $('#slQ').focus(), 30); }
+function slushRender() {
+  const L = P.slush || [];
+  const froms = [...new Map(L.filter(x => x.kind !== 'doc' && x.fromTitle).map(x => [x.from, x.fromTitle])).entries()];
+  const cur = $('#slFrom').value;
+  $('#slFrom').innerHTML = `<option value="">Everything</option>${L.some(x => x.kind === 'doc') ? '<option value="@doc">Deleted documents</option>' : ''}${froms.map(([id, t]) => `<option value="${esc(id)}">Cut from ${esc(t)}</option>`).join('')}`;
+  $('#slFrom').value = [...$('#slFrom').options].some(o => o.value === cur) ? cur : '';
+  const from = $('#slFrom').value, q = trFold($('#slQ').value.trim());
+  const items = L.filter(x => (!from || (from === '@doc' ? x.kind === 'doc' : x.from === from && x.kind !== 'doc')) && (!q || trFold(`${x.title} ${x.note} ${slushText(x.html)}`).includes(q)));
+  const words = L.reduce((a, x) => a + wc(slushText(x.html)), 0);
+  $('#slSum').textContent = L.length ? `${L.length} ${L.length === 1 ? 'piece' : 'pieces'}, ${words.toLocaleString()} ${words === 1 ? 'word' : 'words'}. Kept in the project file; never exported.` : '';
+  const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' }); };
+  const how = x => x.kind === 'doc' ? 'Deleted document' : `${x.kind === 'copy' ? 'Copied' : 'Cut'} from ${esc(x.fromTitle || 'a document')}`;
+  $('#slList').innerHTML = items.length ? items.map(x => { const n = wc(slushText(x.html)); return `<li data-sl="${x.id}">
+    <div class="sl-h"><b>${esc(slushHead(x))}</b><span class="muted small">${how(x)} · ${when(x.at)} · ${n.toLocaleString()} ${n === 1 ? 'word' : 'words'}</span></div>
+    <div class="sl-body docbody" tabindex="0" title="Click to see it all">${x.html}</div>
+    <input class="sl-note" data-sln aria-label="Note on this piece" placeholder="Why you cut it, or where it might go" value="${esc(x.note || '')}">
+    <div class="sl-acts"><button class="small" data-sla="ins" title="Put it back in the writing, where the cursor was">Insert at the cursor</button><button class="small" data-sla="doc">New document</button><button class="small" data-sla="note">Make a note</button><button class="small" data-sla="copy">Copy</button><span class="spacer"></span><button class="small ghost danger" data-sla="del">Delete</button></div>
+  </li>`; }).join('') : `<li class="sl-empty muted">${L.length ? 'Nothing matches.' : 'Nothing here yet. When you cut a passage you might want later, select it and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile). Documents you delete come here too.'}</li>`;
+  $$('#slList .sl-body').forEach(b => { if (b.scrollHeight > b.clientHeight + 4) b.classList.add('more'); });
+  slushCount();
+}
+function slushTake(x, keep, what) {
+  if (keep) return;
+  const at = (P.slush || []).indexOf(x);
+  P.slush = (P.slush || []).filter(y => y !== x); slushCount(); markDirty();
+  return () => { P.slush.splice(Math.max(0, at), 0, x); slushCount(); markDirty(); if ($('#slDlg').open) slushRender(); };
+}
+async function slushAct(x, a) {
+  const keep = $('#slKeep').checked;
+  if (a === 'ins') {
+    $('#slDlg').close();
+    const t = document.createElement('div'); t.innerHTML = scrubHTML(x.html);
+    const only = t.children.length === 1 && t.firstElementChild.tagName === 'P' ? t.firstElementChild.innerHTML : t.innerHTML;
+    editor.focus(); insertHTMLAtCursor(only); syncEditor(); markDirty();
+    const undo = slushTake(x, keep);
+    toast(keep ? 'Inserted; a copy stays in the slush pile.' : 'Back in the writing, and out of the slush pile.', undo ? { label: 'Keep it in the pile too', fn: undo } : undefined);
+    return;
+  }
+  if (a === 'doc') {
+    const d = newDoc(x.kind === 'doc' ? x.title || 'Untitled document' : slushHead(x).replace(/…$/, ''), scrubHTML(x.html));
+    if (x.doc) { if (x.doc.style) d.style = x.doc.style; if (x.doc.lang) d.lang = x.doc.lang; if (x.doc.role) d.role = x.doc.role; }
+    $('#slDlg').close(); addDoc(d); renderDocList(); slushTake(x, keep); openDoc(d.id); markDirty();
+    toast(`“${d.title}” is a document again.`); return;
+  }
+  if (a === 'note') {
+    const box = document.createElement('div'); box.innerHTML = x.html; $$('.cite,.fn,.flag', box).forEach(m => m.remove());
+    const n = newNote(), td = new TurndownService({ headingStyle: 'atx', emDelimiter: '*', bulletListMarker: '-' });
+    n.body = td.turndown(box.innerHTML).trim(); n.kind = 'idea';
+    n.title = slushHead(x).replace(/…$/, '').split(' ').slice(0, 7).join(' ') + (slushText(x.html).split(' ').length > 7 ? '…' : '');
+    if (x.note) n.body += '\n\n' + x.note;
+    P.notes.unshift(n); renderNoteList(); renderHomeSoon(); slushTake(x, keep); slushRender(); markDirty();
+    toast('Made an idea note from it. Find it in Notes.', { label: 'Open', fn: () => { $('#slDlg').close(); openNote(n.id); } });
+    return;
+  }
+  if (a === 'copy') {
+    const html = scrubHTML(x.html), text = slushText(html);
+    try {
+      if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+      else await navigator.clipboard.writeText(text);
+      toast('Copied.');
+    } catch (e) { toast('The browser blocked clipboard access.'); }
+    return;
+  }
+  if (a === 'del') {
+    const undo = slushTake(x, false); slushRender();
+    toast('Deleted from the slush pile.', { label: 'Undo', fn: undo });
+  }
+}
+$('#slList').addEventListener('click', e => {
+  const li = e.target.closest('li[data-sl]'); if (!li) return;
+  const x = (P.slush || []).find(y => y.id === li.dataset.sl); if (!x) return;
+  const b = e.target.closest('[data-sla]'); if (b) { slushAct(x, b.dataset.sla); return; }
+  const body = e.target.closest('.sl-body'); if (body && !e.target.closest('a')) body.classList.toggle('open');
+});
+$('#slList').addEventListener('keydown', e => { const body = e.target.closest('.sl-body'); if (body && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); body.classList.toggle('open'); } });
+$('#slList').addEventListener('change', e => {
+  const i = e.target.closest('[data-sln]'); if (!i) return;
+  const x = (P.slush || []).find(y => y.id === i.closest('li').dataset.sl); if (x) { x.note = i.value.trim(); markDirty(); }
+});
+$('#slQ').addEventListener('input', debounce(slushRender, 120));
+$('#slFrom').addEventListener('change', slushRender);
+$('#slClose').addEventListener('click', () => $('#slDlg').close());
+$('#btnSlush').addEventListener('click', openSlush);
+$('#markMenu').addEventListener('click', e => { if (e.target.closest('button')?.dataset.m === 'slush') { $('#markMenu').classList.remove('open'); slushSelection(false); } });
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey;
+  if (mod && e.altKey && !e.shiftKey && e.code === 'KeyJ') {
+    e.preventDefault(); if (document.querySelector('dialog[open]')) return;
+    const s = getSelection();
+    if (s.rangeCount && !s.isCollapsed && editor.contains(s.anchorNode)) slushSelection(false); else openSlush();
+  }
+});
+COMMANDS.push(
+  ['Slush pile: passages you cut and documents you deleted', () => openSlush()],
+  ['Move the selection to the slush pile', () => slushSelection(false)],
+  ['Copy the selection to the slush pile', () => slushSelection(true)]
+);
+{ const g = KEYS.find(k => k[0] === 'Writing'); if (g) g[1].push(['⌘/Ctrl Alt J', 'Move the selection to the slush pile']); }
 
 /* ================================================================
    Installable app. On the hosted copy (GitHub Pages), Anabasis registers a

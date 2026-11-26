@@ -2092,6 +2092,18 @@ dialog#spcDlg[open]{display:flex;flex-direction:column;animation:none}
 .ftx-hit:hover,.ftx-hit:focus-visible{background:var(--accent-soft)}
 .ftx-where{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .ftx-hit>span{min-width:0;overflow-wrap:anywhere}
+.sl-n{margin-left:5px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}.sl-n:empty{display:none}
+.sl-tools{display:flex;gap:8px;align-items:center}.sl-tools input{flex:1;min-width:0}.sl-tools select{width:auto;max-width:42%;flex:none}
+.sl-list{list-style:none;padding:0;margin:4px 0 0;max-height:58vh;overflow:auto}
+.sl-list>li{border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin:0 0 10px;background:var(--panel2,transparent)}
+.sl-list>li.sl-empty{border:0;padding:6px 0;background:none}
+.sl-h{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}.sl-h b{font-size:14.5px}
+.sl-body{position:relative;margin:8px 0;max-height:7.4em;overflow:hidden;font-size:14px;line-height:1.55;cursor:pointer;border-left:3px solid var(--line2);padding-left:10px}
+.sl-body.more:not(.open)::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2.2em;background:linear-gradient(to bottom,transparent,var(--bg-dlg,var(--panel,#fff)))}
+.sl-body.open{max-height:none}.sl-body p,.sl-body h1,.sl-body h2,.sl-body h3{margin:0 0 .5em;font-size:inherit}.sl-body h1,.sl-body h2,.sl-body h3{font-weight:700}
+.sl-body .fn{font-size:.75em;vertical-align:super}
+.sl-note{width:100%;font-size:13px}
+.sl-acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.sl-acts .spacer{flex:1}
 .ftx-hit mark{background:var(--sun-soft,#f6e3a8);color:inherit;padding:0 1px}
 .lib-list{list-style:none;padding:0;margin:0;max-height:52vh;overflow:auto;border-top:1px solid var(--line2)}
 .lib-list li{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;gap:8px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--line2)}
@@ -2189,7 +2201,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
     </nav>
     <section class="pane on" data-pane="docs">
       <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" class="ghost" title="New part (a folder for chapters)">+ Part</button></div>
-        <div class="pane-tools"><button id="btnPlan" class="ghost small" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" class="ghost small" title="Combine documents into one manuscript"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg>Compile</button><button id="btnTemplates" class="ghost small" title="Front and back matter, chronology, annotated bibliography"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 9h16M9 9v11"/></svg>Templates</button><button id="btnImportDocx" class="ghost small" title="Bring in a Word document, footnotes included"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Import Word</button><button id="btnRel" class="ghost small" title="Who’s connected to whom, from your names list"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 8.3 10.6 16M15.8 8.3 13.4 16M8.5 7h7"/></svg>Relationships</button></div></div>
+        <div class="pane-tools"><button id="btnPlan" class="ghost small" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" class="ghost small" title="Combine documents into one manuscript"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg>Compile</button><button id="btnTemplates" class="ghost small" title="Front and back matter, chronology, annotated bibliography"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 9h16M9 9v11"/></svg>Templates</button><button id="btnImportDocx" class="ghost small" title="Bring in a Word document, footnotes included"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Import Word</button><button id="btnRel" class="ghost small" title="Who’s connected to whom, from your names list"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 8.3 10.6 16M15.8 8.3 13.4 16M8.5 7h7"/></svg>Relationships</button><button id="btnSlush" class="ghost small" title="Passages you cut and documents you deleted, kept for another day (⌘/Ctrl Alt J)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h16l-1.6 10a1.5 1.5 0 0 1-1.5 1.3H7.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M7 9.5 9 5h6l2 4.5M9.5 13.5h5"/></svg>Slush pile<span class="sl-n" id="slushN"></span></button></div></div>
       <ul class="list binder" id="docList"></ul>
     </section>
     <section class="pane" data-pane="outline" id="outlinePane">
@@ -2310,6 +2322,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
         <button data-m="orc" role="menuitem"><span class="mk-i mk-soc" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7a6 6 0 0 0 12 0"/><path d="M8.5 12 6 20M15.5 12 18 20M12 13v7"/></svg></span>Consult the Oracle… <kbd>O</kbd></button>
         <button data-m="lang" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">あ</span>Language of this passage…</button>
         <button data-m="tl" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">Ꙗ</span>Transliterate…</button>
+        <button data-m="slush" role="menuitem"><span class="mk-i mk-lang" aria-hidden="true">⇣</span>Move to the slush pile</button>
         <hr>
         <button data-m="desk" role="menuitem">Research desk <kbd>D</kbd></button>
       </div>
@@ -2665,6 +2678,16 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
     <label for="evNote">Notes <span class="muted">(optional)</span></label><textarea id="evNote" rows="3" placeholder="Boxes to request, the address, what to bring"></textarea>
   </div>
   <footer><button id="evDel" class="danger ghost hidden">Remove</button><span class="spacer"></span><button id="evCancel">Cancel</button><button id="evOk" class="primary">Save</button></footer>
+</div></dialog>
+<dialog id="slDlg" class="wide" aria-labelledby="slTitle"><div class="dlg">
+  <h3 id="slTitle">Slush pile</h3>
+  <div class="body">
+    <p class="small muted" style="margin:0 0 10px">Passages you cut and documents you deleted, kept for another day. To add one, select it in the writing and press ⌘/Ctrl Alt J.</p>
+    <div class="row sl-tools"><input type="search" id="slQ" placeholder="Search the slush pile" aria-label="Search the slush pile" autocomplete="off"><select id="slFrom" aria-label="Show"></select></div>
+    <p class="small muted" id="slSum" role="status"></p>
+    <ul id="slList" class="sl-list"></ul>
+  </div>
+  <footer><label class="inline small"><input type="checkbox" id="slKeep"> Keep a copy here when I use a piece</label><span class="spacer"></span><button id="slClose" class="primary">Done</button></footer>
 </div></dialog>
 <dialog id="trashDlg" class="wide" aria-labelledby="trashTitle"><div class="dlg">
   <h3 id="trashTitle">Note trash</h3>
@@ -3338,7 +3361,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
 
 <dialog id="keysDlg" class="wide"><div class="dlg">
   <h3>Keyboard shortcuts</h3>
-  <div class="body keys" id="keysBody"></div>
+  <div class="body keys" id="keysBody" tabindex="0" role="region" aria-label="Keyboard shortcuts"></div>
   <footer><span class="small muted left">Press <kbd>?</kbd> any time you’re not typing, or <kbd>Ctrl/⌘ /</kbd>.</span><button id="keysClose" class="primary">Done</button></footer>
 </div></dialog>
 
@@ -3439,6 +3462,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
       <li><b>TK</b> leaves a flag where something’s missing: a fact (TK), a citation (cite?), or something to verify (check). Typing the letters TK counts too. Everything to resolve is listed under <b>Outline</b>. Click an item to jump to it.</li>
       <li><b>Outline</b> also lists your headings with section word counts, and paragraphs of 40+ words with no citation. Tick <i>highlight</i> to mark those in the text.</li>
       <li><b>Capture as a note</b> (the note-with-arrow button) turns selected text into a note, linked to the source if the passage carries a citation. With nothing selected it opens a blank note for a quick idea.</li>
+      <li>The <b>slush pile</b> keeps what you cut in case you want it later. Select a passage and press <kbd>⌘/Ctrl Alt J</kbd> (or <b>Mark → Move to the slush pile</b>); Undo puts it back. Documents you delete go there too. Open it from the <b>Docs</b> tab to search it, note why you cut something, and put a piece back at the cursor, or make it a document or a note. It’s kept in the project file and never exported.</li>
       <li><b>Focus</b> hides everything but the page, keeps your line centered and shows your word count and session progress. Set word targets in Page setup and a session goal in Settings.</li>
       <li><b>Search</b> (<kbd>Ctrl/Cmd+K</kbd>) finds anything in your documents, notes and sources, and runs commands. <kbd>Ctrl/Cmd+F</kbd> is find and replace in the current document.</li>
     </ul>

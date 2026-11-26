@@ -14,6 +14,7 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **Reading the text of a scan** (Read the text on an archive photo, Read text in the PDF reader) runs Tesseract, an open-source text reader built into the file, inside the page. The image never leaves your computer, and the reader downloads nothing: its English model is in the file too. Running it needs WebAssembly, so the page’s security policy allows `'wasm-unsafe-eval'`; that lets the page run compiled code it already contains, and opens no new connections.
 - **My library** is kept in the same browser storage, shared by the projects you open in this browser. A source goes into a project file only when you add it to that project. **Export** writes the library to a file you choose.
 - **Submissions** (outlets, editors, dates, fees and notes) are kept in the project file.
+- **The slush pile** (passages you cut and documents you delete) is kept in the project file, like the documents themselves, and is never included in an export.
 - **The calendar** is kept in the project file. **Export .ics** writes a file to your computer for you to import into a calendar app; Anabasis doesn’t connect to Google, Apple or Microsoft calendars.
 
 - **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.

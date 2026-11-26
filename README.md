@@ -65,6 +65,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
 - Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
 - **A calendar** on Project home: the words you wrote each day, deadlines, journal entries, and your archive visits and interviews, exported as an .ics file for any calendar app.
+- **A slush pile** for the passages you cut and the documents you delete, searchable and ready to put back.
 - **A scratch pad** for jotting now and sorting later, turned into notes (or a journal entry) a passage at a time; **note templates** for interview logs, archive visits, source summaries, field notes and meetings, plus your own; a **note trash** that keeps deleted notes 30 days; **copy citation** in any style; and **⌘/Ctrl E** for the documents, notes and sources you opened last.
 - **Submissions**: where each piece has gone, its status and fee, with follow-ups on the calendar.
 - Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
