@@ -55,7 +55,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
 - Sources marked primary, secondary or tertiary, with notes that inherit the type and a bibliography that can be grouped by it.
 - **A research guide** in the journal: what each stage of a project is for and how to tell when it's done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary.
-- **A literature grid** that sets your sources against your questions and themes, and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
+- **A literature grid** that sets your sources against your questions and themes, and drafts a **literature review** from it, a cited section for each theme; and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
 - **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image, and make quote notes that cite the box and folder.
 - A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
 - Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.

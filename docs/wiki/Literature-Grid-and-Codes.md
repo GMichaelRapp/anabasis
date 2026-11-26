@@ -33,10 +33,24 @@ Click a note to open it.
 
 ### Taking it further
 
-- **Make a document** turns the grid into a table in a new document, with each source cited, so the bibliography builds itself. It's a starting point for the review: rewrite across the rows, comparing sources on each question, rather than down them.
+- **Draft a literature review** turns the grid on its side into a first draft (see below).
+- **Grid as a document** turns the grid into a table in a new document, with each source cited, so the bibliography builds itself.
 - **Download CSV** opens in any spreadsheet.
 
 The grid is kept in the project file.
+
+### Drafting the review
+
+A literature review is organized by theme, not by source: it compares what the sources say on each question, rather than summarizing them one after another. **Draft a literature review** reorganizes the grid that way. It makes a new document called *Literature Review* with:
+
+- **an introduction**, with a prompt for the question the review answers and how you found and chose the sources;
+- **a section for each column** (each theme or research question), holding every source's summary from that column as a sentence with its citation, followed by a prompt to compare them;
+- under each section, the sources that have **notes on the theme but no summary** in the grid yet, and the sources **silent on it**, which is often where a gap in the literature, or in your reading, shows up;
+- **Gaps and open questions** and **What this review sets up**, with prompts, and your *How I'll use it* notes gathered there rather than given a section of their own.
+
+The citations follow the open document's style: a note reference after the full stop in a notes style, an author-date citation before it. The prompts are highlighted, so they're easy to find and delete as you rewrite. The summaries are where you start, not the finished paragraphs: rewrite each section into prose that says where the sources agree, where they differ and why.
+
+You can also start it from **Templates** in the Docs tab or **Export → Other formats → Literature review draft**. For the shape of the argument before you draft, **Plan → Templates → Literature review** sets out an outline: the question and scope, themes with what the sources agree on and where they disagree, gaps, and what your review sets up.
 
 ## Codes
 

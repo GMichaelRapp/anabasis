@@ -70,7 +70,7 @@ async def main():
             await pg.click('#deskTools >> text=Download CSV')
         csv = open(await (await dl.value).path(), encoding='utf-8-sig').read()
         check('…as CSV', csv.startswith('"Source","Title"') and 'Supply set the route.' in csv, csv[:120])
-        await pg.click('#deskTools >> text=Make a document'); await pg.wait_for_timeout(800)
+        await pg.click('#deskTools >> text=Grid as a document'); await pg.wait_for_timeout(800)
         r = await pg.evaluate("() => ({ t: curDoc().title, rows: $$('#editor table tr').length, cites: editor.querySelectorAll('.cite').length })")
         check('…and as a document with each source cited', r['t'] == 'Literature Review Grid' and r['rows'] >= 3 and r['cites'] >= 2, r)
         await pg.evaluate("() => { const d = P.docs.find(x => x.title !== 'Literature Review Grid'); openDoc(d.id); }"); await pg.wait_for_timeout(500)

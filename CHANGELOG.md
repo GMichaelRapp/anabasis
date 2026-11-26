@@ -4,6 +4,15 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.6.1] — 2026-11-25
+
+### Added
+- **Draft a literature review** from the literature grid (research desk, Templates, Export → Other formats, or the command search): a new document with an introduction, a section for each theme or research question holding every source's summary as a cited sentence, a prompt to compare them, the sources with notes but no summary and those silent on the theme, then *Gaps and open questions* and *What this review sets up* (where the *How I'll use it* column goes). Citations sit after the full stop in notes styles and before it in author-date styles; the prompts are highlighted.
+- **Literature review** in Plan → Templates: question and scope, themes with agreements, disagreements and key studies, gaps, and what the review sets up.
+
+### Changed
+- The literature grid's **Make a document** is now **Grid as a document**, beside **Draft a literature review**.
+
 ## [2.6.0] — 2026-11-25
 
 ### Added

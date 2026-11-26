@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.6.0';
+const APP_VERSION = '2.6.1';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -2157,6 +2157,7 @@ $('#exportMenu').addEventListener('click', e => {
   if (x === 'notesmd') download(fileSafe(P.title) + ' - notes.md', notesMarkdown(), 'text/markdown');
   if (x === 'epub') exportEpub(doc);
   if (x === 'annot') annotatedBibliography();
+  if (x === 'litrev') lgReview();
   if (x === 'osintlist') download(fileSafe(P.title) + ' - OSINT sources.json', exportOsintList(), 'application/json');
   if (x === 'csl') download(fileSafe(P.title) + ' - sources.json', toCSLJSON(), 'application/json');
   if (x === 'refs') openRefExport();
@@ -2399,7 +2400,7 @@ const COMMANDS = [
   ['Import a Word document (.docx)', () => $('#fileDocx').click()], ['Versions: save or compare', () => openVersions()], ['Export ePub (e-book)', () => exportEpub(curDoc())],
   ['Names & spellings', () => openNames()], ['Source audit', () => openAudit('all')], ['Permissions log: credits and rights for figures, tables and quotations', () => openPerms()], ['Check links: web sources against the Wayback Machine', () => openLinks()], ['Writing record & chapter status', () => openRecord()], ['Revision lens', () => toggleLens()],
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
-  ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
+  ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Draft a literature review from the literature grid', () => lgReview()], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
   ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Close to your notes: wording repeated without quotation marks', () => { PREFS.pxOn = true; savePrefs(); switchTab('outline'); renderCloseToNotes(); $('#pxList').scrollIntoView({ block: 'center' }); }], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
@@ -4325,13 +4326,14 @@ const TEMPLATES = [
 ];
 function openTemplates() {
   $('#tplList').innerHTML = TEMPLATES.map(([k, t, r]) => `<button class="tpl" data-t="${k}"><b>${t}</b><span>${r === 'front' ? 'Front matter' : r === 'back' ? 'Back matter' : 'Chapter'}</span></button>`).join('') +
-    `<button class="tpl" data-t="__chron"><b>Chronology</b><span>Built from your dated notes</span></button><button class="tpl" data-t="__annot"><b>Annotated bibliography</b><span>Sources with your annotations</span></button>`;
+    `<button class="tpl" data-t="__chron"><b>Chronology</b><span>Built from your dated notes</span></button><button class="tpl" data-t="__annot"><b>Annotated bibliography</b><span>Sources with your annotations</span></button><button class="tpl" data-t="__litrev"><b>Literature review</b><span>Drafted from your literature grid</span></button>`;
   $('#tplDlg').showModal();
 }
 $('#tplList').addEventListener('click', e => {
   const b = e.target.closest('[data-t]'); if (!b) return; $('#tplDlg').close();
   if (b.dataset.t === '__chron') { chronologyDoc(); return; }
   if (b.dataset.t === '__annot') { annotatedBibliography(); return; }
+  if (b.dataset.t === '__litrev') { lgReview(); return; }
   const [k, t, role, html] = TEMPLATES.find(x => x[0] === b.dataset.t);
   const d = newDoc(t, html); d.role = role; d.template = k; addDoc(d); d.role = role; renderDocList(); toast(`${t} added as ${role === 'body' ? 'a chapter' : role + ' matter'}. Manuscript compile puts it in the right place.`);
 });
@@ -5365,6 +5367,7 @@ const PLAN_TEMPLATES = {
   'Explainer / video script': ['section:Hook (first 30 seconds)', 'section:The promise — what viewers will learn', 'section:Context', 'claim:Main point 1', ['evidence:Example / footage'], 'claim:Main point 2', ['evidence:Example / footage'], 'claim:Main point 3', ['evidence:Example / footage'], 'section:Payoff', 'section:Call to action'],
   'Article series (Substack)': ['section:Series arc — what readers get by the end', ['question:What do readers already believe about this?', 'idea:Running thread across all parts'], 'section:Part 1', ['section:Hook', 'claim:Argument', 'evidence:Key evidence', 'section:Cliffhanger into Part 2'], 'section:Part 2', ['section:Hook', 'claim:Argument', 'evidence:Key evidence', 'section:Cliffhanger into Part 3'], 'section:Part 3', ['section:Hook', 'claim:Argument', 'evidence:Key evidence', 'section:Cliffhanger into Part 4'], 'section:Part 4', ['section:Hook', 'claim:Argument', 'evidence:Key evidence', 'section:Payoff']],
   'Nonfiction book': ['section:Introduction', 'section:Part I', ['section:Chapter 1', 'section:Chapter 2', 'section:Chapter 3'], 'section:Part II', ['section:Chapter 4', 'section:Chapter 5', 'section:Chapter 6'], 'section:Conclusion'],
+  'Literature review': ['section:Introduction — the question and why it matters', ['section:Scope and search: databases, terms, what you included and left out'], 'section:Theme 1', ['claim:What the sources agree on', 'counter:Where they disagree, and why', 'evidence:Key studies'], 'section:Theme 2', ['claim:What the sources agree on', 'counter:Where they disagree, and why', 'evidence:Key studies'], 'section:Theme 3', ['claim:What the sources agree on', 'evidence:Key studies'], 'section:Gaps and open questions', ['question:What has nobody examined?'], 'section:What this review sets up — your question'],
   'Book proposal': ['section:Overview — the book in two pages', 'section:Audience', 'section:Comparable titles', 'section:About the author', 'section:Marketing and platform', 'section:Chapter-by-chapter outline', 'section:Sample chapter'],
 };
 function plApplyTemplate(name, parent) {
@@ -9407,6 +9410,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.6.1': ['Draft a literature review from the literature grid (research desk → Literature grid, Templates, or Export → Other formats): a section for each theme or research question with every source’s summary cited, prompts to compare them, the sources that have notes but no summary, and the ones silent on each theme. Plan → templates has a Literature review outline too.'],
   '2.6.0': ['A research guide in the journal: what each stage of a project is for and when it’s done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary of research terms.',
     'Close to your notes (Outline) finds sentences that repeat a note’s wording without quotation marks, and adds the marks and citation in one click. Quote and paraphrase notes made in the PDF reader now leave a highlight in the PDF, with a marker that opens the note.',
     'On the research desk: a literature grid that sets your sources against your questions and themes, and Codes, for qualitative coding: a codebook, passages coded with Mark → Code passage (K), codes on notes, counts by source, and codes that turn up together.',
@@ -11610,7 +11614,7 @@ function deskLit() {
   $('#deskTools').innerHTML = `<label class="inline small">Rows <select id="lgRows"><option value="notes">Sources with notes</option><option value="cited">Sources cited in the project</option><option value="all">Every source</option></select></label>
     <button class="small" data-j="${DJ(() => { g.cols.push({ id: uid('lc'), name: 'New column', q: '' }); markDirty(); renderDesk(); setTimeout(() => { const i = $$('#deskBody .lg-colname'); i[i.length - 1]?.select(); }, 30); })}">+ Column</button>
     ${qs.length ? `<select id="lgAddQ" class="small" aria-label="Add a research question as a column"><option value="">+ Research question…</option>${qs.map(q => `<option value="${q.id}">${esc((q.title || 'Untitled question').slice(0, 60))}</option>`).join('')}</select>` : ''}
-    <button class="small" data-j="${DJ(() => lgDoc())}" ${rows.length ? '' : 'disabled'}>Make a document</button><button class="small" data-j="${DJ(() => lgCsv())}" ${rows.length ? '' : 'disabled'}>Download CSV</button>`;
+    <button class="small" data-j="${DJ(() => lgReview())}" ${rows.length ? '' : 'disabled'} title="A draft review with a section for each theme and every summary cited">Draft a literature review</button><button class="small" data-j="${DJ(() => lgDoc())}" ${rows.length ? '' : 'disabled'} title="The grid as a table in a new document">Grid as a document</button><button class="small" data-j="${DJ(() => lgCsv())}" ${rows.length ? '' : 'disabled'}>Download CSV</button>`;
   $('#lgRows').value = g.rows;
   $('#lgRows').addEventListener('change', e => { g.rows = e.target.value; markDirty(); renderDesk(); });
   $('#lgAddQ')?.addEventListener('change', e => { const q = plItem(e.target.value); if (!q) return; g.cols.unshift({ id: uid('lc'), name: q.title || 'Question', q: q.id }); markDirty(); renderDesk(); });
@@ -11630,6 +11634,49 @@ function lgDoc() {
     <table><thead><tr><th>Source</th>${g.cols.map(c => `<th>${esc(c.name)}</th>`).join('')}</tr></thead><tbody>${rows.map(s => `<tr><td>${esc(srcShort(s))}${citeHTML([{ id: s.id }])}</td>${g.cols.map(c => `<td>${esc(cell(s, c)).replace(/\n/g, '<br>') || '<br>'}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
   const d = newDoc('Literature Review Grid', html); d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList();
   closeDesk(); toast('Grid made into a document, with each source cited.');
+}
+/* literature review draft (2.6.1): the grid turned on its side. Each column (a theme or research question)
+   becomes a section, each source's cell a cited sentence under it, ready to be rewritten into a paragraph that
+   compares them; sources with notes but no summary are flagged, and sources silent on a theme are listed as
+   gaps. The default "How I’ll use it" column feeds the closing section instead of a theme of its own. */
+const LG_USE = 'how i’ll use it';
+function lgReviewHTML() {
+  const { g, rows, cell } = lgTable();
+  const isUse = c => c.name.trim().toLowerCase().replace(/'/g, '’') === LG_USE;
+  const themes = g.cols.filter(c => !isUse(c)), use = g.cols.filter(isUse);
+  const P_ = t => `<p><mark>[${esc(t)}]</mark></p>`;
+  const isNote = !!(STYLES[curDoc()?.style || DEFAULT_STYLE] || {}).note;
+  // a note reference follows the full stop ("route.¹"); an author-date citation comes before it ("route (Engels 1978).")
+  const sentence = (txt, id) => {
+    const t = txt.replace(/\s*\n+\s*/g, ' ').trim(), m = t.match(/^([\s\S]*?)([.!?]["”’)]*)$/), [body, end] = m ? [m[1], m[2]] : [t, '.'];
+    return isNote ? `${esc(body)}${esc(end)}${citeHTML([{ id }])}` : `${esc(body)} ${citeHTML([{ id }])}${esc(end)}`;
+  };
+  let html = `<h1>Literature Review</h1>` +
+    P_(`A draft built from your literature grid: ${rows.length} ${rows.length === 1 ? 'source' : 'sources'} across ${themes.length} ${themes.length === 1 ? 'theme' : 'themes'}. Each section gathers what the sources say on one theme. Rewrite each into paragraphs that compare them: where they agree, where they differ and why. Delete the bracketed notes as you go.`) +
+    `<h2>Introduction</h2>` + P_('The question this review answers, why it matters, and how you found and chose the sources: where you searched, with what terms, and what you left out.');
+  const covered = new Set();
+  themes.forEach(c => {
+    html += `<h2>${esc(c.name)}</h2>`;
+    const said = rows.filter(s => cell(s, c)), notesOnly = rows.filter(s => !cell(s, c) && lgNotes(s, c).length), silent = rows.filter(s => !cell(s, c) && !lgNotes(s, c).length);
+    said.forEach(s => covered.add(s.id));
+    if (said.length) html += `<p>${said.map(s => sentence(cell(s, c), s.id)).join(' ')}</p>` + P_(said.length > 1 ? 'Compare: which of these agree, which disagree, and what explains the difference (method, evidence, period, place)?' : 'One source so far. Is it the only one that addresses this, or a gap in your reading?');
+    else html += P_('No summaries in the grid for this theme yet.');
+    notesOnly.forEach(s => { const n = lgNotes(s, c).length; html += P_(`${srcShort(s)}: ${n} ${n === 1 ? 'note bears' : 'notes bear'} on this, but there’s no summary in the grid.`); });
+    if (silent.length && said.length) html += P_(`Not addressed by: ${silent.map(srcShort).join(', ')}.`);
+  });
+  html += `<h2>Gaps and open questions</h2>` + P_('What none of the sources examine, the questions they leave open, and where the evidence is thin or contested.');
+  html += `<h2>What this review sets up</h2>` + P_('How your own work answers the gaps above: the question you take up, and why it needs asking.');
+  use.forEach(c => rows.filter(s => cell(s, c)).forEach(s => { html += P_(`Your note on ${srcShort(s)}: ${cell(s, c).replace(/\s*\n+\s*/g, ' ')}`); }));
+  const unused = rows.filter(s => !covered.has(s.id));
+  if (unused.length) html += P_(`In the grid but not summarized under any theme: ${unused.map(srcShort).join(', ')}.`);
+  return { html, rows, themes };
+}
+function lgReview() {
+  syncEditor();
+  const { html, rows } = lgReviewHTML();
+  if (!rows.length) { toast('Add sources to the literature grid first.'); return; }
+  const d = newDoc('Literature Review', html); d.style = curDoc()?.style || DEFAULT_STYLE; addDoc(d); renderDocList();
+  closeDesk(); toast(`Literature review drafted from ${rows.length} ${rows.length === 1 ? 'source' : 'sources'}.`);
 }
 function lgCsv() {
   const { g, rows, cell } = lgTable(), q = v => '"' + String(v).replace(/"/g, '""') + '"';

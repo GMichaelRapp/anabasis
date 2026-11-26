@@ -51,6 +51,7 @@ SUITES = {
     't44': 'Proofread (misspellings, mixed-up words, a and an, spacing), the abstract and keywords in every export, reading a PDF with a note pad beside it',
     't45': 'the wiki: links between pages, pictures, the sidebar, and a page for every section of Help',
     't46': 'close to your notes, PDF highlights, the literature grid, codes, archive photos, pseudonyms and consent, retractions, duplicates, the reading list, evidence fingerprints, the research guide',
+    't47': 'a literature review drafted from the literature grid, and the Literature review plan template',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

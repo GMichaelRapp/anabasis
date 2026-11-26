@@ -101,6 +101,7 @@ A `main.tex` with BibLaTeX `\autocite` commands, `\ref` and `\label` for cross-r
 
 - **All notes as Markdown** writes every note to one Markdown file.
 - **Annotated bibliography** makes a new document from each source's Annotation field.
+- **Literature review draft** makes a new document from the [literature grid](Literature-Grid-and-Codes#drafting-the-review): a section for each theme, with each source's summary cited.
 - **Sources as BibTeX, RIS or CSL-JSON…** for Zotero, EndNote, Mendeley or JabRef; all sources, or only those cited in the open document.
 - **Sources as OSINT Citation Generator list**, to audit them in that tool.
 
