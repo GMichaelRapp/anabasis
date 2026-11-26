@@ -191,6 +191,7 @@ section{padding:96px 0 0}
 .also26 h3{font-size:21px}
 .also26 p{margin-top:6px;font-size:15.5px;color:var(--muted)}
 .n26-links{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+.since{margin-top:28px;max-width:760px;font-size:16px;color:var(--muted)}
 @media (max-width:980px){
   .n26 figure.lead{grid-template-columns:1fr;gap:16px}
   .also26{grid-template-columns:1fr 1fr}
@@ -274,7 +275,7 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
-      <a href="#new">New in 2.6</a>
+      <a href="#new">New in 2.7</a>
       <a href="#route">What it does</a>
       <a href="#yours">Your work</a>
       <a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
@@ -310,60 +311,54 @@ section{padding:96px 0 0}
         <figcaption>The editor. Citations format as you type, and the notes and bibliography rebuild as you write.</figcaption>
       </figure>
 
-      <p class="new"><b>New in 2.6</b> <span>A guide to every stage of a research project, a literature grid, qualitative codes, archive photos filed by box and folder, and checks for copied wording, retractions and duplicates. <a href="#new">See what’s new</a></span></p>
+      <p class="new"><b>New in 2.7</b> <span>Writing and citing in 27 languages, a translation workspace with a glossary that checks itself, search inside every PDF and transcript, reviews from anyone in a browser, and a library of sources for every project. <a href="#new">See what’s new</a></span></p>
     </div>
   </div>
 
   <section id="new" aria-labelledby="new-h">
     <div class="wrap">
       <div class="head">
-        <p class="kicker">New in version 2.6</p>
-        <h2 id="new-h">For the long middle of a project</h2>
-        <p>Most research happens between the first search and the first draft: reading, sorting, coding, checking. Version 2.6 is for that stretch, with a guide to every stage and new tools for the material you gather on the way.</p>
+        <p class="kicker">New in version 2.7</p>
+        <h2 id="new-h">In other languages, and across everything you’ve gathered</h2>
+        <p>Version 2.7 writes and cites in 27 languages, gives translators a workspace and a glossary that checks itself, searches inside every PDF and transcript you’ve collected, and lets anyone review a draft from their own browser.</p>
       </div>
       <div class="n26">
         <figure class="lead">
-          <div class="frame"><img src="img/guide-detail.png" loading="lazy" width="1100" height="688" alt="The research guide in the journal: the research question stage, with what to do, an example, what to watch for and how to tell when it’s done."></div>
-          <figcaption><b>A guide to every stage</b>Open it from the journal.<span>Twelve stages of a project, from the first question to the last check, each with what to do, what to watch for and how to tell when it’s done. Checklists for sources, quotes and numbers, ethics and consent, data, open-source work and the pass before you submit. Short guides to eight methods, from archival work and interviews to case studies and reporting, and a glossary of 64 research terms.</span></figcaption>
+          <div class="frame"><img src="img/translate-detail.png" loading="lazy" width="1100" height="688" alt="The translation workspace: three segments of Xenophon’s Greek, each with its transliteration and a box for the English, two done, and the glossary term ἐπιμελητής shown with its rendering, quartermaster."></div>
+          <figcaption><b>A translation workspace</b>Research desk → Translate.<span>Paste an original and translate it a paragraph or a sentence at a time, beside it, with its transliteration underneath. The renderings in your glossary are shown for each segment and checked as you type: green when you follow them, red when you’ve used one you decided against. ⌘/Ctrl Enter finishes a segment and moves on. Finish with a document, or the original and your translation side by side.</span></figcaption>
         </figure>
         <figure>
-          <div class="frame"><img src="img/grid-detail.png" loading="lazy" width="1100" height="688" alt="The literature grid: sources down the side, questions across the top, a line of notes in each cell."></div>
-          <figcaption><b>A literature grid.</b> Sources down the side, your questions or themes across the top. Notes tagged to a column turn up in its cell. Then draft a literature review from it, a section for each theme with every source cited.</figcaption>
+          <div class="frame"><img src="img/langs-detail.png" loading="lazy" width="1100" height="688" alt="A document in German behind the Transliterate window, which turns θάλαττα θάλαττα into thalatta thalatta by the Library of Congress table."></div>
+          <figcaption><b>27 languages.</b> Set a document’s language and spelling, quotation marks, word counts and citation terms follow it, with Arabic, Hebrew, Persian and Urdu right to left. Transliterate Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic by the standard tables.</figcaption>
         </figure>
         <figure>
-          <div class="frame"><img src="img/codes-detail.png" loading="lazy" width="1100" height="688" alt="The codebook overview: counts of codes and coded passages, a matrix of codes by document, and the codes that turn up together."></div>
-          <figcaption><b>Qualitative codes.</b> Code passages in interviews, documents and notes with one key. See each code by source, which codes turn up together, and export a codebook.</figcaption>
+          <div class="frame"><img src="img/search-detail.png" loading="lazy" width="1100" height="688" alt="Search inside sources: the word railway found on page 2 of a PDF, in an archive photo’s transcription and in an interview transcript."></div>
+          <figcaption><b>Search inside sources.</b> The full text of every PDF, archive photo transcription and interview transcript, without minding capitals or accents. A hit opens the PDF at its page. Scanned pages are read on your computer first.</figcaption>
         </figure>
         <figure>
-          <div class="frame"><img src="img/archive-detail.png" loading="lazy" width="1100" height="688" alt="Archive photos: thumbnails filed under box 3, folder 12, a handwritten letter, and its transcription beside it."></div>
-          <figcaption><b>Archive photos.</b> Bring in a day’s phone photos, file them by box, folder and item, and transcribe beside the image. Quote straight from the transcription with the box and folder in the citation.</figcaption>
+          <div class="frame"><img src="img/review-detail.png" loading="lazy" width="1100" height="688" alt="A chapter after importing a review: a reviewer’s comment highlighted, and a suggested change from “nearly every halt” to “almost every halt”."></div>
+          <figcaption><b>Reviews from anyone.</b> Send one web page. The reviewer comments and suggests changes in any browser and sends back a small file; their notes land in your margin and as suggestions, even after you’ve kept writing.</figcaption>
         </figure>
         <figure>
-          <div class="frame"><img src="img/close-detail.png" loading="lazy" width="1100" height="688" alt="The outline panel flags 13 words in the draft that match a quotation note but aren’t in quotation marks."></div>
-          <figcaption><b>Close to your notes.</b> Finds wording in the draft that matches a quotation you noted but isn’t in quotation marks, and adds the marks and the citation in one click.</figcaption>
+          <div class="frame"><img src="img/library-detail.png" loading="lazy" width="1100" height="688" alt="My library: four sources on the shelf, two already in this project, with their notes."></div>
+          <figcaption><b>My library.</b> Sources and their notes on a shelf in your browser, for every project. Add them to a new project in a click; the same book is never shelved twice.</figcaption>
         </figure>
         <figure>
-          <div class="frame"><img src="img/calendar-detail.png" loading="lazy" width="1100" height="688" alt="The calendar on Project home: days shaded by the words written, a visit to the county archive marked on Friday, and that day’s details below."></div>
-          <figcaption><b>A calendar.</b> The words you wrote each day, darkest when you met your goal, with what’s due and your journal entries marked. Add archive visits and interviews, and export them to Google, Apple or Outlook calendars.</figcaption>
-        </figure>
-        <figure>
-          <div class="frame"><img src="img/pad-detail.png" loading="lazy" width="1100" height="688" alt="The scratch pad open over a draft, holding four jottings, with buttons to make a note, split into notes or send to the journal."></div>
-          <figcaption><b>A scratch pad.</b> Jot now, sort later. When something’s worth keeping, make it a note, split the pad into notes, or send it to the journal, with its tags and quotations.</figcaption>
+          <div class="frame"><img src="img/subs-detail.png" loading="lazy" width="1100" height="688" alt="Submissions: four pieces with their outlets, editors, dates sent, status, follow-ups and fees, and a summary above."></div>
+          <figcaption><b>Submissions.</b> Where each piece has gone, to which editor, its status and fee, with follow-ups on the calendar and in its .ics export.</figcaption>
         </figure>
       </div>
       <ul class="also26">
-        <li><h3>A retraction check</h3><p>Asks Crossref, Retraction Watch’s records included, whether any source has been retracted or corrected. Only the DOIs are sent.</p></li>
-        <li><h3>Duplicates merged</h3><p>Finds the same work added twice and merges it, with every citation and note moved across.</p></li>
-        <li><h3>A reading list</h3><p>To read, reading and read, with priorities, and what to read next waiting on Project home.</p></li>
-        <li><h3>Evidence fingerprints</h3><p>A SHA-256 fingerprint for each screenshot, video or document, so you can show later that a copy is unchanged.</p></li>
-        <li><h3>Pseudonyms and consent</h3><p>Real names stay in your project; every export uses the pseudonym. Consent is recorded and checked before you publish.</p></li>
-        <li><h3>Highlights that stay</h3><p>Quotes and paraphrases taken from a PDF stay highlighted in it, with a marker in the margin that opens the note.</p></li>
-        <li><h3>A literature review, drafted</h3><p>The literature grid turned on its side: a section for each theme, every source’s summary cited, and the gaps listed.</p></li>
-        <li><h3>Copy citation</h3><p>Any source’s citation or bibliography entry, in any style and with its italics, for an email or someone else’s document.</p></li>
-        <li><h3>Templates and a trash</h3><p>Interview logs, archive visits and source summaries ready to fill in, and deleted notes kept for 30 days.</p></li>
+        <li><h3>Translation notes</h3><p>The original kept beside your translation, inserted in the note or in brackets, with “My translation.” added for you.</p></li>
+        <li><h3>A glossary that checks</h3><p>Record how you render each term and what you’ve decided against. The draft is checked as you write, with Replace.</p></li>
+        <li><h3>Reading scanned pages</h3><p>Typed and printed text in archive photos and scanned PDFs, read on your computer by Tesseract. Nothing is uploaded.</p></li>
+        <li><h3>Special characters</h3><p>Polytonic Greek, Cyrillic, accents and transliteration marks, in a palette that stays open while you type.</p></li>
+        <li><h3>A passage in another language</h3><p>Mark a quotation or a name as Greek, Arabic or French, and it’s checked, read aloud and exported in its own language.</p></li>
+        <li><h3>A note on translation</h3><p>The front-matter note on your conventions, written from the languages, system and glossary you’ve recorded.</p></li>
       </ul>
+      <p class="since">Still new from 2.6: a guide to every stage of a research project, the literature grid, qualitative codes, archive photos, the calendar and scratch pad, and checks for copied wording, retractions and duplicates. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
       <div class="n26-links">
-        <a class="btn primary" href="app/">Try 2.6 in your browser</a>
+        <a class="btn primary" href="app/">Try 2.7 in your browser</a>
         <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki">Read the guide</a>
         <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
       </div>
