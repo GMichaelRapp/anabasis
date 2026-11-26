@@ -4,6 +4,11 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.7.1] — 2026-11-26
+
+### Fixed
+- Search inside sources: a long place, such as an archive photo's box, folder and item, ran over the words found; places now wrap in their own column, and a PDF hit always shows its page.
+
 ## [2.7.0] — 2026-11-26
 
 ### Added

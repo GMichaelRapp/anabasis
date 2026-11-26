@@ -70,6 +70,8 @@ The glossary is checked as you write. **Outline → Glossary** lists every place
 
 For anything longer than a quotation, use **Research desk → Translate**.
 
+![The translation workspace: three segments of Greek, each with its transliteration and the English beside it, and a glossary term with its rendering](images/translation-workspace.png)
+
 1. **New translation**: give it a title, choose the languages and the source it comes from, paste the original, and split it into **paragraphs** or **sentences**.
 2. Each **segment** shows the original, its transliteration, and the glossary terms it contains with the rendering you decided on. Type your translation beside it.
 3. **⌘/Ctrl Enter** marks a segment done and moves to the next. A segment you've started is a draft until you mark it done.
