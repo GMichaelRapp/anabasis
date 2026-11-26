@@ -99,7 +99,7 @@ async def main():
         # shortcut sheet: ? when not typing, never while typing
         await pg.evaluate("() => { document.activeElement.blur(); }"); await pg.keyboard.press('?'); await pg.wait_for_timeout(200)
         check('? opens the keyboard shortcuts', await pg.evaluate("() => $('#keysDlg').open"))
-        check('shortcut sheet has every group', await pg.locator('#keysBody h4').count() == 4)
+        check('shortcut sheet has every group', await pg.locator('#keysBody h4').count() == 5)
         await pg.click('#keysClose')
         await pg.evaluate("() => { const p = editor.querySelector('p'); const r = document.createRange(); r.selectNodeContents(p); r.collapse(false); const s = getSelection(); s.removeAllRanges(); s.addRange(r); editor.focus(); }")
         await pg.keyboard.type('?'); await pg.wait_for_timeout(150)

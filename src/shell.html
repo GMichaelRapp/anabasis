@@ -1954,6 +1954,74 @@ body.rr-on #rdNotes{display:none}
 /* focus is always visible and always the same */
 :root :focus-visible{outline:2px solid var(--sun);outline-offset:2px}
 :root .tabs button:focus-visible,:root .desk-tabs button:focus-visible{outline-offset:-2px}
+/* 2.6.2: the calendar on Project home */
+.hm-cal .cal-nav{margin-left:auto;display:flex;align-items:center;gap:4px;text-transform:none;letter-spacing:0;font-size:13px;color:var(--ink)}
+.hm-cal .cal-nav b{min-width:9.5em;text-align:center;font-weight:600}
+.hm-card h5 .cal-nav button{margin-left:0}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-wd{font-size:11px;color:var(--muted);text-align:center;padding:2px 0 4px}
+.cal-x{aspect-ratio:1/1}
+.cal-d{aspect-ratio:1/1;min-height:30px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:3px 0 4px;border:1px solid transparent;border-radius:6px;background:var(--line2);color:var(--ink);font-variant-numeric:tabular-nums;cursor:pointer}
+.cal-d .dn{font-size:12px;line-height:1.2}
+.cal-d.lv0{background:transparent;border-color:var(--line2)}
+.cal-d.lv0:not(.past):not(.today) .dn{color:var(--muted)}
+.cal-d.lv1{background:color-mix(in srgb,var(--accent) 18%,var(--page))}
+.cal-d.lv2{background:color-mix(in srgb,var(--accent) 38%,var(--page))}
+.cal-d.lv3{background:color-mix(in srgb,var(--accent) 62%,var(--page));color:var(--accent-ink)}
+.cal-d.lv4{background:var(--accent);color:var(--accent-ink)}
+.cal-d.today{border-color:var(--sun);box-shadow:inset 0 0 0 1px var(--sun)}
+.cal-d.today .dn{font-weight:700}
+.cal-d.on{outline:2px solid var(--ink);outline-offset:1px}
+.cal-d:hover{border-color:var(--accent)}
+.cal-dots{display:flex;gap:2px;height:6px}
+.cal-dots i,.cal-key i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--muted)}
+.cal-dots i.ev,.cal-key i.ev{border-radius:1px;transform:rotate(45deg) scale(.85)}
+i.k-visit{background:var(--sun)} i.k-interview{background:#2f9e5b} i.k-meeting{background:var(--accent)} i.k-deadline{background:var(--danger)} i.k-other{background:var(--muted)}
+.cal-d.lv3 i.k-meeting,.cal-d.lv4 i.k-meeting{background:var(--accent-ink)}
+.cal-dots i.due,.cal-key i.due{background:var(--danger)}
+.cal-dots i.jr,.cal-key i.jr{background:transparent;box-shadow:inset 0 0 0 1.5px currentColor}
+.cal-key{display:flex;flex-wrap:wrap;gap:4px 12px;margin:8px 0 4px}
+.cal-key span{display:inline-flex;align-items:center;gap:5px}
+.cal-key i.sw{width:12px;height:10px;border-radius:3px;background:color-mix(in srgb,var(--accent) 38%,var(--page))}
+.cal-key i.jr{color:var(--ink)}
+.cal-day{margin-top:8px;padding-top:10px;border-top:1px solid var(--line2)}
+.cal-dh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+.cal-tag{font-size:11px;padding:0 6px;border-radius:999px;background:var(--line2);white-space:nowrap;line-height:18px}
+.cal-tag.k-visit{background:var(--sun-soft,var(--warn-bg));color:var(--sun-ink,var(--warn-ink))} .cal-tag.k-interview{background:var(--ok-bg);color:var(--ok-ink)} .cal-tag.k-meeting{background:var(--accent-soft);color:var(--accent)} .cal-tag.k-deadline,.cal-tag.due{background:var(--bad-bg);color:var(--bad-ink)} .cal-tag.jr{background:var(--check-bg);color:var(--check-ink)}
+.cal-acts{gap:6px;margin-top:10px;flex-wrap:wrap}
+/* a note resurfaced */
+.rs-note{cursor:pointer;border-left:3px solid var(--sun);padding:2px 0 2px 12px}
+.rs-note b{font:600 16px/1.3 Georgia,serif;display:block}
+.rs-note p{margin:6px 0;font-size:13.5px;line-height:1.5}
+.rs-note:hover b{text-decoration:underline}
+/* the scratch pad */
+.pad{position:fixed;right:18px;bottom:18px;width:min(380px,calc(100vw - 24px));height:min(440px,calc(100vh - 90px));display:flex;flex-direction:column;background:var(--page);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow),0 16px 40px -12px rgba(0,0,0,.35);z-index:60;resize:both;overflow:hidden;min-width:280px;min-height:240px}
+.pad[hidden]{display:none}
+.pad header{display:flex;align-items:center;gap:8px;padding:9px 10px 8px 14px;cursor:move;touch-action:none;user-select:none;border-bottom:1px solid var(--line2);background:color-mix(in srgb,var(--sun) 10%,var(--page))}
+.pad header h3{margin:0;font-size:14px;flex:1}
+.pad textarea{flex:1;border:0;border-radius:0;resize:none;padding:12px 14px;font:15px/1.55 var(--ui);background:transparent;color:var(--ink);min-height:0}
+.pad textarea:focus-visible{outline:none;box-shadow:inset 0 0 0 2px var(--accent-soft)}
+.pad footer{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;border-top:1px solid var(--line2)}
+.pad .tip{padding:0 14px 6px;margin:0}
+/* trash, copy citation, templates, recent */
+.trash-list{list-style:none;padding:0;margin:0}
+.trash-list li{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line2)}
+.trash-list .t{min-width:0}
+.trash-list .kind{font-size:11px;color:var(--muted);text-transform:capitalize}
+.cc-row{padding:10px 0;border-bottom:1px solid var(--line2)}
+.cc-row:last-child{border-bottom:0}
+.cc-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.cc-h b{flex:1;font-size:13px}
+.cc-out{font:15px/1.5 Georgia,serif;padding:8px 10px;background:var(--panel);border:1px solid var(--line2);border-radius:6px;user-select:text}
+.cc-out .csl-entry{padding-left:1.5em;text-indent:-1.5em}
+.nt-row{display:flex;gap:6px;align-items:stretch}
+.nt-row .tpl{flex:1}
+#ntList{display:grid;gap:6px}
+.sw-list li{display:flex;gap:10px;align-items:baseline}
+.sw-list li .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sw-list li .m{font-size:11.5px;color:var(--muted);flex:none}
+.sw-list li .m:first-child{width:4.5em}
+@media (max-width:640px){.trash-list li{grid-template-columns:1fr auto auto}.trash-list li > .small{grid-column:1/-1}}
 </style>
 <style id="pageRule"></style>
 </head>
@@ -2070,6 +2138,7 @@ body.rr-on #rdNotes{display:none}
         <div class="row"><input type="search" id="qNotes" placeholder="Search notes"><button id="btnNewNote" class="primary">+ New</button></div>
         <div class="chips" id="tagChips"></div>
         <div class="row"><button id="btnBoard" class="primary-soft" style="flex:1" title="Cards on a board: piles, tags, sources, or free arrangement">▦ Board</button><button id="btnCompile" style="flex:1">Compile…</button><button id="btnImportMd" title="Import Markdown notes, e.g. from Notecards">Import .md</button></div>
+        <div class="row"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">From a template…</button><button id="btnTrash" class="ghost" title="Deleted notes wait here for 30 days">Trash</button></div>
       </div>
       <ul class="list" id="noteList"></ul>
     </section>
@@ -2490,6 +2559,38 @@ body.rr-on #rdNotes{display:none}
     <div id="rcBody"></div>
   </div>
   <footer><button id="rcClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="evDlg" aria-labelledby="evTitle"><div class="dlg">
+  <h3 id="evTitle">Add to the calendar</h3>
+  <div class="body">
+    <label for="evName">What</label><input id="evName" placeholder="National Archives, Kew · Interview with M. · Draft to editor">
+    <div class="grid2"><div><label for="evDate">Date</label><input type="date" id="evDate"></div><div><label for="evTime">Time <span class="muted">(optional)</span></label><input type="time" id="evTime"></div></div>
+    <label for="evKind">Kind</label><select id="evKind"></select>
+    <label for="evNote">Notes <span class="muted">(optional)</span></label><textarea id="evNote" rows="3" placeholder="Boxes to request, the address, what to bring"></textarea>
+  </div>
+  <footer><button id="evDel" class="danger ghost hidden">Remove</button><span class="spacer"></span><button id="evCancel">Cancel</button><button id="evOk" class="primary">Save</button></footer>
+</div></dialog>
+<dialog id="trashDlg" class="wide" aria-labelledby="trashTitle"><div class="dlg">
+  <h3 id="trashTitle">Note trash</h3>
+  <div class="body"><div id="trashBody"></div></div>
+  <footer><button id="trashEmpty" class="danger ghost">Empty trash</button><span class="spacer"></span><button id="trashClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="ccDlg" class="wide" aria-labelledby="ccTitle"><div class="dlg">
+  <h3 id="ccTitle">Copy citation</h3>
+  <div class="body">
+    <div class="grid2"><div><label for="ccStyle">Style</label><select id="ccStyle"></select></div><div><label for="ccLoc">Page <span class="muted">(optional)</span></label><input id="ccLoc" placeholder="47 or 12–15"></div></div>
+    <div id="ccBody"></div>
+    <p class="small muted" style="margin:6px 0 0">Copied with its italics, for pasting into email, Google Docs or Word. To cite in your draft, use Cite at cursor so the bibliography keeps track.</p>
+  </div>
+  <footer><span class="spacer"></span><button id="ccClose" class="primary">Done</button></footer>
+</div></dialog>
+<dialog id="ntDlg" aria-labelledby="ntTitle"><div class="dlg">
+  <h3 id="ntTitle">New note from a template</h3>
+  <div class="body"><div id="ntList"></div><p class="small muted" style="margin:10px 0 0">Make your own: lay out a note the way you like, then choose <b>Save as template</b> at the foot of the note.</p></div>
+  <footer><span class="spacer"></span><button id="ntClose">Close</button></footer>
+</div></dialog>
+<dialog id="swDlg" class="wide pal" aria-label="Recent documents, notes and sources"><div class="dlg">
+  <div class="body" style="padding-top:14px"><input id="swQ" placeholder="Recent documents, notes and sources: type to filter" autocomplete="off" aria-controls="swList"><ul class="pick sw-list" id="swList" role="listbox"></ul></div>
 </div></dialog>
 <dialog id="dupDlg" class="wide" aria-labelledby="dupTitle"><div class="dlg">
   <h3 id="dupTitle">Duplicate sources</h3>
@@ -3402,6 +3503,8 @@ body.rr-on #rdNotes{display:none}
     <h4>Project home</h4>
     <ul>
       <li>Anabasis opens to the <b>project home</b>; click the logo at top left to return to it. It shows where to pick up, a suggested next step, and progress against your word target and deadline, with the pace you need and the pace you’ve kept. It also lists each document’s status.</li>
+      <li>The <b>calendar</b> shows the month: each day shaded by the words you wrote (darkest when you met your daily goal), with marks for what’s on the calendar, what’s due and your journal entries. Choose a day to see what happened and what’s due; the arrow keys move between days. <b>+ Add to the calendar</b> for archive and library visits, interviews, meetings and your own deadlines. <b>Export .ics</b> saves them, with your document and project deadlines, as a file Google Calendar, Apple Calendar and Outlook can import.</li>
+      <li><b>From your notes</b> brings back a note you haven’t touched in a month, a different one each day (<b>Another</b> for the next).</li>
       <li><b>Loose ends</b> gathers what’s unfinished across the whole project: TK, cite? and check flags, open research questions and plan gaps, uncited paragraphs, sources missing details, and PDFs with no notes yet. Click any item to go straight to it.</li>
       <li><b>Notes inbox</b> lists notes not yet linked to the plan or sorted into a pile. <b>New project…</b> starts from a kind (book, article, Substack series, white paper, intelligence brief, video script, literary journalism) with a plan template, citation style and target preset. It works on one project at a time: save the current one first. <b>Recent files</b> reopen in one click in Chrome and Edge; other browsers ask you to pick the file.</li>
     </ul>
@@ -3434,7 +3537,7 @@ body.rr-on #rdNotes{display:none}
       <li><b>Compile manuscript…</b> joins documents in binder order into one Word file, PDF, Markdown, HTML or new document. Notes number continuously and short forms carry across chapters.</li>
     </ul>
     <h4>Keyboard</h4>
-    <p><kbd>?</kbd> all shortcuts · <kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl Alt G</kbd> mark (then T, C, R, Q or D) · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
+    <p><kbd>?</kbd> all shortcuts · <kbd>⌘/Ctrl S</kbd> save · <kbd>⌘/Ctrl K</kbd> search &amp; commands · <kbd>⌘/Ctrl F</kbd> find · <kbd>⌘/Ctrl Shift F</kbd> focus · <kbd>⌘/Ctrl Shift E</kbd> capture note · <kbd>⌘/Ctrl Alt N</kbd> scratch pad · <kbd>⌘/Ctrl E</kbd> recent · <kbd>⌘/Ctrl Shift K</kbd> flag · <kbd>⌘/Ctrl Alt C</kbd> cite · <kbd>⌘/Ctrl Alt A</kbd> comment · <kbd>⌘/Ctrl Alt G</kbd> mark (then T, C, R, Q or D) · <kbd>⌘/Ctrl P</kbd> PDF · <kbd>Esc</kbd> close</p>
     <h4>Saving</h4>
     <ul><li>The browser keeps a working copy of everything as you type. If you forget to save the file for a while (15 minutes by default, set in Settings), a reminder bar appears. If you open a project file and this browser holds newer unsaved work on it, Anabasis asks which to use.</li></ul>
     <h4>OSINT Style Guide citations</h4>
@@ -3448,6 +3551,10 @@ body.rr-on #rdNotes{display:none}
     <h4>Notes</h4>
     <ul>
       <li>Notes are written in Markdown and can be tagged, typed (quote, paraphrase, summary, idea) and linked to a source and page.</li>
+      <li>The <b>scratch pad</b> (<kbd>⌘/Ctrl Alt N</kbd>, or Notes → Scratch pad) is for jotting now and sorting later, and it’s kept with the project. Put the cursor in a passage, or select one, and choose <b>Make a note</b>; <b>Split into notes</b> makes a note of each passage between blank lines; <b>To the journal</b> adds it to today’s journal. <code>#tags</code> become note tags, and a passage of lines starting with <code>&gt;</code> becomes a quotation. Each comes out of the pad, with Undo. Drag the pad by its title to move it; double-click the title to put it back.</li>
+      <li><b>From a template…</b> starts an interview log, archive visit, source summary, field notes or meeting notes, with today’s date filled in. <b>Save as template</b> at the foot of any note adds your own layout to the list, in every project.</li>
+      <li>Deleting a note moves it to the <b>trash</b> (Notes → Trash), with Undo straight away. It waits there 30 days, with everything it was linked to, until you restore it or empty the trash.</li>
+      <li><kbd>⌘/Ctrl E</kbd> lists the documents, notes and sources you opened most recently; type to filter, Enter to open.</li>
       <li><b>Insert at cursor</b> drops a note into the current document with its citation. Quotes of 100+ words become block quotes, shorter ones get quotation marks.</li>
       <li><b>Compile notes…</b> turns a filtered, ordered set of notes into a new draft, optionally grouped by tag or by source.</li>
       <li><b>Import .md</b> reads Markdown files, such as Notecards notes. The first <code># heading</code> becomes the title. <code>tags:</code> front matter or <code>#hashtags</code> become tags.</li>
@@ -3456,6 +3563,7 @@ body.rr-on #rdNotes{display:none}
     <ul>
       <li>Enter details by hand, or quick-add by DOI (via doi.org / Crossref) or ISBN (via Open Library). Lookups need an internet connection. Everything else works offline.</li>
       <li>Type titles the way they should print. CSL styles can’t reliably convert title case to APA’s sentence case.</li>
+      <li><b>Copy citation</b> on a source copies its citation or bibliography entry, with italics, in any style and with a page if you give one: for an email, a message or someone else’s document. To cite in your own draft, use <b>Cite at cursor</b> so the bibliography keeps track.</li>
       <li>Zotero users: export a collection as <i>CSL JSON</i> and import it here. Sources export back out the same way.</li>
       <li><b>Reading list.</b> Set a source’s <b>Reading</b> to To read, Reading or Read, and tick <b>Read this first</b> for the ones that matter most. Chips at the top of the Sources tab filter the list, and Project home shows what’s waiting.</li>
       <li><b>Check for retractions</b> (Sources → Tools) asks Crossref, which includes the Retraction Watch database, whether any source with a DOI has been retracted, withdrawn or corrected, or has an expression of concern. Only the DOIs are sent, and only when you choose Check. Retracted sources are marked in the list and on Project home.</li>
@@ -3504,6 +3612,11 @@ Full license texts ship with the source code: https://github.com/gmichaelrapp/an
 <button id="focusExit" class="focus-ui" title="Exit focus mode (Esc)">Exit focus</button>
 <div id="focusStat" class="focus-ui"></div>
 <div id="printRoot"></div>
+<aside id="pad" class="pad" hidden aria-labelledby="padH">
+  <header title="Drag to move; double-click to put it back"><h3 id="padH">Scratch pad</h3><button class="ghost small" id="padClose" aria-label="Close the scratch pad" title="Close (Esc)">✕</button></header>
+  <textarea id="padText" aria-label="Scratch pad" placeholder="Jot anything: a thought, a lead, a name to look up, a line to chase. It’s kept with the project.&#10;&#10;When it’s worth keeping, put the cursor in it (or select it) and make it a note. #tags become note tags, and lines starting with &gt; become a quotation."></textarea>
+  <footer><button class="primary small" id="padNote" title="The selection, or the passage the cursor is in">Make a note</button><button class="small" id="padSplit" title="Each passage between blank lines (or ---) becomes its own note: the selection, or the whole pad">Split into notes</button><button class="small" id="padJournal" title="Add it to today’s research journal">To the journal</button></footer>
+</aside>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div id="scrim" aria-hidden="true"></div>
 <div class="tour hidden" id="tour"><div class="tour-spot" id="tourSpot"></div><div class="tour-box" id="tourBox" role="dialog" aria-modal="false" aria-labelledby="tourTitle" aria-describedby="tourText"><div class="tour-step" id="tourStep"></div><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tour-acts"><button id="tourSkip" class="ghost small">Skip tour</button><span class="spacer"></span><button id="tourBack" class="small">Back</button><button id="tourNext" class="primary small">Next</button></div></div></div>

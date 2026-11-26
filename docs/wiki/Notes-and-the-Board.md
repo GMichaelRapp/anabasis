@@ -11,6 +11,35 @@ Open the **Notes** tab and choose **+ New**. There are quicker ways too:
 - **The web clipper** sends a passage selected on any web page into the project as a quote note.
 - **Freewrite** in the Plan saves a timed sprint as a note, linked to the plan item it was about.
 - **The Oracle** files a note when you say `note: …` to it.
+- **The scratch pad** (below) turns jottings into notes when they're worth keeping.
+- **From a template…** starts a laid-out note (below).
+
+### The scratch pad
+
+![The scratch pad open over a draft, with three jottings and the Make a note, Split into notes and To the journal buttons](images/scratch-pad.png)
+
+Not everything is a note yet. The **scratch pad** is for the thought you don't want to lose while you're in the middle of something else: a lead, a name to look up, a line to chase. Open it with **Ctrl+Alt+N** (**⌘⌥N** on a Mac) or **Notes → Scratch pad**. It's kept with the project, so it's there next time, on any device you open the project on.
+
+When something in it is worth keeping:
+
+- **Make a note** turns the passage the cursor is in (the lines between blank lines), or the text you've selected, into a note.
+- **Split into notes** makes a note of every passage, separated by a blank line or a line of `---`: the selection, or the whole pad.
+- **To the journal** adds the passage to today's entry in the [research journal](Research-Journal), as an idea.
+
+Whatever you convert comes out of the pad, and **Undo** in the message puts it back. Two shorthands: `#tags` in the text become the note's tags, and a passage whose lines all start with `>` becomes a quotation note.
+
+The pad floats over the writing. Drag it by its title to move it out of the way (it opens there next time), or double-click the title to put it back in the corner. **Esc** closes it.
+
+### Templates
+
+**Notes → From a template…** starts a note already laid out, with today's date filled in:
+
+- **Interview log**: interviewee or pseudonym, date and place, consent, the recording, key points, quotations to check against the recording, follow-up.
+- **Archive visit**: repository, collection, boxes and folders requested, what you found, what you photographed, what to request next time.
+- **Source summary**: main argument, evidence and method, key findings, limits and gaps, how you'll use it (the [literature grid](Literature-Grid-and-Codes)'s columns). Started with a source open, it's linked to that source.
+- **Field notes** and **meeting notes**.
+
+To make your own, lay out a note the way you like it and choose **Save as template** at the foot of the note. Your templates are kept in this browser and offered in every project; **✕** removes one.
 
 ![A quotation note with its source, locator and tags](images/note.png)
 
@@ -38,9 +67,13 @@ Write `[[Another note]]`, using the other note's title, to link to it. Links and
 
 **Split** breaks a note in two at the cursor, which is handy when one long note turns out to hold two ideas. **Duplicate** makes a copy to rework.
 
+### Deleting, and the trash
+
+**Delete** at the foot of a note (or on several cards on the board) moves it to the **trash**, with **Undo** in the message straight away. **Notes → Trash** lists what's there and how many days each note has left: **Restore** brings it back with its source, tags, codes and links intact, and **Delete now** or **Empty trash** removes notes for good. After 30 days a note leaves the trash by itself.
+
 ## Finding notes
 
-The search box at the top of the Notes tab filters the list as you type. The chips under it filter by source type and tag. **Ctrl+K** searches notes along with everything else.
+The search box at the top of the Notes tab filters the list as you type. The chips under it filter by source type and tag. **Ctrl+K** searches notes along with everything else, and **Ctrl+E** (**⌘E** on a Mac) lists the documents, notes and sources you opened most recently, to jump back to one: type to filter, Enter to open.
 
 ## From note to draft
 
@@ -83,7 +116,7 @@ The board's order matters: it's the default order for **Compile notes** and for 
 - **color**, **pin** or **tag** them together;
 - **move** them to another pile;
 - **merge** them into one note;
-- **delete** them;
+- **delete** them (to the trash);
 - or **draft from these**, which makes a new document from the cards in order.
 
 ## Compiling notes into a draft

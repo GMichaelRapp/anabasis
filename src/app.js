@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.6.1';
+const APP_VERSION = '2.6.2';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -110,7 +110,7 @@ let noteTagFilter = null;
 let homeOn = false;      // project home dashboard showing
 
 function blankProject() {
-  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], threads: [], claims: [], reviewKeys: [], journal: { design: {}, hypotheses: [], log: [], searches: [] }, datasets: [], dashboards: [], stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
+  return { app: 'Anabasis', format: FORMAT, id: uid('p'), title: 'Untitled project', created: nowISO(), modified: nowISO(), parts: [], piles: [], docs: [], notes: [], sources: [], entities: [], threads: [], claims: [], reviewKeys: [], journal: { design: {}, hypotheses: [], log: [], searches: [] }, events: [], scratch: '', trash: [], datasets: [], dashboards: [], stats: { days: {}, base: {} }, indexTerms: [], indexOpts: { names: false }, plan: { items: [], hoist: '' }, goal: { kind: '', target: 0, deadline: '', started: '' }, assets: {} };
 }
 function newDoc(title = 'Untitled document', html = '<p><br></p>') {
   return { id: uid('d'), title, html, style: DEFAULT_STYLE, created: nowISO(), modified: nowISO(), partId: '', order: 0, target: 0,
@@ -209,6 +209,14 @@ function normalize(p) {
     out.datasets = arr(out.datasets).filter(obj).map(d => ({ id: rstr(d.id) || uid('ds'), name: rstr(d.name) || 'Data', cols: arr(d.cols).map(rstr).slice(0, 500), rows: arr(d.rows).filter(Array.isArray).slice(0, 100000).map(r => r.slice(0, 500).map(rstr)), sourceId: rstr(d.sourceId), note: rstr(d.note), created: rstr(d.created) || nowISO(), modified: rstr(d.modified) || nowISO() }));
     out.dashboards = arr(out.dashboards).filter(obj).map(b => ({ id: rstr(b.id) || uid('db'), title: rstr(b.title) || 'Dashboard', subtitle: rstr(b.subtitle), created: rstr(b.created) || nowISO(), modified: rstr(b.modified) || nowISO(),
       tiles: arr(b.tiles).map(normTile).filter(Boolean) }));
+  }
+  { // 2.6.2: the calendar, the scratch pad and the note trash
+    const EVK = { visit: 1, interview: 1, meeting: 1, deadline: 1, other: 1 };
+    out.events = arr(out.events).map(e => ({ id: String(e.id), date: dayOk(e.date), time: /^\d\d:\d\d$/.test(e.time || '') ? e.time : '', title: rstr(e.title), kind: EVK[e.kind] ? e.kind : 'other', note: rstr(e.note), created: rstr(e.created) || nowISO(), modified: rstr(e.modified) || nowISO() })).filter(e => e.date);
+    out.scratch = rstr(out.scratch).slice(0, 500000);
+    const keep = 30 * 864e5;
+    out.trash = (Array.isArray(out.trash) ? out.trash : []).filter(t => t && typeof t === 'object' && t.note && typeof t.note === 'object' && t.note.id && !(Date.now() - new Date(t.at || 0) > keep))
+      .map(t => ({ at: rstr(t.at) || nowISO(), note: Object.assign(newNote(), t.note, { id: String(t.note.id), tags: Array.isArray(t.note.tags) ? t.note.tags.map(rstr).filter(Boolean) : [] }) })).slice(0, 1000);
   }
   return out;
 }
@@ -703,6 +711,7 @@ function titleBlockHTML(doc) {
   return `<p class="tb-title">${esc(doc.title)}</p>` + [m.subtitle, m.author, m.date].filter(Boolean).map(x => `<p>${esc(x)}</p>`).join('');
 }
 function openDoc(id, skipSync = false) {
+  rcTouch('d', id);
   if (!skipSync) syncEditor();
   const d = P.docs.find(x => x.id === id) || P.docs[0];
   if (!d) return;
@@ -1454,11 +1463,12 @@ async function citoid(q) {
 /* source editor panel */
 function openSource(id, focusTitle = false) {
   const s = P.sources.find(x => x.id === id); if (!s) return;
+  rcTouch('s', id);
   panelState = { kind: 'source', id };
   $('#panel').classList.remove('hidden');
   $('#panelTitle').textContent = 'Source';
   renderSourcePanel(s);
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
   renderSourceList();
   if (focusTitle) setTimeout(() => $('#panelBody [data-f="title"]')?.focus(), 30);
 }
@@ -1595,6 +1605,7 @@ $('#panelFoot').addEventListener('click', async e => {
     if (a === 'transcript') { openTranscript(s.id); return; }
     if (a === 'pdf') { readSourcePdf(s.id); return; }
     if (a === 'photos') { openPhotos(s.id); return; }
+    if (a === 'copycite') { openCopyCite(s.id); return; }
     if (a === 'cite') { insertHTMLAtCursor(citeHTML([{ id: s.id }])); toast('Citation inserted. Click it to add a page number.'); }
     if (a === 'note') { const n = newNote(); n.sourceId = s.id; n.kind = 'quote'; P.notes.unshift(n); renderNoteList(); openNote(n.id); switchTab('notes'); markDirty(); }
     if (a === 'del') {
@@ -1880,6 +1891,7 @@ $('#btnNewNote').addEventListener('click', () => { const n = newNote(); if (note
 let notePreview = false;
 function openNote(id, focus = false) {
   const n = P.notes.find(x => x.id === id); if (!n) return;
+  rcTouch('n', id);
   panelState = { kind: 'note', id }; notePreview = false;
   $('#panel').classList.remove('hidden'); $('#panelTitle').textContent = 'Note';
   const opts = sortedSources().map(s => { const l = sourceLabel(s); return `<option value="${s.id}" ${s.id === n.sourceId ? 'selected' : ''}>${esc((l.who ? l.who + ', ' : '') + l.title).slice(0, 70)}</option>`; }).join('');
@@ -1902,7 +1914,7 @@ function openNote(id, focus = false) {
     </div>
     <div class="note-links" id="noteLinks">${noteLinksHTML(n)}</div>
     <div class="muted small" style="margin-top:12px">Created ${new Date(n.created).toLocaleString()} · edited ${relTime(n.modified)} · Link notes with [[Note title]]</div>`;
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button data-a="dupn">Duplicate</button><span class="spacer"></span><button class="danger" data-a="deln">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button data-a="dupn">Duplicate</button><button data-a="savetpl" title="Use this note’s layout to start new notes (Notes → From a template)">Save as template</button><span class="spacer"></span><button class="danger" data-a="deln">Delete</button>`;
   renderNoteList();
   if (focus) setTimeout(() => $('#panelBody [data-n=title]').focus(), 30);
 }
@@ -1938,7 +1950,8 @@ async function noteFootClick(a) {
   if (a === 'ins') insertNote(n);
   if (a === 'split') splitNote(n);
   if (a === 'dupn') { const c = Object.assign({}, n, { id: uid('n'), title: n.title + ' (copy)', tags: [...n.tags], created: nowISO(), modified: nowISO() }); P.notes.unshift(c); openNote(c.id); markDirty(); }
-  if (a === 'deln') { if (!(await ask('Delete note?', `“${n.title || firstLine(n.body) || 'Untitled note'}” will be removed.`, 'Delete'))) return; P.notes = P.notes.filter(x => x.id !== n.id); closePanel(); renderBoard(); markDirty(); }
+  if (a === 'deln') trashNotes([n]);
+  if (a === 'savetpl') saveNoteAsTpl(n);
 }
 /* turn a note into document HTML */
 function noteToHTML(n, { withCite = true, heading = '' } = {}) {
@@ -2229,7 +2242,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
 
-function renderAll() { $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
+function renderAll() { try { padSync(); trashCount(); } catch (e) { /* set up below */ } $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
 
 /* ================================================================
    Drafting & research tools
@@ -2402,7 +2415,7 @@ const COMMANDS = [
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Draft a literature review from the literature grid', () => lgReview()], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
   ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
-  ['Project home: progress, pace, loose ends', () => openHome()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
+  ['Project home: progress, pace, loose ends', () => openHome()], ['Calendar: what you wrote each day, what’s due, archive visits and interviews', () => openCalendar()], ['Add to the calendar…', () => openEvent('', todayKey())], ['Export the calendar (.ics)', () => calIcs()], ['Scratch pad (⌘/Ctrl Alt N)', () => padOpen(true)], ['Note trash: restore deleted notes', () => openTrash()], ['New note from a template…', () => openNoteTpls()], ['Recent documents, notes and sources (⌘/Ctrl E)', () => openSwitcher()], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Close to your notes: wording repeated without quotation marks', () => { PREFS.pxOn = true; savePrefs(); switchTab('outline'); renderCloseToNotes(); $('#pxList').scrollIntoView({ block: 'center' }); }], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
   ['Show outline & checklist', () => { switchTab('outline'); document.body.classList.add('side-open'); }], ['Help', () => { fillHelpTips(); $('#helpDlg').showModal(); }], ['Send feedback…', () => openFeedback()], ['What’s new', () => showWhatsNew('')], ['Check for a newer version', () => updCheck(true)], ['Switch light / dark theme', () => $('#btnTheme').click()],
@@ -3064,8 +3077,7 @@ $('#bdSel').addEventListener('click', async e => {
     toast(`Drafted ${sel.length} cards into a new document.`); return;
   }
   if (act === 'del') {
-    if (!(await ask('Delete cards?', `Delete ${sel.length} card${sel.length > 1 ? 's' : ''}? This can’t be undone after you save.`, 'Delete'))) return;
-    P.notes = P.notes.filter(n => !boardSel.has(n.id)); boardSel.clear(); if (panelState?.kind === 'note' && !P.notes.some(n => n.id === panelState.id)) closePanel();
+    trashNotes(sel); boardSel.clear();
   }
   renderBoard(); renderNoteList(); markDirty();
 });
@@ -5711,6 +5723,8 @@ async function renderHome() {
     </div>
   </div>
 
+  ${calHTML()}
+
   <div class="hm-card">
     <h5>Documents <span class="count">${pc.docs.length}</span><button class="ghost small" id="hmNewDoc">+ Doc</button></h5>
     <ul class="hm-list">${pc.docs.map(x => { const w = docWords(x); return `<li data-j="${J(() => openDoc(x.id))}"><span class="t">${x.role && x.role !== 'body' ? `<span class="role-tag">${esc(x.role)}</span> ` : ''}${esc(x.title || 'Untitled')}</span>${x.status ? `<span class="st st-${x.status === 'final' ? 'done' : 'todo'}">${esc(ST[x.status] || x.status)}</span>` : ''}${x.target ? `<span class="mini" title="${nf(w)} of ${nf(x.target)}"><i style="width:${Math.min(100, w / x.target * 100)}%"></i></span>` : ''}<span class="m">${nf(w)}</span>${dueLabel(x)}</li>`; }).join('')}</ul>
@@ -5732,6 +5746,8 @@ async function renderHome() {
     ${inbox.length ? `<ul class="hm-list">${inbox.slice(0, 8).map(n => `<li data-j="${J(() => openNote(n.id))}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><span class="m">${n.kind ? esc(n.kind) + ' · ' : ''}${relTime(n.created)}</span></li>`).join('')}${inbox.length > 8 ? `<li class="m" data-j="${J(() => openBoard())}">…${inbox.length - 8} more on the board</li>` : ''}</ul>` : '<div class="hm-empty">Every note is linked to the plan or sorted into a pile.</div>'}
     <p class="small muted" style="margin:10px 0 0">Notes leave the inbox when you link them to a plan item or drop them in a board pile.</p>
   </div>
+
+  ${resurfaceHTML()}
 
   <div class="hm-card">
     <h5>Recently touched</h5>
@@ -9410,6 +9426,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.6.2': ['A calendar on Project home: the words you wrote each day, what’s due, your journal entries, and archive visits, interviews and meetings you add. Export it as an .ics file for Google, Apple or Outlook calendars.', 'A scratch pad (⌘/Ctrl Alt N) for jotting now and sorting later: turn a passage into a note, split the pad into notes, or send a passage to the journal.', 'Deleted notes go to a trash for 30 days, with Undo. Copy citation on a source copies it in any style. Notes → From a template starts an interview log, archive visit, source summary, field notes or meeting notes. ⌘/Ctrl E lists what you opened last.'],
   '2.6.1': ['Draft a literature review from the literature grid (research desk → Literature grid, Templates, or Export → Other formats): a section for each theme or research question with every source’s summary cited, prompts to compare them, the sources that have notes but no summary, and the ones silent on each theme. Plan → templates has a Literature review outline too.'],
   '2.6.0': ['A research guide in the journal: what each stage of a project is for and when it’s done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary of research terms.',
     'Close to your notes (Outline) finds sentences that repeat a note’s wording without quotation marks, and adds the marks and citation in one click. Quote and paraphrase notes made in the PDF reader now leave a highlight in the PDF, with a marker that opens the note.',
@@ -13630,6 +13647,7 @@ const KEYS = [
   ['Writing', [['⌘/Ctrl B · I · U', 'Bold, italic, underline'], ['⌘/Ctrl Alt C', 'Insert a citation'], ['⌘/Ctrl Shift K', 'Flag: TK, citation needed, check'], ['⌘/Ctrl Alt A', 'Margin note'], ['⌘/Ctrl Alt X', 'Index entry'], ['⌘/Ctrl Alt E · Alt =', 'Equation'], ['⌘/Ctrl Alt R', 'Cross-reference'], ['⌘/Ctrl Shift V', 'Paste as plain text'], ['⌘/Ctrl Z · Shift Z', 'Undo, redo (marks too)']]],
   ['Research', [['⌘/Ctrl Alt G, then T', 'Highlight the selection in a thread'], ['⌘/Ctrl Alt G, then K', 'Code the selection'], ['⌘/Ctrl Alt G, then C', 'Mark the selection as a claim'], ['⌘/Ctrl Alt G, then R', 'Key the selection for review'], ['⌘/Ctrl Alt G, then Q', 'Link the selection to a question'], ['⌘/Ctrl Alt G, then D', 'Research desk'], ['⌘/Ctrl Shift E', 'Capture the selection as a note']]],
   ['Moving around', [['⌘/Ctrl \\', 'Notes, sources or the research desk beside the writing (again to close)'], ['⌘/Ctrl Shift \\', 'Swap sides'], ['F6', 'Move between the writing and the side panel'], ['⌘/Ctrl K', 'Search everything and run any command'], ['⌘/Ctrl F', 'Find and replace'], ['⌘/Ctrl Shift F', 'Focus mode'], ['Esc', 'Leave focus mode, close a window'], ['?', 'This list (when you’re not typing)']]],
+  ['Notes', [['⌘/Ctrl Alt N', 'Scratch pad'], ['⌘/Ctrl Shift E', 'Selection to a note'], ['⌘/Ctrl E', 'Recent documents, notes and sources']]],
   ['Project', [['⌘/Ctrl S', 'Save the project file'], ['⌘/Ctrl P', 'PDF (print / save as PDF)'], ['⌘/Ctrl Alt D', 'Save a draft of this document']]],
 ];
 function openKeys() {
@@ -13700,6 +13718,413 @@ function rmRedo() { const op = RM_REDO.pop(); if (!op) return; rmRestore(op.afte
 function rmUndoToast(label) {
   toast(label, { label: 'Undo', fn: () => { if (rmCanUndo()) rmUndo(); else toast('Can’t undo that now: the text has changed since.'); } });
 }
+
+/* ================================================================
+   2.6.2: the calendar, the scratch pad, the note trash, copy citation,
+   note templates, and recent items with a note resurfaced on Project home
+   ================================================================ */
+
+/* ---------- calendar (Project home) ---------- */
+const EV_KINDS = [['visit', 'Archive or library visit'], ['interview', 'Interview'], ['meeting', 'Meeting'], ['deadline', 'Deadline'], ['other', 'Other']], EV_NAME = Object.fromEntries(EV_KINDS);
+let calMonth = '', calDay = '';
+// Sunday-first where that's the custom, Monday-first elsewhere
+const calWeekStart = () => (/^(en-(US|CA|PH)|ja|ko|zh-(TW|HK)|pt-BR|he|ar-SA|hi)/i.test(navigator.language || 'en-US') ? 0 : 1);
+const calDate = k => new Date(k + 'T12:00');
+function calIndex() {
+  const ix = {}, at = k => ix[k] || (ix[k] = { a: 0, ev: [], due: [], j: [], notes: [] });
+  Object.entries((P.stats && P.stats.days) || {}).forEach(([k, v]) => { if (v && v.a > 0) at(k).a = v.a; });
+  (P.events || []).forEach(e => at(e.date).ev.push(e));
+  P.docs.forEach(d => { if (d.deadline && d.status !== 'final') at(d.deadline).due.push({ t: `${d.title || 'Untitled document'} due`, go: () => { closeHome(); openDoc(d.id); } }); });
+  if (P.goal && P.goal.deadline) at(P.goal.deadline).due.push({ t: 'Project deadline', go: null });
+  (P.reviewKeys || []).forEach(r => { if (r.due && !r.done) at(r.due).due.push({ t: `Review due: ${r.reason}`, go: () => openDesk('review') }); });
+  jr().log.forEach(e => { if (e.date && e.kind !== 'auto') at(e.date).j.push(e); });
+  P.notes.forEach(n => at(todayISOof(n.created)).notes.push(n));
+  return ix;
+}
+function calLevel(a, maxA) {
+  if (!a) return 0;
+  const g = PREFS.dailyGoal || 0;
+  return g ? (a >= g ? 4 : Math.max(1, Math.ceil(a / g * 3))) : Math.max(1, Math.ceil(a / maxA * 4));
+}
+function calHTML() {
+  const today = todayKey(), mk = calMonth || today.slice(0, 7), [y, m] = mk.split('-').map(Number);
+  const first = new Date(y, m - 1, 1), ws = calWeekStart(), lead = (first.getDay() - ws + 7) % 7, n = new Date(y, m, 0).getDate();
+  const ix = calIndex(), keys = Array.from({ length: n }, (_, i) => `${mk}-${String(i + 1).padStart(2, '0')}`);
+  const maxA = Math.max(1, ...keys.map(k => (ix[k] || {}).a || 0));
+  const sel = calDay && calDay.startsWith(mk) ? calDay : (today.startsWith(mk) ? today : '');
+  const wd = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + ((ws + i) % 7)).toLocaleDateString([], { weekday: 'narrow' }));
+  const wdLong = Array.from({ length: 7 }, (_, i) => new Date(2023, 0, 1 + ((ws + i) % 7)).toLocaleDateString([], { weekday: 'long' }));
+  const cells = Array(lead).fill('<span class="cal-x" aria-hidden="true"></span>').concat(keys.map((k, i) => {
+    const x = ix[k] || { a: 0, ev: [], due: [], j: [], notes: [] }, lv = calLevel(x.a, maxA);
+    const dots = [...x.ev.slice(0, 2).map(e => `<i class="ev k-${e.kind}"></i>`), x.due.length ? '<i class="due"></i>' : '', x.j.length ? '<i class="jr"></i>' : ''].join('');
+    const lab = [calDate(k).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' }), x.a ? `${nf(x.a)} words` : '', x.ev.length ? `${x.ev.length} on the calendar` : '', x.due.length ? `${x.due.length} due` : '', x.j.length ? `${x.j.length} journal ${x.j.length === 1 ? 'entry' : 'entries'}` : ''].filter(Boolean).join(', ');
+    return `<button type="button" class="cal-d lv${lv}${k === today ? ' today' : ''}${k === sel ? ' on' : ''}${k < today ? ' past' : ''}" data-cal="${k}" aria-label="${esc(lab)}" aria-pressed="${k === sel}"><span class="dn">${i + 1}</span><span class="cal-dots">${dots}</span></button>`;
+  }));
+  const monthName = first.toLocaleDateString([], { month: 'long', year: 'numeric' });
+  return `<div class="hm-card hm-cal" id="hmCal">
+    <h5>Calendar<span class="cal-nav"><button class="ghost small" data-calnav="-1" aria-label="Previous month">‹</button><b>${esc(monthName)}</b><button class="ghost small" data-calnav="1" aria-label="Next month">›</button>${mk !== today.slice(0, 7) ? '<button class="ghost small" data-calnav="0">Today</button>' : ''}</span></h5>
+    <div class="cal-grid" role="group" aria-label="${esc(monthName)}">${wd.map((d, i) => `<span class="cal-wd" title="${esc(wdLong[i])}" aria-hidden="true">${esc(d)}</span>`).join('')}${cells.join('')}</div>
+    <div class="cal-key small muted"><span><i class="sw lv2"></i>words written${PREFS.dailyGoal ? ` (darkest: ${nf(PREFS.dailyGoal)}-word goal met)` : ''}</span><span><i class="ev k-visit"></i>on the calendar</span><span><i class="due"></i>due</span><span><i class="jr"></i>journal</span></div>
+    ${sel ? calDayHTML(sel, ix[sel]) : '<p class="small muted">Choose a day to see what happened and what’s due.</p>'}
+    <div class="row cal-acts"><button class="small" id="calAdd">+ Add to the calendar</button><button class="ghost small" id="calIcs" title="Your dated items and deadlines as an .ics file for Google Calendar, Apple Calendar or Outlook">Export .ics</button></div>
+  </div>`;
+}
+function calDayHTML(k, x) {
+  x = x || { a: 0, ev: [], due: [], j: [], notes: [] };
+  const J = fn => { hmJump.push(fn); return hmJump.length - 1; };
+  const li = [];
+  x.ev.slice().sort((a, b) => (a.time || '').localeCompare(b.time || '')).forEach(e => li.push(`<li data-j="${J(() => openEvent(e.id))}"><span class="cal-tag k-${e.kind}">${esc(e.time || EV_NAME[e.kind])}</span><span class="t">${esc(e.title || EV_NAME[e.kind])}</span><span class="m">Edit</span></li>`));
+  x.due.forEach(d => li.push(`<li${d.go ? ` data-j="${J(d.go)}"` : ''}><span class="cal-tag due">Due</span><span class="t">${esc(d.t)}</span></li>`));
+  x.j.forEach(e => li.push(`<li data-j="${J(() => { closeHome(); openJournal('log'); })}"><span class="cal-tag jr">Journal</span><span class="t">${esc(e.text.replace(/\s+/g, ' ').slice(0, 90) || '(empty entry)')}</span></li>`));
+  const nn = x.notes.length;
+  if (nn) li.push(`<li data-j="${J(() => openNote(x.notes[0].id))}"><span class="cal-tag">Notes</span><span class="t">${nn === 1 ? esc(noteTitle(x.notes[0]) || 'Untitled note') : `${nn} notes, starting with “${esc((noteTitle(x.notes[0]) || 'Untitled').slice(0, 50))}”`}</span></li>`);
+  const head = calDate(k).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  return `<div class="cal-day"><div class="cal-dh"><b>${esc(head)}</b><span class="small muted">${x.a ? `${nf(x.a)} words written` : k <= todayKey() ? 'no writing logged' : ''}</span></div>
+    ${li.length ? `<ul class="hm-list">${li.join('')}</ul>` : '<p class="small muted">Nothing on this day.</p>'}</div>`;
+}
+function calRefresh() { const c = $('#hmCal'); if (c) c.outerHTML = calHTML(); }
+$('#hmArea').addEventListener('click', e => {
+  const d = e.target.closest('[data-cal]'); if (d) { calDay = d.dataset.cal; calRefresh(); $(`#hmCal [data-cal="${calDay}"]`)?.focus(); return; }
+  const nv = e.target.closest('[data-calnav]');
+  if (nv) {
+    const step = +nv.dataset.calnav, t = todayKey();
+    if (!step) { calMonth = ''; calDay = t; }
+    else { const [y, m] = (calMonth || t.slice(0, 7)).split('-').map(Number), x = new Date(y, m - 1 + step, 1); calMonth = `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}`; calDay = ''; }
+    calRefresh(); return;
+  }
+  if (e.target.id === 'calAdd') openEvent('', calDay || todayKey());
+  if (e.target.id === 'calIcs') calIcs();
+});
+$('#hmArea').addEventListener('keydown', e => {
+  const d = e.target.closest('[data-cal]'); if (!d || !/^Arrow(Left|Right|Up|Down)$/.test(e.key)) return;
+  e.preventDefault();
+  const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key], x = calDate(d.dataset.cal); x.setDate(x.getDate() + step);
+  calDay = todayKey(x); calMonth = calDay.slice(0, 7); calRefresh(); $(`#hmCal [data-cal="${calDay}"]`)?.focus();
+});
+let evEditing = '';
+function openEvent(id, date) {
+  const e = (P.events || []).find(x => x.id === id);
+  evEditing = e ? e.id : '';
+  $('#evTitle').textContent = e ? 'Edit calendar item' : 'Add to the calendar';
+  $('#evName').value = e ? e.title : ''; $('#evDate').value = e ? e.date : (date || todayKey()); $('#evTime').value = e ? e.time : '';
+  $('#evKind').innerHTML = EV_KINDS.map(([k, l]) => `<option value="${k}" ${(e ? e.kind : 'visit') === k ? 'selected' : ''}>${esc(l)}</option>`).join('');
+  $('#evNote').value = e ? e.note : ''; $('#evDel').classList.toggle('hidden', !e);
+  $('#evDlg').showModal(); setTimeout(() => $('#evName').focus(), 30);
+}
+$('#evCancel').addEventListener('click', () => $('#evDlg').close());
+$('#evOk').addEventListener('click', () => {
+  const date = $('#evDate').value, title = $('#evName').value.trim();
+  if (!/^\d{4}-\d\d-\d\d$/.test(date)) { toast('Choose a date.'); return; }
+  if (!title) { toast('Give it a name, such as “National Archives, Kew”.'); $('#evName').focus(); return; }
+  P.events = P.events || [];
+  let e = P.events.find(x => x.id === evEditing);
+  if (!e) { e = { id: uid('ev'), created: nowISO() }; P.events.push(e); }
+  Object.assign(e, { title, date, time: /^\d\d:\d\d$/.test($('#evTime').value) ? $('#evTime').value : '', kind: $('#evKind').value, note: $('#evNote').value.trim(), modified: nowISO() });
+  $('#evDlg').close(); calDay = date; calMonth = date.slice(0, 7); markDirty(); calRefresh();
+  toast(`On the calendar for ${fmtDay(calDate(date))}.`);
+});
+$('#evName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#evOk').click(); } });
+$('#evDel').addEventListener('click', () => {
+  const i = (P.events || []).findIndex(x => x.id === evEditing); if (i < 0) return;
+  const [gone] = P.events.splice(i, 1); $('#evDlg').close(); markDirty(); calRefresh();
+  toast('Removed from the calendar.', { label: 'Undo', fn: () => { P.events.splice(i, 0, gone); markDirty(); calRefresh(); } });
+});
+/* the calendar as an .ics file: your dated items, document deadlines and the project deadline */
+function calIcsText() {
+  const tx = s => String(s || '').replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/([,;])/g, '\\$1');
+  const fold = l => { const out = []; while (l.length > 74) { out.push(l.slice(0, 74)); l = ' ' + l.slice(74); } out.push(l); return out.join('\r\n'); };
+  const dt = k => k.replace(/-/g, ''), next = k => { const d = calDate(k); d.setDate(d.getDate() + 1); return dt(todayKey(d)); };
+  const local = d => `${dt(todayKey(d))}T${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}00`;
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const items = [...(P.events || []).map(e => ({ uid: e.id, k: e.date, time: e.time, sum: e.title || EV_NAME[e.kind], desc: [EV_NAME[e.kind], e.note].filter(Boolean).join('. ') })),
+    ...P.docs.filter(d => d.deadline && d.status !== 'final').map(d => ({ uid: 'due-' + d.id, k: d.deadline, sum: `Due: ${d.title || 'Untitled document'}`, desc: P.title })),
+    ...(P.goal && P.goal.deadline ? [{ uid: 'goal-' + P.id, k: P.goal.deadline, sum: `Deadline: ${P.title}`, desc: P.goal.target ? `${nf(P.goal.target)} words` : '' }] : [])];
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Zero History//Anabasis//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', `X-WR-CALNAME:${tx(P.title || 'Anabasis')}`];
+  items.forEach(it => {
+    L.push('BEGIN:VEVENT', `UID:${it.uid}@anabasis`, `DTSTAMP:${stamp}`);
+    if (it.time) { const s = new Date(`${it.k}T${it.time}`), e = new Date(s.getTime() + 36e5); L.push(`DTSTART:${local(s)}`, `DTEND:${local(e)}`); }
+    else L.push(`DTSTART;VALUE=DATE:${dt(it.k)}`, `DTEND;VALUE=DATE:${next(it.k)}`);
+    L.push(`SUMMARY:${tx(it.sum)}`); if (it.desc) L.push(`DESCRIPTION:${tx(it.desc)}`);
+    L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  return { text: L.map(fold).join('\r\n') + '\r\n', n: items.length };
+}
+function calIcs() {
+  const { text, n } = calIcsText();
+  if (!n) { toast('Nothing to export yet: add an item, or set a deadline on a document or the project.'); return; }
+  download(fileSafe(P.title || 'Anabasis') + ' - calendar.ics', text, 'text/calendar');
+  toast(`${n} ${n === 1 ? 'item' : 'items'} exported. Open the file to add ${n === 1 ? 'it' : 'them'} to your calendar.`);
+}
+function openCalendar() { if (!homeOn) openHome(); setTimeout(() => { const c = $('#hmCal'); if (c) { c.scrollIntoView({ block: 'center' }); c.querySelector('.cal-d.on,.cal-d.today')?.focus(); } }, 120); }
+
+/* ---------- scratch pad: jot now, sort later ---------- */
+function padOpen(on = !$('#pad').classList.contains('open')) {
+  const p = $('#pad'); p.classList.toggle('open', on); p.hidden = !on;
+  if (on) { $('#padText').value = P.scratch || ''; padPlace(); setTimeout(() => $('#padText').focus(), 20); }
+}
+/* where the pad sits: where you last dragged it, or else bottom right, clear of the side panel */
+function padPlace() {
+  const p = $('#pad'), w = p.offsetWidth, h = p.offsetHeight, pos = PREFS.padPos;
+  let x, y;
+  if (pos && isFinite(pos.x) && isFinite(pos.y)) { x = pos.x; y = pos.y; }
+  else {
+    const pn = $('#panel'), pw = pn && !pn.classList.contains('hidden') && pn.offsetWidth && innerWidth > 900 ? pn.getBoundingClientRect().left : innerWidth;
+    x = Math.max(12, Math.min(pw, innerWidth) - w - 18); y = innerHeight - h - 18;
+  }
+  p.style.left = Math.max(6, Math.min(x, innerWidth - w - 6)) + 'px'; p.style.top = Math.max(6, Math.min(y, innerHeight - 60)) + 'px';
+  p.style.right = 'auto'; p.style.bottom = 'auto';
+}
+{
+  let drag = null;
+  $('#pad header').addEventListener('pointerdown', e => {
+    if (e.target.closest('button')) return;
+    const r = $('#pad').getBoundingClientRect(); drag = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+    e.currentTarget.setPointerCapture(e.pointerId); e.preventDefault();
+  });
+  $('#pad header').addEventListener('pointermove', e => {
+    if (!drag) return;
+    const p = $('#pad'); p.style.left = Math.max(6, Math.min(e.clientX - drag.dx, innerWidth - p.offsetWidth - 6)) + 'px'; p.style.top = Math.max(6, Math.min(e.clientY - drag.dy, innerHeight - 60)) + 'px';
+  });
+  $('#pad header').addEventListener('pointerup', () => { if (!drag) return; drag = null; const r = $('#pad').getBoundingClientRect(); PREFS.padPos = { x: Math.round(r.left), y: Math.round(r.top) }; savePrefs(); });
+  $('#pad header').addEventListener('dblclick', () => { delete PREFS.padPos; savePrefs(); padPlace(); });
+  addEventListener('resize', debounce(() => { if (!$('#pad').hidden) padPlace(); }, 150));
+}
+function padSync() { const t = $('#padText'); if (t && document.activeElement !== t) t.value = P.scratch || ''; }
+const padSave = debounce(() => { markDirty(); }, 400);
+$('#padText').addEventListener('input', () => { P.scratch = $('#padText').value; padSave(); });
+$('#padClose').addEventListener('click', () => padOpen(false));
+$('#pad').addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); padOpen(false); } });
+/* the passage to convert: the selection, or else the block (lines between blank lines) the cursor is in */
+function padRange() {
+  const t = $('#padText'), v = t.value; let s = t.selectionStart, e = t.selectionEnd;
+  if (s === e) {
+    const before = v.lastIndexOf('\n\n', s - 1), after = v.indexOf('\n\n', s);
+    s = before < 0 ? 0 : before + 2; e = after < 0 ? v.length : after;
+  }
+  return [s, e];
+}
+const PAD_TAG = /(^|\s)#([\p{L}\p{N}][\p{L}\p{N}_-]*)/gu;
+function padNoteFrom(text) {
+  const tags = [...text.matchAll(PAD_TAG)].map(m => m[2].toLowerCase());
+  let body = text.replace(PAD_TAG, '$1').replace(/[ \t]+$/gm, '').replace(/[ \t]{2,}/g, ' ').trim();
+  const lines = body.split('\n').filter(l => l.trim());
+  const quote = lines.length && lines.every(l => /^\s*>/.test(l));
+  if (quote) body = lines.map(l => l.replace(/^\s*>\s?/, '')).join('\n');
+  return Object.assign(newNote(), { body, kind: quote ? 'quote' : 'idea', tags: [...new Set(tags)] });
+}
+function padTake(s, e, made) {
+  const t = $('#padText'), before = t.value;
+  t.value = (before.slice(0, s).replace(/\s+$/, '') + (s && e < before.length ? '\n\n' : '') + before.slice(e).replace(/^\s+/, '')).replace(/\n{3,}/g, '\n\n');
+  P.scratch = t.value; markDirty();
+  return () => { t.value = before; P.scratch = before; made(); markDirty(); };
+}
+$('#padNote').addEventListener('click', () => {
+  const [s, e] = padRange(), text = $('#padText').value.slice(s, e).trim();
+  if (!text) { toast('Write something, or put the cursor in a passage, first.'); return; }
+  const n = padNoteFrom(text); P.notes.unshift(n);
+  const undo = padTake(s, e, () => { P.notes = P.notes.filter(x => x !== n); renderNoteList(); if (panelState?.kind === 'note' && panelState.id === n.id) closePanel(); });
+  renderNoteList(); renderHomeSoon();
+  toast(`Made ${n.kind === 'quote' ? 'a quotation' : 'an idea'} note${n.tags.length ? ` tagged ${n.tags.map(x => '#' + x).join(' ')}` : ''}.`, { label: 'Undo', fn: undo });
+});
+$('#padSplit').addEventListener('click', () => {
+  const t = $('#padText'), whole = t.selectionStart === t.selectionEnd, s = whole ? 0 : t.selectionStart, e = whole ? t.value.length : t.selectionEnd;
+  const blocks = t.value.slice(s, e).split(/\n[ \t]*\n+|\n-{3,}[ \t]*\n/).map(b => b.trim()).filter(b => b && !/^-{3,}$/.test(b));
+  if (!blocks.length) { toast('The pad is empty.'); return; }
+  const made = blocks.map(padNoteFrom); P.notes.unshift(...made);
+  const undo = padTake(s, e, () => { const set = new Set(made); P.notes = P.notes.filter(x => !set.has(x)); renderNoteList(); });
+  renderNoteList(); renderHomeSoon();
+  toast(`${made.length} ${made.length === 1 ? 'note' : 'notes'} made from ${whole ? 'the pad' : 'the selection'}. Find ${made.length === 1 ? 'it' : 'them'} in Notes and the board inbox.`, { label: 'Undo', fn: undo });
+});
+$('#padJournal').addEventListener('click', () => {
+  const [s, e] = padRange(), text = $('#padText').value.slice(s, e).trim();
+  if (!text) { toast('Write something, or put the cursor in a passage, first.'); return; }
+  const j = jLog('idea', text);
+  const undo = padTake(s, e, () => { jr().log = jr().log.filter(x => x !== j); });
+  toast('Added to today’s journal, as an idea.', { label: 'Undo', fn: undo });
+});
+
+/* ---------- the note trash: deleted notes wait 30 days ---------- */
+const TRASH_DAYS = 30;
+function trashNotes(notes) {
+  if (!notes.length) return;
+  const ids = new Set(notes.map(n => n.id)), at = nowISO();
+  P.trash = [...notes.map(note => ({ at, note })), ...(P.trash || [])].slice(0, 1000);
+  P.notes = P.notes.filter(n => !ids.has(n.id));
+  if (panelState?.kind === 'note' && ids.has(panelState.id)) closePanel();
+  try { boardSel && boardSel.forEach(id => ids.has(id) && boardSel.delete(id)); } catch (e) { /* the board isn't set up */ }
+  renderNoteList(); renderBoard(); renderHomeSoon(); markDirty(); trashCount();
+  const label = notes.length === 1 ? `“${(noteTitle(notes[0]) || 'Untitled note').slice(0, 40)}” moved to the trash.` : `${notes.length} notes moved to the trash.`;
+  toast(label, { label: 'Undo', fn: () => restoreNotes(notes.map(n => n.id)) });
+}
+function restoreNotes(ids) {
+  const want = new Set(ids), back = (P.trash || []).filter(t => want.has(t.note.id)).map(t => t.note);
+  P.trash = (P.trash || []).filter(t => !want.has(t.note.id));
+  const have = new Set(P.notes.map(n => n.id));
+  P.notes.unshift(...back.filter(n => !have.has(n.id)));
+  renderNoteList(); renderBoard(); renderHomeSoon(); markDirty(); trashCount();
+  if ($('#trashDlg').open) trashRender();
+  return back.length;
+}
+function trashCount() { const b = $('#btnTrash'); if (b) { const n = (P.trash || []).length; b.textContent = n ? `Trash (${n})` : 'Trash'; } }
+function openTrash() { trashRender(); $('#trashDlg').showModal(); }
+function trashRender() {
+  const T = P.trash || [], now = Date.now();
+  $('#trashBody').innerHTML = T.length ? `<ul class="trash-list">${T.map((t, i) => {
+    const left = Math.max(0, TRASH_DAYS - Math.floor((now - new Date(t.at)) / DAY));
+    return `<li><div class="t"><span class="kind">${esc(t.note.kind || 'note')}</span> ${esc(noteTitle(t.note) || 'Untitled note')}<div class="small muted">${esc(String(t.note.body || '').replace(/\s+/g, ' ').slice(0, 110))}</div></div><span class="small muted">Deleted ${esc(relTime(t.at))} · ${left === 0 ? 'goes today' : `${left} ${left === 1 ? 'day' : 'days'} left`}</span><button class="small" data-tr="restore" data-i="${i}">Restore</button><button class="ghost small danger" data-tr="del" data-i="${i}">Delete now</button></li>`;
+  }).join('')}</ul>` : '<p class="muted">The trash is empty. Deleted notes wait here for 30 days, and come back with everything they were linked to.</p>';
+  $('#trashEmpty').disabled = !T.length;
+}
+$('#trashBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-tr]'); if (!b) return;
+  const t = (P.trash || [])[+b.dataset.i]; if (!t) return;
+  if (b.dataset.tr === 'restore') { restoreNotes([t.note.id]); toast('Note restored.'); }
+  else { P.trash.splice(+b.dataset.i, 1); markDirty(); trashRender(); trashCount(); }
+});
+$('#trashEmpty').addEventListener('click', async () => {
+  const n = (P.trash || []).length; if (!n) return;
+  if (!(await ask('Empty the trash?', `${n} ${n === 1 ? 'note is' : 'notes are'} deleted for good. This can’t be undone.`, 'Empty trash'))) return;
+  P.trash = []; markDirty(); trashRender(); trashCount();
+});
+$('#trashClose').addEventListener('click', () => $('#trashDlg').close());
+
+/* ---------- copy a citation for a source, in any style ---------- */
+let ccSrc = '';
+function openCopyCite(id) {
+  const s = P.sources.find(x => x.id === id); if (!s) return;
+  ccSrc = id;
+  const cur = curDoc()?.style || DEFAULT_STYLE;
+  $('#ccStyle').innerHTML = styleOptions(cur);
+  $('#ccLoc').value = '';
+  ccRender(); $('#ccDlg').showModal();
+}
+function ccParts() {
+  const style = $('#ccStyle').value, loc = $('#ccLoc').value.trim(), item = Object.assign({ id: ccSrc }, loc ? { locator: loc, label: 'page' } : {});
+  const cite = previewCluster(style, [item]) || '', bib = previewBib(style, ccSrc) || '';
+  const st = STYLES[style] || {};
+  return [{ k: 'cite', h: st.note ? 'Note' : 'In-text citation', html: cite }, ...(bib ? [{ k: 'bib', h: st.bib || 'Bibliography entry', html: bib.replace(/^\s*<div class="csl-bib-body">|<\/div>\s*$/g, '') }] : [])];
+}
+function ccRender() {
+  $('#ccBody').innerHTML = ccParts().map(p => `<div class="cc-row"><div class="cc-h"><b>${esc(p.h)}</b><button class="small" data-cc="${p.k}">Copy</button></div><div class="cc-out">${p.html || '<span class="muted">This style can’t format this source yet: check it has a title and an author or editor.</span>'}</div></div>`).join('');
+}
+$('#ccStyle').addEventListener('change', ccRender);
+$('#ccLoc').addEventListener('input', debounce(ccRender, 150));
+$('#ccBody').addEventListener('click', async e => {
+  const b = e.target.closest('[data-cc]'); if (!b) return;
+  const p = ccParts().find(x => x.k === b.dataset.cc); if (!p || !p.html) return;
+  const html = p.html, text = htmlToText(html).replace(/\s+/g, ' ').trim();
+  try {
+    if (window.ClipboardItem) await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([text], { type: 'text/plain' }) })]);
+    else await navigator.clipboard.writeText(text);
+    b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1400);
+  } catch (err) { toast('The browser blocked clipboard access. Select the text and copy it instead.'); }
+});
+$('#ccClose').addEventListener('click', () => $('#ccDlg').close());
+
+/* ---------- note templates ---------- */
+const NOTE_TPLS = [
+  { id: 'interview', name: 'Interview log', hint: 'Who, when, consent, what was said, what to check', kind: 'summary', tags: ['interview'], title: 'Interview: ', body: '**Interviewee:** (or pseudonym)\n**Date and place:** {{date}}, \n**Consent:** recorded / on background / off the record\n**Recording:** \n\n## Key points\n- \n\n## Quotations to check against the recording\n- \n\n## Follow up\n- ' },
+  { id: 'archive', name: 'Archive visit', hint: 'Repository, what you requested, what you found, what’s next', kind: 'summary', tags: ['archive'], title: 'Archive visit: ', body: '**Repository:** \n**Date:** {{date}}\n**Collection:** \n**Boxes and folders requested:** \n\n## What I found\n- box , folder : \n\n## Photographed\n- \n\n## Request next time\n- ' },
+  { id: 'source', name: 'Source summary', hint: 'Argument, evidence, findings, limits, how you’ll use it', kind: 'summary', tags: [], title: '', body: '## Main argument\n\n\n## Evidence and method\n\n\n## Key findings\n\n\n## Limits and gaps\n\n\n## How I’ll use it\n' },
+  { id: 'field', name: 'Field notes', hint: 'Where, who, what you saw, what you think it means', kind: 'idea', tags: ['field notes'], title: 'Field notes: ', body: '**Date, time and place:** {{date}}, \n**Present:** \n\n## What I saw and heard\n\n\n## What I think it means\n\n\n## Questions\n- ' },
+  { id: 'meeting', name: 'Meeting notes', hint: 'Who was there, what was decided, who does what', kind: 'idea', tags: ['meeting'], title: 'Meeting: ', body: '**Date:** {{date}}\n**With:** \n\n## Decided\n- \n\n## To do\n- [ ] \n\n## Notes\n' },
+];
+function noteTpls() { return [...NOTE_TPLS, ...(Array.isArray(PREFS.noteTpls) ? PREFS.noteTpls : []).map(t => Object.assign({ mine: true }, t))]; }
+function openNoteTpls() {
+  const T = noteTpls();
+  $('#ntList').innerHTML = T.map(t => `<div class="nt-row"><button class="tpl" data-nt="${esc(t.id)}"><b>${esc(t.name)}</b><span>${esc(t.hint || (t.mine ? 'Your template' : ''))}</span></button>${t.mine ? `<button class="ghost small" data-ntdel="${esc(t.id)}" aria-label="Remove the template ${esc(t.name)}">✕</button>` : ''}</div>`).join('');
+  $('#ntDlg').showModal();
+}
+function newNoteFromTpl(id) {
+  const t = noteTpls().find(x => x.id === id); if (!t) return null;
+  const today = new Date().toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+  const n = Object.assign(newNote(), { title: t.title || '', kind: t.kind || 'idea', tags: [...(t.tags || [])], body: String(t.body || '').replace(/\{\{date\}\}/g, today) });
+  if (panelState?.kind === 'source' && (t.id === 'source' || t.id === 'archive')) n.sourceId = panelState.id;
+  P.notes.unshift(n); renderNoteList(); switchTab('notes'); openNote(n.id, true); markDirty();
+  return n;
+}
+$('#ntList').addEventListener('click', e => {
+  const d = e.target.closest('[data-ntdel]');
+  if (d) { PREFS.noteTpls = (PREFS.noteTpls || []).filter(t => t.id !== d.dataset.ntdel); savePrefs(); openNoteTpls(); return; }
+  const b = e.target.closest('[data-nt]'); if (!b) return;
+  $('#ntDlg').close(); newNoteFromTpl(b.dataset.nt);
+});
+$('#ntClose').addEventListener('click', () => $('#ntDlg').close());
+function saveNoteAsTpl(n) {
+  const name = (n.title || firstLine(n.body) || 'My template').replace(/:\s*$/, '').slice(0, 60);
+  PREFS.noteTpls = [...(PREFS.noteTpls || []).filter(t => t.name !== name), { id: uid('nt'), name, hint: 'Your template', kind: n.kind, tags: [...n.tags], title: n.title, body: n.body }].slice(-40);
+  savePrefs(); toast(`Saved “${name}” as a note template. It’s under Notes → From a template, in every project.`);
+}
+
+/* ---------- recent items (⌘/Ctrl E) and a note resurfaced on Project home ---------- */
+const RECENT = [];
+function rcTouch(k, id) { const i = RECENT.findIndex(r => r.k === k && r.id === id); if (i >= 0) RECENT.splice(i, 1); RECENT.unshift({ k, id }); RECENT.length = Math.min(RECENT.length, 40); }
+function recentItems() {
+  const seen = new Set(), out = [];
+  const add = (k, x) => { if (!x || seen.has(k + x.id)) return; seen.add(k + x.id); out.push({ k, x }); };
+  RECENT.forEach(r => add(r.k, r.k === 'd' ? P.docs.find(d => d.id === r.id) : r.k === 'n' ? P.notes.find(n => n.id === r.id) : P.sources.find(s => s.id === r.id)));
+  [...P.docs.map(x => ({ k: 'd', x })), ...P.notes.map(x => ({ k: 'n', x })), ...P.sources.map(x => ({ k: 's', x }))]
+    .sort((a, b) => (b.x.modified || '').localeCompare(a.x.modified || '')).forEach(r => add(r.k, r.x));
+  return out.slice(0, 30);
+}
+const RC_K = { d: 'Doc', n: 'Note', s: 'Source' };
+const rcName = r => r.k === 'd' ? (r.x.title || 'Untitled document') : r.k === 'n' ? (noteTitle(r.x) || 'Untitled note') : (sourceLabel(r.x).title || 'Untitled source');
+let swItems = [], swIdx = 0;
+function openSwitcher() {
+  swIdx = RECENT.length && RECENT[0].k === 'd' && RECENT[0].id === curDocId ? 1 : 0;
+  $('#swQ').value = ''; swRender(); $('#swDlg').showModal(); setTimeout(() => $('#swQ').focus(), 20);
+}
+function swRender() {
+  const q = $('#swQ').value.toLowerCase().trim();
+  swItems = recentItems().filter(r => !q || rcName(r).toLowerCase().includes(q));
+  swIdx = Math.max(0, Math.min(swIdx, swItems.length - 1));
+  $('#swList').innerHTML = swItems.length ? swItems.map((r, i) => `<li role="option" data-sw="${i}" aria-selected="${i === swIdx}" class="${i === swIdx ? 'on' : ''}"><span class="m">${RC_K[r.k]}</span><span class="t">${esc(rcName(r))}</span><span class="m">${esc(relTime(r.x.modified))}</span></li>`).join('') : '<li class="muted">Nothing matches.</li>';
+  $('#swList .on')?.scrollIntoView({ block: 'nearest' });
+}
+function swGo(i) {
+  const r = swItems[i]; if (!r) return; $('#swDlg').close();
+  if (homeOn && r.k === 'd') closeHome();
+  if (r.k === 'd') openDoc(r.x.id); else if (r.k === 'n') { switchTab('notes'); openNote(r.x.id); } else { switchTab('sources'); openSource(r.x.id); }
+}
+$('#swQ').addEventListener('input', () => { swIdx = 0; swRender(); });
+$('#swQ').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); swIdx = (swIdx + (e.key === 'ArrowDown' ? 1 : -1) + swItems.length) % Math.max(1, swItems.length); swRender(); }
+  if (e.key === 'Enter') { e.preventDefault(); swGo(swIdx); }
+});
+$('#swList').addEventListener('click', e => { const li = e.target.closest('[data-sw]'); if (li) swGo(+li.dataset.sw); });
+/* a note you haven't touched in a month, a different one each day */
+let rsOffset = 0;
+function resurfaceNote() {
+  const old = P.notes.filter(n => String(n.body || '').trim().length > 30 && Date.now() - new Date(n.modified || n.created) > 30 * DAY);
+  if (!old.length) return null;
+  old.sort((a, b) => a.id.localeCompare(b.id));
+  let h = 0; for (const c of todayKey() + P.id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return { n: old[(h + rsOffset) % old.length], of: old.length };
+}
+function resurfaceHTML() {
+  const r = resurfaceNote(); if (!r) return '';
+  const n = r.n, s = n.sourceId && P.sources.find(x => x.id === n.sourceId), l = s ? sourceLabel(s) : null;
+  const J = fn => { hmJump.push(fn); return hmJump.length - 1; };
+  return `<div class="hm-card hm-rs" id="hmRs">
+    <h5>From your notes${r.of > 1 ? `<button class="ghost small" id="rsNext">Another</button>` : ''}</h5>
+    <div class="rs-note" data-j="${J(() => openNote(n.id))}" role="button" tabindex="0"><b>${esc(noteTitle(n) || 'Untitled note')}</b>
+    <p>${esc(String(n.body).replace(/[#*_`]/g, '').replace(/\s+/g, ' ').slice(0, 260))}${String(n.body).length > 260 ? '…' : ''}</p>
+    <span class="small muted">${esc(n.kind)}${l ? ` · ${esc(l.who || l.title)}` : ''} · last touched ${esc(relTime(n.modified || n.created))}</span></div>
+  </div>`;
+}
+$('#hmArea').addEventListener('click', e => { if (e.target.id === 'rsNext') { rsOffset++; const c = $('#hmRs'); if (c) c.outerHTML = resurfaceHTML(); } });
+$('#hmArea').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && e.target.classList.contains('rs-note')) { e.preventDefault(); e.target.click(); } });
+
+/* ---------- wiring ---------- */
+$('#btnPad').addEventListener('click', () => padOpen());
+$('#btnNoteTpl').addEventListener('click', openNoteTpls);
+$('#btnTrash').addEventListener('click', openTrash);
+document.addEventListener('keydown', e => {
+  const mod = e.metaKey || e.ctrlKey, dlgOpen = !!document.querySelector('dialog[open]');
+  if (mod && e.altKey && !e.shiftKey && e.code === 'KeyN') { e.preventDefault(); if (!dlgOpen) padOpen(); }
+  if (mod && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'e') { e.preventDefault(); if (!dlgOpen) openSwitcher(); }
+});
 
 /* ================================================================
    Installable app. On the hosted copy (GitHub Pages), Anabasis registers a

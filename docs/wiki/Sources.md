@@ -75,6 +75,7 @@ Set a source's **Reading** to *To read*, *Reading* or *Read*, and tick **Read th
 The buttons at the foot of a source:
 
 - **Cite at cursor** inserts a citation of this source where you were writing.
+- **Copy citation** shows the source's citation (a note or an in-text citation) and its bibliography entry, in the open document's style or any other, with a page if you give one. **Copy** puts it on the clipboard with its italics, for an email, a message or someone else's document. To cite in your own draft, use Cite at cursor, so the bibliography keeps track.
 - **+ Note on this** starts a note linked to the source.
 - **Transcript…** takes a pasted transcript or a caption file (`.srt`, `.vtt`), text or Word file. Select lines to make quote or paraphrase notes with the timestamp as the locator. Caption fragments are joined into sentences with speakers and timestamps, and the search box filters the lines.
 - **Attach PDF** or **Read PDF** opens the source's PDF in the reader beside your draft.

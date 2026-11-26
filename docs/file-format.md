@@ -60,6 +60,9 @@ Format 2 is frozen for Anabasis 2.x. Every 2.x release opens every file written 
 | `entities` (2.6) | A name may carry `pseudo` (the name used in exports), `aka` (other forms to replace) and `consent` (`given`, `pending`, `declined`, `withdrawn` or `public`). `pseudoOn: false` at the top level turns pseudonyms off. |
 | `journal.checks` (2.6) | Ticks in the research guide’s checklists: `{ listKey: { itemKey: "YYYY-MM-DD" } }`. |
 | `notDup` (2.6) | Pairs of source ids (`"a|b"`) you’ve said aren’t duplicates. |
+| `events` (2.6.2) | Calendar items: `{ id, date ("YYYY-MM-DD"), time ("HH:MM" or ""), title, kind (visit, interview, meeting, deadline or other), note, created, modified }`. |
+| `scratch` (2.6.2) | The scratch pad’s text. |
+| `trash` (2.6.2) | Deleted notes: `{ at, note }`, the note as it was. Entries older than 30 days are dropped when the project is opened. |
 
 Unknown fields are kept when Anabasis saves, so add-ons and future versions can store their own data.
 

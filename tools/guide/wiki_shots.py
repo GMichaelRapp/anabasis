@@ -120,6 +120,27 @@ async def main(only):
         await shot('project-home')
         await close_all()
 
+        # Calendar on Project home: a fortnight of writing, a visit, an interview, a deadline
+        if want('calendar'):
+            await pg.evaluate("""() => { const K = o => { const d = new Date(); d.setDate(d.getDate() + o); return todayKey(d); };
+                PREFS.dailyGoal = 500; P.stats.days = {};
+                [[-13, 260], [-12, 540], [-10, 820], [-9, 140], [-8, 610], [-6, 505], [-5, 330], [-3, 720], [-2, 450], [-1, 515], [0, 210]].forEach(([o, a]) => P.stats.days[K(o)] = { a, n: a });
+                P.events = [{ id: 'ev1', date: K(2), time: '10:00', title: 'County archive: boxes 3 and 4', kind: 'visit', note: '' }, { id: 'ev2', date: K(5), time: '14:30', title: 'Interview with M. (pseudonym)', kind: 'interview', note: '' }];
+                P.docs[0].deadline = K(4); calMonth = ''; calDay = ''; openHome(); }""")
+            await pg.wait_for_timeout(900)
+            await pg.evaluate("() => $('#hmCal').scrollIntoView({ block: 'center' })"); await pg.wait_for_timeout(300)
+            await shot('calendar', '#hmCal')
+            await close_all()
+
+        # The scratch pad over the draft
+        if want('scratch-pad'):
+            await pg.evaluate("""() => { const d = P.docs.find(x => /retreat|supply|march/i.test(x.title)) || P.docs[0]; openDoc(d.id); delete PREFS.padPos;
+                P.scratch = 'Ask the archivist whether the 1919 report survives #archive\\n\\n> the army moved like a town\\n\\nCompare Engels on fodder with the halt at the villages #supply\\n\\nCall M. about the photos'; padOpen(true); }""")
+            await pg.wait_for_timeout(500)
+            await shot('scratch-pad')
+            await pg.evaluate("padOpen(false)")
+            await close_all()
+
         # New project
         if want('new-project'):
             await pg.click('#btnNewProj'); await pg.wait_for_timeout(500)

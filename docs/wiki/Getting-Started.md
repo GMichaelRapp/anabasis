@@ -37,7 +37,23 @@ Project home is the launch pad for the project that's open. Click the Anabasis l
 - **Each document's status** (idea, drafting, revising, final), which you set in **Record** in the document bar, along with each chapter's deadline.
 - **Loose ends**: everything unfinished across the whole project, gathered in one list. That means TK, cite? and check flags; open research questions and gaps in the plan; paragraphs with no citation; sources missing details; and PDFs you haven't taken notes on. Click any item to go straight to it.
 - **Notes inbox**: notes not yet linked to the plan or sorted into a pile on the board.
+- **The calendar** (see below).
+- **From your notes**: a note you haven't touched in a month, a different one each day. **Another** shows the next; click it to open the note. A good way to find the idea you'd forgotten you had.
 - **Recent files**, which reopen in one click in Chrome and Edge. Other browsers ask you to pick the file.
+
+### The calendar
+
+![The calendar on Project home: days shaded by words written, marks for visits, deadlines and journal entries, and the chosen day's details below](images/calendar.png)
+
+The calendar shows the month at a glance:
+
+- **Shading** is the words you wrote that day. If you've set a daily goal in Settings, the darkest shade means you met it.
+- **Marks** show what's on the calendar (a diamond, colored by kind), what's due (a red dot: a document's deadline, the project deadline, a review key) and journal entries (a ring).
+- **Choose a day** to see what happened and what's due: the words you wrote, the items on the calendar, the journal entries and the notes you made. Click any of them to open it. The arrow keys move between days, and ‹ › between months.
+
+**+ Add to the calendar** records an archive or library visit, an interview, a meeting, a deadline or anything else, with an optional time and notes (the boxes to request, the address, what to bring). Click an item to edit or remove it.
+
+**Export .ics** saves your calendar items, each document's deadline and the project deadline as a calendar file. Open it, or import it into Google Calendar, Apple Calendar or Outlook, to see them beside the rest of your life. It's a file you make when you want one, so nothing is sent anywhere, and it doesn't stay in sync: export again after you change something.
 
 ## Starting a project
 

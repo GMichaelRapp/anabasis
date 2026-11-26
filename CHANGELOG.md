@@ -4,6 +4,21 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.6.2] — 2026-11-25
+
+### Added
+- **Calendar** on Project home: each day shaded by the words written (darkest when the daily goal is met), with marks for calendar items, deadlines (documents, the project, review keys) and journal entries. Choose a day for its details; arrow keys move between days. **+ Add to the calendar** records archive or library visits, interviews, meetings, deadlines and other items, with an optional time and notes. **Export .ics** saves them with document and project deadlines for Google Calendar, Apple Calendar or Outlook.
+- **Scratch pad** (⌘/Ctrl Alt N, or Notes → Scratch pad), kept with the project. **Make a note** from the passage at the cursor or the selection, **Split into notes** at blank lines or `---`, or send a passage **to the journal**; `#tags` become note tags and `>` passages become quotation notes. Converted text leaves the pad, with Undo. The pad can be dragged and remembers where.
+- **Note trash**: deleting a note (or cards on the board) moves it to the trash, with Undo; Notes → Trash restores notes for 30 days.
+- **Copy citation** on a source: its citation and bibliography entry in any style, with an optional page, copied with italics.
+- **Note templates** (Notes → From a template…): interview log, archive visit, source summary, field notes, meeting notes; **Save as template** on any note adds your own, in every project.
+- **Recent items** (⌘/Ctrl E): the documents, notes and sources opened most recently, filterable.
+- **From your notes** on Project home: a note untouched for a month, a different one each day.
+
+### Changed
+- Deleting a note no longer asks first: it goes to the trash, with Undo.
+- The shortcut sheet has a Notes group.
+
 ## [2.6.1] — 2026-11-25
 
 ### Added

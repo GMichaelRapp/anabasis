@@ -9,7 +9,8 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **Checkpoints** of the whole project are kept in the same browser storage. Download a checkpoint to keep it anywhere else.
 - **PDFs and archive photos** you open are kept in the same browser storage, not in the project file. Photos are resized to 2,400 pixels. The project file keeps their transcriptions, the notes made from them, and a SHA-256 fingerprint of each original file.
 - **Evidence fingerprints** are worked out in the browser from the file you choose. The file itself is never stored or sent anywhere.
-- **Preferences**, such as theme and check settings, are kept in localStorage. So are the name and contact details you give for Word’s manuscript format, which never go into the project file.
+- **Preferences**, such as theme and check settings, are kept in localStorage, as are note templates you save and where you put the scratch pad. So are the name and contact details you give for Word’s manuscript format, which never go into the project file.
+- **The calendar** is kept in the project file. **Export .ics** writes a file to your computer for you to import into a calendar app; Anabasis doesn’t connect to Google, Apple or Microsoft calendars.
 
 - **The installed app's own files.** If you add the hosted copy to your Home Screen or install it, a small service worker keeps a copy of Anabasis itself (the page and its icons) so it opens offline. It stores nothing you write and makes no connections of its own. The downloaded file doesn't use one.
 
