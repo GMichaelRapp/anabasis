@@ -1470,7 +1470,7 @@ svg{stroke-width:1.75}
 .toolbar select#blockSel{min-height:var(--ctl);max-width:150px}
 /* document bar */
 :root .doc-bar{gap:4px;padding:6px 10px;align-items:center}
-:root .doc-bar .doc-title{flex:0 1 300px;min-width:90px;max-width:340px}
+:root .doc-bar .doc-title{flex:0 1 300px;min-width:min(190px,40vw);max-width:340px}
 :root .doc-bar select{flex:0 1 auto;min-width:110px;max-width:240px;field-sizing:fixed;width:auto}
 .doc-bar button.ghost{color:var(--muted);gap:6px;padding:0 9px;min-height:var(--ctl)}
 .doc-bar button.ghost:hover{color:var(--ink)}
@@ -2123,6 +2123,66 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
 #ocrDlg header{display:flex;align-items:center;padding:8px 10px 6px 14px;border-bottom:1px solid var(--line2)}#ocrDlg header h3{flex:1;margin:0;font-size:14px}
 #ocrDlg p{margin:6px 14px}#ocrDlg textarea{margin:0 12px;min-height:200px;font:14px/1.5 var(--serif,Georgia),serif}
 #ocrDlg footer{display:flex;gap:6px;padding:8px 12px}
+
+/* ================================================================
+   2.7.3: a tidying pass. Same look, fewer rough edges.
+   ================================================================ */
+/* a focused dialog body doesn't draw a frame unless you got there by keyboard */
+:root dialog .dlg .body:focus:not(:focus-visible){outline:none}
+/* every field is the same height, the time and email ones included */
+input[type=time],input[type=email],input[type=tel],input[type=month],input[type=datetime-local]{background:var(--page);color:var(--ink);border:1px solid var(--line);border-radius:var(--radius);padding:5px 9px;min-height:32px;font:inherit}
+/* a menu's arrow never sits on top of its words */
+:root select:not([multiple]):not([size]){padding-right:26px!important;background-position:right 8px center}
+/* the project's name in the top bar takes the room it needs */
+@supports (field-sizing: content){:root .topbar .proj-title{field-sizing:content;flex:0 1 auto;max-width:min(440px,34vw)}}
+/* sidebar heads: the search box keeps its words; tools sit in a tidy grid */
+.pane-head .row input{min-width:0}
+:root .pane-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 4px;margin:0 -4px}
+:root .pane-tools button{justify-content:flex-start;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.binder .meta > span:not(.st) + span::before{content:"·";margin-right:6px;color:var(--faint)}
+/* panel footers: the main actions, then a quieter row */
+.panel-foot .pf-more{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;flex-basis:100%;margin:0 -6px -4px}
+.panel-foot .pf-more button{min-height:28px;padding:3px 8px;color:var(--muted);font-weight:500}
+.panel-foot .pf-more button:hover{color:var(--ink)}
+.panel-foot .pf-more button.danger{color:var(--danger)}
+.panel-foot .pf-more .pf-end{margin-left:auto}
+/* the research desk: the tabs always on the first line, the view's tools on the second */
+#desk > .board-bar{row-gap:6px}
+#desk > .board-bar .desk-tabs{flex:1 1 0;min-width:0;order:0}
+#desk > .board-bar .spacer{display:none}
+#desk > .board-bar #deskTools{flex-basis:100%;flex-wrap:wrap;align-items:center;gap:6px;order:1}
+#desk > .board-bar #deskTools:empty{display:none}
+/* Settings: sections, one option to a line */
+.st-checks{display:flex;flex-direction:column;margin:8px 0 2px}
+.st-checks label{display:flex;gap:8px;align-items:center;margin:3px 0;font-size:13.5px;color:var(--ink);font-weight:400}
+.st-checks input{width:auto;margin:0;flex:none}
+.st-note:empty{display:none}.st-note{margin:-2px 0 6px 24px}
+.st-row{display:flex;gap:10px;align-items:center;margin:6px 0 2px}
+.st-kv{display:grid;grid-template-columns:6.5em minmax(0,1fr);gap:10px;align-items:baseline;margin:6px 0}
+:root .st-dlg .st-h{margin:20px 0 8px;padding-top:14px;border-top:1px solid var(--line2)}
+/* Page setup: words-per-minute only matters for a script */
+.radio-row:has(#suScript:not(:checked)) label.inline{display:none}
+/* the journal's method row: the explanation on a line of its own */
+.j-tpl select{flex:1 1 12em;min-width:0}.j-tpl > .muted{flex-basis:100%;margin-top:-2px}
+/* Help: one row of buttons that look alike */
+:root .help-top{gap:8px}
+:root .help-top a{display:inline-flex;align-items:center;min-height:30px;padding:4px 11px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);color:var(--ink);font-weight:500;text-decoration:none}
+:root .help-top a:hover{border-color:var(--muted)}
+/* nothing to empty, nothing to show */
+#trashEmpty:disabled{visibility:hidden}
+.rs-eye{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rs-th button[aria-pressed=false]{color:var(--faint)}
+/* an empty list doesn't need a window the width of the screen */
+dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
+/* claim chips sit on the same line as the claim */
+#rsClaims .cl-chip{vertical-align:baseline;line-height:1.2;padding:1px 5px;margin-right:4px}
+#rsClaims li > span{line-height:1.45}
+/* on a phone the save state is one word, and nothing touches the screen's edge */
+@media (max-width:600px){
+  :root .topbar .save-state{font-size:0;flex:none}
+  :root .topbar .save-state::before{content:attr(data-s);font-size:12px}
+  :root .topbar{padding-right:max(8px,env(safe-area-inset-right))}
+}
 </style>
 <style id="pageRule"></style>
 </head>
@@ -2200,7 +2260,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
       <button data-tab="research" title="Threads, claims, review keys and questions"><svg class="tab-ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m20.5 20.5-4.9-4.9M8.5 11l2 2 3.5-3.5"/></svg><span class="tab-l">Research<span class="count badge" id="tabResearchBadge"></span></span></button>
     </nav>
     <section class="pane on" data-pane="docs">
-      <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" class="ghost" title="New part (a folder for chapters)">+ Part</button></div>
+      <div class="pane-head"><div class="row"><input type="search" id="qDocs" placeholder="Search docs" aria-label="Search documents"><button id="btnNewDoc" class="primary" title="New document">+ Doc</button><button id="btnNewPart" class="ghost" title="New part (a folder for chapters)">+ Part</button></div>
         <div class="pane-tools"><button id="btnPlan" class="ghost small" title="Plan your piece: outline, argument map, templates, build drafts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01" stroke-width="2.6"/></svg> Plan</button><button id="btnManuscript" class="ghost small" title="Combine documents into one manuscript"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 16h7"/></svg>Compile</button><button id="btnTemplates" class="ghost small" title="Front and back matter, chronology, annotated bibliography"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1"/><path d="M4 9h16M9 9v11"/></svg>Templates</button><button id="btnImportDocx" class="ghost small" title="Bring in a Word document, footnotes included"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7.5 10.5 12 15l4.5-4.5"/><path d="M5 15v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Import Word</button><button id="btnRel" class="ghost small" title="Who’s connected to whom, from your names list"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.2 8.3 10.6 16M15.8 8.3 13.4 16M8.5 7h7"/></svg>Relationships</button><button id="btnSlush" class="ghost small" title="Passages you cut and documents you deleted, kept for another day (⌘/Ctrl Alt J)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h16l-1.6 10a1.5 1.5 0 0 1-1.5 1.3H7.1a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M7 9.5 9 5h6l2 4.5M9.5 13.5h5"/></svg>Slush pile<span class="sl-n" id="slushN"></span></button></div></div>
       <ul class="list binder" id="docList"></ul>
     </section>
@@ -2242,7 +2302,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
         <div class="row"><input type="search" id="qNotes" placeholder="Search notes"><button id="btnNewNote" class="primary">+ New</button></div>
         <div class="chips" id="tagChips"></div>
         <div class="row"><button id="btnBoard" class="primary-soft" style="flex:1" title="Cards on a board: piles, tags, sources, or free arrangement">▦ Board</button><button id="btnCompile" style="flex:1">Compile…</button><button id="btnImportMd" title="Import Markdown notes, e.g. from Notecards">Import .md</button></div>
-        <div class="row notes-more"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">Templates…</button><button id="btnTrash" class="ghost" title="Deleted notes wait here for 30 days">Trash</button></div>
+        <div class="row notes-more"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">Templates…</button><button id="btnTrash" title="Deleted notes wait here for 30 days">Trash</button></div>
       </div>
       <ul class="list" id="noteList"></ul>
     </section>
@@ -2262,7 +2322,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
     <div class="remind hidden" id="tabBar"><span>Anabasis is open in another tab. Edits in two tabs can overwrite each other, so keep working in just one.</span><button id="tabBarClose" class="ghost">Dismiss</button></div>
     <div class="remind hidden" id="remindBar"><span id="remindText"></span><button class="primary" id="remindSave">Save now</button><button id="remindLater" class="ghost">Later</button></div>
     <div class="doc-bar pbar" id="docBar">
-      <input id="docTitle" class="doc-title" aria-label="Document title" data-minw="120">
+      <input id="docTitle" class="doc-title" aria-label="Document title" data-minw="190">
       <select id="docStyle" aria-label="Citation style" data-minw="130"></select>
       <div class="spacer pb-flex"></div>
       <span class="tgt hidden" id="tgtBar"><i id="tgtFill"></i></span>
@@ -2752,7 +2812,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
   <div class="body"><p class="small" id="subSum"></p>
     <div class="sub-wrap"><table class="cl-table sub-table hidden" id="subTable"><colgroup><col style="width:13%"><col style="width:12%"><col style="width:10%"><col style="width:8.5%"><col style="width:11%"><col style="width:10%"><col style="width:11%"><col style="width:7.5%"><col><col style="width:32px"></colgroup>
       <thead><tr><th scope="col">Piece</th><th scope="col">Outlet</th><th scope="col">Editor</th><th scope="col">Kind</th><th scope="col">Sent</th><th scope="col">Status</th><th scope="col">Follow up</th><th scope="col">Fee</th><th scope="col">Notes</th><th scope="col"><span class="sr-only">Delete</span></th></tr></thead><tbody id="subList"></tbody></table></div></div>
-  <footer><button id="subCsv" class="ghost">CSV</button><span class="spacer"></span><button id="subAdd">+ Add a pitch or submission</button><button id="subClose" class="primary">Done</button></footer>
+  <footer><button id="subCsv" class="ghost">CSV</button><span class="spacer"></span><button id="subAdd" autofocus>+ Add a pitch or submission</button><button id="subClose" class="primary">Done</button></footer>
 </div></dialog>
 <dialog id="rvsDlg" aria-labelledby="rvsTitle"><div class="dlg">
   <h3 id="rvsTitle">Send for review</h3>
@@ -3312,17 +3372,15 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
 </div></dialog>
 
 <!-- settings -->
-<dialog id="settingsDlg"><div class="dlg">
+<dialog id="settingsDlg" class="st-dlg"><div class="dlg">
   <h3>Settings <span class="muted small">(this browser)</span></h3>
   <div class="body">
     <label for="stName">Your name <span class="muted">(on your suggestions and margin notes)</span></label><input id="stName" autocomplete="name" placeholder="e.g. Michael Rapp">
     <div class="grid2">
-      <div><label>Remind me to save after</label><select id="stRemind"><option value="0">Never</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
-      <div><label>Session word goal</label><input id="stGoal" inputmode="numeric" placeholder="e.g. 750 (blank = none)"></div>
-      <div><label>Daily word goal <span class="muted">(streaks)</span></label><input id="stDaily" inputmode="numeric" placeholder="e.g. 500 (blank = any writing)"></div>
-      <div><label>“Uncited paragraph” means ≥ words</label><input id="stUncited" inputmode="numeric"></div>
-    </div>
-    <div class="radio-row" style="margin-top:10px">
+      <div><label for="stRemind">Remind me to save after</label><select id="stRemind"><option value="0">Never</option><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
+      <div><label for="stGoal">Session word goal</label><input id="stGoal" inputmode="numeric" placeholder="e.g. 750 (blank = none)"></div>
+      <div><label for="stDaily">Daily word goal <span class="muted">(streaks)</span></label><input id="stDaily" inputmode="numeric" placeholder="e.g. 500 (blank = any writing)"></div>
+      <div><label for="stUncited">“Uncited paragraph” means ≥ words</label><input id="stUncited" inputmode="numeric"></div>
     </div>
     <h4 class="st-h">The writing page on this screen <span class="muted small">(PDF, Word and print follow Page setup)</span></h4>
     <div class="grid3">
@@ -3331,20 +3389,24 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
       <div><label for="stScrLh">Line spacing</label><select id="stScrLh"><option value="">Comfortable</option><option value="compact">Compact</option><option value="page">As in Page setup</option></select></div>
     </div>
     <div class="grid2">
-      <div><label for="stType">Typewriter scrolling <span class="muted">(keep your line mid-screen)</span></label><select id="stType"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
+      <div><label for="stType">Typewriter scrolling <span class="muted">(your line stays mid-screen)</span></label><select id="stType"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
       <div><label for="stDim">Dim other paragraphs</label><select id="stDim"><option value="off">Off</option><option value="focus">In focus mode</option><option value="always">Always</option></select></div>
     </div>
-    <div class="radio-row">
+    <div class="st-checks">
       <label><input type="checkbox" id="stFocusMarks"> Show research marks in focus mode</label>
-      <button type="button" class="small" id="stToolbar" style="margin:4px 0 6px">Customize toolbar…</button>
       <label><input type="checkbox" id="stSpell"> Spellcheck</label>
-      <label><input type="checkbox" id="stHome"> Open to the project home (otherwise straight to the draft)</label>
+    </div>
+    <div class="st-row"><button type="button" class="small" id="stToolbar">Customize toolbar…</button><span class="small muted">Hide the buttons you don’t use.</span></div>
+    <h4 class="st-h">Starting and saving</h4>
+    <div class="st-checks">
+      <label><input type="checkbox" id="stHome"> Open to the project home <span class="muted">(otherwise straight to the draft)</span></label>
       <label><input type="checkbox" id="stTips"> Show getting-started tips on empty documents</label>
       <label id="stUpdRow" title="Asks GitHub for the latest release number. Nothing about you or your work is sent."><input type="checkbox" id="stUpd"> Check weekly for a newer version</label>
-      <label><input type="checkbox" id="stAuto"> Autosave to the project file (Chrome and Edge)</label><div class="small muted" id="stAutoNote" style="margin:-2px 0 6px 24px"></div>
+      <label><input type="checkbox" id="stAuto"> Autosave to the project file <span class="muted">(Chrome and Edge)</span></label><div class="small muted st-note" id="stAutoNote"></div>
     </div>
-    <label>Browser storage</label><div class="small" id="stStorage">Checking…</div>
-    <label>Start over</label><div class="small">Clear the slate: a blank project, or erase everything Anabasis keeps in this browser. <button id="btnFresh" class="small danger">Start fresh…</button></div>
+    <h4 class="st-h">This browser</h4>
+    <div class="st-kv"><span class="small muted">Storage</span><div class="small" id="stStorage">Checking…</div></div>
+    <div class="st-kv"><span class="small muted">Start over</span><div class="small">Clear the slate: a blank project, or erase everything Anabasis keeps in this browser. <button id="btnFresh" class="small danger">Start fresh…</button></div></div>
     <div class="tip">Your work is always copied into this browser as you type. The reminder is for saving the project file, the copy you keep and back up.</div>
   </div>
   <footer><button id="stCancel">Cancel</button><button id="stOk" class="primary">Save settings</button></footer>
@@ -3427,7 +3489,7 @@ dialog#ocrDlg[open]{display:flex;flex-direction:column;animation:none}
   <h3>Anabasis <span class="muted small" style="font-weight:500">version <span id="aboutVersion"></span></span> — help &amp; about</h3>
   <div class="body help">
     <blockquote class="help-epigraph" lang="en"><p><span lang="grc">θάλαττα θάλαττα</span></p><p>Presently they could hear the soldiers shouting and passing on the joyful word, “The sea! the sea!”</p><footer>Xenophon, <cite>Anabasis</cite> IV.7, translated by H. G. Dakyns</footer></blockquote>
-    <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><button id="helpFeedback">Send feedback</button><button id="helpNew" class="ghost">What’s new</button><button id="helpUpd" class="ghost">Check for a newer version</button></div>
+    <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><button id="helpFeedback">Send feedback</button><button id="helpNew">What’s new</button><button id="helpUpd">Check for a newer version</button></div>
     <h4>Your privacy</h4>
     <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), checking sources for retractions (Crossref, which receives only the DOIs), checking links (the Internet Archive), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>

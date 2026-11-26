@@ -90,7 +90,7 @@ async def main():
 
         # ---- word count and reading aloud
         r = await pg.evaluate("() => { updateWordCount(); return { wc: $('#wordCount').textContent, tts: plainBlocks().map(b => b.text).filter(t => /Equation|equation|x\\^2|alpha/.test(t)) }; }")
-        check('display equations don’t count as words', r['wc'].startswith(str(await pg.evaluate("() => { const c = editor.cloneNode(true); c.querySelectorAll('p.eq').forEach(p => p.remove()); c.querySelectorAll('span.math').forEach(m => m.textContent = 'x'); return c.textContent.trim().split(/\\s+/).filter(Boolean).length; }")) + ' words'), r)
+        check('display equations don’t count as words', r['wc'].startswith(str(await pg.evaluate("() => { const c = editor.cloneNode(true); c.querySelectorAll('p.eq').forEach(p => p.remove()); c.querySelectorAll('span.math').forEach(m => m.textContent = 'x'); c.querySelectorAll('p,h1,h2,h3,li,blockquote').forEach(b => b.append(' ')); return c.textContent.trim().split(/\\s+/).filter(Boolean).length; }")) + ' words'), r)
         check('reading aloud says “equation” rather than reading TeX', any(t == 'Equation.' for t in r['tts']) and not any(re.search(r'alpha|\^', t) for t in r['tts']), r['tts'])
 
         # ---- pasting: equations survive, nothing else does

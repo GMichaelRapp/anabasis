@@ -75,7 +75,7 @@ async def main():
         await pg.keyboard.press('Backspace'); await pg.keyboard.press('Backspace'); await pg.wait_for_timeout(150)
         check('deleting your own suggested text removes it outright', await pg.evaluate("() => [...editor.querySelectorAll('ins.sg')].map(e => e.textContent).join() === 'has'"))
         await pg.keyboard.type('te'); await pg.wait_for_timeout(200)
-        check('word count leaves out suggested deletions', await pg.evaluate("() => { const c = editor.cloneNode(true); c.querySelectorAll('.cite,.fn,.flag,del.sg').forEach(x => x.remove()); return parseInt($('#wordCount').textContent.replace(/,/g, ''), 10) === c.innerText.trim().split(/\\s+/).filter(Boolean).length; }"))
+        check('word count leaves out suggested deletions', await pg.evaluate("() => { const n = parseInt($('#wordCount').textContent.replace(/,/g, ''), 10), w = editor.cloneNode(true); w.querySelectorAll('del.sg').forEach(d => d.replaceWith(' ' + d.textContent + ' ')); const dels = [...editor.querySelectorAll('del.sg')].reduce((a, d) => a + d.textContent.trim().split(/\\s+/).filter(Boolean).length, 0); return dels > 0 && n === wordsIn(editor) && wordsIn(w) === n + dels; }"))
         html = await pg.evaluate("() => buildExport(curDoc(), 'html').body")
         check('other exports show suggestions as accepted', 'Plans built for haste can crowd out diplomacy' in re.sub('<[^>]+>', '', html) and 'speed' not in re.sub('<[^>]+>', '', html).split('Plans built')[1][:40])
         z = zipfile.ZipFile(await dl("() => $('#exportMenu [data-x=docx]').click()")); xml = z.read('word/document.xml').decode()

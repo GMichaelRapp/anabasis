@@ -4,6 +4,25 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.7.3] — 2026-11-26
+
+### Changed
+- A tidying pass over the look of the app, checked screen by screen in light, dark and on a phone:
+  - **Settings** is grouped into sections (the writing page on screen; starting and saving; this browser), one option to a line.
+  - The **source** and **note** panels keep their main actions as buttons and move the rest (Save to library, Transcript, PDF, Photos, Split, Save as template, Delete) to a quieter row beneath.
+  - The **research desk** keeps its tabs on one line and the view's tools on the next.
+  - Each thread in the Research tab has an eye to show or hide its highlight, in place of a dot.
+  - The project name in the top bar and the chapter title take the room they need before toolbar buttons do; on a phone the save state is one word.
+  - The Docs tab's tools sit in a tidy two-column grid; Help's links are buttons like the rest.
+  - Menus never draw their arrow over their words; time fields match the others.
+  - Claims that need a source or are contested don't repeat it under the chip.
+  - Empty states: the trash's Empty button and Submissions' CSV only show when there's something to act on; an empty Submissions window is narrower.
+
+### Fixed
+- **One word count everywhere.** The document bar, the binder and Drafts could each give a different count, and words at the end of one paragraph and the start of the next were sometimes counted as one. All three now use the same count.
+- Words per minute in Page setup only shows for a video script.
+- What's new after an update always reaches back to the feature release it patches, so updating to a patch doesn't hide what the release brought.
+
 ## [2.7.2] — 2026-11-26
 
 ### Added

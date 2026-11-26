@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.7.2';
+const APP_VERSION = '2.7.3';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -322,8 +322,9 @@ async function loadLocal() {
 function markDirty() { if (POPOUT) { if (P) P.modified = nowISO(); popPush(); return; } if (typeof requestPersist === 'function') requestPersist(); if (!dirtyFile || !dirtySince) { dirtyFile = true; dirtySince = dirtySince || Date.now(); } P.modified = nowISO(); updateSaveState(); autosave(); popSync(); if (SPLIT.on && SPLIT.view === 'doc') splitDocRefresh(); }
 function updateSaveState() {
   const el = $('#saveState');
-  if (dirtyFile) { el.textContent = autosaveOk ? 'Unsaved changes · kept in browser' : 'Unsaved changes'; el.classList.add('dirty'); }
-  else { el.textContent = lastFileSave ? 'Saved ' + lastFileSave.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''; el.classList.remove('dirty'); }
+  if (dirtyFile) { el.textContent = autosaveOk ? 'Unsaved changes · kept in browser' : 'Unsaved changes'; el.dataset.s = 'Unsaved'; el.classList.add('dirty'); }
+  else { el.textContent = lastFileSave ? 'Saved ' + lastFileSave.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''; el.dataset.s = lastFileSave ? 'Saved' : ''; el.classList.remove('dirty'); }
+  el.title = el.textContent;
   checkReminder();
 }
 const fmtMins = m => m < 60 ? Math.round(m) + ' min' : (m / 60).toFixed(m < 600 ? 1 : 0).replace(/\.0$/, '') + ' h';
@@ -752,9 +753,7 @@ function openDoc(id, skipSync = false) {
   renderMargin(); requestAnimationFrame(() => renderMargin()); updateDraftBtn(); updateScript(); renderAcronyms(); runEstimative(); renderCorroboration(); renderCloseToNotes(); renderGlossaryCheck(); renderHouse(); renderA11y(); if (typeof renderResearch === 'function') renderResearch(); if (typeof sgRefresh === 'function') sgRefresh();
 }
 function updateWordCount() {
-  const clone = editor.cloneNode(true);
-  $$('.cite,.fn,.flag,del.sg,p.eq', clone).forEach(m => m.remove()); $$('span.math', clone).forEach(m => { m.textContent = 'x'; });
-  const words = (clone.innerText || '').trim().split(/\s+/).filter(Boolean).length;
+  const words = wordsIn(editor);
   const cites = $$('.cite', editor).length;
   $('#wordCount').textContent = `${words.toLocaleString()} words · ${cites} citation${cites === 1 ? '' : 's'}`;
 }
@@ -1120,7 +1119,7 @@ function relTime(iso) {
   return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
 }
 /* ---------- binder: documents grouped into parts, in manual order ---------- */
-const docWords = d => { const t = htmlToText((d.id === curDocId ? editor.innerHTML : d.html).replace(/<span class="(cite|fn|flag)[^"]*"[^>]*>.*?<\/span>/g, ' ').replace(/<span class="math"[^>]*>.*?<\/span>/g, ' x ').replace(/<p class="eq[^"]*"[^>]*>.*?<\/p>/g, '')); return t.trim().split(/\s+/).filter(Boolean).length; };
+const docWords = d => { if (d.id === curDocId) return wordsIn(editor); const t = document.createElement('template'); t.innerHTML = d.html || ''; const box = document.createElement('div'); box.append(t.content); return wordsIn(box); };
 function docsInPart(pid) { return P.docs.filter(d => (d.partId || '') === pid).sort((a, b) => a.order - b.order); }
 function binderOrder() { return ['', ...P.parts.map(x => x.id)].flatMap(docsInPart); }
 function renumber(pid) { docsInPart(pid).forEach((d, i) => d.order = i); }
@@ -1492,7 +1491,7 @@ function openSource(id, focusTitle = false) {
   $('#panel').classList.remove('hidden');
   $('#panelTitle').textContent = 'Source';
   renderSourcePanel(s);
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="savelib" title="Keep this source (and its notes) on your library shelf, for every project">Save to library</button><button data-a="note">+ Note on this</button><button data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><span class="spacer"></span><button class="danger" data-a="del">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="cite">“ Cite at cursor</button><button data-a="copycite" title="Copy a formatted citation or bibliography entry, in any style">Copy citation</button><button data-a="note">+ Note on this</button><div class="pf-more"><button class="small ghost" data-a="savelib" title="Keep this source (and its notes) on your library shelf, for every project">Save to library</button><button class="small ghost" data-a="transcript" title="Paste an interview or video transcript and turn lines into timestamped quote notes">Transcript…</button><button class="small ghost" data-a="pdf" title="Read this source’s PDF beside your draft">${s.pdfName ? 'Read PDF' : 'Attach PDF'}</button><button class="small ghost" data-a="photos" title="Photos of archive documents: box and folder, transcription, notes">${s.photos && s.photos.length ? `Photos (${s.photos.length})` : 'Photos…'}</button><button class="small ghost danger pf-end" data-a="del">Delete</button></div>`;
   renderSourceList();
   if (focusTitle) setTimeout(() => $('#panelBody [data-f="title"]')?.focus(), 30);
 }
@@ -1940,7 +1939,7 @@ function openNote(id, focus = false) {
     </div>
     <div class="note-links" id="noteLinks">${noteLinksHTML(n)}</div>
     <div class="muted small" style="margin-top:12px">Created ${new Date(n.created).toLocaleString()} · edited ${relTime(n.modified)} · Link notes with [[Note title]]</div>`;
-  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button data-a="dupn">Duplicate</button><button data-a="savetpl" title="Use this note’s layout to start new notes (Notes → Templates…)">Save as template</button><span class="spacer"></span><button class="danger" data-a="deln">Delete</button>`;
+  $('#panelFoot').innerHTML = `<button class="primary" data-a="ins">Insert at cursor</button><button data-a="dupn">Duplicate</button><div class="pf-more"><button class="small ghost" data-a="split" title="Split this card in two at the cursor in the note text">Split</button><button class="small ghost" data-a="savetpl" title="Use this note’s layout to start new notes (Notes → Templates…)">Save as template</button><button class="small ghost danger pf-end" data-a="deln">Delete</button></div>`;
   renderNoteList();
   if (focus) setTimeout(() => $('#panelBody [data-n=title]').focus(), 30);
 }
@@ -2320,7 +2319,13 @@ editor.addEventListener('click', e => { const f = e.target.closest('.flag'); if 
 
 /* ---------- outline & drafting checklist ---------- */
 function blockSnippet(el, n = 70) { const t = (el.textContent || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n) + '…' : t; }
-function wordsIn(el) { const c = el.cloneNode(true); $$('.cite,.fn,.flag,p.eq', c).forEach(m => m.remove()); $$('span.math', c).forEach(m => { m.textContent = 'x'; }); return (c.textContent || '').trim().split(/\s+/).filter(Boolean).length; }
+/* one word count everywhere: citations, footnote markers, flags and display equations don't count, an inline equation counts as one word,
+   and paragraphs, headings and list items are kept apart so the last word of one and the first of the next aren't run together */
+function wordsIn(el) {
+  const c = el.cloneNode(true); $$('.cite,.fn,.flag,del.sg,p.eq', c).forEach(m => m.remove()); $$('span.math', c).forEach(m => { m.textContent = 'x'; });
+  $$('p,h1,h2,h3,h4,h5,h6,li,blockquote,figcaption,td,th,pre,div,dt,dd', c).forEach(b => b.append(' ')); $$('br', c).forEach(b => b.replaceWith(' '));
+  return wc(c.textContent || '');
+}
 function uncitedBlocks() {
   return $$(':scope > p, :scope > blockquote, :scope > ul > li, :scope > ol > li', editor)
     .filter(el => !el.querySelector('.cite') && wordsIn(el) >= (PREFS.uncitedMin || 40));
@@ -3452,7 +3457,7 @@ function renderDrafts() {
     </li>`;
   };
   $('#dfRail').innerHTML = `
-    <div class="df-cur ${dfLeft === 'current' || dfRight === 'current' ? 'on' : ''}"><b>Current text</b><div class="df-meta">${wc(docPlain(d.html)).toLocaleString()} words · edited ${relTime(d.modified)}</div></div>
+    <div class="df-cur ${dfLeft === 'current' || dfRight === 'current' ? 'on' : ''}"><b>Current text</b><div class="df-meta">${docWords(d).toLocaleString()} words · edited ${relTime(d.modified)}</div></div>
     ${drafts.length ? `<ol class="df-list">${drafts.map(item).join('')}</ol>` : `<div class="df-empty"><p>No drafts yet.</p><p>Save one before a big revision, when you send it out, or whenever you want a fixed point to come back to. Drafts are only made when you choose.</p><button class="primary" data-a="save">Save Draft 1</button></div>`}
     ${safety.length ? `<details class="df-safety"><summary>Safety copies <span class="count">${safety.length}</span></summary><p class="small muted">Made automatically just before Anabasis replaced text for you (restoring a draft, or bringing back paragraphs).</p><ol class="df-list">${safety.map(item).join('')}</ol></details>` : ''}`;
   $('#dfL').innerHTML = dfOptions(dfLeft); $('#dfR').innerHTML = dfOptions(dfRight);
@@ -3641,7 +3646,7 @@ function dfTake(k) {
   $$('.cite,.fn,.flag', editor).forEach(m => m.setAttribute('contenteditable', 'false'));
   lastSig = ''; renderRefs(true); updateWordCount(); syncEditor(); markDirty();
   const y = $('#dfGrid').scrollTop; dfCompute(); $('#dfGrid').scrollTop = y;
-  const doc = curDoc(); $('.df-cur .df-meta') && ($('.df-cur .df-meta').textContent = `${wc(docPlain(doc.html)).toLocaleString()} words · edited just now`);
+  const doc = curDoc(); $('.df-cur .df-meta') && ($('.df-cur .df-meta').textContent = `${docWords(doc).toLocaleString()} words · edited just now`);
   toast(msg + ' A safety copy from before your first change is in the list.');
 }
 $('#dfDl').addEventListener('click', () => {
@@ -9467,6 +9472,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.7.3': ['A tidying pass over the whole app: Settings in clear sections, quieter footers on sources and notes, the research desk’s tools on a line of their own, an eye to show or hide each thread, room for long project and chapter names, a one-word save state on phones, and one word count everywhere (paragraphs no longer run together in it).'],
   '2.7.2': ['A slush pile for passages you cut but might want later: select them and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile). Documents you delete go there too. Open it from the Docs tab to search, put a piece back where the cursor is, or make it a document or a note.'],
   '2.7.1': ['Search inside sources lays out long places, such as “box 3, folder 12, item 4”, on lines of their own instead of over the found words.'],
   '2.7.0': ['Write in other languages: set a document’s language in Page setup for spell-checking, quotation marks, citation terms (“Hrsg.”, “trad.”) and right-to-left for Arabic, Hebrew, Persian and Urdu. Mark → Language of this passage does the same for a quotation or a name.', 'Translation notes hold the original beside your translation; insert one with the original in the note and “My translation.” in the citation. The research journal has a Translation section: a glossary that flags renderings you’ve decided against, recorded decisions, and a Note on translation for the front matter.', 'Transliterate Russian, Ukrainian, Bulgarian, Serbian, Greek (modern and ancient) and Arabic by the standard tables (Mark → Transliterate…), and type accents, Greek with breathings and accents, Cyrillic and transliteration marks from Special characters (⌘/Ctrl Alt O).', 'Research desk → Translate: paste an original and translate it segment by segment beside it, with its transliteration, your glossary’s renderings checked as you type, progress, and the result as a document or side by side. ⌘/Ctrl Enter finishes a segment.', 'Sources → Search inside sources finds words in the text of your PDFs, archive photo transcriptions and interview transcripts, and opens the page. Scanned pages and photos can now be read on this computer (Read the text), with nothing sent anywhere.', 'Sources → My library keeps sources and their notes in this browser so you can add them to any project. Submissions (on Project home and in the command search) tracks where each piece has gone, with follow-ups on the calendar.', 'Export → For a reviewer makes one web page anyone can comment on in a browser; Import a review puts their comments in your margin and their changes in as suggestions, even after you’ve kept writing.'],
@@ -9526,7 +9532,10 @@ const WHATS_NEW = {
 };
 const vcmp = (a, b) => { const x = String(a).replace(/^v/, '').split('.').map(Number), y = String(b).replace(/^v/, '').split('.').map(Number); for (let i = 0; i < 3; i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0 ? 1 : -1; } return 0; };
 function showWhatsNew(since) {
-  const vs = Object.keys(WHATS_NEW).filter(v => !since || vcmp(v, since) > 0).sort((a, b) => vcmp(b, a)).slice(0, 3);
+  // the newest versions, always reaching back to the feature release they patch (so 2.7.3 still shows what 2.7 brought)
+  const all = Object.keys(WHATS_NEW).filter(v => !since || vcmp(v, since) > 0).sort((a, b) => vcmp(b, a));
+  const minor = all.length ? all[0].split('.').slice(0, 2).join('.') + '.' : '';
+  const vs = all.filter((v, i) => i < 3 || v.startsWith(minor));
   if (!vs.length) vs.push(Object.keys(WHATS_NEW).sort((a, b) => vcmp(b, a))[0]);
   $('#wnTitle').textContent = since ? `What’s new in Anabasis ${APP_VERSION}` : 'What’s new';
   $('#wnBody').innerHTML = vs.map((v, i) => `${vs.length > 1 || i ? `<h4>${esc(v.replace(/\.0$/, ''))}</h4>` : ''}<ul>${WHATS_NEW[v].map(x => `<li>${esc(x)}</li>`).join('')}</ul>`).join('');
@@ -9773,6 +9782,8 @@ function claimIssues(p, c) {
   if (p.cites.some(id => !P.sources.some(s => s.id === id))) out.push('Cites a deleted source');
   return out;
 }
+/* the issues worth a line of their own: the status chip or menu already says “needs a source” or “contested” */
+const issExtra = x => x.iss.filter(i => !(i === 'Needs a source' && x.c.status === 'need') && !(i === 'Contested' && x.c.status === 'disp'));
 function setClaimStatus(id, st) {
   const c = clById(id); if (!c || !(st in CL_ST)) return;
   syncEditor(); c.status = st; c.modified = nowISO();
@@ -10990,7 +11001,7 @@ function renderResearch() {
   const J = fn => { rsEls.push(fn); return rsEls.length - 1; }; rsEls = [];
   $('#rmShow').checked = !PREFS.marksOff;
   // threads
-  $('#rsThreads').innerHTML = P.threads.length ? P.threads.map(t => { const n = here.filter(p => p.k === 'th' && p.ref === t.id).length, m = all.filter(p => p.k === 'th' && p.ref === t.id).length; return `<li class="rs-th" data-thid="${esc(t.id)}"><i class="th-dot" style="--c:${t.color}"></i><span class="t" data-j="${J(() => openDesk('threads', t.id))}" title="Read the thread">${esc(t.name)}<span class="muted small"> ${n} here · ${m} in all</span></span><button class="ghost small" data-a="prev" aria-label="Previous passage in ${esc(t.name)}" title="Previous passage">‹</button><button class="ghost small" data-a="next" aria-label="Next passage in ${esc(t.name)}" title="Next passage">›</button><button class="ghost small" data-a="eye" aria-pressed="${!t.hidden}" title="${t.hidden ? 'Show' : 'Hide'} this thread’s highlight">${t.hidden ? '◌' : '●'}</button></li>`; }).join('')
+  $('#rsThreads').innerHTML = P.threads.length ? P.threads.map(t => { const n = here.filter(p => p.k === 'th' && p.ref === t.id).length, m = all.filter(p => p.k === 'th' && p.ref === t.id).length; return `<li class="rs-th" data-thid="${esc(t.id)}"><i class="th-dot" style="--c:${t.color}"></i><span class="t" data-j="${J(() => openDesk('threads', t.id))}" title="Read the thread">${esc(t.name)}<span class="muted small"> ${n} here · ${m} in all</span></span><button class="ghost small" data-a="prev" aria-label="Previous passage in ${esc(t.name)}" title="Previous passage">‹</button><button class="ghost small" data-a="next" aria-label="Next passage in ${esc(t.name)}" title="Next passage">›</button><button class="ghost small" data-a="eye" aria-pressed="${!t.hidden}" title="${t.hidden ? 'Show' : 'Hide'} this thread’s highlight"><svg class="rs-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/>${t.hidden ? '<path d="M4 20 20 4"/>' : '<circle cx="12" cy="12" r="3"/>'}</svg></button></li>`; }).join('')
     : '<li class="muted small none">Threads follow a theme, an argument or a person through the piece. Select a passage, then <b>Mark → Add to thread</b>.</li>';
   // claims in this doc
   const cls = here.filter(p => p.k === 'cl').map(p => ({ p, c: clById(p.pid) || { status: 'open' } })).map(x => Object.assign(x, { iss: claimIssues(x.p, x.c) }));
@@ -10998,7 +11009,7 @@ function renderResearch() {
   $('#rsClaimSum').textContent = cls.length ? Object.entries(CL_ST).map(([k, v]) => by(k) ? `${by(k)} ${v.short}` : '').filter(Boolean).join(' · ') : '';
   const probs = cls.filter(x => x.iss.length);
   $('#rsClaimCount').textContent = probs.length || '';
-  $('#rsClaims').innerHTML = cls.length ? [...probs, ...cls.filter(x => !x.iss.length)].map(x => `<li data-j="${J(() => rmGo(x.p))}"><span><span class="cl-chip st-${x.c.status}">${CL_ST[x.c.status].short}</span> ${esc(x.p.text.length > 90 ? x.p.text.slice(0, 88) + '…' : x.p.text)}${x.iss.length ? `<br><span class="rs-iss small">${x.iss.map(esc).join(' · ')}</span>` : ''}</span><em>${x.p.cites.length}</em></li>`).join('')
+  $('#rsClaims').innerHTML = cls.length ? [...probs, ...cls.filter(x => !x.iss.length)].map(x => `<li data-j="${J(() => rmGo(x.p))}"><span><span class="cl-chip st-${x.c.status}">${CL_ST[x.c.status].short}</span> ${esc(x.p.text.length > 90 ? x.p.text.slice(0, 88) + '…' : x.p.text)}${issExtra(x).length ? `<br><span class="rs-iss small">${issExtra(x).map(esc).join(' · ')}</span>` : ''}</span><em>${x.p.cites.length}</em></li>`).join('')
     : '<li class="muted small none">Mark a sentence as a claim to track whether it’s supported, which sources back it, and whether it changed after you checked it.</li>';
   // review keys (whole project, open first by due date)
   const keys = all.filter(p => p.k === 'rv').map(p => ({ p, r: rvById(p.pid) })).filter(x => x.r && !x.r.done).sort((a, b) => (a.r.due || '9999').localeCompare(b.r.due || '9999'));
@@ -11590,7 +11601,7 @@ function deskClaims() {
     <select id="clDoc" aria-label="Document"><option value="">All documents</option>${docs.map(id => `<option value="${esc(id)}" ${id === fd ? 'selected' : ''}>${docT(id)}</option>`).join('')}</select></div>
     ${rows.length ? `<table class="cl-table"><thead><tr><th scope="col">Status</th><th scope="col">Claim</th><th scope="col">Sources</th><th scope="col">Note</th></tr></thead><tbody>${rows.map(x => `<tr class="${x.p.pid === deskSel ? 'hot' : ''}" data-pid="${esc(x.p.pid)}">
       <td><select data-cl="status" aria-label="Status">${Object.entries(CL_ST).map(([k, v]) => `<option value="${k}" ${k === x.c.status ? 'selected' : ''}>${v.label}</option>`).join('')}</select></td>
-      <td><a href="#" class="cl-text" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.p.text)}</a><div class="muted small">${docT(x.p.docId)}${x.c.checkedAt && x.c.status === 'ok' ? ' · checked ' + esc(relTime(x.c.checkedAt)) + (x.c.checkedBy ? ' by ' + esc(x.c.checkedBy) : '') : ''}</div>${x.iss.length ? `<div class="rs-iss small">${x.iss.map(esc).join(' · ')}</div>` : ''}</td>
+      <td><a href="#" class="cl-text" data-j="${DJ(e => { e.preventDefault(); rmGo(x.p); })}">${esc(x.p.text)}</a><div class="muted small">${docT(x.p.docId)}${x.c.checkedAt && x.c.status === 'ok' ? ' · checked ' + esc(relTime(x.c.checkedAt)) + (x.c.checkedBy ? ' by ' + esc(x.c.checkedBy) : '') : ''}</div>${issExtra(x).length ? `<div class="rs-iss small">${issExtra(x).map(esc).join(' · ')}</div>` : ''}</td>
       <td>${x.p.cites.length ? x.p.cites.map(id => { const s = P.sources.find(v => v.id === id), r = srcRating(id); return `<a href="#" class="cl-src" data-j="${DJ(e => { e.preventDefault(); if (s) openSource(id); })}">${esc(srcShort(s))}</a>${r ? ` <span class="rt rt-${rateTier(r)}">${esc(r)}</span>` : ''}`; }).join('<br>') : '<span class="muted small">none</span>'}</td>
       <td><textarea data-cl="note" rows="1" aria-label="Note" placeholder="What you checked, against what">${esc(x.c.note || '')}</textarea></td></tr>`).join('')}</tbody></table>`
       : `<div class="desk-empty"><p><b>${rmAll('cl').length ? 'No claims match.' : 'Nothing in the register yet.'}</b></p>${rmAll('cl').length ? '' : '<p>Select a factual sentence in a draft and choose <b>Mark → Claim</b> (Ctrl/Cmd+Alt+G, then C). Anabasis finds the citations inside it or right after it, warns when a claim has no source or leans only on low-rated ones, and notices if you edit a claim after marking it supported. The fact-check sheet turns the register into a checklist for you or an editor.</p>'}</div>`}
@@ -15008,6 +15019,7 @@ function subsSummary() {
 }
 function openSubs(focusId) { subsRender(); $('#subDlg').showModal(); if (focusId) setTimeout(() => $(`#subList [data-sub="${focusId}"] input`)?.focus(), 40); }
 function subsRender() {
+  $('#subCsv').disabled = !(P.subs || []).length;
   const S = subsOf().slice().sort((a, b) => (SUB_OPEN.has(b.status) - SUB_OPEN.has(a.status)) || (b.sent || b.created).localeCompare(a.sent || a.created));
   const sm = subsSummary(), cur = PREFS.currency || '$', today = todayKey();
   $('#subSum').innerHTML = sm.n ? `<b>${sm.out}</b> out · <b>${sm.acc}</b> accepted · ${sm.dec} declined${sm.fees ? ` · ${esc(cur)}${nf(sm.fees)} in accepted fees` : ''}${sm.next ? ` · next follow-up ${esc(fmtDay(calDate(subDue(sm.next))))}: ${esc(sm.next.outlet || 'untitled')}` : ''}` : 'Track where each piece has gone: pitches and submissions, editors, dates, fees. Follow-up dates show on the calendar.';
