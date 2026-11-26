@@ -153,8 +153,8 @@ The first search reads each PDF's text, which can take a moment for a large proj
 
 A project file holds the sources for that project. **Sources → My library** is a shelf that every project can use, kept in this browser.
 
-- **Save to library**, at the foot of a source, puts it on the shelf with its notes. **Save all** in My library shelves every source in the project.
-- In another project, open **My library**, search it, tick the sources you want and choose **Add**. Leave *Add their notes too* ticked to bring their notes as well. Sources already in the project are marked, so you don't add one twice.
+- **Save to library**, at the foot of a source, puts it on the shelf with its notes. **Save this project's sources** in My library shelves every source in the project.
+- In another project, open **My library**, search it, tick the sources you want and choose **Add to this project** (or **Add** on a single one). Leave *Add their notes too* ticked to bring their notes as well. Sources already in the project are marked, so you don't add one twice.
 - The shelf doesn't keep the same source twice. It matches by DOI, then ISBN, then title, year and first author, and saving a source again updates it and adds any new notes.
 - **Export** saves the whole shelf as a file, to keep or to take to another computer or browser; **Import** adds one in. The library is never sent anywhere, and it isn't in any project file unless you add sources to a project.
 
