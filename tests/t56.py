@@ -245,8 +245,12 @@ async def main():
         check('night inverts the PDF page', 'invert' in await pg.evaluate("getComputedStyle(document.querySelector('.rd-page canvas')).filter"))
         await pg.check('#rdViewPop [name=rdTheme][value=paper]'); await pg.keyboard.press('Escape')
         await pg.evaluate("goPage(2)"); await pg.wait_for_timeout(400)
+        try: await pg.wait_for_function("() => [...document.querySelectorAll('.rd-page[data-n=\"2\"] .textLayer span')].some(s => s.textContent.trim().length > 8)", timeout=15000)  # slower machines draw the text layer later
+        except Exception: pass
         await pg.evaluate("""() => { const sp = [...document.querySelectorAll('.rd-page[data-n="2"] .textLayer span')].filter(s => s.textContent.trim().length > 8)[0]; const r = document.createRange(); r.selectNodeContents(sp); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }"""); await pg.wait_for_timeout(300)
         await pg.click('#rdSelBar [data-c=b]'); await pg.wait_for_timeout(400)
+        try: await pg.wait_for_function("() => !!document.querySelector('.rd-page[data-n=\"2\"] .rd-hl.c-b')", timeout=5000)
+        except Exception: pass
         check('blue highlight drawn on the PDF page', await pg.evaluate("!!document.querySelector('.rd-page[data-n=\"2\"] .rd-hl.c-b')"))
         hb = await pg.evaluate("(() => { const q = document.querySelector('.rd-hl.c-b').getBoundingClientRect(); return [q.left + q.width / 2, q.top + q.height / 2]; })()")
         await pg.mouse.click(hb[0], hb[1]); await pg.wait_for_timeout(250)
