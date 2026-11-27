@@ -160,7 +160,7 @@ async def main():
         check('the reviewer copy has wide margins, “Review copy” and line numbering', 'margin:1in 2.4in 1in 1.25in' in html and 'Review copy' in html and 'cpLineNums()' in html)
         p = pathlib.Path(OUT) / 'review.html'; p.write_text(html, encoding='utf-8')
         p2 = await ctx.new_page(); p2.on('pageerror', lambda e: errs.append('review ' + str(e)))
-        await p2.goto(p.as_uri()); await p2.wait_for_function("document.querySelectorAll('.cp-ln').length > 0", timeout=60000); await p2.wait_for_timeout(500)
+        await p2.goto(p.as_uri()); await p2.wait_for_function("() => (document.querySelectorAll('.cp-ln').length > 0)", timeout=60000); await p2.wait_for_timeout(500)
         r = await p2.evaluate("() => { const pgs = [...document.querySelectorAll('.pagedjs_page')]; return { pages: pgs.length, per: pgs.map(p => [...p.querySelectorAll('.cp-ln')].map(x => +x.textContent)), left: [...document.querySelectorAll('.cp-ln')].every(x => x.getBoundingClientRect().right <= x.closest('.pagedjs_page').querySelector('.pagedjs_page_content').getBoundingClientRect().left) }; }")
         seq_ok = all(p == list(range(1, len(p) + 1)) for p in r['per'] if p)
         check('…every line is numbered, starting again on each page, in the margin', r['pages'] >= 2 and seq_ok and sum(len(p) for p in r['per']) > 60 and r['left'], {'pages': r['pages'], 'counts': [len(p) for p in r['per']], 'left': r['left']})

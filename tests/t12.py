@@ -97,7 +97,7 @@ async def main():
     html = await pg.evaluate("exportPagedPDF(curDoc())")
     open(OUT + '/paged.html','w').write(html)
     p2=await ctx.new_page(); p2.on('pageerror', lambda e: errs.append('paged '+str(e)))
-    await p2.goto(HTTP + 'paged.html'); await p2.wait_for_function("document.querySelectorAll('.pagedjs_page').length>0 && !!document.querySelector('.pagedjs_pages')", timeout=60000); await p2.wait_for_timeout(1500)
+    await p2.goto(HTTP + 'paged.html'); await p2.wait_for_function("() => (document.querySelectorAll('.pagedjs_page').length>0 && !!document.querySelector('.pagedjs_pages'))", timeout=60000); await p2.wait_for_timeout(1500)
     print('paged pages:', await p2.eval_on_selector_all('.pagedjs_page','e=>e.length'), '| footnotes:', await p2.eval_on_selector_all('.pagedjs_footnote_area .fn-note','e=>e.length'))
     await p2.pdf(path='ms-paged.pdf', prefer_css_page_size=True); await p2.close()
     # epub of manuscript

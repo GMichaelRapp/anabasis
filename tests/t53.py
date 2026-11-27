@@ -75,7 +75,7 @@ async def main():
         check('…half title, title page and a copyright page with the ISBN and publisher', 'class="bk-half"' in html and 'A town and its water' in html and 'ISBN 978-0-00-000000-0' in html and 'Published by Mesa Press' in html and 'Copyright ©' in html)
         check('…front matter, then numbered chapters, then back matter, each opening on a right-hand page', html.index('Acknowledgments</h1>') < html.index('Chapter 1') < html.index('Chapter 2') < html.index('A note on sources</h1>') and '.bk-sec{break-before:right}' in html)
         bp = await ctx.new_page(); await bp.set_content(html);
-        await bp.wait_for_function("document.querySelectorAll('.pagedjs_page').length > 0 && [...document.querySelectorAll('.pagedjs_page')].every(p => p.dataset.folio)", timeout=60000)
+        await bp.wait_for_function("() => (document.querySelectorAll('.pagedjs_page').length > 0 && [...document.querySelectorAll('.pagedjs_page')].every(p => p.dataset.folio))", timeout=60000)
         r = await bp.evaluate("""(() => { const pages = [...document.querySelectorAll('.pagedjs_page')]; const at = sel => { const e = document.querySelector(sel); const p = e && e.closest('.pagedjs_page'); return p ? p.dataset.folio : null; };
             return { n: pages.length, first: pages.slice(0, 3).map(p => p.dataset.folio), ack: at('.bk-fm h1'), ch1: at('.bk-ch h1'), toc: [...document.querySelectorAll('.bk-toc a')].map(a => [a.textContent, a.dataset.folio]),
               ch1page: (() => { const e = document.querySelector('.bk-ch h1'); return [...pages].indexOf(e.closest('.pagedjs_page')) % 2; })() }; })()""")

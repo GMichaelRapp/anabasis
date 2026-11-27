@@ -10,7 +10,7 @@ A security release: more layers between anything hostile and your work, and less
 
 ### Security
 - **Only Anabasis’s own scripts can run.** The content security policy no longer allows inline script: each of the page’s scripts is pinned by its SHA-256 hash when Anabasis is built, inline event handlers and `javascript:` links are refused, and the print frames load their scripts from addresses the app makes itself.
-- **Trusted Types** (Chrome and Edge): the browser refuses any HTML written into the page that hasn’t passed through Anabasis’s policy, which cleans it with DOMPurify, and refuses to turn any string into script.
+- **Trusted Types** (Chrome and Edge): the browser refuses any HTML written into the page that hasn’t passed through Anabasis’s policy, which cleans with DOMPurify anything that could carry script, and refuses to turn any string into script.
 - **Saved web pages lock themselves down too.** A web page, reviewer’s page, dashboard, comparison of drafts or fact-check sheet carries its own content security policy: it runs only the scripts written into it and loads nothing from the internet (a dashboard’s YouTube and Vimeo tiles excepted, now sandboxed).
 - **Locking covers everything the project keeps in this browser.** PDFs, ePubs and archive photos added to a locked project are encrypted with its password as well, and a GitHub token remembered while it’s open is too.
 - **A locked project hides itself when you step away** (after 15 minutes unless you choose otherwise), and **Lock now** hides it at once. Passwords need at least 10 characters, and the commonest are refused.

@@ -1,17 +1,18 @@
 """2.10.2 security: Trusted Types and the strict script policy, Work offline, the idle lock and password checks,
 encrypted PDFs, photos and GitHub token in a locked project, the public-repository guard, photos without their
 metadata, saved pages with their own policy, and refusing to run inside another site's page."""
-import asyncio, base64, io, json, re
+import asyncio, json
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from env import URL, HTTP
 from playwright.async_api import async_playwright
 
 
-def jpeg(orientation=1):
-    from PIL import Image
-    im = Image.new('RGB', (60, 40), (180, 40, 40)); ex = Image.Exif()
-    ex[0x010F] = 'CameraCo'; ex[0x0110] = 'Model X'; ex[0x0112] = orientation; ex[0x8825] = {1: 'N', 2: (35.0, 10.0, 5.0), 3: 'W', 4: (103.0, 12.0, 1.0)}
-    b = io.BytesIO(); im.save(b, 'JPEG', exif=ex.tobytes(), comment=b'secret comment'); return 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+# 60x40 JPEGs with GPS, camera make and model and a comment, upright (1) and marked as turned (6); made with Pillow
+JPEG = {1: '/9j/4AAQSkZJRgABAQAAAQABAAD/4QC+RXhpZgAATU0AKgAAAAgABAEPAAIAAAAJAAAAPgEQAAIAAAAIAAAASAESAAMAAAABAAEAAIglAAQAAAABAAAAUAAAAABDYW1lcmFDbwAATW9kZWwgWAAABAABAAIAAAACTgAAAAACAAUAAAADAAAAhgADAAIAAAACVwAAAAAEAAUAAAADAAAAngAAAAAAAAAjAAAAAQAAAAoAAAABAAAABQAAAAEAAABnAAAAAQAAAAwAAAABAAAAAQAAAAH//gAQc2VjcmV0IGNvbW1lbnT/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAoADwDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDkaKKK8o++CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//9k=',
+        6: '/9j/4AAQSkZJRgABAQAAAQABAAD/4QC+RXhpZgAATU0AKgAAAAgABAEPAAIAAAAJAAAAPgEQAAIAAAAIAAAASAESAAMAAAABAAYAAIglAAQAAAABAAAAUAAAAABDYW1lcmFDbwAATW9kZWwgWAAABAABAAIAAAACTgAAAAACAAUAAAADAAAAhgADAAIAAAACVwAAAAAEAAUAAAADAAAAngAAAAAAAAAjAAAAAQAAAAoAAAABAAAABQAAAAEAAABnAAAAAQAAAAwAAAABAAAAAQAAAAH//gAQc2VjcmV0IGNvbW1lbnT/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAoADwDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDkaKKK8o++CiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooA//9k='}
+
+
+def jpeg(orientation=1): return 'data:image/jpeg;base64,' + JPEG[orientation]
 
 
 async def main():
@@ -52,6 +53,14 @@ async def main():
         check('timers, eval and Function from strings are refused', r.get('timer') == 'refused' and ran[3] is None and fn == ['refused', 'refused'], [r.get('timer'), fn])
         check('the policy pins scripts by hash, with no unsafe-inline', "'unsafe-inline'" not in r['csp'].split('style-src')[0] and r['csp'].count("'sha256-") >= 3 and 'require-trusted-types-for' in r['csp'], r['csp'][:200])
         check('nothing ran', ran == [None, None, None, None], ran)
+
+        # ---- the quick path: only markup with nothing that could run skips the full cleaning
+        r = await pg.evaluate(r"""(() => { const bad = ['<img src=x onerror=alert(1)>', '<img/onerror=alert(1) src=x>', '<a href="java\tscript:alert(1)">', '<a href="JaVaScRiPt:x">',
+            '<a href="&#106;avascript:x">', '<a href="java&Tab;script:x">', '<iframe srcdoc="x">', '<SCRIPT>x</SCRIPT>', '< script>', '<svg><animate onbegin=x>', '<base href="//evil">',
+            '<meta http-equiv=refresh content="0;url=//evil">', '<form action=x>', '<object data=x>', '<embed src=x>', '<details open ontoggle=x>', '<a href="vbscript:x">', '<template><img src=x onerror=x></template>'];
+          const good = ['<li class="note" data-id="n1"><b>Plans &amp; politics</b> <span title="3 &lt;notes&gt;">3</span></li>', '<svg viewBox="0 0 24 24"><path d="M1 1"/></svg>', '<p>Upon reflection, the plan won.</p>'];
+          return { missed: bad.filter(h => !TT_RISKY.test(h)), slowed: good.filter(h => TT_RISKY.test(h)) }; })()""")
+        check('anything that could run takes the full cleaning; the interface\'s own markup doesn\'t need to', not r['missed'] and not r['slowed'], r)
 
         # ---- password strength
         r = await pg.evaluate("[pwWeak('short'), pwWeak('password123'), pwWeak('aaaaaaaaaaaa'), pwWeak('correct horse battery')]")

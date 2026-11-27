@@ -4219,7 +4219,14 @@ var TT_ON = false, TT_LIBS = new Set(), TT_AUDIT = null, TT_FRAME = null;
 var TT_WRAP = [[/^(tr)$/, '<table><tbody>', '</tbody></table>', 'tbody'], [/^(td|th)$/, '<table><tbody><tr>', '</tr></tbody></table>', 'tr'],
   [/^(thead|tbody|tfoot|caption|colgroup|col)$/, '<table>', '</table>', 'table'],
   [/^(path|g|circle|rect|line|polyline|polygon|ellipse|text|tspan|defs|use|marker|lineargradient|radialgradient|stop|clippath|mask|pattern|symbol)$/, '<svg>', '</svg>', 'svg']];
+/* Most writes are the interface's own markup, built with every value escaped. Cleaning them all with DOMPurify
+   (parse, walk, serialize, then parse again) slowed typing in big projects, so a write passes untouched when it
+   has nothing that could run: no script-bearing element, no event handler attribute, no javascript: address
+   (however spaced), no srcdoc, and no character reference that could spell one. Anything else is cleaned, and the
+   page's script policy still refuses inline handlers and javascript: links whatever gets through. */
+var TT_RISKY = /<\s*\/?\s*(script|iframe|frame|frameset|object|embed|applet|base|meta|link|form|template|noscript|portal|fencedframe|xmp|plaintext|noembed)\b|[\s"'\/]on[a-z]+\s*=|j[\s\0]*a[\s\0]*v[\s\0]*a[\s\0]*s[\s\0]*c[\s\0]*r[\s\0]*i[\s\0]*p[\s\0]*t[\s\0]*:|vbscript\s*:|srcdoc|&(?!(?:amp|lt|gt|quot|apos|nbsp|#39|#x27);)/i;
 function ttClean(h) {
+  if (!TT_RISKY.test(h)) return h;
   if (!ttClean.hooked) { // DOMPurify trims attribute values; a data- attribute may hold a space on purpose (the thin space in Special characters)
     DOMPurify.addHook('uponSanitizeAttribute', (node, d) => { if (/^data-/.test(d.attrName)) { const v = node.getAttribute(d.attrName); if (v !== null && v.trim() === d.attrValue) d.attrValue = v; } });
     ttClean.hooked = true;

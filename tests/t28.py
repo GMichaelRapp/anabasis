@@ -59,7 +59,7 @@ async def main():
         pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(URL); await pg.wait_for_timeout(1000)
         await pg.set_input_files('#fileOpen', path)
-        await pg.wait_for_function("P && P.title === 'Big book'", timeout=60000); await pg.wait_for_timeout(2500)
+        await pg.wait_for_function("() => (P && P.title === 'Big book')", timeout=60000); await pg.wait_for_timeout(2500)
         await pg.evaluate("""window.__lt = []; new PerformanceObserver(l => l.getEntries().forEach(e => window.__lt.push(e.duration))).observe({ type: 'longtask', buffered: false });""")
         for name, setup, sel in SCENARIOS:
             try:

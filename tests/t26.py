@@ -44,7 +44,7 @@ async def main():
         await pg.goto(URL); await pg.wait_for_timeout(1000)
         t = time.time()
         await pg.set_input_files('#fileOpen', path)
-        await pg.wait_for_function("P && P.title === 'Big book'", timeout=60000)
+        await pg.wait_for_function("() => (P && P.title === 'Big book')", timeout=60000)
         print('open (s)', round(time.time() - t, 2))
         await pg.wait_for_timeout(1500)
         res = await pg.evaluate("""(async()=>{

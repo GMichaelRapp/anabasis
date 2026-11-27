@@ -47,7 +47,7 @@ async def main():
     await pg.click('#btnIndexMgr'); await pg.click('#ixPreview'); await pg.wait_for_timeout(200); print('preview:', (await pg.inner_text('#ixPrev')).replace('\n',' | ')); await pg.screenshot(path='r2.png'); await pg.click('#ixManClose')
     # paged with index
     html=await pg.evaluate("exportPagedPDF(curDoc())"); open(OUT + '/paged2.html','w').write(html)
-    p2=await ctx.new_page(); await p2.goto(HTTP + 'paged2.html'); await p2.wait_for_function("document.querySelectorAll('.pagedjs_page').length>0 && document.querySelector('.ix-refs') && !document.querySelector('.ix-refs a')", timeout=60000)
+    p2=await ctx.new_page(); await p2.goto(HTTP + 'paged2.html'); await p2.wait_for_function("() => (document.querySelectorAll('.pagedjs_page').length>0 && document.querySelector('.ix-refs') && !document.querySelector('.ix-refs a'))", timeout=60000)
     print('paged index:', (await p2.inner_text('.ix-body')).replace('\n',' | ')); await p2.pdf(path='ix.pdf', prefer_css_page_size=True); await p2.close()
     # docx with index
     await pg.click('#btnExport')
