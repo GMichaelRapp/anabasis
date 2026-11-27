@@ -15983,7 +15983,7 @@ function deskRevision() {
     const q = v => `"${String(v).replace(/"/g, '""')}"`;
     download(fileSafe(P.title) + ' - revision.csv', '﻿' + [['Document', 'Words', 'Words a sentence', 'Variety', 'Long sentences', 'Passive per 1,000', 'Hedges per 1,000', 'Clichés', 'Adverbs per 1,000', 'Buried verbs', 'Grade level', 'Checklist'].map(q).join(','), ...rows.map(({ d, s, done }) => [d.title || 'Untitled', s.words, s.mean.toFixed(1), s.sd.toFixed(1), s.N.long, per(s.N.passive, s.words), per(s.N.hedge, s.words), s.N.cliche, per(s.N.adverb, s.words), s.N.nominal, s.grade.toFixed(1), `${done}/${REV_CHECKS.length}`].map(q).join(','))].join('\r\n'), 'text/csv');
   })}">CSV</button>`;
-  const table = rows.length ? `<table class="cl-table rev-table"><thead><tr><th scope="col">Document</th><th scope="col">Words</th><th scope="col" title="Average words a sentence, and how much they vary">Sentences</th><th scope="col">Long</th><th scope="col" title="Per 1,000 words">Passive</th><th scope="col" title="Per 1,000 words">Hedges</th><th scope="col">Clichés</th><th scope="col" title="Per 1,000 words">Adverbs</th><th scope="col" title="“The implementation of…”">Buried verbs</th><th scope="col" title="Flesch–Kincaid">Grade</th><th scope="col">Checklist</th></tr></thead><tbody>${rows.map(({ d, s, done }) => `<tr class="${d.id === deskSel ? 'on' : ''}" data-j="${DJ(() => { deskSel = d.id; renderDesk(); })}"><th scope="row">${esc(d.title || 'Untitled')}</th><td>${s.words.toLocaleString()}</td><td${flag(s.sd < 4 && s.sents > 8 ? 9 : 0, 9)}>${s.mean.toFixed(0)} <span class="muted">± ${s.sd.toFixed(0)}</span></td><td${flag(s.sents ? s.N.long / s.sents : 0, 0.15)}>${s.N.long}</td><td${flag(+per(s.N.passive, s.words), 8)}>${per(s.N.passive, s.words)}</td><td${flag(+per(s.N.hedge, s.words), 10)}>${per(s.N.hedge, s.words)}</td><td${flag(s.N.cliche, 3)}>${s.N.cliche}</td><td${flag(+per(s.N.adverb, s.words), 12)}>${per(s.N.adverb, s.words)}</td><td${flag(s.N.nominal, 5)}>${s.N.nominal}</td><td>${s.grade.toFixed(1)}</td><td><span class="rev-bar"><i style="width:${Math.round(done / REV_CHECKS.length * 100)}%"></i></span> ${done}/${REV_CHECKS.length}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No documents to revise yet.</p>';
+  const table = rows.length ? `<div class="rev-scroll"><table class="cl-table rev-table"><thead><tr><th scope="col">Document</th><th scope="col">Words</th><th scope="col" title="Average words a sentence, and how much they vary">Sentences</th><th scope="col">Long</th><th scope="col" title="Per 1,000 words">Passive</th><th scope="col" title="Per 1,000 words">Hedges</th><th scope="col">Clichés</th><th scope="col" title="Per 1,000 words">Adverbs</th><th scope="col" title="“The implementation of…”">Buried verbs</th><th scope="col" title="Flesch–Kincaid">Grade</th><th scope="col">Checklist</th></tr></thead><tbody>${rows.map(({ d, s, done }) => `<tr class="${d.id === deskSel ? 'on' : ''}" data-j="${DJ(() => { deskSel = d.id; renderDesk(); })}"><th scope="row">${esc(d.title || 'Untitled')}</th><td>${s.words.toLocaleString()}</td><td${flag(s.sd < 4 && s.sents > 8 ? 9 : 0, 9)}>${s.mean.toFixed(0)} <span class="muted">± ${s.sd.toFixed(0)}</span></td><td${flag(s.sents ? s.N.long / s.sents : 0, 0.15)}>${s.N.long}</td><td${flag(+per(s.N.passive, s.words), 8)}>${per(s.N.passive, s.words)}</td><td${flag(+per(s.N.hedge, s.words), 10)}>${per(s.N.hedge, s.words)}</td><td${flag(s.N.cliche, 3)}>${s.N.cliche}</td><td${flag(+per(s.N.adverb, s.words), 12)}>${per(s.N.adverb, s.words)}</td><td${flag(s.N.nominal, 5)}>${s.N.nominal}</td><td>${s.grade.toFixed(1)}</td><td><span class="rev-bar"><i style="width:${Math.round(done / REV_CHECKS.length * 100)}%"></i></span> ${done}/${REV_CHECKS.length}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted">No documents to revise yet.</p>';
   const d = sel && sel.d, R = (d && d.revision) || {};
   const list = d ? `<section class="rev-check"><h3>Revision checklist: ${esc(d.title || 'Untitled')}</h3><ul>${REV_CHECKS.map(([k, t]) => `<li><label><input type="checkbox" data-revk="${k}" ${R[k] ? 'checked' : ''}> ${esc(t)}${R[k] ? ` <span class="muted small">${esc(new Date(R[k] + 'T12:00').toLocaleDateString([], { month: 'short', day: 'numeric' }))}</span>` : ''}</label></li>`).join('')}</ul>${sel.s.pets.length ? `<p class="small muted">Words this chapter leans on: ${sel.s.pets.map(esc).join(', ')}.</p>` : ''}</section>` : '';
   $('#deskBody').innerHTML = `<div class="desk-main rev-main"><p class="small muted" style="margin:0 0 10px">Each chapter’s writing at a glance. A shaded number is worth a look, not a rule. Choose a row for its checklist; open it with the lens to see each finding in the text.</p>${table}${list}</div>`;
@@ -16041,7 +16041,7 @@ function bookHTML(B) {
     const raw = stripCp(d.html), h1 = /^\s*<h1[^>]*>([\s\S]*?)<\/h1>/.exec(raw), tt = h1 ? h1[1].replace(/<[^>]+>/g, '').trim() || d.title : d.title || 'Untitled';
     titles.push(tt);
     if (role === 'body') chN++;
-    html += `<div class="bk-sec ${cls} bk-s${i}${isFirstBody ? ' bk-first' : ''}" data-doc="${esc(d.id)}">${role === 'body' && B.chapterNums !== false ? `<p class="bk-chn">Chapter ${chN}</p>` : ''}<h1 class="chapter-title bk-h">${esc(tt)}</h1>${h1 ? raw.slice(h1[0].length) : raw}</div>`;
+    html += `<div class="bk-sec ${cls} bk-s${i}${isFirstBody ? ' bk-first' : ''}" data-doc="${esc(d.id)}">${role === 'body' && B.chapterNums !== false ? `<p class="bk-chn">Chapter ${chN}</p>` : ''}<h1 class="chapter-title bk-h${role === 'body' && B.chapterNums !== false ? ' bk-afterchn' : ''}">${esc(tt)}</h1>${h1 ? raw.slice(h1[0].length) : raw}</div>`;
   });
   const ms = { id: '__book', title: B.title || P.title, html, style: first.style, meta: Object.assign({}, first.meta, { showTitleBlock: false }), layout: Object.assign({}, first.layout, { pdfNotes: 'foot' }), target: 0, lang: first.lang || '' };
   const x = buildExport(ms, 'paged'), cs = docClassAndStyle(ms);
@@ -16053,8 +16053,9 @@ function bookHTML(B) {
   // ids for the contents, and the place where page numbers start again at 1
   const tmp = document.createElement('div'); tmp.innerHTML = x.body;
   $$('.bk-sec > h1.bk-h', tmp).forEach((h, i) => { h.id = 'bk-h' + i; });
+  $$('.bk-sec p', tmp).forEach(p => { const pr = p.previousElementSibling; if (pr && pr.tagName === 'P' && !pr.classList.contains('bk-chn') && !p.closest('blockquote,figure,nav,td,th')) p.classList.add('bk-ind'); });
   const W = t[2] + bl * 2, H = t[3] + bl * 2;
-  const font = { book: '"Source Serif 4","Source Serif Pro",Georgia,serif', times: '"Times New Roman",Times,serif', sans: '"Atkinson Hyperlegible","Helvetica Neue",Arial,sans-serif' }[B.font] || 'Georgia,serif';
+  const font = { book: '"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Charter,Georgia,serif', times: '"Times New Roman",Times,serif', sans: '"Atkinson Hyperlegible","Helvetica Neue",Arial,sans-serif' }[B.font] || 'Georgia,serif';
   const box = (pos, content) => `@${pos}{content:${content};font:9pt ${font};color:#222}`;
   const nCh = $$('.bk-sec', tmp).length;
   const perCh = [...Array(nCh)].map((_, i) => `.bk-s${i}{page:s${i}}@page s${i}:first{@top-left{content:none}@top-right{content:none}@bottom-left{content:none}@bottom-right{content:none}${box('bottom-center', 'var(--folio)')}}`).join('\n');
@@ -16069,7 +16070,10 @@ ${fmPages}
 html,body{margin:0;background:#fff;color:#000}
 article.docbody{--doc-font:${font}!important;--doc-size:${B.size}pt!important;--doc-lh:${B.lead}!important;max-width:none;padding:0;hyphens:auto;text-align:justify}
 .pagedjs_footnote_area{font-family:${font}}
-.docbody p{widows:2;orphans:2;margin:0}.docbody p + p{text-indent:1.5em}
+.docbody p{widows:2;orphans:2;margin:0}
+/* book paragraphs: the first after a heading flush left, the rest indented 1.5em (marked by class: Paged.js mishandles sibling selectors) */
+article.docbody p{text-indent:0!important}article.docbody p.bk-ind{text-indent:1.5em!important}
+article.docbody :is(.bk-copy,.bk-titlep,.bk-half,blockquote,figure,.refs,.end-sec,nav,.pagedjs_footnote_area) p,article.docbody p.bk-chn{text-indent:0!important}
 .docbody h1,.docbody h2,.docbody h3{break-after:avoid;text-align:left;hyphens:manual}
 .docbody figure,.docbody table,.docbody blockquote{break-inside:avoid}
 .docbody .fn-note{float:footnote;font-size:${Math.max(7.5, B.size - 2)}pt!important;line-height:1.3;text-indent:0;text-align:left;margin:0 0 2pt}
@@ -16081,7 +16085,7 @@ article.docbody{--doc-font:${font}!important;--doc-size:${B.size}pt!important;--
 .bk-copy{display:flex;flex-direction:column;justify-content:flex-end;height:${(t[3] - B.top - B.bottom - 0.3).toFixed(2)}in}.bk-copy p{font-size:8.5pt;line-height:1.45;margin:0 0 6pt;text-indent:0;text-align:left}
 .bk-toc{page:bare;break-before:right}.bk-toc .toc-title{text-align:center;font-size:1.4em;margin:1in 0 .4in}.bk-toc ol{list-style:none;padding:0}.bk-toc li{display:flex;margin:0 0 6pt;text-indent:0}.bk-toc li a{flex:1;color:inherit;text-decoration:none}.bk-toc li a::after{content:attr(data-folio);float:right}
 .bk-sec{${B.recto ? 'break-before:right' : 'break-before:page'}}
-.bk-chn{text-indent:0;margin:1.1in 0 0;font-size:.8em;letter-spacing:.14em;text-transform:uppercase;text-align:left}.bk-sec > .bk-chn + h1.bk-h{margin-top:.15in}
+.bk-chn{text-indent:0;margin:1.1in 0 0;font-size:.8em;letter-spacing:.14em;text-transform:uppercase;text-align:left}.bk-sec > h1.bk-h.bk-afterchn{margin-top:.15in}
 .bk-sec > h1.bk-h{string-set:chaptitle content(text);margin:1.2in 0 .5in;font-size:1.6em;text-align:left;font-weight:600}
 .docbody .refs,.docbody .end-sec{break-before:right}
 .docbody mark{background:#fde68a}
