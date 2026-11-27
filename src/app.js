@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.10.0';
+const APP_VERSION = '2.10.1';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -10351,6 +10351,8 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.10.1': ['A security fix: a project file made to attack Anabasis could run code when you opened it. Opening a file now checks everything that goes into the interface. Your own projects aren’t changed.',
+    'The reader’s side panel keeps its tabs in a tidy grid, LaTeX export writes backslashes correctly, and the README, wiki and screenshots are up to date.'],
   '2.10.0': ['The reader opens ePubs (DRM-free ones), with a quote’s printed page when the book marks its pages, or its chapter and paragraph when it doesn’t. Search inside sources reads them too.',
     'Beside the page (☰): the contents, thumbnails of a PDF’s pages, your highlights, every match for Find with the words around it, and a reading list that shows how far you’ve got. Each PDF or book reopens where you left off.',
     'Highlight in four colors without making a note; click one to recolor it, note it or put it in the draft. List them, filter by color, download them as Markdown, or make them all quote notes at once.',

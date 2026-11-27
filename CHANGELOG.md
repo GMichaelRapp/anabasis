@@ -4,10 +4,16 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.10.1] — 2026-11-27
+
 ### Security
 - **A crafted project file could run script.** Ids, the references to them, colors, kinds and statuses in a project file were written into the interface without being checked, so a file made to attack Anabasis (sent as a co-author’s copy, say) could run code when opened. Opening a project now holds those values to a safe shape; ids Anabasis makes are never changed. Found while reviewing GitHub’s CodeQL scan.
 - A footnote number read back from a page is treated as text, and HTML is read as text in an inert template, so nothing in it loads.
 - Messages between the main window and a pop-out window go only to Anabasis’s own origin when it’s served from a website, and each side checks where a message came from.
+
+### Changed
+- The reader’s side panel keeps its tabs in a grid instead of letting them wrap.
+- README, wiki, quick-start and screenshots brought up to date; US spelling throughout.
 
 ### Fixed
 - LaTeX export: a backslash in the text became `\textbackslash\{\}` instead of `\textbackslash{}`.
@@ -456,7 +462,8 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
-[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.0...HEAD
+[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.1...HEAD
+[2.10.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.1
 [2.10.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.0
 [2.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.9.0
 [2.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.8.0
