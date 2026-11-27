@@ -58,6 +58,8 @@ SUITES = {
     't51': 'the slush pile: cutting passages to it, deleted documents, searching it and putting pieces back',
     't52': 'special characters by name, contents and lists, paragraph and line numbers, the précis, editing marks',
     't53': 'the revision desk, a book for print, submission packages, a Zotero library file, reviewer marks, the faster citation engine',
+    't54': 'Socrates questions the draft, four more walks, new kinds of question, and remembers the questions you take',
+    't55': 'the Oracle on revision, editing marks, submissions and the calendar; check-in, wrap-up and what next; its manner; a script lint and a long conversation',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

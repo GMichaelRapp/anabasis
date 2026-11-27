@@ -176,6 +176,7 @@ section{padding:96px 0 0}
 /* new in 2.6 */
 #new .head{max-width:760px}
 .kicker{font:italic 600 18px/1.3 var(--display);color:var(--accent);margin-bottom:10px}
+.n26.gallery{grid-template-columns:repeat(3,1fr);gap:40px 28px}@media (max-width:980px){.n26.gallery{grid-template-columns:1fr 1fr}}@media (max-width:640px){.n26.gallery{grid-template-columns:1fr}}
 .n26{display:grid;grid-template-columns:repeat(2,1fr);gap:48px 36px;margin-top:48px}
 .n26 figure.lead{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,4fr);gap:36px;align-items:center}
 .n26 figure.lead figcaption{font-size:18px;margin-top:0}
@@ -275,7 +276,7 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
-      <a href="#new">New in 2.8</a>
+      <a href="#new">New in 2.9</a><a href="#showcase">Showcase</a>
       <a href="#route">What it does</a>
       <a href="#yours">Your work</a>
       <a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
@@ -311,21 +312,67 @@ section{padding:96px 0 0}
         <figcaption>The editor. Citations format as you type, and the notes and bibliography rebuild as you write.</figcaption>
       </figure>
 
-      <p class="new"><b>New in 2.8</b> <span>A revision pass for every chapter, the copyeditor’s editing marks, a print-ready book at a trim size, submission packages, contents and line numbers, the rhetorical précis, and a Zotero library that keeps itself current. <a href="#new">See what’s new</a></span></p>
+      <p class="new"><b>New in 2.9</b> <span>Socrates reads your draft and walks you through steelmanning, a pre-mortem and competing explanations; the Oracle starts your day where you left off and says what to work on next. <a href="#new">See what’s new</a></span></p>
     </div>
   </div>
 
   <section id="new" aria-labelledby="new-h">
     <div class="wrap">
       <div class="head">
-        <p class="kicker">New in version 2.8</p>
-        <h2 id="new-h">From draft to the finished thing</h2>
-        <p>Version 2.8 is about the last mile: revising chapter by chapter, taking an editor’s marks, and sending the work out as a print-ready book or a submission an editor can open, with contents, numbering and the characters scientific and academic writing needs.</p>
+        <p class="kicker">New in version 2.9</p>
+        <h2 id="new-h">Better questions, and a better day</h2>
+        <p>Socrates now reads your draft for the places that need a question and walks you through four more methods. The Oracle knows where the project stands, starts your day where you left off, and ends it in the journal. Still no AI, and nothing online.</p>
       </div>
       <div class="n26">
         <figure class="lead">
+          <div class="frame"><img src="img/scan-detail.png" loading="lazy" width="1100" height="688" alt="Socrates’ Question the draft: five places in a chapter worth a question, a sweeping word, a claim of cause, an unnamed authority, a fact without a source and a hedged claim, each with buttons for questions about it."></div>
+          <figcaption><b>Socrates reads your draft</b>Socrates → Question the draft.<span>He reads a chapter, or the whole book, for the places a careful reader will stop: claims of cause, sweeping words, certainty, unnamed authorities, facts in a paragraph with no citation, hedges and round numbers. Each comes with questions that suit it, about that sentence; or examine it, or go to it. A pattern, not a verdict.</span></figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/steelman-detail.png" loading="lazy" width="1100" height="688" alt="Steelman the other side: Socrates asks who disagrees, the writer makes their case, and Socrates offers a passage from the project that bears on it."></div>
+          <figcaption><b>Steelman the other side.</b> State the best opposing case before you answer it: who disagrees, their case at its strongest, what you concede, and your position now. One of four new walks, with a pre-mortem and defining your terms.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/ach-detail.png" loading="lazy" width="1100" height="688" alt="Competing explanations: three explanations for why the army turned north, weighed against three pieces of evidence, with the one with least evidence against it ranked first."></div>
+          <figcaption><b>Competing explanations.</b> The intelligence analyst’s method: every explanation against every piece of evidence, and the one with the least evidence against it leads. Evidence that fits everything is pointed out.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/checkin-detail.png" loading="lazy" width="1100" height="688" alt="The Oracle’s check-in: what was logged yesterday, what’s coming up, next steps and open questions, with a button for what to work on first."></div>
+          <figcaption><b>A check-in that remembers.</b> The Oracle starts from what you did last time and meant to do first, then what’s coming up and what an editor left you. Ask what to work on next for the most pressing three.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/wrap-detail.png" loading="lazy" width="1100" height="688" alt="The Oracle’s wrap-up: what was done, what’s still open and the first thing next time, filed in the journal, and a maxim from Delphi."></div>
+          <figcaption><b>Wrap up the day.</b> What you got done, what’s left and the first thing next time go into the journal, for tomorrow’s check-in. Its manner is yours to set: gentle, plain or blunt.</figcaption>
+        </figure>
+      </div>
+      <ul class="also26">
+        <li><h3>Pre-mortem</h3><p>Imagine the piece failed, say why, and see the warnings your project already shows.</p></li>
+        <li><h3>Define your terms</h3><p>Pin a word down, then see every place you already use it.</p></li>
+        <li><h3>111 new questions</h3><p>Ethics, method, policy, the scholarly conversation, and scene and character: 475 in all.</p></li>
+        <li><h3>What to work on next</h3><p>Ask the Oracle, and it lists deadlines, follow-ups, an editor’s queries and open steps, most pressing first.</p></li>
+        <li><h3>Socrates remembers</h3><p>Questions you take aren’t dealt again, and an old one still open comes back.</p></li>
+        <li><h3>Install it as an app</h3><p>Its own window and icon, and it works offline: Settings → This browser in the hosted copy.</p></li>
+      </ul>
+      <p class="since">The 2.7 and 2.8 features are in the showcase below. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
+      <div class="n26-links">
+        <a class="btn primary" href="app/">Try 2.9 in your browser</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki">Read the guide</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase" aria-labelledby="show-h">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">Showcase</p>
+        <h2 id="show-h">What came before 2.9</h2>
+        <p>Every feature from the last two releases, as it looks in the app: from finishing a book to working in other languages.</p>
+      </div>
+      <div class="n26 gallery">
+        <figure>
           <div class="frame"><img src="img/revision-detail.png" loading="lazy" width="1100" height="688" alt="Research desk, Revision: three chapters in a table with words, sentence length, long sentences, passive voice, hedges, clichés, adverbs, buried verbs and grade level, a few numbers shaded, and the revision checklist for the selected chapter below."></div>
-          <figcaption><b>A revision pass</b>Research desk → Revision.<span>Every chapter side by side: sentence length and variety, passive voice and hedges per thousand words, clichés, adverbs, buried verbs and grade level, with the numbers worth a look shaded. Each chapter has a revision checklist, dated as you tick it, and opens with the revision lens on, which now also finds clichés, same-length runs, pet words, adverbs and buried verbs.</span></figcaption>
+          <figcaption><b>A revision pass.</b> Every chapter side by side: sentence length and variety, passive voice and hedges per thousand words, clichés, adverbs, buried verbs and grade level, with the numbers worth a look shaded. Each chapter has a revision checklist, dated as you tick it, and opens with the revision lens on, which now also finds clichés, same-length runs, pet words, adverbs and buried verbs.</figcaption>
         </figure>
         <figure>
           <div class="frame"><img src="img/marks-detail.png" loading="lazy" width="1100" height="688" alt="A chapter with four editing marks (a query to the author, a replacement, a deletion and a check), listed in the Outline tab, and the query open with a box for the author’s answer."></div>
@@ -343,20 +390,34 @@ section{padding:96px 0 0}
           <div class="frame"><img src="img/precis-detail.png" loading="lazy" width="1100" height="688" alt="The Write a précis window: the claim, how it is developed, the purpose and the audience filled in for a book by John W. I. Lee, and the four-sentence précis read back below."></div>
           <figcaption><b>The rhetorical précis.</b> Four sentences on what a source claims, how, why and for whom, built a part at a time and kept as a note that feeds the annotated bibliography.</figcaption>
         </figure>
-      </div>
-      <ul class="also26">
-        <li><h3>Characters for science</h3><p>Math, logic and sets, superscripts and subscripts, units and scholarly marks, found by name: type “integral” and press Enter.</p></li>
-        <li><h3>Zotero, kept current</h3><p>Follow the library file Better BibTeX keeps up to date; new and changed references come in by themselves. Nothing goes online.</p></li>
-        <li><h3>A revision checklist</h3><p>Nine checks for each chapter, from the argument on page one to reading it aloud, dated as you go.</p></li>
-        <li><h3>Contents and numbering</h3><p>A contents and lists of figures, tables or equations that fill themselves in, and line and paragraph numbers in the page, PDF and Word.</p></li>
-        <li><h3>A quicker start</h3><p>The citation engine is built after the window appears, and in about half the time.</p></li>
-        <li><h3>Marks from reviewers</h3><p>The page you send a reviewer has the editing marks too, and they come back into your draft under the reviewer’s name.</p></li>
-      </ul>
-      <p class="since">Still new from 2.7: writing and citing in 27 languages, a translation workspace, search inside every PDF and transcript, reviews from anyone in a browser, my library and submissions. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
-      <div class="n26-links">
-        <a class="btn primary" href="app/">Try 2.8 in your browser</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki">Read the guide</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
+        <figure>
+          <div class="frame"><img src="img/contents-detail.png" loading="lazy" width="1100" height="688" alt="A chapter with a contents list under its title, line numbers down the left margin and paragraph numbers on the right."></div>
+          <figcaption><b>Contents and numbering.</b> A contents, list of figures, tables or equations that fills itself in, and line and paragraph numbers in the page, PDF and Word.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/translate-detail.png" loading="lazy" width="1100" height="688" alt="The translation workspace: three segments of Xenophon’s Greek, each with its transliteration and a box for the English, two done, and the glossary term ἐπιμελητής shown with its rendering, quartermaster."></div>
+          <figcaption><b>A translation workspace.</b> Paste an original and translate it a paragraph or a sentence at a time, beside it, with its transliteration underneath. The renderings in your glossary are shown for each segment and checked as you type: green when you follow them, red when you’ve used one you decided against. ⌘/Ctrl Enter finishes a segment and moves on. Finish with a document, or the original and your translation side by side.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/langs-detail.png" loading="lazy" width="1100" height="688" alt="A document in German behind the Transliterate window, which turns θάλαττα θάλαττα into thalatta thalatta by the Library of Congress table."></div>
+          <figcaption><b>27 languages.</b> Set a document’s language and spelling, quotation marks, word counts and citation terms follow it, with Arabic, Hebrew, Persian and Urdu right to left. Transliterate Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic by the standard tables.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/search-detail.png" loading="lazy" width="1100" height="688" alt="Search inside sources: the word railway found on page 2 of a PDF, in an archive photo’s transcription and in an interview transcript."></div>
+          <figcaption><b>Search inside sources.</b> The full text of every PDF, archive photo transcription and interview transcript, without minding capitals or accents. A hit opens the PDF at its page. Scanned pages are read on your computer first.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/review-detail.png" loading="lazy" width="1100" height="688" alt="A chapter after importing a review: a reviewer’s comment highlighted, and a suggested change from “nearly every halt” to “almost every halt”."></div>
+          <figcaption><b>Reviews from anyone.</b> Send one web page. The reviewer comments and suggests changes in any browser and sends back a small file; their notes land in your margin and as suggestions, even after you’ve kept writing.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/library-detail.png" loading="lazy" width="1100" height="688" alt="My library: four sources on the shelf, two already in this project, with their notes."></div>
+          <figcaption><b>My library.</b> Sources and their notes on a shelf in your browser, for every project. Add them to a new project in a click; the same book is never shelved twice.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/subs-detail.png" loading="lazy" width="1100" height="688" alt="Submissions: four pieces with their outlets, editors, dates sent, status, follow-ups and fees, and a summary above."></div>
+          <figcaption><b>Submissions.</b> Where each piece has gone, to which editor, its status and fee, with follow-ups on the calendar and in its .ics export.</figcaption>
+        </figure>
       </div>
     </div>
   </section>

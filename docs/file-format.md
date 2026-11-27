@@ -74,6 +74,7 @@ Format 2 is frozen for Anabasis 2.x. Every 2.x release opens every file written 
 | `notes` (2.8) | A précis is a note of `kind: "summary"` tagged `précis`, with `precis: { cred, genre, verb, thesis, how, method, purpose, aim, audience, tone }`, the parts its four sentences are made from; `body` holds the sentences as Markdown. |
 | `book` (2.8) | Book for print settings: `{ trim, font, size, lead, inside, outside, top, bottom, bleed, recto, heads, half, titlepage, copyright, contents, title, subtitle, author, publisher, year, isbn, edition, notice }`, margins in inches and the switches true or false. |
 | `zotero` (2.8) | The followed Zotero library file: `{ file (its name), read (when last read), modified (the file's own time, in milliseconds), count }`. The browser's permission to read the file is kept in browser storage, not here. A source that came from the file carries `zkey`, its citation key (or DOI or title key). |
+| `socq` (2.9) | Questions taken from Socrates: `{ id, q (the question as you saved it), st (the stem it came from), g (its kind), qid (the research question it became), docId, at, snooze? }`, the last 500. Socrates uses it not to deal a question twice and to bring back old ones still open. |
 
 Unknown fields are kept when Anabasis saves, so add-ons and future versions can store their own data.
 

@@ -20,7 +20,7 @@ Anabasis is a word processor for research writing that runs as a single web page
 
 - **[The research journal](Research-Journal)**: research design, hypotheses, the dated log, the search log, the twelve research-process prompts, and the research guide: stage guides, checklists, method guides and a glossary.
 - **[Literature grid and codes](Literature-Grid-and-Codes)**: your sources against your questions and themes, and qualitative coding with a codebook.
-- **[Socrates](Socrates)**: a deck of 364 questions to start from, and Examine a claim, a short walk through the Socratic method.
+- **[Socrates](Socrates)**: 475 questions to start from, a reading of your draft for the places that need one, and five walks: examine a claim, steelman, pre-mortem, competing explanations and define your terms.
 - **[The Oracle](The-Oracle)**: a conversation partner in the manner of ELIZA that answers from your own project. No AI; nothing goes online.
 
 ## Finishing

@@ -17,6 +17,7 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody, inc
 - **The slush pile** (passages you cut and documents you delete) is kept in the project file, like the documents themselves, and is never included in an export.
 - **A followed Zotero library** is a file on your computer that Zotero (with Better BibTeX) keeps up to date. Anabasis reads it in the page; it never talks to Zotero or to zotero.org. The project file keeps the file's name and when it was read. In Chrome and Edge, the browser's permission to re-read that one file is kept in the same browser storage, and removing the link (or clearing site data) forgets it.
 - **Book for print** and **submission packages** are made in the page: the book goes to your browser's print dialog, and the package is a .zip saved to your computer. Anonymizing for blind review happens before the file is written; the original document is not changed.
+- **Socrates and the Oracle** read only your project, in the page. The questions you take from Socrates are kept in the project file so it can bring back old ones; the Oracle's manner is kept in this browser's settings. Neither has any AI or goes online.
 - **Editing marks** carry the name you give in Settings, so an author can see who made each mark. Exports leave the marks out.
 - **The calendar** is kept in the project file. **Export .ics** writes a file to your computer for you to import into a calendar app; Anabasis doesn’t connect to Google, Apple or Microsoft calendars.
 

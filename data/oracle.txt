@@ -63,6 +63,29 @@
 %syn num = number numbers figure figures percent percentage count data statistic statistics estimate
 %syn time = deadline late behind
 %syn hi = hello hi hey greetings morning afternoon evening
+%syn reject = rejected rejection rejections
+%syn pub = publish published publishing publisher press journal magazine outlet
+%syn open = opening beginning intro introduction lede
+%syn close = ending conclusion conclude finale
+%syn cutw = cut trim shorten tighten delete
+%syn long = long wordy bloated sprawling rambling
+%syn short = short thin slight skimpy
+%syn order = structure outline order organise organize sequence arrange
+%syn avoid = procrastinate procrastinating procrastination avoiding distracted distraction
+%syn read = reading reread rabbit
+%syn quote = quote quotes quotation quotations
+%syn revise = revise revising revision rewrite rewriting redraft
+%syn feedback = feedback comments critique criticism
+%syn reader = reader readers audience
+%syn voice = voice style tone register
+%syn title = title headline subtitle
+%syn perfect = perfect perfectionist perfectionism polish polishing
+%syn interview = interview interviewed interviewee interviewing
+%syn idea = idea ideas angle
+%syn theory = theory framework model concept
+%syn money = money paid pay fee fees advance
+%syn translation = translate translating translation translator
+%syn data = data dataset chart charts graph map maps table
 
 @ [hi] | 0
 > *
@@ -346,7 +369,227 @@
 - We were talking about your work, not me. Where were we?
 - I’m a mirror with a good memory for your notes. What do you think?
 
+@ [reject] | 7
+> * [reject] *
+-[g] That stings, and it’s also ordinary: most good work is turned down somewhere first. Did they say why?
+-[b] It happens to everyone who sends work out. Did they say why, or is that a guess?
+- Did they say why, or are you guessing?
+- Was it the piece, or the fit with where you sent it?
+- Where does it go next? A rejection is also a list of places that are left.
+- Is there anything in their note you agree with?
+
+@ [pub] | 4
+> * [pub] *
+- What does this outlet publish that’s like your piece, and what’s unlike it?
+- Who reads it, and what do they already know?
+- What would their editor need to see in the first paragraph?
+- Is the piece finished, or are you hoping the outlet will make it finished?
+
+@ [open] | 5
+> * [open] *
+- What’s the first thing a reader needs, a fact, a scene or a question?
+- Could the piece start three paragraphs later?
+- What does your opening promise, and does the piece keep the promise?
+-[b] Most openings are throat-clearing. Which sentence is the real start?
+-[g] Openings are hard for everyone. What’s the sentence you’d most like to begin with, even if it feels too bold?
+
+@ [close] | 5
+> * [close] *
+- What should a reader think or do after the last line?
+- Does the ending answer the question the opening asked?
+- Are you summarising, or landing somewhere new?
+- What’s the last image, fact or line that would stay with a reader?
+
+@ [cutw] | 6
+> * [cutw] *
+- What does the piece lose if that goes? Be honest: maybe nothing.
+- Which part are you protecting because it was hard to write, not because the reader needs it?
+-[b] If you had to cut a tenth by tomorrow, where would the knife go first?
+-[g] Cutting is easier with a safety net. Move it to the slush pile, and see whether you miss it.
+- Is it too long, or too slow? They’re different problems.
+
+@ [long] | 4
+> * [long] *
+- Long for the reader, or long for the word count?
+- Where does the reader’s attention drop? That’s where to start.
+- Is it long because there’s too much, or because the order is wrong?
+
+@ [short] | 4
+> * [short] *
+- Thin on evidence, or on explanation?
+- What would a skeptical reader ask that the piece doesn’t answer yet?
+- Is it short, or just finished?
+
+@ [order] | 6
+> * [order] *
+- What does the reader need to know first for the rest to make sense?
+- If each section were one sentence, would the sentences make an argument in that order?
+- Is it in the order you found things, or the order a reader needs them?
+- Which section could move, and what would change if it did?
+- Try the Planning board: put each section on a card and shuffle them. Which order holds up?
+
+@ [avoid] | 7
+> * [avoid] *
+-[g] That’s human. What’s the smallest piece of it you could do before you stop for the day?
+-[b] What exactly are you avoiding? Name it.
+- What is it about the task that makes it easy to avoid?
+- Could you do a rough, bad version in fifteen minutes, just to get past it?
+- Is it the task itself, or what happens after it?
+
+@ [read] | 5
+> * [read] *
+- What question are you reading to answer? If you can’t say, it might be time to write.
+- What would you write if you had to stop reading today?
+- Is the next source going to change the argument, or only add a footnote?
+- How will you know when you’ve read enough?
+
+@ [quote] | 5
+> * [quote] *
+- Does the quotation say something only those words can say, or could you paraphrase it?
+- Have you checked it against the source, word for word?
+- What does the quotation do for the reader: evidence, voice or colour?
+- Who said it, and why would they say it that way?
+
+@ [revise] | 5
+> * [revise] *
+- What’s the one change that would make the most difference?
+- Are you revising the argument, or polishing sentences? Do the first one first.
+- Research desk → Revision shows each chapter side by side, with a checklist. Which chapter is furthest behind?
+- What did you learn writing the draft that the draft doesn’t know yet?
+
+@ [feedback] | 6
+> * [feedback] *
+- Which comment are you most tempted to ignore? That’s often the one to look at.
+- Do the comments agree with each other, or pull in different directions?
+- Which comments are about the piece, and which are about the piece they wish you’d written?
+-[g] Feedback can feel like a verdict. It’s usually a list of places a reader stumbled. Which one is easiest to fix first?
+-[b] Which comment is right, even if you don’t like it?
+
+@ [reader] | 6
+> * [reader] *
+- Who exactly is the reader: what do they know, and what do they want?
+- What does the reader need from this paragraph?
+- Where would a reader get lost, or bored?
+- What would the reader say back to you?
+
+@ [voice] | 4
+> * [voice] *
+- Whose voice is it: yours, your field’s, or a writer you admire?
+- Read a paragraph aloud. Where do you stumble?
+- Is the tone right for the reader, or right for you?
+
+@ [title] | 6
+> * [title] *
+- What would the reader search for to find this?
+- Does the title promise what the piece delivers?
+- Clever or clear? You can usually have one in the title and the other in the subtitle.
+
+@ [perfect] | 6
+> * [perfect] *
+-[g] Done and good often beats perfect and late. What would good enough look like here?
+-[b] Perfect is a way of not finishing. What would good enough look like?
+- Who would notice the difference between this and perfect?
+- What’s the cost of another week on it?
+
+@ [interview] | 8
+> * [interview] *
+- What do you need from them that no document can give you?
+- What would they not want to talk about, and how will you ask it anyway?
+- How will you check what they tell you?
+- Did they agree to be quoted by name? Is that written down?
+
+@ [idea] | 8
+> * [idea] *
+- Write it down before it goes. Say idea: and I’ll keep it.
+- Is it new, or new to you? Who else has had it?
+- What would have to be true for it to work?
+
+@ [theory] | 4
+> * [theory] *
+- What does the theory let you see that you couldn’t see without it?
+- What does it make you ignore?
+- Is it doing work in the argument, or decorating it?
+- Who uses it differently, and why?
+
+@ [money] | 3
+> * [money] *
+- Is the fee worth the time, honestly counted?
+- Have you asked for what the work is worth?
+- What’s the work that pays, and the work that matters? Is it the same work?
+
+@ [translation] | 4
+> * [translation] *
+- What does the original say that English can’t quite carry?
+- Is the word a technical term, or an ordinary one in its time?
+- Have you kept the same rendering throughout? The glossary will tell you.
+
+@ [data] | 4
+> * [data] *
+- What’s the one thing the reader should see in it?
+- Who collected the data, how, and for what?
+- What’s missing from the data, and does the chart hide that?
+- Compared with what? A number alone means little.
+
+@ editor editors | 6
+> * my editor *
+- What does your editor want that you haven’t given them yet?
+- Which of their marks do you disagree with, and why?
+- Ask me “any queries from my editor?” and I’ll list the marks still open.
+> *
+- What did the editor ask for?
+- Which of their changes would you fight for, and which can go?
+
+@ chapter chapters | 3
+> * this chapter *
+- What does this chapter do that no other chapter does?
+- If the chapter had to lose a section, which would go?
+> *
+- Which chapter is weakest, and why? Ask me “which chapter is weakest?” and I’ll look.
+
+@ paragraph paragraphs | 3
+> *
+- What’s the job of that paragraph, in one sentence?
+- Does its first sentence tell the reader what it’s about?
+- Could it be two paragraphs, or half of one?
+
+@ sentence sentences | 2
+> *
+- Read it aloud. Where do you run out of breath?
+- What’s the verb doing in it? Is there a stronger one?
+
+@ archive archives archival | 8
+> * archive *
+- What are you hoping the archive has, and what if it doesn’t?
+- Who catalogued it, and what did they think mattered?
+- What would be in the boxes nobody asks for?
+
+@ deadline deadlines | 7
+> * deadline *
+-[g] Deadlines are easier in small pieces. What’s due first, and what’s the smallest step toward it?
+-[b] How many days, and how many words? Do the arithmetic.
+- What can you hand in rough and still keep the argument?
+- Is it a real deadline, or one you set yourself?
+- Ask me “what’s coming up?” and I’ll list what’s due this week.
+
+@ submit submitted submission submissions pitch pitched | 5
+> * pitch *
+- What’s the story in one sentence, and why now?
+- Why are you the person to write it?
+> *
+- What’s out, and what’s due to be followed up? Ask me “what’s out on submission?”
+- Where will it go next if this one says no?
+
+@ lonely alone isolated | 6
+> *
+- Writing is lonely work. Who could you send a page to this week, just to have another reader?
+- Is there someone you could talk this through with, besides me?
+- What would it take to have a reader for the next draft?
+
 @ none
+-[g] {Take your time. What else is on your mind about it?|There’s no rush. Go on.}
+-[g] {That sounds like it matters to you. Why?|What’s underneath that, do you think?}
+-[b] {So what?|And?|Meaning what, exactly?}
+-[b] {Say it plainer.|In one sentence: what’s the point?}
 - {Go on.|Keep going.|And then?}
 - {Say more about that.|Tell me more.|Go on: what else?}
 - {What makes you say that?|What makes you think so?|Where does that come from?}

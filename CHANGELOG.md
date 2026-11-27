@@ -4,6 +4,31 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.9.0] — 2026-11-26
+
+### Added
+- **Socrates: Question the draft.** Reads the document, or every chapter, for places worth a question: claims of cause (*led to*, *caused*, *because of*), sweeping words (*always*, *never*, *everyone*), certainty (*clearly*, *obviously*, *proves*), unnamed authorities (*some historians say*, *studies show*), facts in a paragraph with no citation, hedged claims and round numbers. One finding a sentence, with the others noted, shaded in the page while the list is open. **Questions about it** deals questions of the kind that suits the finding; **Examine it** starts Examine a claim; **Go to it** selects the sentence.
+- **Four more walks with Socrates**, each ending in a summary for the journal:
+  - **Steelman the other side**: your position, who disagrees most seriously, their case at its strongest, a passage from your project that bears on it, what you concede, your answer and your position now. Their case can be kept as a note tagged *counterargument*.
+  - **Pre-mortem**: imagine the piece failed and say why, three ways, then see the warnings your project already shows (claims without sources, contested claims, TKs, unanswered queries, weak sources, falling behind) and choose a first step, which can go on your next steps.
+  - **Competing explanations**: Heuer's analysis of competing hypotheses. Explanations and evidence, a grid of consistent and inconsistent, weighed so the explanation with the least evidence against it leads; evidence that fits everything is pointed out. The explanations can become hypotheses in the journal.
+  - **Define your terms**: a definition, an example that counts and one that doesn't, then every place you already use the word, and a final definition kept as a note.
+- **111 new questions in five new kinds**: ethics, harm and responsibility; method and research design; policy and recommendations; the scholarly conversation; and scene, character and story. 475 questions in 24 kinds. White papers and briefs lean toward policy, narratives toward scene, investigations toward ethics, theses toward method and the scholarly conversation.
+- **Socrates remembers** the questions you take (kept in the project file), doesn't deal them again, and brings an old one still open back under *From before*, with **Answer it**, **Examine it** and **Not now**.
+- **The Oracle knows the project as it stands**: “what should I work on next?” (overdue chapters, follow-ups, an editor's queries, review keys, your next steps, claims without sources, TKs, the least revised chapter, most pressing first), “which chapter is weakest?”, “any queries from my editor?”, “what's out on submission?” and “what's coming up?”.
+- **Starting and ending the day**: the check-in starts from what you logged last time and meant to do first, and adds what's coming up, open editing marks and an old question from Socrates. **Wrap up** asks what you got done, what's left and the first thing next time, and files them in the journal.
+- **The Oracle's manner**: gentle, plain or blunt, in Settings or by telling it (“be blunt”). Gentle and blunt replies come first in that manner.
+- **A bigger script**: 30 new subjects (openings, endings, cutting, length, structure, rejection, publishing, feedback, the reader, voice, titles, perfectionism, procrastination, reading too long, interviews, archives, quotations, translation, data, theory, money, deadlines, submissions, editors and more), and the Oracle hands **steelman:**, **pre-mortem**, **competing explanations:** and **define:** to Socrates.
+
+- **Install as an app** from inside Anabasis: in the hosted copy, Settings → This browser → **Install Anabasis** (Chrome and Edge), or the steps for Safari and iPhone. It opens in its own window with a Dock or Start menu icon, and works offline. The downloaded file explains that browsers install apps only from a website, and links to the hosted copy.
+
+### Changed
+- A design pass: the Revision table scrolls sideways on a phone instead of breaking into unlabelled numbers; line and paragraph numbers step aside on a phone, where there's no margin for them (they still go into every export); the special-characters palette fits a phone screen; the Oracle's message box sits clear of the Writing button on a phone; weighed evidence in Competing explanations is shown as C and I rather than menus; Settings' tick boxes wrap their notes neatly.
+- The Oracle's quick buttons are **Check in**, **What next?**, **Coming up**, **Argue the other side**, **Wrap up** and **Help**.
+- “Done for today” is now the three-question wrap-up.
+
+### Fixed
+- The Oracle could mistake a short word for a longer one with the same stem (“like” for “likely”, “shower” corrected to “showed”), and answered “my title is boring” as a mood rather than a writing problem.
 ## [2.8.0] — 2026-11-26
 
 ### Added

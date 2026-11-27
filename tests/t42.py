@@ -25,7 +25,7 @@ async def main():
 
         # ---- the deck itself
         deck = await pg.evaluate("() => socData().map(g => ({ id: g.id, label: g.label, suits: g.suits, n: g.stems.length, bad: g.stems.filter(s => !/[?.][”]?$/.test(s) || (s.match(/___/g) || []).length > 2) }))")
-        check('Socrates has 19 kinds of question and 364 stems', len(deck) == 19 and sum(g['n'] for g in deck) == 364, [(g['id'], g['n']) for g in deck])
+        check('Socrates has 24 kinds of question and 475 stems', len(deck) == 24 and sum(g['n'] for g in deck) == 475, [(g['id'], g['n']) for g in deck])
         check('every stem ends as a question or sentence and has at most two blanks', all(not g['bad'] for g in deck), [g['bad'] for g in deck if g['bad']])
         check('every kind says which selections it suits', all(g['suits'] and all(x in {'term', 'claim', 'number', 'source', 'person', 'event', 'none'} for x in g['suits']) for g in deck))
 
@@ -75,7 +75,7 @@ async def main():
         await pg.evaluate("() => { getSelection().removeAllRanges(); savedRange = null; switchTab('research'); }")
         await pg.click('#rsSoc'); await pg.wait_for_timeout(250)
         mx = await pg.evaluate("() => ({ about: $('#socAbout').value, kind: socKindNow, foot: $('#socFoot').textContent, n: $$('#socCards li').length })")
-        check('with nothing selected Socrates deals a mix of kinds', mx['about'] == '' and mx['kind'] == 'none' and mx['n'] == 3 and 'a mix of kinds' in mx['foot'] and '364 questions in 19 kinds' in mx['foot'], mx)
+        check('with nothing selected Socrates deals a mix of kinds', mx['about'] == '' and mx['kind'] == 'none' and mx['n'] == 3 and 'a mix of kinds' in mx['foot'] and '475 questions in 24 kinds' in mx['foot'], mx)
         noblank = await pg.evaluate("() => { let n = 0; for (let i = 0; i < 20; i++) { socShuffle(); n += socDeal.filter(d => d.s.includes('___')).length; } return n; }")
         check('with nothing selected, most questions stand on their own instead of leaving a blank', noblank <= 20, noblank)
         await pg.select_option('#socKind', 'clarify'); await pg.wait_for_timeout(100)

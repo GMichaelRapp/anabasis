@@ -409,3 +409,124 @@ If I explain ___ out loud to an empty room, where do I trip?
 What if the gap is the finding: what does it mean that ___ can’t be found?
 Is it time to narrow the question, or to stop and write what I have?
 What is the smallest true thing I can say about ___ right now?
+
+@ ethics | Ethics, harm and responsibility | claim person event none
+Who could be harmed by what I am about to publish?
+Have the people in this piece been told how they appear in it?
+Whose story am I telling, and did they ask me to?
+Is anything here legal but unfair?
+What am I obliged to say that I would rather not?
+What would I change if the people in it could read it tomorrow?
+Who could be harmed if I publish what I say about ___?
+Is the harm of telling ___ greater or less than the harm of keeping quiet?
+Have I described ___ in a way they would recognise as fair? {p}
+Did ___ agree to be named, quoted or photographed? Do they know how they appear here? {p}
+What would ___ say if they read this paragraph tomorrow? {p}
+Am I using ___’s suffering to make a point they never asked me to make? {p}
+Whose consent did ___ depend on, and was it given freely? {x}
+Who bore the cost of ___, and did they have a choice? {x}
+Is ___ wrong, or only unpleasant? What makes the difference? {c}
+What duty does ___ assume, and to whom is it owed? {c}
+Which rule would I want everyone to follow in a case like ___?
+Would I write about ___ the same way if they were my neighbour, my reader or my rival?
+What am I leaving out about ___ because it complicates the moral of the story?
+Who profits from my telling of ___: me, my sources, my readers, someone else?
+What do I owe the people in ___ who are no longer alive to answer? {x}
+Is my judgment of ___ fair to what people knew at the time, or only to what we know now?
+Have I mistaken what is legal about ___ for what is right, or the other way round?
+If ___ is true, what should someone do about it, and who?
+
+@ method | Method and research design | claim number source none
+Which result surprised me, and did I check it twice?
+What evidence did I stop collecting too early?
+Which of my findings rests on the smallest sample?
+Which limitation belongs in the text, not a footnote?
+What would someone need from my notes to repeat what I did?
+What method got me to ___, and would someone else using it reach the same place?
+What would I have to observe to show that ___ is false? {c}
+Is ___ something I measured, counted, read or inferred?
+What sample does ___ rest on, and how was it chosen?
+Which cases did I leave out of ___, and why?
+Could I have found ___ by chance? How would I know?
+What would a pilot study of ___ have looked like?
+How would I check ___ against a second kind of evidence: documents, numbers, interviews, the ground itself?
+What is the unit of analysis in ___: a person, a group, an event, a place, a year?
+What would I need to hold constant to compare ___ fairly?
+How did my questions shape the answers I got about ___?
+What is the gap between what I set out to study and ___?
+Could another researcher repeat what I did for ___ from my notes alone?
+What did I decide before I looked at the evidence, and what after?
+Where in ___ am I most likely to be fooling myself?
+What is the simplest test that could embarrass ___? {c}
+What limitations of ___ should go in the text, not a footnote?
+If I had twice the time, what would I do differently to establish ___?
+
+@ policy | Policy and recommendations | claim event none
+Who has to act on what I recommend, and can they?
+What is the cost of doing nothing?
+What can a decision-maker actually do on Monday morning?
+What did the last attempt at this get wrong?
+Who loses if my recommendation is adopted?
+Which recommendation would I drop if I could make only one?
+What exactly do I recommend about ___, and who has to act on it?
+What does ___ cost, who pays, and when?
+What has been tried before on ___, and why did it fail or work?
+What would success on ___ look like in a year? How would anyone know?
+Who loses if ___ is adopted, and what will they do about it?
+What is the least someone could do about ___ and still make a difference?
+What are the second-order effects of ___: what happens after the first thing happens?
+Which assumption about ___ would make my recommendation wrong if it changed? {c}
+Is ___ within the power of the person I am asking to act?
+What is the option I haven’t considered for ___, including doing nothing?
+How would an adversary exploit ___?
+What would I tell a decision-maker about ___ if I had thirty seconds?
+How confident am I in ___, and have I said so in words they will read the same way?
+What risk does ___ create that it doesn’t solve?
+What does the decision-maker already believe about ___, and how far am I asking them to move?
+Whose interests does the status quo on ___ serve?
+What would make me change my recommendation on ___?
+Is ___ a problem to solve, or a condition to manage?
+
+@ scholarship | The scholarly conversation | claim term source none
+Whose argument am I answering, in their own words?
+What does my work add that the last good book on this subject didn’t?
+Which debate in the field does this piece join?
+Who is the scholar I most need to convince?
+What is the newest work on this that I haven’t read yet?
+Who has written the standard account of ___, and where do I part from it?
+Am I disagreeing with {author} about ___, or extending {author}? {c}
+What would {author} say is missing from my account of ___?
+Which scholars would agree with ___, and which would push back? Have I named both?
+What is the debate about ___ really about, underneath the details?
+Where does ___ sit in the field: the centre, the edge, or a new place?
+What is the newest work on ___, and have I read it?
+Which classic text about ___ do I cite without having read closely?
+What does my account of ___ add that a reader couldn’t get from the existing literature?
+Am I attacking a straw version of the view on ___? Whose actual words am I answering?
+Which discipline would see ___ differently, and how?
+What question about ___ is the field not asking, and why not?
+Does ___ need a footnote, a paragraph, or a chapter to place it in the debate?
+How would I summarise the state of research on ___ in three sentences?
+What would make a specialist in ___ stop reading my argument?
+Which of my sources on ___ are primary, and which are other people’s readings?
+What is the oldest serious answer to ___, and is it really superseded?
+
+@ scene | Scene, character and story | person event none
+What did ___ want, at this moment, more than anything? {p}
+What did ___ see, hear and smell here? Do I know, or am I guessing? {x}
+What is ___ afraid of? {p}
+What did ___ do that surprised the people around them? {p}
+Where does the scene of ___ begin, and where should it end? {x}
+What is the one detail about ___ a reader will remember? Is it documented?
+Whose point of view am I telling ___ from, and why that one?
+What does ___ not know yet that the reader knows, or the other way round?
+What changes between the start and the end of ___? If nothing, is it a scene? {x}
+What did ___ say in their own words? Can I quote it rather than paraphrase? {p}
+Where is the tension in ___: who wants what, and what stands in the way?
+What is ___’s contradiction: the thing that makes them a person and not a type? {p}
+What time of day, season and weather was it during ___? Which source tells me? {x}
+What happened just before ___, and does the reader need it?
+Am I inventing ___’s thoughts, or does a source record them? {p}
+What would the opening line of the chapter on ___ be if it started in the middle of the action? {x}
+Which scene about ___ can I cut without losing the story?
+What does the setting of ___ add that a summary would lose? {x}

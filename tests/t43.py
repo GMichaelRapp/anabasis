@@ -45,7 +45,7 @@ async def main():
         check('your words are turned around: my → your, I am → you are, you → me', en['refl'] == 'your chapter and you are sure I saw me' or en['refl'] == 'your chapter and you are sure me saw you', en['refl'])
         check('{n.} keeps just the noun phrase', en['np'] == 'source', en['np'])
         g = en['g']
-        check('the highest-ranked keyword picks the reply', g['stuck'] == '[stuck]' and g['belief'] == '[belief]' and g['hedge'] == '[hedge]' and g['because'] == 'because' and g['know'] == 'know' and g['src'] == '[src]' and g['all'] == '[all]' and g['none'] is None, g)
+        check('the highest-ranked keyword picks the reply', g['stuck'] == '[stuck]' and g['belief'] == '[belief]' and g['hedge'] == '[hedge]' and g['because'] == 'because' and g['know'] == 'know' and g['src'] == 'archive archives archival' and g['all'] == '[all]' and g['none'] is None, g)
         rot = await pg.evaluate("() => { const a = orcReply('maybe it was the harvest').text, b = orcReply('maybe it was the harvest').text, c = orcReply('maybe it was the harvest').text; return [a, b, c]; }")
         check('saying the same thing again gets a different reply', len(set(rot)) == 3, rot)
         fill = await pg.evaluate("() => orcReply('I think the blockade caused the famine').text")
@@ -149,6 +149,7 @@ async def main():
         check('“done for today” asks what you did', 'what did you get done today' in a, a)
         a = await say('drafted the section on the passes')
         logged = await pg.evaluate("() => jr().log.some(e => e.kind === 'did' && e.text === 'drafted the section on the passes' && e.tags.includes('oracle'))")
+        a = await say('skip'); a = await say('skip')  # 2.9: what's left, and the first thing next time
         sign = await pg.evaluate("() => ORC.log[ORC.log.length - 1].html")
         check('…logs it in the journal', logged)
         check('…and signs off with a maxim carved at Delphi', 'orc-max' in sign and any(g in sign for g in ['Γνῶθι σεαυτόν', 'Μηδὲν ἄγαν', 'Ἐγγύα']), sign[:300])

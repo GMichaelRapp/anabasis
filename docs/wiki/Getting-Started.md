@@ -15,6 +15,16 @@ Current desktop **Chrome**, **Edge**, **Brave** or another Chromium browser work
 
 **Firefox** and **Safari** work too. Saving downloads a fresh copy of the project file each time, and a few highlights from the checks show only in their lists rather than in the text.
 
+### Installing it as an app
+
+The hosted copy, [zerohistory.net/anabasis/app](https://zerohistory.net/anabasis/app/), installs like an app, the way many web tools do. It then opens in its own window with an icon in your Dock, Start menu or app list, and works offline.
+
+- **Chrome or Edge**: choose the install icon at the right of the address bar, or **Settings → This browser → Install Anabasis** inside Anabasis.
+- **Safari on a Mac**: **File → Add to Dock**.
+- **iPhone or iPad**: **Share → Add to Home Screen**.
+
+The downloaded file can't be installed: browsers install apps only from a website. Your work moves between the two with **Save** and **Open**, since both use the same project file. Firefox doesn't install web apps.
+
 ### On a phone or tablet
 
 Open the hosted copy in Safari, tap **Share**, then **Add to Home Screen**. It then opens full screen, like an app, and works offline once it has loaded. Android browsers offer **Install app** in their menu. On a small screen the sidebar becomes a drawer behind **☰**, toolbar buttons that don't fit move into a **⋯** menu, and dialogs fill the screen. Everything is still there, but a computer is more comfortable for a long session.
