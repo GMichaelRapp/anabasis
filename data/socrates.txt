@@ -45,7 +45,7 @@ What evidence would I expect to find if ___ were false? Have I looked for that? 
 What evidence is missing that should exist? Why might it be missing?
 Is the absence of evidence for ___ meaningful here, or just a gap in the record?
 Would this evidence convince someone who starts out doubting ___?
-Am I quoting ___ in a way the author would recognise?
+Am I quoting ___ in a way the author would recognize?
 Does the evidence support the claim as I’ve worded it, or a weaker one?
 Which of my claims rests on a single source?
 What is the date of the evidence, and does it fit the date of the event?
@@ -169,7 +169,7 @@ How has this source been read by others? Am I reading it against the grain or wi
 If ___ is a web page, has it changed since I read it? Is there an archived copy?
 If ___ is an image or video, where and when was it really taken?
 What would the source’s critics say about its reliability?
-How much weight can this source bear: colour, corroboration, or the whole claim?
+How much weight can this source bear: color, corroboration, or the whole claim?
 
 @ causation | Causation | event claim
 Where in {doc} do I explain why ___ happened, and not only that it did? {x}
@@ -197,7 +197,7 @@ What happened before ___, and what came right after?
 Am I sure of the order? Which dates are firm, and which are estimates?
 What changed, and what stayed the same, between ___ and ___?
 When did ___ start? Is that when it became visible, or when it began? {x}
-When did people realise ___ was happening? How long after it began?
+When did people realize ___ was happening? How long after it began?
 Was the change sudden, gradual, or sudden after a long build-up?
 What was the turning point, and was it seen as one at the time?
 Which was faster, the event or the reaction to it?
@@ -305,7 +305,7 @@ What has ___ said before, on the record, that I can compare with now? {p}
 What can be seen from open sources: satellite imagery, social media, archived web pages?
 What can be confirmed by a second, independent source?
 Who else was in the room?
-Who has left the organisation, and what would they say now?
+Who has left the organization, and what would they say now?
 Who knows the most about ___ and has the least reason to lie?
 Who would be hurt if this were published? Is that harm justified?
 Have I put every serious allegation to the person it concerns, with time to reply?
@@ -419,7 +419,7 @@ What am I obliged to say that I would rather not?
 What would I change if the people in it could read it tomorrow?
 Who could be harmed if I publish what I say about ___?
 Is the harm of telling ___ greater or less than the harm of keeping quiet?
-Have I described ___ in a way they would recognise as fair? {p}
+Have I described ___ in a way they would recognize as fair? {p}
 Did ___ agree to be named, quoted or photographed? Do they know how they appear here? {p}
 What would ___ say if they read this paragraph tomorrow? {p}
 Am I using ___’s suffering to make a point they never asked me to make? {p}

@@ -71,7 +71,7 @@ async def main():
     sheet = sheet.resize((W // 2, (a.height + gap * 2) // 2), Image.LANCZOS)
     sheet.save(OUT / 'phone.png', optimize=True)
     for f in ('editor-light.png', 'editor-dark.png', 'research.png', 'journal.png', 'dashboard.png', 'split.png', 'equations.png'):
-        p = OUT / f; Image.open(p).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(p, optimize=True)
+        p = OUT / f; Image.open(p).convert('RGB').quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(p, optimize=True)
     print('wrote editor-light.png, editor-dark.png, research.png, journal.png, dashboard.png, split.png, equations.png, phone.png to', OUT.relative_to(ROOT))
 
 

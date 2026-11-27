@@ -159,7 +159,7 @@ async def main():
         if errs: sys.exit('page errors: ' + '; '.join(errs))
         try:  # shrink the files: interface screenshots need far fewer than 16 million colors
             from PIL import Image
-            for f in OUT.glob('*.png'): Image.open(f).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(f, optimize=True)
+            for f in OUT.glob('*.png'): Image.open(f).convert('RGB').quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(f, optimize=True)
         except ImportError: pass
         print('wrote', len(list(OUT.glob('*.png'))), 'screenshots to', OUT.relative_to(ROOT))
 

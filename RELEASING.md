@@ -27,7 +27,7 @@ The **CI** workflow runs on every push: it builds, runs every test suite in Chro
 
 1. Make sure CI is green on `main`.
 2. Set the version in `src/app.js` (`APP_VERSION`), following semver.
-3. In `CHANGELOG.md`, rename **Unreleased** to the version and date, for example `## [1.0.0] — 2026-12-01`, and start a fresh **Unreleased** section above it.
+3. In `CHANGELOG.md`, rename **Unreleased** to the version and date, for example `## [1.0.0] — 2026-12-01`, and start a fresh **Unreleased** section above it. At the bottom, add a link line for the version (`[1.0.0]: …/releases/tag/v1.0.0`) and point `[Unreleased]` at the new tag.
 4. Commit, tag and push:
 
    ```sh
@@ -50,4 +50,4 @@ If something goes wrong, delete the tag (`git push --delete origin v1.0.0` and `
 
 ## The product site
 
-zerohistory.net/anabasis/ is built by the zerohistory repo's Netlify site (`build-anabasis.sh` there): it downloads this repo's `main` and the latest release's `anabasis.html`, then runs `tools/site/build_web.py --base /anabasis/`, which puts the front page (`web/index.html`) at `/anabasis/`, the installable app at `/anabasis/app/` and the download at `/anabasis/anabasis.html`. The front page follows `main`; the app follows releases. A new release, or a change to `web/`, `tools/site/` or the screenshots, asks Netlify to rebuild through `.github/workflows/site.yml`, using the build hook stored in the repository secret `NETLIFY_BUILD_HOOK`. Without the secret, trigger a deploy from Netlify by hand.
+zerohistory.net/anabasis/ is built by the zerohistory repo’s Netlify site (`build-anabasis.sh` there): it downloads this repo’s `main` and the latest release’s `anabasis.html`, then runs `tools/site/build_web.py --base /anabasis/`, which puts the front page (`web/index.html`) at `/anabasis/`, the installable app at `/anabasis/app/` and the download at `/anabasis/anabasis.html`. The front page follows `main`; the app follows releases. A new release, or a change to `web/`, `tools/site/` or the screenshots, asks Netlify to rebuild through `.github/workflows/site.yml`, using the build hook stored in the repository secret `NETLIFY_BUILD_HOOK`. Without the secret, trigger a deploy from Netlify by hand.

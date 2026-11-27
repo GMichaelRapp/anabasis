@@ -23,89 +23,88 @@
 
 Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
 
-The whole app is a single HTML file of about 13 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+The whole app is a single HTML file of about 23 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
 
 ## What it does
 
 **Write and cite**
 - A word processor with headings, lists, tables, footnotes and figures, plus margin notes, focus mode and freewriting sprints.
-- Co-writing without a server: send a co-author or editor a copy, then take their changes back as suggestions to accept or reject, with anything you both changed shown side by side.
-- Cross-references to figures, tables, equations, headings and chapters that renumber themselves and become links in Word, PDF and e-books.
-- Credit lines and permission status for every figure and table, with a permissions log for your editor; a link check against the Wayback Machine that keeps archived copies of your web sources.
-- A PDF for reviewers with numbered lines, and Word in standard manuscript format for submissions.
-- **Reviews from anyone**: send a reviewer one web page they can comment on and suggest changes to in any browser, with nothing to install, then import their review: comments in your margin, changes as suggestions, placed correctly even after you've kept writing.
-- **Write in 27 languages**: spell-checking, quotation marks, citation terms, word counts and reading aloud follow the document's language, Arabic, Hebrew, Persian and Urdu run right to left, and a quotation can be marked in a language of its own.
-- Equations written in TeX, in a sentence or on their own line and numbered, drawn offline by MathJax. They go into Word as real, editable Word equations and come back from Word as TeX; LaTeX, Markdown and Pandoc keep the TeX.
 - Citations in 55 styles: Chicago (notes or author-date), APA, MLA, MHRA, Harvard, APSA, ASA, OSCOLA, Bluebook, AMA, Vancouver, CSE, IEEE, Nature and more, plus the [OSINT Style Guide](https://gmichaelrapp.github.io/OSINT_Cites/). Switch styles at any time and every citation reformats. *Ibid.*, short forms and the bibliography are handled for you.
-- Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero's CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating.
-- **Suggest mode** marks your edits for review, like tracked changes, and Word files carry them both ways: tracked changes and comments in, tracked changes and comments out.
-- **Pandoc / Quarto and LaTeX packages**: the text with citation keys, its .bib file and the style, ready for `pandoc --citeproc`, Overleaf or `latexmk`.
-- **Listen** reads the draft aloud, sentence by sentence, with the browser's own voices.
+- Add sources by DOI, ISBN or web address, or import BibTeX, RIS and Zotero’s CSL-JSON. Export them the same three ways, so nothing is locked in. Each source can carry an Admiralty reliability rating, and its type: primary, secondary or tertiary.
+- **Write in 27 languages**: spell-checking, quotation marks, citation terms, word counts and Listen follow the document’s language; Arabic, Hebrew, Persian and Urdu run right to left; and a quotation can be marked in a language of its own.
+- Equations written in TeX, in a sentence or on their own line and numbered, drawn offline by MathJax. They go into Word as real, editable Word equations and come back as TeX.
+- Cross-references to figures, tables, equations, headings and chapters that renumber themselves and become links in Word, PDF and e-books.
 - A binder of chapters and parts that compiles into a manuscript, with an index, front and back matter, and a chronology built from dated notes.
+- **Suggest mode** marks your edits for review, like tracked changes, and Word files carry tracked changes and comments both ways.
+- **Co-writing without a server**: send a co-author or editor a copy, then take their changes back as suggestions to accept or reject.
+- **Reviews from anyone**: send a reviewer one web page they can comment on in any browser, then import their comments into your margin and their changes as suggestions, placed correctly even after you’ve kept writing.
+- **Listen** reads the draft aloud, sentence by sentence, with the browser’s own voices.
+- Special characters for scientific and academic writing (math, logic, units, scholarly marks) found by name, and **copy citation** in any style.
 
-**Research**
-- Five example projects to learn from or build on: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece.
-- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A reader for PDFs and DRM-free ePubs sits beside the draft, or with **Take notes** fills the screen with a note pad beside it (quotes with their pages filled in), and a web clipper captures from other tabs.
-- **The reader**: contents and page thumbnails beside the page, highlights in four colours with no note needed (listed, filtered, exported as Markdown), quotes straight into the draft with their citation, reading aloud, every Find match in a list, paper, sepia and night, two pages side by side, and each PDF or book reopening where you left off, with a reading list that shows how far you've got. An ePub quote gets the printed page when the book marks its pages, or its chapter and paragraph.
-- Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
-- Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
-- **The Oracle**, a conversation partner beside the writing in the manner of ELIZA, the 1960s MIT chatbot: no AI, nothing online. It turns what you say into questions, answers from your own notes and sources ("what have I written about…", "how many claims need a source?"), files notes, questions and journal entries as you talk, argues the other side of a claim, and reads a selected passage back to you with questions. It starts the day where you left off and wraps it up into the journal, says what to work on next from your deadlines, follow-ups and an editor's queries, and knows where revision, editing marks and submissions stand. Its manner is yours to set: gentle, plain or blunt. It keeps track of the conversation: a “yes” or a “hmm” is answered against what it just asked, it notices when you're tired or repeating yourself, and it knows your sources' authors by name. It understands word endings, small typos and negation, answers long messages at their most telling sentence, points out related notes and sources (a word-weighted search of your project, built in the browser), and picks up from your last conversation if you saved it to the journal.
-- **Socrates** offers questions to start from when you're working alone: 475 question stems in 24 kinds (evidence, assumptions, alternatives, sources, causation, numbers, intelligence analysis, journalism, ethics, method, policy, the scholarly conversation, scene and character, being stuck and more), dealt three at a time and filled in with whatever you've selected, fitted to whether it's a person, a place, a term or a claim. Some name your own sources' authors, your chapter or a thread. **Examine a claim** walks you through the Socratic method: define the key phrase, meet a passage from your notes that pushes against the claim, restate it, and keep the before and after in the journal. Four more walks: **steelman** the other side, a **pre-mortem**, **competing explanations** weighed the way intelligence analysts do, and **define your terms**. **Question the draft** reads a chapter for sweeping words, claims of cause, unnamed authorities, round numbers and facts without a source. Use a question and it becomes an open question linked to the passage. No AI; it all stays on your computer.
-- Threads, claims, review keys and questions marked right in the draft. Follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, set passages to come back to by a date, and gather everything about one name or term (with its other spellings) in one place.
-- A research journal: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them with a dated status history, a daily log of what you did, found and decided, and a search log. It turns into a research memo or a methods appendix in one click. A weekly review shows what moved and what’s next, and method templates get the design started. Prompts for each stage of the research process (topic, research question, keywords, notes on a source, thesis, outline, Draft 0, peer feedback) start entries with the right question.
-- Data dashboards: bring in a CSV, lay out headline numbers, charts, maps, timelines, searchable tables, text, images and video, each crediting its source, and export the whole thing as one web page. Put any number, table or chart from the data into your writing, and update them all when the data changes.
-- Charts for nonfiction: columns, bars, lines, areas, small multiples, dot plots, scatter and bubble, histograms, heatmaps, and shaded maps of countries, US states or regions.
-- Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
-- Sources marked primary, secondary or tertiary, with notes that inherit the type and a bibliography that can be grouped by it.
-- **A research guide** in the journal: what each stage of a project is for and how to tell when it's done, due-diligence checklists (sources, quotes and numbers, ethics and consent, backups, open-source verification, before you submit), short guides to eight research methods, and a glossary.
-- **A literature grid** that sets your sources against your questions and themes, and drafts a **literature review** from it, a cited section for each theme; and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
+**Read and take notes**
+- **A reader for PDFs and DRM-free ePubs** beside the draft: quote and paraphrase notes with their pages filled in, highlights in four colors with no note needed, quotes straight into the draft with their citation, reading aloud, contents and page thumbnails, every Find match in a list, paper, sepia and night, and two pages side by side. Each PDF or book reopens where you left off. An ePub quote gets the printed page when the book marks its pages, or its chapter and paragraph.
+- **Take notes** fills the screen with the reader and a note pad side by side.
+- Notes and quotes on a board you can pile, pin, tag and drag into a draft; note templates for interviews, archive visits, source summaries, field notes and meetings; a scratch pad for jotting now and sorting later; and a note trash that keeps deleted notes 30 days.
+- A web clipper, interview transcripts from caption files (.srt, .vtt), text or Word, and Markdown notes from Obsidian and similar tools.
 - **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image (or have a typed page read for you, offline), and make quote notes that cite the box and folder.
-- **Translation**: translation notes that keep the original beside your translation, a glossary checked as you write, standard transliteration for Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic, a special-characters palette, and a workspace for translating a passage segment by segment.
 - **Search inside sources**: the full text of your PDFs, ePubs, photo transcriptions and interview transcripts, opened at the page. Scanned PDFs are read on your computer (Tesseract), never uploaded.
-- **My library**: a shelf of sources and their notes in your browser, to add to any project.
-- A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
-- Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
-- **A calendar** on Project home: the words you wrote each day, deadlines, journal entries, and your archive visits and interviews, exported as an .ics file for any calendar app.
-- **Install it as an app** from the hosted copy (Settings → This browser → Install Anabasis, in Chrome or Edge, or Add to Dock in Safari): its own window and icon, and it works offline.
-- **A slush pile** for the passages you cut and the documents you delete, searchable and ready to put back.
-- **A rhetorical précis** of a source in four sentences, kept as a note and gathered into one document; **follow a Zotero library** through a Better BibTeX auto-export file, so changes come in by themselves.
-- **A scratch pad** for jotting now and sorting later, turned into notes (or a journal entry) a passage at a time; **note templates** for interview logs, archive visits, source summaries, field notes and meetings, plus your own; a **note trash** that keeps deleted notes 30 days; **copy citation** in any style; and **⌘/Ctrl E** for the documents, notes and sources you opened last.
-- **Submissions**: where each piece has gone, its status and fee, with follow-ups on the calendar.
-- Short getting-started tips on an empty page for each kind of writing: book, article, Substack series, white paper, intelligence brief, video script, literary journalism, thesis chapter, book proposal and investigation.
+- **A reading list** with how far you’ve got in each source, **My library** (a shelf of sources and notes in your browser, for any project), a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
+- **A rhetorical précis** of a source in four sentences, and **following a Zotero library** through a Better BibTeX auto-export file, so changes come in by themselves.
 
-**Figures**
-- Charts from a table: columns, bars, lines, areas, dot plots and small multiples, with event lines and shaded periods.
-- Maps that work offline: shade countries or provinces, and add markers, routes, arrows and hatched areas, with rivers, a scale bar and a locator inset.
+**Research and think it through**
+- **A research journal**: the research design (questions, methods, data, scope, ethics), hypotheses tracked against the evidence for and against them, a daily log of what you did, found and decided, a search log, and twelve prompts for the stages of a project, from a first topic to peer feedback. It turns into a research memo or a methods appendix in one click.
+- **A research guide**: what each stage of a project is for and how to tell when it’s done, due-diligence checklists, short guides to eight research methods, and a glossary.
+- Threads, claims, review keys and questions marked right in the draft: follow a thread through every chapter, keep a claims register with a printable fact-check sheet, see claims against sources in an evidence grid, and gather everything about one name or term in one place.
+- **A literature grid** that sets your sources against your questions and themes and drafts a literature review from it, and **qualitative coding** with a codebook, counts by source and the codes that turn up together.
+- **Socrates** offers questions to start from: 475 in 24 kinds, filled in with whatever you’ve selected. He reads a chapter for the places that need a question (sweeping words, claims of cause, unnamed authorities, facts without a source) and walks you through examining a claim, a steelman, a pre-mortem, competing explanations and defining your terms.
+- **The Oracle**, a conversation partner in the manner of ELIZA, the 1960s MIT chatbot. It turns what you say into questions, answers from your own notes and sources, files notes and journal entries as you talk, argues the other side, starts the day where you left off and says what to work on next. Gentle, plain or blunt: you choose.
+- Socrates and the Oracle use no AI and nothing online; everything stays on your computer.
+- **Translation**: notes that keep the original beside your translation, a glossary checked as you write, standard transliteration for Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic, and a workspace for translating segment by segment.
+- Pseudonyms used in every export while the project keeps the real names, with each person’s consent recorded and checked.
+
+**Figures and data**
+- Charts from a table: columns, bars, lines, areas, small multiples, dot plots, scatter and bubble, histograms and heatmaps, with event lines and shaded periods.
+- Maps that work offline: shade countries, US states or provinces, and add markers, routes, arrows and hatched areas, with rivers, a scale bar and a locator inset.
 - Timelines from dated notes, and relationship maps of the people, places and organizations in your text.
+- **Data dashboards**: bring in a CSV, lay out headline numbers, charts, maps, timelines and searchable tables, each crediting its source, and export the whole thing as one web page. Numbers and charts placed in your writing update when the data changes.
+- Credit lines and permission status for every figure and table, with a permissions log for your editor.
 
-**Revise and finish**
-- **The revision pass**: the revision lens now also shades clichés, same-length runs, pet words, *-ly* adverbs and buried verbs, and the Research desk's **Revision** view sets every chapter side by side with a dated revision checklist for each.
-- **Editing marks** for collaboration: the copyeditor's set (query to author, verify, stet, delete, replace, transpose, close up, capitalize, lowercase, italic, roman, spell out, new paragraph, run in), signed and dated, accepted to make the change or rejected. Reviewers can mark the page you send them too.
-- **Contents, lists of figures, tables and equations** that fill themselves in; **paragraph numbers** and **line numbers** in the page and in exports.
-- **Book for print**: a print-ready PDF at a trim size, with mirrored margins, chapters on right-hand pages, running heads, roman folios in the front matter, and the half title, title page, copyright page and contents made for you.
-- **Submission packages**: the piece (anonymized for blind review if you like), a title page and your cover letter, pitch, query, synopsis or proposal, in one .zip.
-- **Special characters for scientific and academic writing**: math, logic and sets, superscripts and subscripts, units and science, and scholarly marks, found by name.
+**Plan, revise and finish**
+- **Project home** with a calendar of the words you wrote each day, deadlines, journal entries, archive visits and interviews, exported as an .ics file. **Submissions** tracks where each piece has gone, its status and fee.
+- **The revision pass**: the revision lens shades clichés, same-length runs, pet words, *-ly* adverbs and buried verbs, and the Research desk’s **Revision** view sets every chapter side by side with a dated checklist for each.
+- **Editing marks**, the copyeditor’s set (query to author, verify, stet, transpose, close up and the rest), signed and dated, to accept or reject. Reviewers can mark the page you send them too.
+- **A slush pile** for the passages you cut and the documents you delete, searchable and ready to put back.
+- Contents and lists of figures, tables and equations that fill themselves in; paragraph and line numbers in the page and in exports.
+- Drafts you can compare side by side, checkpoints of the whole project, and find and replace across every document.
 
 **Check the draft**
-- **Proofread** (F7): about 400 common misspellings, mixed-up words ("would of", "more then", "your welcome"), *a* and *an* by sound, doubled words, spacing and capitals, with fix, fix all and ignore. Offline, and no grammar engine.
-- **Abstract and keywords**: build an abstract a part at a time (research article, essay or chapter, report), with sentences suggested from the draft, a word limit, and keywords from the names and terms the document uses most; they go under the title in every export.
-- **Close to your notes**: sentences that repeat a note's wording without quotation marks, fixed in one click. Quotes taken from a PDF stay highlighted in it.
+- **Proofread** (F7): about 400 common misspellings, mixed-up words (“would of”, “more then”, “your welcome”), *a* and *an* by sound, doubled words, spacing and capitals, with fix, fix all and ignore. Offline, and no grammar engine.
+- **Close to your notes**: sentences that repeat a note’s wording without quotation marks, fixed in one click.
 - Undefined or late-defined acronyms, vague estimative language (against the ICD 203 scale), and paragraphs resting on a single source or only on weak ones.
-- House style: numbers, dates, the serial comma, US or U.S., dashes, quotes and your preferred spellings. Accessibility: alt text, heading order, table headers and link text.
-- Find and replace across every document. Drafts you can compare side by side, and checkpoints of the whole project.
+- House style (numbers, dates, the serial comma, US or U.S., dashes, quotes and your preferred spellings) and accessibility (alt text, heading order, table headers and link text).
+- **A link check** against the Wayback Machine that keeps archived copies of your web sources.
 
 **Publish**
 - PDF with real footnotes, Word (.docx), ePub, HTML, Markdown and a Substack-ready post, plus a promo kit with a social thread, subtitle and quote cards.
+- **Book for print**: a print-ready PDF at a trim size, with mirrored margins, chapters on right-hand pages, running heads, and the front matter made for you.
+- A PDF for reviewers with numbered lines, Word in standard manuscript format, and **submission packages**: the piece (anonymized for blind review if you like), a title page and your cover letter, pitch, query, synopsis or proposal, in one .zip.
+- **An abstract and keywords**, built a part at a time with sentences suggested from the draft, under the title in every export.
+- **Pandoc / Quarto and LaTeX packages**: the text with citation keys, its .bib file and the style, ready for `pandoc --citeproc`, Overleaf or `latexmk`.
 - Video-script mode with run time, an A/V table and a teleprompter.
-- Text size, typeface and line spacing for the screen, separate from what you export; what’s new after each update; and Send feedback in Help.
 - **Archive**: the whole project as plain files (Markdown, BibTeX, CSL-JSON, images, the project file and a README), readable without Anabasis for as long as there are computers.
+
+**Around the app**
+- Five example projects to learn from: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece, and getting-started tips for ten kinds of writing.
+- Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
+- **Install it as an app** from the hosted copy (Settings → This browser → Install Anabasis, in Chrome or Edge, or Add to Dock in Safari): its own window and icon, and it works offline.
+- Text size, typeface and line spacing for the screen, separate from what you export; what’s new after each update; **⌘/Ctrl E** for what you opened last; and Send feedback in Help.
 - Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
 
 | | |
 |---|---|
-| ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab's checks beside a draft](docs/screenshots/checks.png) |
+| ![A map with shaded provinces, rivers and a locator inset](docs/screenshots/map.png) | ![The Outline tab’s checks beside a draft](docs/screenshots/checks.png) |
 | ![A line chart with an event line and a shaded period](docs/screenshots/chart.png) | ![The editor in dark mode](docs/screenshots/editor-dark.png) |
-| ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar's ⋯ menu](docs/screenshots/phone.png) |
+| ![A supported claim, a thread highlight and the Research tab](docs/screenshots/research.png) | ![Anabasis on a phone: the draft, and the toolbar’s ⋯ menu](docs/screenshots/phone.png) |
 | ![The research journal: hypotheses with their status, evidence for and against, and status history](docs/screenshots/journal.png) | ![A data dashboard: headline numbers with trend lines, a line chart and a table, each crediting its source](docs/screenshots/dashboard.png) |
 | ![Notes beside the writing, in split view](docs/screenshots/split.png) | ![Equations in a draft: inline symbols and numbered display equations](docs/screenshots/equations.png) |
 
@@ -113,7 +112,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 
 **New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in twelve illustrated steps.
 
-For more depth on any feature, see the **[wiki](https://github.com/gmichaelrapp/anabasis/wiki)**: citations and sources, notes and the board, reading PDFs and ePubs, the research journal, Socrates and the Oracle, the checks, and every export.
+For more depth on any feature, see the **[wiki](https://github.com/gmichaelrapp/anabasis/wiki)**: citations and sources, notes and the board, the reader, the research journal, Socrates and the Oracle, the checks, and every export.
 
 1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
 2. Open it in your browser. A short tour and a sample project show you around.
@@ -127,7 +126,7 @@ Anabasis is published by [Zero History](https://zerohistory.net/). The old addre
 
 Open the [hosted copy](https://zerohistory.net/anabasis/app/) in Safari, tap **Share**, then **Add to Home Screen**. Anabasis then opens like an app, full screen, and works offline once it has loaded. Android browsers offer **Install app** in their menu.
 
-The installed app keeps its own working copy, separate from Safari's, so save your project file and open it there to carry work across. Saving on a phone or tablet puts the `.json` file in Files (or Downloads) each time.
+The installed app keeps its own working copy, separate from Safari’s, so save your project file and open it there to carry work across. Saving on a phone or tablet puts the `.json` file in Files (or Downloads) each time.
 
 ### Browsers
 
@@ -135,7 +134,7 @@ Anabasis works best in current desktop **Chrome**, **Edge**, **Brave** or anothe
 
 **Firefox** and **Safari** work too. Saving downloads a fresh copy of the project file each time instead of overwriting it, and some highlights in the checks appear only in the lists, not in the text.
 
-On phones and tablets the layout adapts: the sidebar becomes a drawer, toolbar buttons that don't fit move into a **⋯** menu, and dialogs open full screen. A computer is still the most comfortable place for a long working session.
+On phones and tablets the layout adapts: the sidebar becomes a drawer, toolbar buttons that don’t fit move into a **⋯** menu, and dialogs open full screen. A computer is still the most comfortable place for a long working session.
 
 ## Your data
 
@@ -162,8 +161,10 @@ Other tools:
 
 ```sh
 python tools/site/build_site.py        # the installable hosted copy (site/), as published to GitHub Pages
+python tools/site/build_web.py         # the product page with the app, as on zerohistory.net/anabasis
 python tools/guide/quickstart.py       # the quick-start screenshots
 python tools/guide/screenshots.py      # the interface screenshots in this README
+python tools/guide/wiki_shots.py       # the screenshots in the wiki
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is laid out.

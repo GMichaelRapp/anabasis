@@ -19,12 +19,17 @@ src/shell.html       markup and CSS for the whole interface
 src/app.js           all application code, in one script (sections are marked with banner comments)
 src/doc.css          styles for the page itself, shared by the editor, PDF, ePub and HTML exports
 vendor/js, vendor/csl  third-party libraries and citation styles, pinned and checksummed
-data/                map and gazetteer data (see tools/data/README.md)
+vendor/ocr           Tesseract and its English data, for reading scanned pages offline
+data/                map and gazetteer data (see tools/data/README.md), and the text of the research guide,
+                     Proofread’s word lists, and Socrates’ and the Oracle’s questions and scripts
 assets/              fonts, background and icon
 build.py             inlines everything into dist/anabasis.html
 tests/               Playwright suites (see tests/run_tests.py for what each covers)
-tools/site/          builds the installable hosted copy for GitHub Pages (manifest, service worker, icons)
-tools/guide/         regenerates the quick-start and README screenshots
+tools/site/          builds the installable hosted copy (manifest, service worker, icons) and the product page
+                     at zerohistory.net/anabasis (web/)
+tools/guide/         regenerates the quick-start, README and wiki screenshots
+web/                 the product page (zerohistory.net/anabasis)
+docs/wiki/           the wiki, published to GitHub by the wiki.yml workflow
 ```
 
 The app is deliberately a single file with no framework and no build step beyond inlining. Keep it that way: plain JavaScript, no new runtime dependencies without discussion, and everything must work offline from `file://`.
@@ -41,7 +46,7 @@ python tests/smoke.py --browser firefox   # quick check in another engine
 Before you open a pull request:
 
 - Run the full suite. Add or extend a test for what you changed.
-- Keep `dist/anabasis.html` under the 25 MB budget. `build.py` refuses to go over it. Size isn't the only budget: anything large should stay packed until it's first used, so the app opens as fast as it does now.
+- Keep `dist/anabasis.html` under the 25 MB budget. `build.py` refuses to go over it. Size isn’t the only budget: anything large should stay packed until it’s first used, so the app opens as fast as it does now.
 - To add a citation style, copy an independent style (no `independent-parent` link) from the CSL styles repository into `vendor/csl/`, add its entry to `vendor/manifest.json`, and give it a label and group in `STYLES` in `src/app.js`.
 - If you change what a project file holds, follow [Changing the format](docs/file-format.md#changing-the-format).
 - If the change is user-visible, add a line to `CHANGELOG.md` under **Unreleased**, and update Help in `src/shell.html` if it explains the feature.

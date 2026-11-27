@@ -5,7 +5,7 @@ Revising is where a draft becomes a piece of writing. Anabasis helps in three wa
 Turn it on with the **Revision lens** button on the toolbar. A bar of chips across the page counts each kind of finding and shades it in the text:
 
 - **Long sentences**: over 35 words. Split them, or make sure each one earns its length.
-- **Passive voice**: who did it? Keep the passive when the actor doesn't matter.
+- **Passive voice**: who did it? Keep the passive when the actor doesn’t matter.
 - **Hedges and filler**: *very*, *quite*, *arguably*, *it should be noted*.
 - **Repeated words**: the same word again within 40 words.
 - **Clichés**: *at the end of the day*, *tip of the iceberg*, *a perfect storm* and about ninety more.
@@ -14,20 +14,20 @@ Turn it on with the **Revision lens** button on the toolbar. A bar of chips acro
 - **-ly adverbs**: often propping up a weak verb.
 - **Buried verbs**: *the implementation of* hides *implement*.
 
-Click a chip to show or hide that kind. The last four start hidden, because they're for a closer pass. The bar also shows the grade level.
+Click a chip to show or hide that kind. The last four start hidden, because they’re for a closer pass. The bar also shows the grade level.
 
 ## Revision, chapter by chapter
 
 **Research desk → Revision** puts every chapter in one table: words, average sentence length and how much it varies, long sentences, passive voice and hedges per thousand words, clichés, adverbs, buried verbs and a grade level. A shaded number is worth a look, not a rule: a chapter of dialogue will have short, even sentences, and a methods section will have more passive voice.
 
-Choose a row to see that chapter's **revision checklist**:
+Choose a row to see that chapter’s **revision checklist**:
 
 - The argument is clear by the end of the first page
 - Each paragraph does one job, and its first sentence says what
 - Transitions carry the reader from paragraph to paragraph
 - Every claim of fact has a source, and the sources can bear it
 - Quotations are introduced, accurate and explained
-- Cut what doesn't serve the argument (aim for a tenth)
+- Cut what doesn’t serve the argument (aim for a tenth)
 - Went through the revision lens
 - Names, dates, numbers and spellings checked
 - Read it aloud, start to finish
@@ -36,7 +36,7 @@ Each item you tick is dated and kept with the project, and the bar in the table 
 
 ## Editing marks
 
-Select some words and press **⌘/Ctrl Alt M** (or **Mark → Editing mark…**). The marks are the copyeditor's set:
+Select some words and press **⌘/Ctrl Alt M** (or **Mark → Editing mark…**). The marks are the copyeditor’s set:
 
 | Mark | What it asks for |
 |---|---|

@@ -10,7 +10,7 @@ Download `anabasis.html` from the [latest release](https://github.com/gmichaelra
 
 The first time, a short tour points out the main controls. Take it, or choose **Skip tour**. A sample project opens behind it; it’s there to explore and you can replace it.
 
-![The tour's welcome card over the sample project](quick-start/01-welcome.png)
+![The tour’s welcome card over the sample project](quick-start/01-welcome.png)
 
 ## 2. Start a project
 
@@ -20,7 +20,7 @@ The kind of writing sets up a starting plan and turns on the checks that suit it
 
 Would rather see a finished project first? In the same window, **Or open a finished example** loads a complete thesis chapter, article, white paper, book proposal or investigative piece, with sources, notes, threads and claims already in place.
 
-![The New project window with a title and "Article or essay" selected](quick-start/02-new-project.png)
+![The New project window with a title and “Article or essay” selected](quick-start/02-new-project.png)
 
 ## 3. Write
 
@@ -37,7 +37,7 @@ Open the **Sources** tab in the sidebar.
 
 You can also import a whole bibliography from Zotero, BibTeX or RIS with **Import references…**.
 
-![The Sources tab and the source form, filled in for Xenophon's Anabasis translated by H. G. Dakyns](quick-start/04-add-source.png)
+![The Sources tab and the source form, filled in for Xenophon’s Anabasis translated by H. G. Dakyns](quick-start/04-add-source.png)
 
 ## 5. Cite as you write
 
@@ -79,9 +79,9 @@ Open the **Outline** tab. Besides the outline of your headings, it reads over yo
 
 Most problems have a one-click fix. Click a finding to jump to it in the text.
 
-![The Outline tab's Corroboration check flagging a paragraph with one source](quick-start/09-checks.png)
+![The Outline tab’s Corroboration check flagging a paragraph with one source](quick-start/09-checks.png)
 
-## 10. Mark what you'll come back to
+## 10. Mark what you’ll come back to
 
 Select a passage and choose **Mark** in the toolbar:
 
@@ -89,9 +89,9 @@ Select a passage and choose **Mark** in the toolbar:
 - **Highlight in a thread** follows a theme or an argument through every chapter, in its own color.
 - **Key for review** sets a passage to come back to by a date; **Link to a question** ties it to an open research question.
 
-Click a marked passage to change it. The **Research** tab lists what's in this document and what's due, and **Research desk** reads a thread straight through, shows claims against sources, and gathers everything about a name. Marks never appear in exports.
+Click a marked passage to change it. The **Research** tab lists what’s in this document and what’s due, and **Research desk** reads a thread straight through, shows claims against sources, and gathers everything about a name. Marks never appear in exports.
 
-![A supported claim and a highlighted thread in the draft, the claim's popover, and the Research tab](quick-start/10-research.png)
+![A supported claim and a highlighted thread in the draft, the claim’s popover, and the Research tab](quick-start/10-research.png)
 
 To keep a research journal, choose **＋ Today’s entry** in the Research tab, or **Journal** on the research desk. Write down your research design and hypotheses, log what you did, found and decided each day, and record your searches. **Research memo** turns it all into a document you can send.
 

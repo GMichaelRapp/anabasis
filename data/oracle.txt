@@ -447,7 +447,7 @@
 > * [quote] *
 - Does the quotation say something only those words can say, or could you paraphrase it?
 - Have you checked it against the source, word for word?
-- What does the quotation do for the reader: evidence, voice or colour?
+- What does the quotation do for the reader: evidence, voice or color?
 - Who said it, and why would they say it that way?
 
 @ [revise] | 5
@@ -560,7 +560,7 @@
 @ archive archives archival | 8
 > * archive *
 - What are you hoping the archive has, and what if it doesn’t?
-- Who catalogued it, and what did they think mattered?
+- Who cataloged it, and what did they think mattered?
 - What would be in the boxes nobody asks for?
 
 @ deadline deadlines | 7

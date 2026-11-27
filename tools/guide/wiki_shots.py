@@ -54,6 +54,33 @@ SAMPLE_NOTES = """() => {
 }"""
 
 
+# A short made-up book for the ePub shot: three chapters, with the printed pages marked as many ebooks do.
+BOOK = [
+    ('Chapter 1: The Coast', ["The caravan left the harbour at Qasr before dawn, forty camels and twice as many men, with the salt packed in cakes the size of roof tiles.",
+        "Salt was worth more than silver that year. The rains had failed in the south, the inland markets had emptied, and every porter in the column knew what a load would fetch at Tamra if it arrived whole.",
+        "The guides argued for three days about the western pass. The older of them, a man the porters called the Notary because he wrote down everything, wanted the long road by the wells; the younger wanted the short one over the ridge.",
+        "In the end the merchants chose the wells. It cost them nine days, and it saved, by the Notary's own count, every animal but two."], {0: 11, 2: 12}),
+    ('Chapter 2: The Hills', ["In the hills the road narrowed to a single track, and the column stretched out until the last camel was an hour behind the first.",
+        "The porters sang to keep their spirits up. The songs were about the coast, which most of them would never see again, and about the price of salt, which they knew to the copper."], {0: 13}),
+    ('Chapter 3: Tamra', ["Tamra stood on a shelf of rock above the plain, and from a day away the caravan could see the smoke of its kilns."], {0: 15}),
+]
+
+
+def make_epub(path):
+    import zipfile, html
+    z = zipfile.ZipFile(path, 'w')
+    z.writestr(zipfile.ZipInfo('mimetype'), 'application/epub+zip')
+    z.writestr('META-INF/container.xml', '<?xml version="1.0"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="OEBPS/content.opf" media-type="application/oebps-package+xml"/></rootfiles></container>')
+    items = refs = nav = ''
+    for i, (t, ps, pb) in enumerate(BOOK, 1):
+        body = f'<h1>{t}</h1>' + ''.join((f'<span epub:type="pagebreak" id="pg{pb[k]}" title="{pb[k]}"></span>' if k in pb else '') + f'<p>{html.escape(p)}</p>' for k, p in enumerate(ps))
+        z.writestr(f'OEBPS/ch{i}.xhtml', f'<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><head><title>{t}</title></head><body>{body}</body></html>')
+        items += f'<item id="c{i}" href="ch{i}.xhtml" media-type="application/xhtml+xml"/>'; refs += f'<itemref idref="c{i}"/>'; nav += f'<li><a href="ch{i}.xhtml">{t}</a></li>'
+    z.writestr('OEBPS/nav.xhtml', f'<?xml version="1.0"?><html xmlns="http://www.w3.org/1999/xhtml" xmlns:epub="http://www.idpf.org/2007/ops"><body><nav epub:type="toc"><ol>{nav}</ol></nav></body></html>')
+    z.writestr('OEBPS/content.opf', f'<?xml version="1.0"?><package xmlns="http://www.idpf.org/2007/opf" version="3.0" unique-identifier="id"><metadata xmlns:dc="http://purl.org/dc/elements/1.1/"><dc:identifier id="id">urn:uuid:anabasis-guide-sample</dc:identifier><dc:title>The Salt Road</dc:title><dc:creator>Mara Velloso</dc:creator><dc:date>2019</dc:date><dc:publisher>Lantern Press</dc:publisher><dc:language>en</dc:language></metadata><manifest><item id="nav" href="nav.xhtml" properties="nav" media-type="application/xhtml+xml"/>{items}</manifest><spine>{refs}</spine></package>')
+    z.close()
+
+
 async def main(only):
     if not (ROOT / 'dist' / 'anabasis.html').exists(): sys.exit('Build first: python build.py')
     OUT.mkdir(parents=True, exist_ok=True)
@@ -231,6 +258,24 @@ async def main(only):
             await pg.evaluate("() => showReader(false)"); await pg.wait_for_timeout(300)
             await close_all()
 
+        # an ePub, with its contents beside it, a quote and a highlight, and a passage selected
+        if want('epub-reader'):
+            book = tmp.parent / 'the-salt-road.epub'; make_epub(book)
+            await pg.evaluate("() => { PREFS.readerWidth = 700; PREFS.rdSide = 1; PREFS.rdTab = 'toc'; RD.tab = 'toc'; }")
+            await pg.click('#btnSide'); await pg.wait_for_timeout(300)
+            await pg.set_input_files('#filePdf', str(book)); await pg.wait_for_selector('.ep-ch'); await pg.wait_for_timeout(600)
+            await pg.evaluate("() => rdSideOpen(true, 'toc')")
+            sel = """([n, word]) => { const body = R.pages[n - 1].div.querySelector('.ep-body'); const w = document.createTreeWalker(body, NodeFilter.SHOW_TEXT); let t;
+              while ((t = w.nextNode())) { const i = t.data.indexOf(word); if (i >= 0) { const r = document.createRange(); r.setStart(t, i); r.setEnd(t, i + word.length); getSelection().removeAllRanges(); getSelection().addRange(r); return; } } }"""
+            await pg.evaluate(sel, [1, 'Salt was worth more than silver that year']); await pg.wait_for_timeout(300)
+            await pg.click('#rdSelBar [data-k=quote]'); await pg.wait_for_timeout(400)
+            await pg.evaluate(sel, [1, 'In the end the merchants chose the wells']); await pg.wait_for_timeout(300)
+            await pg.click('#rdSelBar [data-c=g]'); await pg.wait_for_timeout(400)
+            await pg.evaluate(sel, [1, 'The guides argued for three days about the western pass']); await pg.wait_for_timeout(500)
+            await shot('epub-reader')
+            await pg.evaluate("() => { getSelection().removeAllRanges(); showReader(false); }"); await pg.click('#btnSide'); await pg.wait_for_timeout(300)
+            await close_all()
+
         # Close to your notes: a sentence that repeats the Dakyns quotation without quotation marks
         if want('close-to-notes'):
             await pg.evaluate("""() => { const d = P.docs.find(x => /retreat|supply|march/i.test(x.title)) || P.docs[0]; openDoc(d.id);
@@ -373,7 +418,8 @@ async def main(only):
         if errs: sys.exit('page errors: ' + '; '.join(errs))
     try:  # interface screenshots need far fewer than 16 million colors
         from PIL import Image
-        for f in OUT.glob('*.png'): Image.open(f).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE).save(f, optimize=True)
+        # octree keeps small accents (highlight swatches, status dots) exact; median cut blurred them
+        for f in OUT.glob('*.png'): Image.open(f).convert('RGB').quantize(colors=256, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE).save(f, optimize=True)
     except ImportError: pass
     print('wrote', len(list(OUT.glob('*.png'))), 'screenshots to', OUT.relative_to(ROOT))
 

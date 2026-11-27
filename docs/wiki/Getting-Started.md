@@ -1,11 +1,11 @@
-This page covers opening Anabasis for the first time, starting a project, and finding your way around the screen. If you'd rather follow one short piece of writing from a blank page to a PDF, the [quick start](https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md) does that in twelve steps.
+This page covers opening Anabasis for the first time, starting a project, and finding your way around the screen. If you’d rather follow one short piece of writing from a blank page to a PDF, the [quick start](https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md) does that in twelve steps.
 
 ## Two ways to open it
 
 Anabasis is one HTML file. You can use it in either of two ways, and they behave the same:
 
 - **Download it.** Get `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest) and open it in your browser. It runs from your disk, with no internet connection needed. Each release lists a SHA-256 checksum if you want to confirm the file is the one that was published.
-- **Use the hosted copy** at [zerohistory.net/anabasis/app/](https://zerohistory.net/anabasis/app/). It's the same file served from a web address. Your work still stays in your browser; nothing you write is sent to the site. The hosted copy updates itself when a new version comes out, and it's the one to use for the web clipper and for adding Anabasis to a phone's home screen.
+- **Use the hosted copy** at [zerohistory.net/anabasis/app/](https://zerohistory.net/anabasis/app/). It’s the same file served from a web address. Your work still stays in your browser; nothing you write is sent to the site. The hosted copy updates itself when a new version comes out, and it’s the one to use for the web clipper and for adding Anabasis to a phone’s home screen.
 
 A browser keeps a separate working copy for each address it opens Anabasis from. A downloaded file, the hosted copy and a home-screen app each have their own. To move work between them, save your project file in one and open it in the other.
 
@@ -23,11 +23,11 @@ The hosted copy, [zerohistory.net/anabasis/app](https://zerohistory.net/anabasis
 - **Safari on a Mac**: **File → Add to Dock**.
 - **iPhone or iPad**: **Share → Add to Home Screen**.
 
-The downloaded file can't be installed: browsers install apps only from a website. Your work moves between the two with **Save** and **Open**, since both use the same project file. Firefox doesn't install web apps.
+The downloaded file can’t be installed: browsers install apps only from a website. Your work moves between the two with **Save** and **Open**, since both use the same project file. Firefox doesn’t install web apps.
 
 ### On a phone or tablet
 
-Open the hosted copy in Safari, tap **Share**, then **Add to Home Screen**. It then opens full screen, like an app, and works offline once it has loaded. Android browsers offer **Install app** in their menu. On a small screen the sidebar becomes a drawer behind **☰**, toolbar buttons that don't fit move into a **⋯** menu, and dialogs fill the screen. Everything is still there, but a computer is more comfortable for a long session.
+Open the hosted copy in Safari, tap **Share**, then **Add to Home Screen**. It then opens full screen, like an app, and works offline once it has loaded. Android browsers offer **Install app** in their menu. On a small screen the sidebar becomes a drawer behind **☰**, toolbar buttons that don’t fit move into a **⋯** menu, and dialogs fill the screen. Everything is still there, but a computer is more comfortable for a long session.
 
 ## The first visit
 
@@ -39,37 +39,37 @@ After the first visit, Anabasis opens to **Project home**.
 
 ![Project home: where to pick up, the next step, progress against the target and loose ends](images/project-home.png)
 
-Project home is the launch pad for the project that's open. Click the Anabasis logo at the top left to come back to it at any time. It shows:
+Project home is the launch pad for the project that’s open. Click the Anabasis logo at the top left to come back to it at any time. It shows:
 
 - **Pick up where you left off**: the document and place you were last working in.
-- **A suggested next step**, drawn from what's unfinished.
-- **Progress** against your word target and deadline, with the pace you need from here and the pace you've kept so far.
-- **Each document's status** (idea, drafting, revising, final), which you set in **Record** in the document bar, along with each chapter's deadline.
-- **Loose ends**: everything unfinished across the whole project, gathered in one list. That means TK, cite? and check flags; open research questions and gaps in the plan; paragraphs with no citation; sources missing details; and PDFs you haven't taken notes on. Click any item to go straight to it.
+- **A suggested next step**, drawn from what’s unfinished.
+- **Progress** against your word target and deadline, with the pace you need from here and the pace you’ve kept so far.
+- **Each document’s status** (idea, drafting, revising, final), which you set in **Record** in the document bar, along with each chapter’s deadline.
+- **Loose ends**: everything unfinished across the whole project, gathered in one list. That means TK, cite? and check flags; open research questions and gaps in the plan; paragraphs with no citation; sources missing details; and PDFs you haven’t taken notes on. Click any item to go straight to it.
 - **Notes inbox**: notes not yet linked to the plan or sorted into a pile on the board.
 - **The calendar** (see below).
-- **From your notes**: a note you haven't touched in a month, a different one each day. **Another** shows the next; click it to open the note. A good way to find the idea you'd forgotten you had.
+- **From your notes**: a note you haven’t touched in a month, a different one each day. **Another** shows the next; click it to open the note. A good way to find the idea you’d forgotten you had.
 - **Recent files**, which reopen in one click in Chrome and Edge. Other browsers ask you to pick the file.
 
 ### Submissions
 
 The **Submissions** card on Project home (or *Submissions* in the command search) tracks where each piece has gone. For each submission, record the outlet, the editor, whether it was a pitch or the full piece, the date you sent it, its status (planned, sent, followed up, accepted, published, declined or withdrawn), any fee, a follow-up date and notes.
 
-**Add** starts one for the open document, sent today, with a follow-up in two weeks. The summary shows what's out, what's been accepted, the fees agreed and the next follow-up. Follow-ups appear on the calendar and in its .ics export, and **CSV** saves the list. Submissions are kept in the project file.
+**Add** starts one for the open document, sent today, with a follow-up in two weeks. The summary shows what’s out, what’s been accepted, the fees agreed and the next follow-up. Follow-ups appear on the calendar and in its .ics export, and **CSV** saves the list. Submissions are kept in the project file.
 
 ### The calendar
 
-![The calendar on Project home: days shaded by words written, marks for visits, deadlines and journal entries, and the chosen day's details below](images/calendar.png)
+![The calendar on Project home: days shaded by words written, marks for visits, deadlines and journal entries, and the chosen day’s details below](images/calendar.png)
 
 The calendar shows the month at a glance:
 
-- **Shading** is the words you wrote that day. If you've set a daily goal in Settings, the darkest shade means you met it.
-- **Marks** show what's on the calendar (a diamond, colored by kind), what's due (a red dot: a document's deadline, the project deadline, a review key) and journal entries (a ring).
-- **Choose a day** to see what happened and what's due: the words you wrote, the items on the calendar, the journal entries and the notes you made. Click any of them to open it. The arrow keys move between days, and ‹ › between months.
+- **Shading** is the words you wrote that day. If you’ve set a daily goal in Settings, the darkest shade means you met it.
+- **Marks** show what’s on the calendar (a diamond, colored by kind), what’s due (a red dot: a document’s deadline, the project deadline, a review key) and journal entries (a ring).
+- **Choose a day** to see what happened and what’s due: the words you wrote, the items on the calendar, the journal entries and the notes you made. Click any of them to open it. The arrow keys move between days, and ‹ › between months.
 
 **+ Add to the calendar** records an archive or library visit, an interview, a meeting, a deadline or anything else, with an optional time and notes (the boxes to request, the address, what to bring). Click an item to edit or remove it.
 
-**Export .ics** saves your calendar items, each document's deadline and the project deadline as a calendar file. Open it, or import it into Google Calendar, Apple Calendar or Outlook, to see them beside the rest of your life. It's a file you make when you want one, so nothing is sent anywhere, and it doesn't stay in sync: export again after you change something.
+**Export .ics** saves your calendar items, each document’s deadline and the project deadline as a calendar file. Open it, or import it into Google Calendar, Apple Calendar or Outlook, to see them beside the rest of your life. It’s a file you make when you want one, so nothing is sent anywhere, and it doesn’t stay in sync: export again after you change something.
 
 ## Starting a project
 
@@ -78,7 +78,7 @@ Choose **New** in the top bar (or **New project…** on Project home).
 ![The New project window, with a title, a kind of writing and a citation style](images/new-project.png)
 
 1. Give it a **working title**. You can change it later.
-2. Choose **what you're writing**. Each kind sets up a starting plan, a citation style, a word target and a deadline, and turns on the checks that suit it:
+2. Choose **what you’re writing**. Each kind sets up a starting plan, a citation style, a word target and a deadline, and turns on the checks that suit it:
 
    | Kind | Plan template | Style | Target |
    |---|---|---|---|
@@ -91,7 +91,7 @@ Choose **New** in the top bar (or **New project…** on Project home).
    | Literary journalism | Narrative journalism | Chicago notes | 8,000 words over two months |
    | Blank | none | Chicago notes | none |
 
-3. Change the **citation style**, **word target** and **deadline** if the presets don't fit. All of these can be changed later too.
+3. Change the **citation style**, **word target** and **deadline** if the presets don’t fit. All of these can be changed later too.
 4. Choose **Create project**.
 
 Anabasis works on one project at a time. Starting a new one replaces the project in this browser, so save the current one to its file first. Anabasis asks before it replaces unsaved work.
@@ -116,13 +116,13 @@ The same window offers **Or open a finished example to learn from**: a complete 
 
 **The toolbar** above the page holds what you do while writing: paragraph style, bold and lists, **Cite**, footnote, flag, margin note, **Suggest**, **Mark** and **Find**. **Insert** (the plus) holds everything that goes into the page: figures, charts, maps, timelines, tables, equations, cross-references and index entries.
 
-**The document bar** just above the page has the document's title, its citation style and word count, then **Beside the writing**, margin notes, **Page setup**, **Drafts**, **Record**, **Listen** and **Focus**.
+**The document bar** just above the page has the document’s title, its citation style and word count, then **Beside the writing**, margin notes, **Page setup**, **Drafts**, **Record**, **Listen** and **Focus**.
 
-When the window is narrow, buttons that don't fit move into the **⋯** menu at the end of their bar. **Customize toolbar…** in that menu hides buttons you don't use; their shortcuts keep working.
+When the window is narrow, buttons that don’t fit move into the **⋯** menu at the end of their bar. **Customize toolbar…** in that menu hides buttons you don’t use; their shortcuts keep working.
 
 ### Search finds everything
 
-Press **Ctrl+K** (**⌘K** on a Mac) to search your documents, notes and sources, and to run any command by name. If you can't find where something lives, type what you want to do. **Ctrl+F** is find and replace in the current document. Press **?** when you're not typing to see every keyboard shortcut.
+Press **Ctrl+K** (**⌘K** on a Mac) to search your documents, notes and sources, and to run any command by name. If you can’t find where something lives, type what you want to do. **Ctrl+F** is find and replace in the current document. Press **?** when you’re not typing to see every keyboard shortcut.
 
 ### Beside the writing
 
@@ -130,7 +130,7 @@ Press **Ctrl+\\** (or **Beside the writing** in the document bar) to put notes, 
 
 ## Before you go further
 
-- **Save early.** The browser keeps a working copy as you type, but the real copy is the `.json` file you save. Choose **Save** once now and pick a folder that's backed up. See [Projects, saving and privacy](Projects-and-Saving).
+- **Save early.** The browser keeps a working copy as you type, but the real copy is the `.json` file you save. Choose **Save** once now and pick a folder that’s backed up. See [Projects, saving and privacy](Projects-and-Saving).
 - **Set your name** in Settings. It signs your suggestions, margin notes and fact checks.
 - **Pick the kind of writing** if you started blank. The tips card on an empty document and several checks change with it.
 

@@ -1,4 +1,4 @@
-Anabasis is a word processor for research writing that runs as a single web page. It keeps your drafts, notes, sources and research records together in one project file, and it works offline. There's no account and no server. This wiki covers each part of it in more depth than the in-app Help has room for.
+Anabasis is a word processor for research writing that runs as a single web page. It keeps your drafts, notes, sources and research records together in one project file, and it works offline. There’s no account and no server. This wiki covers each part of it in more depth than the in-app Help has room for.
 
 ![A thesis chapter open in Anabasis, with the sidebar, the page, footnotes and the research tab](images/home-editor.png)
 
@@ -12,7 +12,7 @@ Anabasis is a word processor for research writing that runs as a single web page
 - **[Citations and styles](Citations-and-Styles)**: citing as you write, locators and note text, the 55 styles, and changing style at any time.
 - **[Sources](Sources)**: adding sources by DOI, ISBN or web address, importing from Zotero and BibTeX, source types and ratings, the reading list, the source audit, retractions, duplicates, evidence fingerprints, searching inside sources, and My library across projects.
 - **[Notes and the board](Notes-and-the-Board)**: quote, paraphrase, summary and idea notes, linking notes to each other, and sorting them on the board before you draft.
-- **[Reading PDFs and ePubs](Reading-PDFs)**: the reader, for PDFs and DRM-free ePubs; quote and paraphrase notes with page numbers, highlights in four colours, quoting straight into the draft, reading aloud, where you left off and the reading list; and Take notes, which puts the PDF or book and a note pad side by side.
+- **[Reading PDFs and ePubs](Reading-PDFs)**: the reader, for PDFs and DRM-free ePubs; quote and paraphrase notes with page numbers, highlights in four colors, quoting straight into the draft, reading aloud, where you left off and the reading list; and Take notes, which puts the PDF or book and a note pad side by side.
 - **[Archive photos](Archive-Photos)**: photos from an archive visit, filed by box and folder, transcribed, and turned into notes that cite where each document came from.
 - **[Languages and translation](Languages-and-Translation)**: writing in 27 languages, passages in another language, transliteration, special characters, translation notes, the glossary and the translation workspace.
 
@@ -26,17 +26,17 @@ Anabasis is a word processor for research writing that runs as a single web page
 ## Finishing
 
 - **[Checking the draft](Checking-the-Draft)**: close to your notes, Proofread, house style, corroboration, acronyms, estimative language, accessibility, and flags left to resolve.
-- **[Revising and copyediting](Revising-and-Copyediting)**: the revision lens, every chapter on the Research desk with a revision checklist, and the copyeditor's editing marks to accept or reject.
+- **[Revising and copyediting](Revising-and-Copyediting)**: the revision lens, every chapter on the Research desk with a revision checklist, and the copyeditor’s editing marks to accept or reject.
 - **[Exporting](Exporting)**: Word, PDF, web page, e-book, Substack, Markdown, Pandoc and LaTeX, a page for reviewers and importing their review, a book for print, submission packages, contents and lists, paragraph and line numbers, plus the abstract and keywords, and pseudonyms.
 
 ## Where else to look
 
-- **Help** inside the app (the **?** button) has a short section on every feature, and it's always the right version for the copy you have.
+- **Help** inside the app (the **?** button) has a short section on every feature, and it’s always the right version for the copy you have.
 - The **[quick start](https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md)** walks from a blank page to a PDF in about ten minutes.
 - **[Privacy](https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md)** lists every time Anabasis connects to the internet, and why.
 - **[File format](https://github.com/gmichaelrapp/anabasis/blob/main/docs/file-format.md)** documents the project file, for anyone who wants to read it with other tools.
 - **[Releases](https://github.com/gmichaelrapp/anabasis/releases)** has every version, with checksums.
 
-More pages are on the way: the editor and toolbar, figures, charts and maps, data and dashboards, threads and claims, planning, co-writing and suggestions, drafts and checkpoints, and keyboard shortcuts.
+Some parts of Anabasis are covered so far only in Help: the editor and toolbar, figures, charts and maps, data and dashboards, threads and claims, planning, co-writing and suggestions, drafts and checkpoints, and keyboard shortcuts (press **?** when you’re not typing).
 
 These pages are kept in the main repository under `docs/wiki/` and published here automatically, so a correction can come as an ordinary pull request.

@@ -511,9 +511,10 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 .rd-main{flex:1;display:flex;min-height:0;position:relative}
 .rd-main .rd-pages{flex:1;min-width:0}
 .rd-side{width:236px;flex:none;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-right:1px solid var(--line)}
-.rd-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 6px 0;border-bottom:1px solid var(--line)}
-.rd-tabs button{min-height:28px;padding:2px 8px;font-size:12.5px;border:0;border-radius:6px 6px 0 0;background:none;color:var(--muted)}
-.rd-tabs button[aria-selected="true"]{background:var(--bg);color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent)}
+.rd-tabs{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:3px;padding:6px;border-bottom:1px solid var(--line)}
+.rd-tabs button{min-height:28px;padding:2px 6px;font-size:12.5px;border:0;border-radius:6px;background:none;color:var(--muted);white-space:nowrap}
+.rd-tabs button:hover{background:var(--bg);color:var(--ink)}
+.rd-tabs button[aria-selected="true"]{background:var(--accent-soft);color:var(--ink);font-weight:700}
 .rd-tabs button[hidden]{display:none}
 .rd-tab{flex:1;overflow:auto;padding:8px 6px 16px;font-size:13.5px}
 .rd-tab ol,.rd-tab ul{list-style:none;margin:0;padding:0}
@@ -611,7 +612,7 @@ body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-sh
 .rd-tts select{width:auto;min-height:28px;font-size:12.5px}
 .rd-tts button{min-height:28px}
 .rd-tts .spacer{flex:1}
-/* page colours */
+/* page colors */
 .reader.th-sepia{background:#6d6254}
 .reader.th-night{background:#15171a}
 .reader.th-sepia .rd-page:not(.ep-ch) canvas,.reader.th-sepia .rd-thumbs canvas{filter:sepia(.5) saturate(1.15) brightness(.95)}
@@ -1045,7 +1046,7 @@ body.plan-on .doc-bar,body.plan-on .toolbar,body.plan-on .findbar,body.plan-on .
 /* ================================================================
    Anabasis theme: “survey sheet”
    Map-paper desk, slate ink, Aegean navy from the mark, brass sun for marks and focus.
-   Every status colour comes in a light and a dark pair; coloured text never sits on a coloured fill.
+   Every status color comes in a light and a dark pair; colored text never sits on a colored fill.
    ================================================================ */
 /*@FONTS@*/
 :root{
@@ -3372,7 +3373,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   <div class="body">
     <label for="crCredit">Credit line <span class="muted">(ends the caption in every export)</span></label><input id="crCredit" placeholder="Photo: Library of Congress, Prints and Photographs Division">
     <div class="grid2"><div><label for="crRights">Permission</label><select id="crRights"></select></div><div><label for="crHolder">Rights holder, or whom to ask</label><input id="crHolder" placeholder="Name, agency, email"></div></div>
-    <label for="crNote">Notes <span class="muted">(fee, date asked, licence terms; kept in the project, never exported)</span></label><input id="crNote">
+    <label for="crNote">Notes <span class="muted">(fee, date asked, license terms; kept in the project, never exported)</span></label><input id="crNote">
     <div class="tip">The Permissions log in the Sources tab lists every figure and table with its status, plus quotations by source, ready to hand to an editor.</div>
   </div>
   <footer><button id="crCancel">Cancel</button><button id="crOk" class="primary">Save</button></footer>
@@ -3864,7 +3865,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <h4>Equations</h4>
     <ul>
       <li>Choose <b>Insert → Equation</b> in the toolbar (or press <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>E</kbd>, or <kbd>Alt</kbd>+<kbd>=</kbd> as in Word) and type the equation in TeX, the way LaTeX writes it: <code>x^2</code>, <code>\frac{a}{b}</code>, <code>\sqrt{x}</code>, <code>\sum_{i=1}^n</code>, <code>\alpha</code>. The buttons under the box add common pieces, and the preview shows it as you type, with a note if something isn’t right (a missing brace, a command it doesn’t know).</li>
-      <li><b>In the sentence</b> puts it in the line of text. <b>On its own line</b> sets it apart, centred; numbered ones get (1), (2)… at the right margin, renumbered as you add or remove them. In an empty paragraph the box starts with “on its own line”; in a sentence, “in the sentence”.</li>
+      <li><b>In the sentence</b> puts it in the line of text. <b>On its own line</b> sets it apart, centered; numbered ones get (1), (2)… at the right margin, renumbered as you add or remove them. In an empty paragraph the box starts with “on its own line”; in a sentence, “in the sentence”.</li>
       <li>Click an equation to change it, switch it between the two, or remove it. Select TeX you’ve typed or pasted (with or without its <code>$…$</code>) and open the box to turn it into an equation; <b>Turn TeX in $…$ and $$…$$ into equations</b> in the command palette does a whole document at once. Amounts of money like “$5 and $10” are left alone.</li>
       <li><b>Word:</b> equations go into the .docx as Word equations, which you (or an editor) can change in Word’s equation editor; numbered ones keep their numbers. <b>Import Word</b> brings Word equations back in as TeX, so a document can go to Word and back. LibreOffice opens them too, though it draws a few things (boxes, fancy letters like ℝ) more plainly than Word.</li>
       <li><b>PDF, web page and EPUB</b> draw them sharply at any size, with the TeX as a description for screen readers. <b>LaTeX</b> gets <code>\( … \)</code>, <code>equation</code> for numbered ones and <code>\[ … \]</code> for the rest; <b>Markdown</b> and <b>Pandoc</b> get <code>$…$</code> and <code>$$…$$</code>. Copy for <b>Substack</b> gives the TeX in dollars, to paste into Substack’s own equation block.</li>
@@ -4079,9 +4080,9 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>☰</b> opens a panel beside the page: <b>Contents</b> (the PDF’s or book’s own), <b>Pages</b> (thumbnails of a PDF), <b>Highlights</b>, <b>Found</b> (every match for Find) and <b>Reading list</b>.</li>
       <li><b>Where you left off</b>: a PDF or book reopens at the place you stopped, kept in this browser. Opening a source marked <i>To read</i> moves it to <i>Reading</i>; at the end you’re offered <b>Mark as read</b>. The <b>Reading list</b> tab shows what you’re reading and want to read, with how far you’ve got.</li>
       <li><b>Aa</b> (View): <b>Paper</b>, <b>Sepia</b> or <b>Night</b>; <b>One page</b> or <b>Two pages</b> side by side for a PDF; <b>Book</b> or <b>Plain</b> type for an ePub.</li>
-      <li><b>Highlights without notes</b>: select a passage and choose a colour. Click a highlight to change its colour, make it a quote note, put it in the draft or remove it. The <b>Highlights</b> tab lists them in order, by colour if you like, to copy, download as Markdown, or turn into quote notes all at once. They’re kept with the source in the project file.</li>
+      <li><b>Highlights without notes</b>: select a passage and choose a color. Click a highlight to change its color, make it a quote note, put it in the draft or remove it. The <b>Highlights</b> tab lists them in order, by color if you like, to copy, download as Markdown, or turn into quote notes all at once. They’re kept with the source in the project file.</li>
       <li><b>Insert in draft</b> quotes the selection at the draft’s cursor, with its citation and page, and keeps it as a quote note. A short quotation runs into your sentence; a long one becomes a block quotation.</li>
-      <li><b>Read aloud</b> (the speaker) reads from the top of what you can see, or from the passage you’ve selected, a sentence at a time and on to the next page or chapter. It uses the speed and voice of Read aloud for the draft.</li>
+      <li><b>Read aloud</b> (the speaker) reads from the top of what you can see, or from the passage you’ve selected, a sentence at a time and on to the next page or chapter. It uses the speed and voice you chose for <b>Listen</b>.</li>
       <li><b>Find</b> lists every match in <b>Found</b>, with its page or chapter and the words around it. Enter goes to the next, Shift+Enter back, Esc clears.</li>
       <li><b>Take notes</b> (in the reader’s top bar) sets the writing aside: the PDF on the left, a note pad on the right. Write a note and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>; select a passage in the PDF and click <b>Quote note</b> to put it in the pad, then add your comment. Notes go to the PDF’s source, with the page filled in as you scroll. Click a note in the list to edit it, or its page to go there. <b>Back to writing</b> returns.</li>
       <li><b>Read PDF / ePub</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
