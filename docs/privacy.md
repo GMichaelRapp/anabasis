@@ -42,6 +42,8 @@ Only when you ask it to, and only to these addresses:
 | Back up to GitHub, or open a backup | api.github.com | your project file and your access token, sent to a repository you choose |
 | Check for a newer version (Help, or the weekly check you can switch on in Settings) | api.github.com | nothing but the request for the latest release number |
 
+**Work offline** (Settings) turns off every one of these at once: Anabasis then never goes online.
+
 The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web. Proofread, Close to your notes, Socrates, the Oracle, the research guide and coding all run inside the page.
 
 ## Dashboards you export
@@ -54,11 +56,19 @@ An exported dashboard page is self-contained, except for video tiles: when someo
 
 ## GitHub backup
 
-If you turn on GitHub backup, you give Anabasis a personal access token. It is kept in memory for the session. If you tick **Remember**, it is stored in this browser’s localStorage, unencrypted. Anyone who can use your browser profile could read it, so use a fine-grained token limited to one private repository. A locked project is backed up locked.
+If you turn on GitHub backup, you give Anabasis a personal access token. It is kept in memory for the session. If you tick **Remember** while a locked project is open, it is stored in this browser encrypted with that project’s password; otherwise it is stored in this browser’s localStorage unencrypted, where anyone who can use your browser profile could read it. Either way, make a fine-grained token limited to the one private repository, with **Contents: Read and write** only and an expiration date, so a leaked token can reach only those backups and only for a while. Anabasis won’t back up to a public repository without asking, and never does so automatically. A locked project is backed up locked.
 
 ## Password lock
 
-A locked project is encrypted with AES-256-GCM, using a key derived from your password with PBKDF2 (SHA-256, 600,000 iterations). The password is never stored. Nobody can recover a locked project without the password, including the author.
+A locked project is encrypted with AES-256-GCM, using a key derived from your password with PBKDF2 (SHA-256, 600,000 iterations). The password is never stored. Nobody can recover a locked project without the password, including the author. After a spell away (15 minutes unless you choose otherwise in the lock settings), a locked project hides itself and asks for the password again.
+
+## Pictures you add
+
+Photos carry more than pixels: where they were taken (GPS), the camera and its serial number, the time, sometimes a thumbnail of the uncropped picture. Anabasis takes all of that out when a picture comes in, whether you insert it, paste it, or add it to an archive source, so none of it ends up in your project file or anything you export. A photo the camera marked as turned is redrawn upright first.
+
+## Web pages you save
+
+Every web page Anabasis saves (a document, a reviewer’s page, a dashboard, a comparison of drafts, a fact-check sheet) carries its own content security policy: it can run only the scripts written into it and load nothing from the internet, except a dashboard’s YouTube and Vimeo tiles and the video files they link.
 
 ## Files from other people
 

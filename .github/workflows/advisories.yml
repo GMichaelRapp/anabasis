@@ -1,0 +1,46 @@
+name: Check vendored libraries for advisories
+
+# Every week, and whenever a library is updated, look up each vendored library at its exact version in
+# the OSV advisory database. If any advisory applies, open an issue (or update the open one) listing them.
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+  push:
+    branches: [main]
+    paths: ['vendor/manifest.json', 'tools/check_advisories.py']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false   # nothing here pushes with git, so the token is not left on disk
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: '3.12'
+      - name: Look up advisories
+        id: osv
+        run: |
+          set +e
+          python tools/check_advisories.py --markdown > advisories.md
+          code=$?
+          cat advisories.md
+          if [ $code -gt 1 ]; then exit $code; fi
+          echo "found=$code" >> "$GITHUB_OUTPUT"
+      - name: Open or update the issue
+        if: steps.osv.outputs.found == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          title="Security advisories for vendored libraries"
+          n=$(gh issue list -R "$REPO" --state open --search "\"$title\" in:title" --json number --jq '.[0].number')
+          if [ -n "$n" ]; then gh issue edit "$n" -R "$REPO" --body-file advisories.md
+          else gh issue create -R "$REPO" --title "$title" --body-file advisories.md --label security || gh issue create -R "$REPO" --title "$title" --body-file advisories.md; fi

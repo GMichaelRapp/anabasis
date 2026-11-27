@@ -12,16 +12,20 @@ on:
         required: true
 
 permissions:
-  contents: write
-  actions: write   # to start the Pages and zerohistory.net workflows after publishing
+  contents: write      # to publish the release
+  actions: write       # to start the Pages and zerohistory.net workflows after publishing
+  id-token: write      # to sign the build provenance
+  attestations: write  # to record it, so anyone can check a download with `gh attestation verify`
 
 jobs:
   release:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false   # nothing here pushes with git, so the token is not left on disk
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: '3.12'
       - name: Check the version matches the app
@@ -47,7 +51,11 @@ jobs:
           # release notes: the changelog section for this version
           v="${TAG#v}"
           awk -v v="$v" '$0 ~ "^## \\[" v "\\]" {on=1; next} on && /^## \[/ {exit} on {print}' ../CHANGELOG.md > notes.md
-          printf '\n---\n**Download `anabasis.html`**, open it in your browser, and choose Save to keep your project. SHA-256 checksum in `SHA256SUMS.txt`.\n' >> notes.md
+          printf '\n---\n**Download `anabasis.html`**, open it in your browser, and choose Save to keep your project. SHA-256 checksum in `SHA256SUMS.txt`; to check where it was built, run `gh attestation verify anabasis.html -R gmichaelrapp/anabasis`.\n' >> notes.md
+      - name: Sign build provenance (where, from which commit and by which workflow the file was built)
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: dist/anabasis.html
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}

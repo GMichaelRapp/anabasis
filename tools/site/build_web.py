@@ -46,6 +46,9 @@ HEADERS = """{P}/*
   Content-Disposition: attachment; filename="anabasis.html"
   Cache-Control: public, max-age=0, must-revalidate
 
+{P}/app/*
+  Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'none'
+
 {P}/app/sw.js
   Cache-Control: no-cache
 

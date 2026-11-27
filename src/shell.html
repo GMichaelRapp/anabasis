@@ -25,9 +25,11 @@
 <head>
 <meta charset="utf-8">
 <!-- What this page may load or contact. Anabasis runs entirely in the browser: it reaches the network only to look up
-     a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org https://archive.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+     a citation (doi.org, Crossref, DataCite, Open Library, Wikipedia) or to back up to GitHub when you ask it to.
+     build.py replaces the inline allowance in script-src with the SHA-256 hash of each script in the built page, so only those run. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; media-src data: blob:; connect-src data: blob: https://api.github.com https://doi.org https://*.doi.org https://api.crossref.org https://data.crossref.org https://api.datacite.org https://data.datacite.org https://openlibrary.org https://covers.openlibrary.org https://en.wikipedia.org https://archive.org; worker-src 'self' blob:; manifest-src 'self'; frame-src blob: data:; object-src 'none'; base-uri 'none'; require-trusted-types-for 'script'; trusted-types default dompurify anabasis-frame; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Anabasis">
@@ -720,6 +722,9 @@ body.mg-narrow .mg-card:not(.mg-collapsed){left:auto;right:0;width:min(260px,70v
 #btnMargin:not(.on){opacity:.55}
 .lock-badge{display:none;padding:2px 4px}
 body.locked .lock-badge{display:inline-block}
+/* 2.10.2: a locked project hidden while you're away; only the password box shows */
+body.idle-locked > :not(#pwDlg):not(script):not(style){visibility:hidden}
+body.idle-locked #pwDlg::backdrop{background:var(--bg,#fff)}
 .auto-resume{color:#b45309}
 .pw-err{color:#b91c1c;font-size:13px;min-height:18px;margin-top:6px}
 .ss-list{margin:0 0 6px;padding-left:18px;font-size:14px;line-height:1.7}
@@ -3448,14 +3453,16 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <label>Password</label><input id="pw1" type="password" autocomplete="current-password">
     <div id="pw2Row"><label>Type it again</label><input id="pw2" type="password" autocomplete="new-password"></div>
     <div class="pw-err" id="pwErr"></div>
-    <div class="tip" id="pwWarn"><b>There’s no way to recover a forgotten password</b> — not for you, and not for anyone else. Keep it in a password manager. Locking covers the project file and this browser’s working copy (documents, notes, sources and images). PDFs you open in the reader are stored separately and aren’t locked.</div>
+    <div class="tip" id="pwWarn"><b>There’s no way to recover a forgotten password</b> — not for you, and not for anyone else. Keep it in a password manager. Locking covers the project file and everything this browser keeps for it: the working copy (documents, notes, sources and images) and the PDFs, ePubs and archive photos you’ve added. Use at least 10 characters; a phrase of three or four unrelated words is strong and easy to remember.</div>
   </div>
   <footer><button id="pwFresh" class="ghost danger hidden">Forgot it? Start without this copy</button><button id="pwCancel">Cancel</button><button id="pwOk" class="primary">Unlock</button></footer>
 </div></dialog>
 <dialog id="lockDlg"><div class="dlg">
   <h3>This project is locked</h3>
-  <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p></div>
-  <footer><button id="lockRemove" class="danger">Remove lock</button><button id="lockChange">Change password</button><button id="lockClose" class="primary">Done</button></footer>
+  <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p>
+    <label for="lockIdle">When you step away, hide the project and ask for the password again after</label>
+    <select id="lockIdle"><option value="5">5 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">an hour</option><option value="0">never</option></select></div>
+  <footer><button id="lockRemove" class="danger">Remove lock</button><button id="lockChange">Change password</button><button id="lockNow" title="Hide the project now; the password brings it back">Lock now</button><button id="lockClose" class="primary">Done</button></footer>
 </div></dialog>
 <!-- chart -->
 <dialog id="chDlg" class="xwide"><div class="dlg">
@@ -3541,9 +3548,9 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <p class="small muted" style="margin-top:0">Each backup is a commit of the project file to a <b>private</b> repository, so GitHub keeps the full history. A locked project is backed up locked. To pick up on another device, enter the same repository and token there and choose <b>Open a project</b>; Anabasis tells you when a newer backup is waiting.</p>
     <div class="grid3"><div><label style="margin-top:0">Repository</label><input id="ghRepo" placeholder="owner/name"></div><div><label style="margin-top:0">Branch</label><input id="ghBranch" placeholder="main"></div><div><label style="margin-top:0">Folder</label><input id="ghFolder" placeholder="anabasis"></div></div>
     <label>Access token</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…">
-    <div class="small muted">Make a fine-grained token on GitHub (Settings → Developer settings) with access to just this repository and <b>Contents: Read and write</b>.</div>
+    <div class="small muted">Make a fine-grained token on GitHub (Settings → Developer settings → Fine-grained tokens): <b>Only select repositories</b> with just this one, <b>Contents: Read and write</b> and nothing else, and an expiration date (90 days is sensible). If it ever leaks, it can reach only these backups, and only until it expires.</div>
     <div class="radio-row"><label><input type="checkbox" id="ghRemember"> Remember the token on this device</label><label><input type="checkbox" id="ghAuto"> Back up whenever I save</label></div>
-    <div class="small muted">Saved to <code id="ghPath"></code>. A remembered token is stored unencrypted in this browser; leave it unchecked on shared computers.</div>
+    <div class="small muted">Saved to <code id="ghPath"></code>. In a locked project, a remembered token is stored encrypted with the project’s password; otherwise it is stored as plain text in this browser, so leave it unchecked on shared computers.</div>
     <div class="gh-status" id="ghStatus"></div>
     <ul class="ver-list" id="ghHist"></ul>
   </div>
@@ -3681,6 +3688,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <label><input type="checkbox" id="stHome"> Open to the project home <span class="muted">(otherwise straight to the draft)</span></label>
       <label><input type="checkbox" id="stTips"> Show getting-started tips on empty documents</label>
       <label id="stUpdRow" title="Asks GitHub for the latest release number. Nothing about you or your work is sent."><input type="checkbox" id="stUpd"> Check weekly for a newer version</label>
+      <label title="Turns off everything that reaches the internet: DOI, ISBN and Wikipedia lookups, citation and link checks, update checks, GitHub backups."><input type="checkbox" id="stOffline"> Work offline <span class="muted">(never go online, not even for lookups or backups)</span></label>
       <label><input type="checkbox" id="stAuto"> Autosave to the project file <span class="muted">(Chrome and Edge)</span></label><div class="small muted st-note" id="stAutoNote"></div>
     </div>
     <h4 class="st-h">The Oracle</h4>
@@ -3773,7 +3781,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <blockquote class="help-epigraph" lang="en"><p><span lang="grc">θάλαττα θάλαττα</span></p><p>Presently they could hear the soldiers shouting and passing on the joyful word, “The sea! the sea!”</p><footer>Xenophon, <cite>Anabasis</cite> IV.7, translated by H. G. Dakyns</footer></blockquote>
     <div class="help-top"><button id="helpTour" class="primary">Take the two-minute tour</button><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md" target="_blank" rel="noopener">Quick-start guide</a><button id="helpFeedback">Send feedback</button><button id="helpNew">What’s new</button><button id="helpUpd">Check for a newer version</button></div>
     <h4>Your privacy</h4>
-    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), checking sources for retractions (Crossref, which receives only the DOIs), checking links (the Internet Archive), backing up to GitHub, or checking for a newer version. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web.</p>
+    <p>Anabasis has no account, no server and no tracking. Your project lives in two places only: the .json file you save, and a working copy in this browser (IndexedDB) so nothing is lost if the tab closes. Anabasis connects to the internet only when you ask it to: looking up a source by DOI (doi.org, Crossref, DataCite), ISBN (Open Library) or web address (Wikipedia’s citation service), checking sources for retractions (Crossref, which receives only the DOIs), checking links (the Internet Archive), backing up to GitHub, or checking for a newer version; <b>Work offline</b> in Settings turns all of those off. <b>Send feedback</b> includes only what you write plus the version, browser and device. A locked project is encrypted (AES-256-GCM) before it is saved or backed up. Anything a project file contains is cleaned on opening, so a file someone sends you can’t run code or call out to the web. Pictures lose their location and camera details when you add them.</p>
     <p>A project holds <b>documents</b>, <b>notes</b> and <b>sources</b>. It autosaves in this browser as you work, but the real copy is the <b>.json file</b> you save. Keep that file somewhere backed up (a synced folder or a private GitHub repo).</p>
     <h4>Where things are</h4>
     <ul class="help-map">
@@ -4054,7 +4062,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>Export → Substack post</b> copies the document ready to paste: notes become a numbered Notes section, figures stay images, and tables are drawn as images because Substack has no tables. The .zip package has the post and every image, in case something doesn’t paste.</li>
       <li><b>Import .md</b> (Notes tab) takes a whole folder, such as Notecards or an Obsidian vault, or a few files. Subfolders can become board piles.</li>
       <li><b>Autosave to file</b> (Settings, Chrome and Edge): after you save the project once, Anabasis writes to the same .json a few seconds after you stop typing. After a restart the browser may ask for one click (<i>Resume autosave</i>) before it can write again.</li>
-      <li><b>Lock project</b> (Export menu) encrypts the project file and this browser’s copy with a password (AES-256, PBKDF2). There’s no recovery if you forget it. PDFs opened in the reader aren’t locked.</li>
+      <li><b>Lock project</b> (Export menu) encrypts the project file and everything this browser keeps for it, PDFs and archive photos included, with a password (AES-256, PBKDF2). There’s no recovery if you forget it. After 15 minutes away it hides itself and asks for the password again (change that, or <b>Lock now</b>, in the lock settings).</li>
     </ul>
     <h4>Project home</h4>
     <ul>
@@ -4188,6 +4196,54 @@ Full license texts ship with the source code: https://github.com/gmichaelrapp/an
 <div class="tour hidden" id="tour"><div class="tour-spot" id="tourSpot"></div><div class="tour-box" id="tourBox" role="dialog" aria-modal="false" aria-labelledby="tourTitle" aria-describedby="tourText"><div class="tour-step" id="tourStep"></div><h3 id="tourTitle"></h3><p id="tourText"></p><div class="tour-acts"><button id="tourSkip" class="ghost small">Skip tour</button><span class="spacer"></span><button id="tourBack" class="small">Back</button><button id="tourNext" class="primary small">Next</button></div></div></div>
 
 <!--@CSL@-->
+<script>
+/* Trusted Types (Chrome and Edge): the page's policy refuses to write a string into the page as HTML unless it has
+   been through a policy. The default one cleans every write with DOMPurify, keeping the interface's own markup
+   (forms, SVG, styles, data- attributes) but dropping scripts, event handlers and javascript: links. Rows, cells and
+   SVG shapes are cleaned inside a table or an <svg> so the parser keeps them. The print frames, whole
+   pages the app builds, have a policy of their own. A page parsed by DOMParser is inert
+   (nothing in it runs or loads), so that passes as it is. Scripts may come only from blob: addresses the app makes (and the hosted copy's sw.js),
+   and a library kept as text in the page runs only while the app itself is running it. */
+/* Not inside someone else's page: another site could frame Anabasis invisibly and trick clicks into it. */
+(function () {
+  let foreign = false;
+  try { foreign = window.top !== window.self && window.top.location.origin !== location.origin; } catch (e) { foreign = true; }
+  if (!foreign) return;
+  const st = document.createElement('style'); st.textContent = 'html{display:none!important}'; document.head.appendChild(st);
+  try { window.top.location = location.href; } catch (e) {}
+})();
+var TT_CFG = { ADD_ATTR: ['contenteditable', 'target', 'inert', 'popover', 'popovertarget', 'focusable'], SANITIZE_DOM: false, ADD_DATA_URI_TAGS: ['a'], FORCE_BODY: true,
+  ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp|matrix|blob):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+  CUSTOM_ELEMENT_HANDLING: { tagNameCheck: /^mjx-/, attributeNameCheck: /^[\w-]+$/, allowCustomizedBuiltInElements: false } };
+var TT_ON = false, TT_LIBS = new Set(), TT_AUDIT = null, TT_FRAME = null;
+var TT_WRAP = [[/^(tr)$/, '<table><tbody>', '</tbody></table>', 'tbody'], [/^(td|th)$/, '<table><tbody><tr>', '</tr></tbody></table>', 'tr'],
+  [/^(thead|tbody|tfoot|caption|colgroup|col)$/, '<table>', '</table>', 'table'],
+  [/^(path|g|circle|rect|line|polyline|polygon|ellipse|text|tspan|defs|use|marker|lineargradient|radialgradient|stop|clippath|mask|pattern|symbol)$/, '<svg>', '</svg>', 'svg']];
+function ttClean(h) {
+  if (!ttClean.hooked) { // DOMPurify trims attribute values; a data- attribute may hold a space on purpose (the thin space in Special characters)
+    DOMPurify.addHook('uponSanitizeAttribute', (node, d) => { if (/^data-/.test(d.attrName)) { const v = node.getAttribute(d.attrName); if (v !== null && v.trim() === d.attrValue) d.attrValue = v; } });
+    ttClean.hooked = true;
+  }
+  const first = (/^\s*<([a-zA-Z][\w-]*)/.exec(h) || [])[1], w = first && TT_WRAP.find(x => x[0].test(first.toLowerCase()));
+  let out;
+  if (w) { const body = DOMPurify.sanitize(w[1] + h + w[2], Object.assign({ RETURN_DOM: true }, TT_CFG)), el = body.querySelector(w[3]); out = el ? el.innerHTML : ''; }
+  else out = DOMPurify.sanitize(h, TT_CFG);
+  if (TT_AUDIT && DOMPurify.removed.length) TT_AUDIT(DOMPurify.removed, h);
+  return out;
+}
+if (window.trustedTypes && trustedTypes.createPolicy) {
+  try {
+    trustedTypes.createPolicy('default', {
+      createHTML: (h, type, sink) => (sink === 'DOMParser parseFromString' ? h : window.DOMPurify ? ttClean(h) : ''),
+      createScriptURL: u => (/^blob:/.test(u) || u === 'sw.js' ? u : null), // workers the app makes, and the hosted copy's service worker
+      createScript: t => (TT_LIBS.has(t) ? t : null),
+    });
+    // the print frames: whole pages the app builds itself, scripts and all (see srcdocScripts)
+    TT_FRAME = trustedTypes.createPolicy('anabasis-frame', { createHTML: h => h });
+    TT_ON = true;
+  } catch (e) { console.warn('Trusted Types policy', e); }
+}
+</script>
 <script>/*@VENDOR@*/</script>
 <script>
 /*@APP@*/

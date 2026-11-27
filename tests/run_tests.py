@@ -62,6 +62,8 @@ SUITES = {
     't55': 'the Oracle on revision, editing marks, submissions and the calendar; check-in, wrap-up and what next; its manner; a script lint and a long conversation',
     't56': 'the reader: ePubs, contents and thumbnails, where you left off and the reading list, paper, sepia and night, two pages, highlights without notes, quoting into the draft, reading aloud, the list of find results',
     't57': 'hardening against crafted project files: ids, references, colors and kinds without markup; footnote numbers as text; HTML read without loading; LaTeX and Markdown escaping; messages between windows',
+    't58': 'a fuzzed hostile project: script payloads in every field, every view visited, every saved web page opened; nothing runs, nothing is fetched',
+    't59': '2.10.2 security: Trusted Types and the hashed script policy, password checks, the idle lock, encrypted PDFs and token in a locked project, Work offline, the public-repository guard, photo metadata, saved pages, framing',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

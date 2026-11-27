@@ -22,7 +22,8 @@ async def main():
         await ctx.add_init_script("delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg = await ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)
+        # hostile markup in this test carries event handlers: the page's policy refusing them as it's parsed is expected
+        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' and 'Executing inline event handler' not in m.text else None)
         await pg.goto(URL); await pg.wait_for_timeout(1500)
 
         # a document with a sentence, a dataset with a source, a dashboard with a number, a table and a chart

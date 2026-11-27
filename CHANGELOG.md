@@ -4,6 +4,28 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.10.2] — 2026-11-27
+
+A security release: more layers between anything hostile and your work, and less of your work leaving with what you send.
+
+### Security
+- **Only Anabasis’s own scripts can run.** The content security policy no longer allows inline script: each of the page’s scripts is pinned by its SHA-256 hash when Anabasis is built, inline event handlers and `javascript:` links are refused, and the print frames load their scripts from addresses the app makes itself.
+- **Trusted Types** (Chrome and Edge): the browser refuses any HTML written into the page that hasn’t passed through Anabasis’s policy, which cleans it with DOMPurify, and refuses to turn any string into script.
+- **Saved web pages lock themselves down too.** A web page, reviewer’s page, dashboard, comparison of drafts or fact-check sheet carries its own content security policy: it runs only the scripts written into it and loads nothing from the internet (a dashboard’s YouTube and Vimeo tiles excepted, now sandboxed).
+- **Locking covers everything the project keeps in this browser.** PDFs, ePubs and archive photos added to a locked project are encrypted with its password as well, and a GitHub token remembered while it’s open is too.
+- **A locked project hides itself when you step away** (after 15 minutes unless you choose otherwise), and **Lock now** hides it at once. Passwords need at least 10 characters, and the commonest are refused.
+- **Pictures lose their location and camera details** (EXIF, GPS, XMP, comments) when you add them, so they don’t travel with your project or exports. A photo the camera marked as turned is redrawn upright.
+- **Work offline** (Settings) turns off every feature that goes online.
+- **GitHub backups:** Anabasis won’t back up to a public repository without asking, and automatic backups never do; it warns about classic tokens, and the dialog explains how to make a fine-grained, single-repository, expiring token.
+- **Releases are signed.** Each release has a build-provenance attestation: `gh attestation verify anabasis.html -R gmichaelrapp/anabasis` confirms the file was built by this repository’s workflow from the tagged commit.
+- **Supply chain:** the workflows pin every action to an exact commit, keep their permissions to what each job needs, and don’t leave credentials on disk; Dependabot proposes action updates; a weekly check looks up every vendored library in the OSV advisory database and opens an issue if one is affected. The OCR engine and its model are now verified against the manifest like every other library.
+- **zerohistory.net** sends a content security policy, HSTS, a permissions policy and a cross-origin opener policy with its pages.
+- New test suite `t58`: a project with script payloads in every field, every part of the interface visited and every saved page opened; nothing may run and nothing may be fetched.
+
+### Changed
+- A Word file that includes your comments says that whoever you send it to can read them.
+- `SECURITY.md` sets out what Anabasis defends against, what it can’t, and how to check a download.
+
 ## [2.10.1] — 2026-11-27
 
 ### Security
@@ -462,7 +484,8 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
-[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.1...HEAD
+[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.2...HEAD
+[2.10.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.2
 [2.10.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.1
 [2.10.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.0
 [2.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.9.0

@@ -718,5 +718,37 @@
     "license": "Apache-2.0",
     "source": "npm:mathjax@3.2.2 es5/tex-svg-full.js",
     "sha256": "a4354ff94fd868aea0cc6eaaa79a57fda0588646fc46ee3700a349ee0a11cbe6"
+  },
+  {
+    "file": "vendor/ocr/tesseract.min.js",
+    "name": "Tesseract.js",
+    "version": "7.0.0",
+    "license": "Apache-2.0",
+    "source": "npm:tesseract.js@7.0.0 dist/tesseract.min.js",
+    "sha256": "000c27d9cd0def655f77b36c72a389c0ab13793aa31cb4d7aab56d09c0afbc7e"
+  },
+  {
+    "file": "vendor/ocr/worker.min.js",
+    "name": "Tesseract.js worker",
+    "version": "7.0.0",
+    "license": "Apache-2.0",
+    "source": "npm:tesseract.js@7.0.0 dist/worker.min.js",
+    "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d"
+  },
+  {
+    "file": "vendor/ocr/tesseract-core-simd-lstm.wasm.js",
+    "name": "tesseract.js-core (simd-lstm)",
+    "version": "6.1.2",
+    "license": "Apache-2.0",
+    "source": "npm:tesseract.js-core@6.1.2 tesseract-core-simd-lstm.wasm.js",
+    "sha256": "9d7c43fb206dc9f48475228b46bf35f888fa9e6259da2e67d5a75c77049f2dc7"
+  },
+  {
+    "file": "vendor/ocr/eng.traineddata.gz",
+    "name": "Tesseract English model (best_int)",
+    "version": "1.0.0",
+    "license": "Apache-2.0",
+    "source": "npm:@tesseract.js-data/eng@1.0.0 4.0.0_best_int/eng.traineddata.gz",
+    "sha256": "45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91"
   }
 ]

@@ -19,7 +19,9 @@ async def main():
         await ctx.add_init_script("delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg = await ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)
+        # the hostile paste below carries onclick/onmouseover: Chrome reports the strict CSP refusing them the moment
+        # the markup is parsed (even into an inert document), before the paste filter strips them. That report is expected.
+        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' and 'Executing inline event handler' not in m.text else None)
         pg.on('request', lambda r: reqs.append(r.url) if not r.url.startswith(('data:', 'blob:', 'file:', 'about:')) and '127.0.0.1' not in r.url and 'localhost' not in r.url else None)
         await pg.goto(URL); await pg.wait_for_timeout(1500)
         check('MathJax isn’t loaded until an equation needs it', await pg.evaluate("() => !window.MathJax && !MATH.ready"))

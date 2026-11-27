@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.10.1';
+const APP_VERSION = '2.10.2';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -365,7 +365,47 @@ function checkReminder() {
 }
 setInterval(checkReminder, 30000);
 const fileSafe = s => (String(s || 'untitled').replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 80) || 'untitled');
+/* SHA-256 without waiting (crypto.subtle is asynchronous), for the hashes in an exported page's policy */
+function sha256B64(str) {
+  const K = [0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
+    0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
+    0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
+    0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3, 0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2];
+  const b = new TextEncoder().encode(str), n = ((b.length + 9 + 63) >> 6) << 6, m = new Uint8Array(n); m.set(b); m[b.length] = 0x80;
+  const dv = new DataView(m.buffer), bits = b.length * 8; dv.setUint32(n - 8, Math.floor(bits / 0x100000000)); dv.setUint32(n - 4, bits >>> 0);
+  const H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19], W = new Uint32Array(64), r = (x, k) => (x >>> k) | (x << (32 - k));
+  for (let o = 0; o < n; o += 64) {
+    for (let i = 0; i < 16; i++) W[i] = dv.getUint32(o + i * 4);
+    for (let i = 16; i < 64; i++) { const a = W[i - 15], c = W[i - 2]; W[i] = (W[i - 16] + (r(a, 7) ^ r(a, 18) ^ (a >>> 3)) + W[i - 7] + (r(c, 17) ^ r(c, 19) ^ (c >>> 10))) >>> 0; }
+    let [a, bb, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) >>> 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0; d = c; c = bb; bb = a; a = (t1 + t2) >>> 0;
+    }
+    [a, bb, c, d, e, f, g, h].forEach((v, i) => { H[i] = (H[i] + v) >>> 0; });
+  }
+  const out = new Uint8Array(32); H.forEach((v, i) => new DataView(out.buffer).setUint32(i * 4, v)); return bytesToB64(out);
+}
+/* Every web page Anabasis saves carries its own Content Security Policy: it can run only the scripts written
+   into it (pinned by hash), load nothing from the internet, and send nothing anywhere. If something hostile ever
+   slipped into a page's text, it could neither run nor phone home. */
+function pageCSP(html) {
+  if (!/^<!DOCTYPE html>/i.test(html) || /http-equiv="Content-Security-Policy"/i.test(html)) return html;
+  const hs = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${sha256B64(m[1])}'`);
+  // a dashboard's video tiles: the two players it embeds, and video files it links (always https)
+  const frames = ['https://www.youtube-nocookie.com', 'https://player.vimeo.com'].filter(h => html.includes(`<iframe src="${h}/`)), vids = /<video [^>]*src="https:/.test(html);
+  const csp = `default-src 'none'; img-src data: blob:; media-src data: blob:${vids ? ' https:' : ''}; font-src data:; style-src 'unsafe-inline'; script-src ${hs.length ? hs.join(' ') : "'none'"};${frames.length ? ' frame-src ' + frames.join(' ') + ';' : ''} base-uri 'none'; form-action 'none'`;
+  return html.replace(/<head>/i, `<head><meta http-equiv="Content-Security-Policy" content="${csp}">`);
+}
+/* Every request Anabasis makes to the internet goes through here, so "Work offline" in Settings stops them all.
+   (The page's own policy already limits where they can go: DOI, Crossref, DataCite, Open Library, Wikipedia,
+   the Wayback Machine, and GitHub.) */
+function netFetch(url, opt) {
+  if (PREFS.offline) return Promise.reject(new Error('Anabasis is set to work offline (Settings), so it didn’t go online.'));
+  return fetch(url, opt);
+}
 function download(name, text, type) {
+  if (type === 'text/html' && typeof text === 'string') text = pageCSP(text);
   const blob = text instanceof Blob ? text : new Blob([text], { type });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
@@ -439,7 +479,7 @@ async function loadProjectText(text, handle = null, name = '') {
   }
   let np; try { np = normalize(useLocal ? local.project : data); } catch (e) { console.error(e); toast('That project couldn’t be opened: ' + e.message); return; }
   P = np;
-  LOCK = newLock; document.body.classList.toggle('locked', !!LOCK); pendingHandle = null; autoFailed = false;
+  LOCK = newLock; document.body.classList.toggle('locked', !!LOCK); pendingHandle = null; autoFailed = false; ghUnsealToken();
   fileHandle = handle; lastFileName = name || (handle && handle.name) || ''; lastFileSave = null;
   dirtyFile = useLocal; dirtySince = useLocal ? (local.dirtySince || Date.now()) : null;
   srcVersion++;
@@ -915,10 +955,10 @@ function scrubHTML(html) {
   if (!html) return '';
   if (window.DOMPurify && DOMPurify.isSupported) {
     if (!scrubHTML.hooked) { // images live in the project as data; a remote address would let a shared file ping a server when opened
-      DOMPurify.addHook('uponSanitizeAttribute', (node, d) => { if (node.nodeName === 'IMG' && d.attrName === 'src' && !/^data:image\/(png|jpeg|gif|webp)/i.test(d.attrValue)) d.keepAttr = false; });
+      DOMPurify.addHook('uponSanitizeAttribute', (node, d) => { if (scrubHTML.on && node.nodeName === 'IMG' && d.attrName === 'src' && !/^data:image\/(png|jpeg|gif|webp)/i.test(d.attrValue)) d.keepAttr = false; });
       scrubHTML.hooked = true;
     }
-    return DOMPurify.sanitize(html, SCRUB_CFG);
+    scrubHTML.on = true; try { return DOMPurify.sanitize(html, SCRUB_CFG); } finally { scrubHTML.on = false; }
   }
   return sanitize(html);
 }
@@ -1455,7 +1495,7 @@ async function lookupId(q) {
   const doi = q.match(/10\.\d{4,9}\/[^\s"<>]+/);
   if (doi) {
     let r;
-    try { r = await fetch('https://doi.org/' + doi[0].replace(/[.,;)]+$/, ''), { headers: { Accept: 'application/vnd.citationstyles.csl+json' } }); }
+    try { r = await netFetch('https://doi.org/' + doi[0].replace(/[.,;)]+$/, ''), { headers: { Accept: 'application/vnd.citationstyles.csl+json' } }); }
     catch (e) { throw new Error('Couldn’t reach doi.org. Check your connection, or enter the source by hand.'); }
     if (!r.ok) throw new Error('DOI not found (' + r.status + ').');
     return cleanCsl(await r.json());
@@ -1463,7 +1503,7 @@ async function lookupId(q) {
   const isbn = q.replace(/[^0-9Xx]/g, '');
   if ((isbn.length === 10 || isbn.length === 13) && !/^https?:/i.test(q)) {
     let j;
-    try { const r = await fetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`); j = await r.json(); }
+    try { const r = await netFetch(`https://openlibrary.org/api/books?bibkeys=ISBN:${isbn}&format=json&jscmd=data`); j = await r.json(); }
     catch (e) { throw new Error('Couldn’t reach Open Library. Check your connection, or enter the source by hand.'); }
     const b = j['ISBN:' + isbn];
     if (!b) { try { return await citoid(isbn); } catch (e) { throw new Error('No record found for that ISBN. Enter it by hand.'); } }
@@ -1523,8 +1563,8 @@ function citoidToCsl(it) {
 async function citoid(q) {
   const url = 'https://en.wikipedia.org/api/rest_v1/data/citation/mediawiki/' + encodeURIComponent(q);
   let r = null;
-  try { r = await fetch(url, { headers: { 'Api-User-Agent': 'Anabasis/1.0 (open-source writing and research tool)' } }); }
-  catch (e) { try { r = await fetch(url); } catch (e2) { r = null; } }
+  try { r = await netFetch(url, { headers: { 'Api-User-Agent': 'Anabasis/1.0 (open-source writing and research tool)' } }); }
+  catch (e) { try { r = await netFetch(url); } catch (e2) { r = null; } }
   if (!r || !r.ok) throw new Error('Citation service unavailable');
   const j = await r.json();
   return citoidToCsl(Array.isArray(j) ? j[0] : j);
@@ -2625,7 +2665,7 @@ document.addEventListener('selectionchange', debounce(focusTrack, 30));
 /* ---------- settings ---------- */
 function openSettings() {
   $('#stRemind').value = String(PREFS.remindMins); $('#stGoal').value = PREFS.sessionGoal || '';
-  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stScrSize').value = String(PREFS.scrSize || 100); $('#stScrFont').value = PREFS.scrFont || ''; $('#stScrLh').value = PREFS.scrLh || ''; $('#stUpd').checked = !!PREFS.updCheck; $('#stUpdRow').classList.toggle('hidden', IS_HOSTED); $('#stTips').checked = !PREFS.tipsOff; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
+  $('#stDaily').value = PREFS.dailyGoal || ''; $('#stName').value = PREFS.myName || ''; $('#stType').value = !PREFS.typewriter ? 'off' : PREFS.twAlways ? 'always' : 'focus'; $('#stDim').value = !PREFS.dimOthers ? 'off' : PREFS.dimAlways ? 'always' : 'focus'; $('#stFocusMarks').checked = PREFS.focusMarks !== false; $('#stUncited').value = PREFS.uncitedMin; $('#stHome').checked = PREFS.startHome !== false; $('#stScrSize').value = String(PREFS.scrSize || 100); $('#stScrFont').value = PREFS.scrFont || ''; $('#stScrLh').value = PREFS.scrLh || ''; $('#stUpd').checked = !!PREFS.updCheck; $('#stOffline').checked = !!PREFS.offline; $('#stUpdRow').classList.toggle('hidden', IS_HOSTED); $('#stTips').checked = !PREFS.tipsOff; $('#stAuto').checked = !!PREFS.fileAutosave; $('#stAuto').disabled = !canFileAutosave(); $('#stAutoNote').textContent = canFileAutosave() ? 'Writes to the .json file a few seconds after you stop typing, once you’ve saved it there.' : 'This browser can’t write to files directly (Chrome and Edge can). You’ll get save reminders instead.'; $('#stSpell').checked = !!PREFS.spellcheck;
   $('#stOrcManner').value = orcManner(); installRender();
   $('#settingsDlg').showModal(); renderStorageStatus();
 }
@@ -2633,7 +2673,7 @@ $('#btnSettings').addEventListener('click', openSettings);
 $('#stCancel').addEventListener('click', () => $('#settingsDlg').close());
 $('#stOk').addEventListener('click', () => {
   PREFS.remindMins = +$('#stRemind').value; PREFS.sessionGoal = Math.max(0, parseInt($('#stGoal').value, 10) || 0);
-  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; PREFS.scrSize = +$('#stScrSize').value; PREFS.scrFont = $('#stScrFont').value; PREFS.scrLh = $('#stScrLh').value; const updWas = PREFS.updCheck; PREFS.updCheck = $('#stUpd').checked; applyScreen(); if (PREFS.updCheck && !updWas) { PREFS.updAt = 0; setTimeout(updMaybe, 300); } PREFS.tipsOff = !$('#stTips').checked; tipCheck(); const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
+  PREFS.dailyGoal = Math.max(0, parseInt($('#stDaily').value, 10) || 0); PREFS.startHome = $('#stHome').checked; PREFS.scrSize = +$('#stScrSize').value; PREFS.scrFont = $('#stScrFont').value; PREFS.scrLh = $('#stScrLh').value; const updWas = PREFS.updCheck; PREFS.updCheck = $('#stUpd').checked; PREFS.offline = $('#stOffline').checked; applyScreen(); if (PREFS.updCheck && !updWas) { PREFS.updAt = 0; setTimeout(updMaybe, 300); } PREFS.tipsOff = !$('#stTips').checked; tipCheck(); const wasAuto = !!PREFS.fileAutosave; PREFS.fileAutosave = $('#stAuto').checked && canFileAutosave(); if (PREFS.fileAutosave && !wasAuto) { if (fileHandle) fileAutosave(); else restoreAutosaveHandle(); } PREFS.myName = $('#stName').value.trim(); PREFS.typewriter = $('#stType').value !== 'off'; PREFS.twAlways = $('#stType').value === 'always'; PREFS.dimOthers = $('#stDim').value !== 'off'; PREFS.dimAlways = $('#stDim').value === 'always'; PREFS.focusMarks = $('#stFocusMarks').checked; PREFS.uncitedMin = Math.max(5, parseInt($('#stUncited').value, 10) || 40); PREFS.spellcheck = $('#stSpell').checked;
   if ($('#stOrcManner').value !== orcManner()) { PREFS.orcManner = $('#stOrcManner').value; ORS = null; ORC.rot = {}; }
   savePrefs(); $('#settingsDlg').close(); applyWritingView(); sgRefresh();
   editor.spellcheck = PREFS.spellcheck; snoozeUntil = 0; checkReminder(); renderOutline(); updateTargets();
@@ -2785,7 +2825,7 @@ async function exportDocx(doc, opt = {}) {
     download(fileSafe(doc.title) + (ms ? ' - manuscript' : '') + '.docx', blob, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     if (ms) { toast(`Manuscript saved: Times New Roman 12, double-spaced, ${ms.words}, with your name and page numbers at the top of each page.`); return; }
     const fl = (doc.html.match(/class="flag/g) || []).length;
-    if (cmtList.length) toast(`Word file saved with ${cmtList.length} comment${cmtList.length > 1 ? 's' : ''} in the margin${fl ? ` and ${fl} unresolved flag${fl > 1 ? 's' : ''}` : ''}.`); else
+    if (cmtList.length) toast(`Word file saved with ${cmtList.length} comment${cmtList.length > 1 ? 's' : ''} in the margin${fl ? ` and ${fl} unresolved flag${fl > 1 ? 's' : ''}` : ''}. Anyone you send it to can read them; to leave them out, set Margin notes in Document setup.`); else
     toast(fl ? `Word file saved. Note: ${fl} unresolved flag${fl > 1 ? 's' : ''} printed as [TK].` : (isNote ? 'Word file saved with real footnotes.' : 'Word file saved.'));
   } catch (e) { console.error(e); toast('Couldn’t build the Word file: ' + e.message); }
 }
@@ -3353,6 +3393,20 @@ function reviewCSS() {
   return `@page{margin:1in 2.4in 1in 1.25in;@top-right{content:"Review copy · ${day.replace(/"/g, '')}";font:9pt Helvetica,Arial,sans-serif;color:#777;white-space:nowrap}}
 .pagedjs_page{position:relative}.cp-ln{position:absolute;width:30px;text-align:right;font:7.5pt/12px Helvetica,Arial,sans-serif;color:#888;user-select:none}`;
 }
+/* The page laid out for printing runs in a frame of its own, which keeps the app's script policy: only the app's
+   scripts may run inline. So its scripts go in as blob: addresses the app makes itself, which the policy allows, and
+   are let go when the frame is. */
+function srcdocScripts(html, frame) {
+  const urls = [];
+  const blob = code => { const u = URL.createObjectURL(new Blob([code], { type: 'text/javascript' })); urls.push(u); return `<script src="${u}"><\/script>`; };
+  let out = html.replace(/<script>([\s\S]*?)<\/script>/g, (m, code) => blob(code));
+  // the frame inherits the page's Trusted Types rule; the layout script (Paged.js) moves the frame's own, already
+  // cleaned, content about, so the frame gets a policy that lets it (scripts still come only from these blob: addresses)
+  out = out.replace(/<head>/i, '<head>' + blob("if (window.trustedTypes && trustedTypes.createPolicy) { try { trustedTypes.createPolicy('default', { createHTML: h => h, createScriptURL: u => (/^blob:/.test(u) ? u : null) }); } catch (e) {} }"));
+  const gone = () => urls.forEach(u => URL.revokeObjectURL(u));
+  new MutationObserver((ms, ob) => { if (!frame.isConnected) { gone(); ob.disconnect(); } }).observe(document.body, { childList: true });
+  return TT_FRAME ? TT_FRAME.createHTML(out) : out;
+}
 function exportPagedPDF(doc, opt = {}) {
   if (mathPending(doc)) { mathLoad().then(() => exportPagedPDF(doc, opt)); return; }
   const x = buildExport(doc, 'paged'), cs = docClassAndStyle(doc);
@@ -3372,7 +3426,7 @@ function exportPagedPDF(doc, opt = {}) {
     setTimeout(() => f.remove(), 120000);
   };
   window.addEventListener('message', done);
-  f.srcdoc = html; document.body.appendChild(f);
+  f.srcdoc = srcdocScripts(html, f); document.body.appendChild(f);
   return html;
 }
 function pagedHTMLFor(doc) { // used by tests and for saving a print-ready page
@@ -4629,9 +4683,41 @@ function idbReq(mode, fn) {
     r.onsuccess = () => { const db = r.result, t = db.transaction('kv', mode), st = t.objectStore('kv'); let out; const q = fn(st); if (q) q.onsuccess = () => { out = q.result; }; t.oncomplete = () => { db.close(); res(out); }; t.onerror = () => { db.close(); rej(t.error); }; };
   });
 }
+/* 2.10.2: in a locked project, the PDFs, ePubs and archive photos kept in this browser are encrypted with the
+   project's key too (AES-GCM, a fresh IV for each), so the lock covers everything the project stores here.
+   Each is opened only while that project is unlocked. */
+async function sealBytes(key, bytes) { const iv = crypto.getRandomValues(new Uint8Array(12)); return { iv: bytesToB64(iv), ct: await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, bytes) }; }
+const openBytes = (key, x) => crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(x.iv) }, key, x.ct);
+const lockKey = () => (typeof LOCK !== 'undefined' && LOCK ? LOCK.key : null);
+async function sealVal(val, key = lockKey()) {
+  if (!key || val == null || val.sealed) return val;
+  const obj = typeof val === 'object', raw = obj && val.buf ? val.buf : null, rest = obj ? Object.assign({}, val) : { __s: val };
+  delete rest.buf; if (raw && ArrayBuffer.isView(raw)) rest.__u8 = 1;
+  return { sealed: 1, m: await sealBytes(key, new TextEncoder().encode(JSON.stringify(rest))), b: raw ? await sealBytes(key, raw) : null };
+}
+async function openVal(val, key = lockKey()) {
+  if (!val || !val.sealed) return val;
+  if (!key) return null;
+  try {
+    const rest = JSON.parse(new TextDecoder().decode(await openBytes(key, val.m)));
+    if ('__s' in rest) return rest.__s;
+    if (val.b) { const b = await openBytes(key, val.b); rest.buf = rest.__u8 ? new Uint8Array(b) : b; }
+    delete rest.__u8; return rest;
+  } catch (e) { return null; } // another project's key, or damaged
+}
+async function resealStored(oldKey, newKey) { // when a project is locked, its password changes, or the lock comes off
+  const keys = []; (P ? P.sources : []).forEach(s => { keys.push('pdf:' + s.id); (s.photos || []).forEach(f => keys.push('photo:' + f.id, 'phth:' + f.id)); });
+  for (const k of keys) {
+    try {
+      const raw = await idbReq('readonly', st => st.get(k)); if (raw == null) continue;
+      const v = raw.sealed ? await openVal(raw, oldKey) : raw; if (v == null) continue;
+      const out = newKey ? await sealVal(v, newKey) : v; await idbReq('readwrite', st => st.put(out, k));
+    } catch (e) { console.warn('reseal', k, e); }
+  }
+}
 const pdfStore = {
-  get: id => idbReq('readonly', st => st.get('pdf:' + id)),
-  set: (id, val) => idbReq('readwrite', st => st.put(val, 'pdf:' + id)),
+  get: id => idbReq('readonly', st => st.get('pdf:' + id)).then(v => openVal(v)),
+  set: async (id, val) => { const v = await sealVal(val); return idbReq('readwrite', st => st.put(v, 'pdf:' + id)); },
   del: id => idbReq('readwrite', st => st.delete('pdf:' + id)),
   keys: () => idbReq('readonly', st => st.getAllKeys()),
 };
@@ -4641,9 +4727,9 @@ const pdfStore = {
    2400 pixels; the project file keeps where each came from, its transcription and a SHA-256 fingerprint of
    the original file. ---------- */
 const photoStore = {
-  get: id => idbReq('readonly', st => st.get('photo:' + id)),
-  thumb: id => idbReq('readonly', st => st.get('phth:' + id)),
-  set: (id, val, th) => idbReq('readwrite', st => { st.put(th, 'phth:' + id); return st.put(val, 'photo:' + id); }),
+  get: id => idbReq('readonly', st => st.get('photo:' + id)).then(v => openVal(v)),
+  thumb: id => idbReq('readonly', st => st.get('phth:' + id)).then(v => openVal(v)),
+  set: async (id, val, th) => { const v = await sealVal(val), t = await sealVal(th); return idbReq('readwrite', st => { st.put(t, 'phth:' + id); return st.put(v, 'photo:' + id); }); },
   del: id => idbReq('readwrite', st => { st.delete('phth:' + id); return st.delete('photo:' + id); }),
 };
 const PH = { src: '', cur: '', url: '', zoom: 'fit', thumbs: {} };
@@ -4714,9 +4800,10 @@ async function phAddFiles(files) {
       if (s.photos.some(f => f.sha256 === sha)) continue;
       const big = await phResize(file, 2400), small = await phResize(file, 220);
       const blob = await new Promise(r => big.toBlob(r, 'image/jpeg', .86));
-      const keepOrig = file.type === 'image/jpeg' && orig.byteLength <= blob.size;
+      const clean = file.type === 'image/jpeg' ? jpegClean(new Uint8Array(orig)) : null; // the original without its GPS and camera details
+      const keepOrig = !!clean && !clean.rotated && clean.bytes.byteLength <= blob.size;
       const id = uid('ph');
-      await photoStore.set(id, { type: keepOrig ? file.type : 'image/jpeg', buf: keepOrig ? orig : await blob.arrayBuffer() }, small.toDataURL('image/jpeg', .7));
+      await photoStore.set(id, { type: keepOrig ? file.type : 'image/jpeg', buf: keepOrig ? clean.bytes.buffer.slice(clean.bytes.byteOffset, clean.bytes.byteOffset + clean.bytes.byteLength) : await blob.arrayBuffer() }, small.toDataURL('image/jpeg', .7));
       s.photos.push({ id, name: file.name, box: prev.box || '', folder: prev.folder || '', item: '', date: '', caption: '', text: '', sha256: sha, size: file.size, taken: file.lastModified ? new Date(file.lastModified).toISOString() : '', added: nowISO(), rot: 0 });
       if (!firstId) firstId = id; n++;
     } catch (e) { console.warn(e); toast(`Couldn’t read ${file.name}.`); }
@@ -6782,11 +6869,59 @@ function addAsset(data, name = '', w = 0, h = 0) {
 }
 const loadImage = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('That image couldn’t be read. Try a PNG or JPEG.')); i.src = src; });
 const fileToDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+/* Photos carry more than pixels: the place they were taken (GPS), the camera's serial number, the time, the
+   editing software, sometimes a thumbnail of the uncropped picture. None of it belongs in a project file that
+   may be shared, so it is taken out when an image comes in. Keeps what the picture needs to look right (the JFIF
+   header, the color profile, Adobe's color flag). A photo the camera marked as turned is redrawn upright instead. */
+function jpegClean(u8) {
+  if (u8[0] !== 0xFF || u8[1] !== 0xD8) return null;
+  const out = [u8.subarray(0, 2)]; let i = 2, rotated = false, had = false;
+  while (i + 4 <= u8.length) {
+    if (u8[i] !== 0xFF) return null;
+    const m = u8[i + 1];
+    if (m === 0xFF) { i++; continue; }
+    if (m === 0xDA) { out.push(u8.subarray(i)); break; } // start of scan: the rest is picture
+    if ((m >= 0xD0 && m <= 0xD7) || m === 0x01) { out.push(u8.subarray(i, i + 2)); i += 2; continue; }
+    const len = (u8[i + 2] << 8) | u8[i + 3], end = i + 2 + len; if (len < 2 || end > u8.length) return null;
+    const keep = !((m >= 0xE1 && m <= 0xED) || m === 0xEF || m === 0xFE) || m === 0xE2; // drop APP1, APP3-13, APP15, comments; keep APP0, APP2 (ICC), APP14 (Adobe)
+    if (m === 0xE1 && String.fromCharCode(...u8.subarray(i + 4, i + 10)) === 'Exif\0\0') { const o = exifOrientation(u8.subarray(i + 10, end)); if (o > 1) rotated = true; }
+    if (keep) out.push(u8.subarray(i, end)); else had = true;
+    i = end;
+  }
+  const n = out.reduce((a, b) => a + b.length, 0), r = new Uint8Array(n); let k = 0; out.forEach(b => { r.set(b, k); k += b.length; });
+  return { bytes: r, rotated, had };
+}
+function exifOrientation(t) {
+  try {
+    const le = t[0] === 0x49, v = new DataView(t.buffer, t.byteOffset, t.byteLength), u16 = o => v.getUint16(o, le), ifd = v.getUint32(4, le), n = u16(ifd);
+    for (let e = 0; e < n; e++) { const o = ifd + 2 + e * 12; if (u16(o) === 0x0112) return u16(o + 8); }
+  } catch (e) {}
+  return 1;
+}
+function pngClean(u8) { // drops text, time and EXIF chunks
+  const sig = [137, 80, 78, 71, 13, 10, 26, 10]; if (sig.some((b, i) => u8[i] !== b)) return null;
+  const out = [u8.subarray(0, 8)]; let i = 8, rotated = false, had = false;
+  while (i + 12 <= u8.length) {
+    const len = ((u8[i] << 24) | (u8[i + 1] << 16) | (u8[i + 2] << 8) | u8[i + 3]) >>> 0, type = String.fromCharCode(...u8.subarray(i + 4, i + 8)), end = i + 12 + len;
+    if (end > u8.length) return null;
+    if (type === 'eXIf') rotated = true; // may turn the picture: redraw it
+    if (/^(tEXt|zTXt|iTXt|eXIf|tIME)$/.test(type)) had = true; else out.push(u8.subarray(i, end));
+    i = end; if (type === 'IEND') break;
+  }
+  const n = out.reduce((a, b) => a + b.length, 0), r = new Uint8Array(n); let k = 0; out.forEach(b => { r.set(b, k); k += b.length; });
+  return { bytes: r, rotated, had };
+}
+function stripImageMeta(dataURL, type) { // a data: URL without the metadata, or null when it must be redrawn
+  const m = /^data:([^;,]+);base64,(.*)$/s.exec(dataURL); if (!m) return null;
+  const u8 = b64ToBytes(m[2]), r = /jpeg/.test(type) ? jpegClean(u8) : /png/.test(type) ? pngClean(u8) : { bytes: u8, rotated: false, had: false };
+  if (!r || r.rotated) return null;
+  return r.had ? `data:${m[1]};base64,${bytesToB64(r.bytes)}` : dataURL;
+}
 async function normalizeImage(raw, type = '', size = 0) {
   const img = await loadImage(raw);
   let w = img.naturalWidth || 800, h = img.naturalHeight || 600;
   const scale = Math.min(1, 1800 / Math.max(w, h));
-  if (/^image\/(png|jpeg|gif)$/.test(type) && scale === 1 && size && size < 700e3) return { data: raw, w, h };
+  if (/^image\/(png|jpeg|gif)$/.test(type) && scale === 1 && size && size < 700e3) { const clean = stripImageMeta(raw, type); if (clean) return { data: clean, w, h }; }
   w = Math.max(1, Math.round(w * scale)); h = Math.max(1, Math.round(h * scale));
   const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
   g.drawImage(img, 0, 0, w, h);
@@ -7339,7 +7474,7 @@ const doiOf = s => String(s.csl.DOI || '').trim().replace(/^https?:\/\/(dx\.)?do
 function rcWorst(s) { const n = s.rc && Array.isArray(s.rc.notices) ? s.rc.notices.filter(x => RC_SERIOUS.has(x.type)) : []; return n.length ? n.map(x => x.type).sort((a, b) => RC_RANK.indexOf(a) - RC_RANK.indexOf(b))[0] : ''; }
 function rcBadge(s) { const w = rcWorst(s); if (w) return `<span class="rc-b rc-bad" title="Crossref records a notice on this work">${esc(RC_NAME[w])}</span>`; const c = s.rc && (s.rc.notices || []).length; return c ? `<span class="rc-b" title="Crossref records an update to this work">${esc(RC_NAME[s.rc.notices[0].type] || 'Updated')}</span>` : ''; }
 async function crossrefNotices(doi) {
-  const r = await fetch('https://api.crossref.org/works/' + encodeURIComponent(doi), { cache: 'no-store', credentials: 'omit' });
+  const r = await netFetch('https://api.crossref.org/works/' + encodeURIComponent(doi), { cache: 'no-store', credentials: 'omit' });
   if (r.status === 404) return { notices: [], unknown: 1 };
   if (!r.ok) throw new Error('Crossref answered ' + r.status + '.');
   const m = ((await r.json()) || {}).message || {};
@@ -7474,7 +7609,7 @@ document.addEventListener('click', async e => {
    ================================================================ */
 const WB_OK = /^https?:\/\/web\.archive\.org\/web\/\d{4,14}[a-z_]*\//;
 async function waybackLookup(url) {
-  const r = await fetch('https://archive.org/wayback/available?url=' + encodeURIComponent(url), { cache: 'no-store', credentials: 'omit' });
+  const r = await netFetch('https://archive.org/wayback/available?url=' + encodeURIComponent(url), { cache: 'no-store', credentials: 'omit' });
   if (!r.ok) throw new Error('The Internet Archive answered ' + r.status + '.');
   const j = await r.json(), c = j && j.archived_snapshots && j.archived_snapshots.closest;
   if (!c || !c.available || !WB_OK.test(String(c.url || ''))) return null;
@@ -8456,7 +8591,17 @@ async function projectFileText() {
   try { const env = JSON.parse(sealed), back = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(env.iv) }, LOCK.key, b64ToBytes(env.data))); if (back === t) return sealed; } catch (e) {}
   throw new Error('The locked copy didn’t read back correctly, so nothing was written. Try again; if it keeps happening, remove the lock and save.');
 }
-function askPassword(title, msg, { confirm = false, allowFresh = false } = {}) {
+/* A lock is only as strong as its password: anyone holding the file can try guesses as fast as their computer allows
+   (the 600,000 rounds of PBKDF2 slow each guess, but not enough to save a common password). */
+const PW_COMMON = /^(password|passw0rd|p@ssword|qwerty|qwertyuiop|asdfghjkl|zxcvbnm|letmein|welcome|iloveyou|admin|login|abc123|monkey|dragon|football|baseball|sunshine|princess|trustno1|anabasis|changeme|secret|superman|batman|starwars|whatever|master)\d*!?$/i;
+function pwWeak(p) {
+  const t = p.trim();
+  if (t.length < 10) return 'Use at least 10 characters. A phrase of three or four unrelated words is strong and easy to remember.';
+  if (PW_COMMON.test(t.replace(/\s+/g, ''))) return 'That password is one of the first ones people try. Choose something less common, such as a phrase of unrelated words.';
+  if (/^(.)\1+$/.test(t) || '0123456789012345678901234567890abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz'.includes(t.toLowerCase())) return 'A run of repeated or sequential characters is easy to guess. Try a phrase of unrelated words.';
+  return '';
+}
+function askPassword(title, msg, { confirm = false, allowFresh = false, stay = false } = {}) {
   return new Promise(res => {
     const d = $('#pwDlg');
     $('#pwTitle').textContent = title; $('#pwMsg').textContent = msg; $('#pwErr').textContent = '';
@@ -8464,16 +8609,16 @@ function askPassword(title, msg, { confirm = false, allowFresh = false } = {}) {
     $('#pwFresh').classList.toggle('hidden', !allowFresh);
     $('#pwWarn').classList.toggle('hidden', !confirm);
     $('#pwOk').textContent = confirm ? 'Lock project' : 'Unlock';
-    $('#pwCancel').classList.toggle('hidden', allowFresh);
+    $('#pwCancel').classList.toggle('hidden', allowFresh || stay);
     const fin = v => { d.close(); $('#pwOk').onclick = $('#pwCancel').onclick = $('#pwFresh').onclick = d.oncancel = null; res(v); };
     $('#pwOk').onclick = () => {
       const a = $('#pw1').value;
-      if (confirm) { if (a.length < 8) { $('#pwErr').textContent = 'Use at least 8 characters (a short phrase is best).'; return; } if (a !== $('#pw2').value) { $('#pwErr').textContent = 'The two passwords don’t match.'; return; } }
+      if (confirm) { const weak = pwWeak(a); if (weak) { $('#pwErr').textContent = weak; return; } if (a !== $('#pw2').value) { $('#pwErr').textContent = 'The two passwords don’t match.'; return; } }
       if (!a) return; fin(a);
     };
     $('#pwCancel').onclick = () => fin(null);
     $('#pwFresh').onclick = () => fin('__fresh');
-    d.oncancel = e => { if (allowFresh) { e.preventDefault(); return; } fin(null); };
+    d.oncancel = e => { if (allowFresh || stay) { e.preventDefault(); return; } fin(null); };
     d.showModal(); setTimeout(() => $('#pw1').focus(), 30);
   });
 }
@@ -8490,19 +8635,46 @@ async function unlockLoop(env, title, msg, allowFresh) {
 }
 async function openLockSettings() {
   if (LOCK) {
-    const d = $('#lockDlg'); d.showModal(); return;
+    const d = $('#lockDlg'); $('#lockIdle').value = String(idleMins()); d.showModal(); return;
   }
   const pass = await askPassword('Lock this project', 'Anyone opening the project file, or this browser’s working copy, will need the password.', { confirm: true });
   if (!pass) return;
   const salt = crypto.getRandomValues(new Uint8Array(16));
   LOCK = { key: await deriveKey(pass, salt), salt, iter: ITER };
-  document.body.classList.add('locked'); markDirty(); await persistLocal();
+  document.body.classList.add('locked'); markDirty(); await persistLocal(); ghStoreToken(); resealStored(null, LOCK.key);
   if (fileHandle && PREFS.fileAutosave) fileAutosave();
   toast('Locked. Save the project now so the file on disk is locked too.');
 }
-$('#lockChange').addEventListener('click', async () => { $('#lockDlg').close(); const old = LOCK; LOCK = null; const pass = await askPassword('New password', 'Choose a new password for this project.', { confirm: true }); if (!pass) { LOCK = old; return; } const salt = crypto.getRandomValues(new Uint8Array(16)); LOCK = { key: await deriveKey(pass, salt), salt, iter: ITER }; markDirty(); persistLocal(); toast('Password changed. Save the project to update the file.'); });
-$('#lockRemove').addEventListener('click', async () => { $('#lockDlg').close(); if (!(await ask('Remove the lock?', 'The project file and this browser’s copy will be stored as plain text again after the next save.', 'Remove lock'))) return; LOCK = null; document.body.classList.remove('locked'); markDirty(); persistLocal(); toast('Lock removed. Save to write an unlocked file.'); });
+$('#lockChange').addEventListener('click', async () => { $('#lockDlg').close(); const old = LOCK; LOCK = null; const pass = await askPassword('New password', 'Choose a new password for this project.', { confirm: true }); if (!pass) { LOCK = old; return; } const salt = crypto.getRandomValues(new Uint8Array(16)); LOCK = { key: await deriveKey(pass, salt), salt, iter: ITER }; markDirty(); persistLocal(); ghStoreToken(); resealStored(old.key, LOCK.key); toast('Password changed. Save the project to update the file.'); });
+$('#lockRemove').addEventListener('click', async () => { $('#lockDlg').close(); if (!(await ask('Remove the lock?', 'The project file and this browser’s copy will be stored as plain text again after the next save.', 'Remove lock'))) return; const oldKey = LOCK.key; LOCK = null; document.body.classList.remove('locked'); markDirty(); persistLocal(); ghStoreToken(); resealStored(oldKey, null); toast('Lock removed. Save to write an unlocked file.'); });
 $('#lockClose').addEventListener('click', () => $('#lockDlg').close());
+/* Stepping away: after a spell with no typing, clicking or scrolling, a locked project is hidden until its
+   password is entered again (the key stays in memory, so nothing is lost and saving carries on). */
+let idleAt = Date.now(), idleLocked = false;
+const idleMins = () => (PREFS.idleLock === undefined ? 15 : +PREFS.idleLock || 0);
+['keydown', 'pointerdown', 'wheel', 'touchstart'].forEach(t => document.addEventListener(t, () => { if (!idleLocked) idleAt = Date.now(); }, { capture: true, passive: true }));
+async function lockMatches(pass) { // same password? compare what the two keys make of the same bytes (never stored or sent)
+  const k = await deriveKey(pass, LOCK.salt, LOCK.iter), iv = new Uint8Array(12), t = new TextEncoder().encode('Anabasis idle lock');
+  const a = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, k, t)), b = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, LOCK.key, t));
+  return a.length === b.length && a.every((x, i) => x === b[i]);
+}
+async function idleLockNow(why) {
+  if (!LOCK || idleLocked) return; idleLocked = true;
+  try { if (curDocId) syncEditor(); await persistLocal(); } catch (e) {}
+  $$('dialog[open]').forEach(d => { if (d.id !== 'pwDlg') d.close(); });
+  document.body.classList.add('idle-locked'); const title = document.title; document.title = 'Anabasis (locked)';
+  let msg = why;
+  for (;;) {
+    const pass = await askPassword('Locked', msg, { stay: true });
+    if (pass && LOCK && (await lockMatches(pass).catch(() => false))) break;
+    if (!LOCK) break;
+    msg = pass ? 'That password didn’t unlock it. Try again.' : why;
+  }
+  document.body.classList.remove('idle-locked'); document.title = title; idleLocked = false; idleAt = Date.now();
+}
+setInterval(() => { const m = idleMins(); if (LOCK && m && !idleLocked && Date.now() - idleAt > m * 60e3) idleLockNow(`This project hid itself after ${m} minutes away. Enter its password to carry on.`); }, 20e3);
+$('#lockNow').addEventListener('click', () => { $('#lockDlg').close(); idleLockNow('This project is hidden. Enter its password to carry on.'); });
+$('#lockIdle').addEventListener('change', e => { PREFS.idleLock = +e.target.value; savePrefs(); });
 $('#lockBadge').addEventListener('click', openLockSettings);
 
 /* ================================================================
@@ -8511,7 +8683,7 @@ $('#lockBadge').addEventListener('click', openLockSettings);
    so it exports everywhere a picture does and reopens in its editor.
    ================================================================ */
 const LIBS = {};
-function useLib(id) { if (LIBS[id]) return; const s = document.createElement('script'); s.textContent = document.getElementById(id).textContent; document.head.appendChild(s); LIBS[id] = true; }
+function useLib(id) { if (LIBS[id]) return; const s = document.createElement('script'), code = document.getElementById(id).textContent; TT_LIBS.add(code); s.textContent = code; TT_LIBS.delete(code); document.head.appendChild(s); LIBS[id] = true; }
 const SERIES = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#6250d6', '#e34948']; // validated categorical order (fixed, never cycled)
 const VIZ = { ink: '#1d2733', ink2: '#52514e', grid: '#e4e6e3', surface: '#ffffff', font: '"Helvetica Neue", Helvetica, Arial, sans-serif', mapFont: 'Arial, Helvetica, sans-serif' };
 const captionFor = s => [s.caption && s.caption.trim().replace(/([^.!?])$/, '$1.'), s.source && 'Source: ' + s.source.trim().replace(/([^.!?])$/, '$1.')].filter(Boolean).join(' ');
@@ -9586,6 +9758,23 @@ let ghTokenMem = '';
 const GH_TOKEN_KEY = 'anabasis.ghToken';
 function ghCfg() { PREFS.gh = PREFS.gh || { repo: '', branch: 'main', folder: 'anabasis', auto: false, paths: {}, remember: false }; PREFS.gh.paths = PREFS.gh.paths || {}; return PREFS.gh; }
 function ghToken() { return ghTokenMem || (ghCfg().remember ? (localStorage.getItem(GH_TOKEN_KEY) || '') : ''); }
+/* A token remembered while a locked project is open is kept encrypted with that project's key (the same AES-GCM
+   key as the project, so it opens only once the project is unlocked); otherwise it is kept as plain text. */
+const ghSealKey = () => GH_TOKEN_KEY + '.sealed.' + (P && P.id);
+async function ghStoreToken(tok = ghToken()) {
+  const c = ghCfg();
+  try {
+    if (!c.remember || !tok) { localStorage.removeItem(GH_TOKEN_KEY); if (P) localStorage.removeItem(ghSealKey()); return; }
+    if (LOCK && P) {
+      const iv = crypto.getRandomValues(new Uint8Array(12)), ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, LOCK.key, new TextEncoder().encode(tok)));
+      localStorage.setItem(ghSealKey(), JSON.stringify({ iv: bytesToB64(iv), data: bytesToB64(ct) })); localStorage.removeItem(GH_TOKEN_KEY);
+    } else { localStorage.setItem(GH_TOKEN_KEY, tok); if (P) localStorage.removeItem(ghSealKey()); }
+  } catch (e) { console.warn('GitHub token', e); }
+}
+async function ghUnsealToken() {
+  if (!LOCK || !P) return; let raw = null; try { raw = localStorage.getItem(ghSealKey()); } catch (e) {} if (!raw) return;
+  try { const x = JSON.parse(raw); ghTokenMem = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(x.iv) }, LOCK.key, b64ToBytes(x.data))); } catch (e) {}
+}
 function ghPath() { const c = ghCfg(); return c.paths[P.id] || `${(c.folder || 'anabasis').replace(/^\/+|\/+$/g, '')}/${fileSafe(P.title || 'project').replace(/\s+/g, '-')}-${P.id.slice(-6)}.json`; }
 function ghErr(status, body) {
   let m = ''; try { m = JSON.parse(body).message || ''; } catch (e) {}
@@ -9597,22 +9786,33 @@ function ghErr(status, body) {
 }
 async function gh(path, opt = {}) {
   const tok = ghToken(); if (!tok) throw new Error('Add a GitHub token first.');
-  const r = await fetch('https://api.github.com' + path, { method: opt.method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + tok, Accept: opt.raw ? 'application/vnd.github.raw' : 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, opt.body ? { 'Content-Type': 'application/json' } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined });
+  const r = await netFetch('https://api.github.com' + path, { method: opt.method || 'GET', headers: Object.assign({ Authorization: 'Bearer ' + tok, Accept: opt.raw ? 'application/vnd.github.raw' : 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' }, opt.body ? { 'Content-Type': 'application/json' } : {}), body: opt.body ? JSON.stringify(opt.body) : undefined });
   if (!r.ok) { const e = new Error(ghErr(r.status, await r.text())); e.status = r.status; throw e; }
   return opt.raw ? r.text() : r.status === 204 ? null : r.json();
 }
 const ghRepo = () => { const c = ghCfg(), m = (c.repo || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').match(/^([\w.-]+)\/([\w.-]+)$/); if (!m) throw new Error('Enter the repository as owner/name, e.g. gmrapp/anabasis-backups.'); return `/repos/${m[1]}/${m[2]}`; };
 async function ghTest() {
   const repo = await gh(ghRepo());
-  const warn = repo.private ? '' : ' Warning: this repository is public, so anyone can read your backups. Use a private repository.';
+  const warn = (repo.private ? '' : ' Warning: this repository is public, so anyone can read your backups. Use a private repository.') +
+    (/^gh[ps]_/.test(ghToken()) ? ' This is a classic token, which can reach every repository you have; a fine-grained token (github_pat_…) limited to this one repository is safer.' : '');
+  if (repo.private) ghCleared.add(repo.full_name.toLowerCase());
   if (repo.permissions && !repo.permissions.push) throw new Error('The token can read this repository but not write to it.');
   return `Connected to ${repo.full_name} (${repo.private ? 'private' : 'public'}).${warn}`;
 }
 let ghBusy = false;
+const ghCleared = new Set(); // repositories cleared for backups this session: private, or public and confirmed
 async function ghBackup(manual = true) {
   if (ghBusy) return; ghBusy = true; const c = ghCfg(), R = ghRepo(), path = ghPath(), branch = (c.branch || 'main').trim();
   try {
     if (manual) ghStatus('Backing up…');
+    const full = R.replace(/^\/repos\//, '').toLowerCase();
+    if (!ghCleared.has(full)) { // never put a project in a public repository without asking
+      const repo = await gh(R);
+      if (repo.private) ghCleared.add(full);
+      else if (!manual) { ghStatus('Not backed up: the repository is public, so anyone could read the project. Use a private repository.', true); return; }
+      else if (!(await ask('This repository is public', `Anyone on the internet can read what’s in ${repo.full_name}, including this project${LOCK ? ' (still locked with its password)' : ''}. Use a private repository unless you mean to publish it.`, 'Back up anyway'))) { ghStatus('Not backed up.'); return; }
+      ghCleared.add(full);
+    }
     const text = await projectFileText(), b64 = bytesToB64(new TextEncoder().encode(text));
     const words = P.docs.reduce((n, d) => n + docWords(d), 0);
     const message = `Back up “${LOCK ? 'locked project' : P.title}”: ${words.toLocaleString()} words, ${P.docs.length} document${P.docs.length === 1 ? '' : 's'}, ${P.notes.length} notes`;
@@ -9644,7 +9844,7 @@ async function ghBackup(manual = true) {
 }
 let ghLastAuto = 0;
 function ghAfterSave(fromAutosave) {
-  const c = ghCfg(); if (!c.auto || !c.repo || !ghToken()) return;
+  const c = ghCfg(); if (!c.auto || !c.repo || !ghToken() || PREFS.offline) return;
   const gap = fromAutosave ? 10 * 60e3 : 30e3; if (Date.now() - ghLastAuto < gap) return;
   ghLastAuto = Date.now(); ghBackup(false).catch(() => {});
 }
@@ -9658,8 +9858,7 @@ function openGitHub() {
 }
 function ghSaveForm() {
   const c = ghCfg(); c.repo = $('#ghRepo').value.trim(); c.branch = $('#ghBranch').value.trim() || 'main'; c.folder = $('#ghFolder').value.trim() || 'anabasis'; c.auto = $('#ghAuto').checked; c.remember = $('#ghRemember').checked;
-  ghTokenMem = $('#ghToken').value.trim();
-  if (c.remember && ghTokenMem) localStorage.setItem(GH_TOKEN_KEY, ghTokenMem); else localStorage.removeItem(GH_TOKEN_KEY);
+  ghTokenMem = $('#ghToken').value.trim(); ghStoreToken(ghTokenMem);
   savePrefs(); $('#ghPath').textContent = ghPath();
 }
 ['#ghRepo', '#ghBranch', '#ghFolder', '#ghToken'].forEach(s => $(s).addEventListener('change', ghSaveForm));
@@ -10351,6 +10550,9 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.10.2': ['Security, in layers: only Anabasis’s own scripts can run, anything written into the page is cleaned again on the way, and every web page you save locks itself down the same way.',
+    'Locking covers everything: PDFs, ePubs and archive photos in a locked project are encrypted too, and it hides itself when you step away (Lock now hides it at once). Pictures lose their GPS and camera details when you add them.',
+    'Work offline (Settings) turns off everything that goes online. GitHub backups won’t go to a public repository without asking. Releases are signed, so you can check where your copy came from.'],
   '2.10.1': ['A security fix: a project file made to attack Anabasis could run code when you opened it. Opening a file now checks everything that goes into the interface. Your own projects aren’t changed.',
     'The reader’s side panel keeps its tabs in a tidy grid, LaTeX export writes backslashes correctly, and the README, wiki and screenshots are up to date.'],
   '2.10.0': ['The reader opens ePubs (DRM-free ones), with a quote’s printed page when the book marks its pages, or its chapter and paragraph when it doesn’t. Search inside sources reads them too.',
@@ -10479,21 +10681,21 @@ const IS_HOSTED = !!document.querySelector('meta[name=anabasis-installable]');
 async function updCheck(manual) {
   if (IS_HOSTED && !manual) return null;
   try {
-    const r = await fetch('https://api.github.com/repos/gmichaelrapp/anabasis/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
+    const r = await netFetch('https://api.github.com/repos/gmichaelrapp/anabasis/releases/latest', { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' });
     if (!r.ok) throw new Error(r.status);
     const j = await r.json(), tag = String(j.tag_name || '').replace(/^v/, '');
     PREFS.updAt = Date.now(); savePrefs();
     if (tag && vcmp(tag, APP_VERSION) > 0) { $('#updMsg').textContent = `Anabasis ${tag} is out. You have ${APP_VERSION}. Save your project file first, then download the new version and open your project file in it.`; $('#updBar').classList.remove('hidden'); return tag; }
     if (manual) toast(`You have the newest version (${APP_VERSION}).`);
     return '';
-  } catch (e) { if (manual) toast('Couldn’t reach GitHub to check. Try again later.'); return null; }
+  } catch (e) { if (manual) toast(PREFS.offline ? e.message : 'Couldn’t reach GitHub to check. Try again later.'); return null; }
 }
 $('#updBar').addEventListener('click', e => {
   const a = e.target.closest('[data-ub]'); if (!a) return;
   if (a.dataset.ub === 'get') window.open('https://github.com/gmichaelrapp/anabasis/releases/latest', '_blank', 'noopener');
   $('#updBar').classList.add('hidden');
 });
-function updMaybe() { if (!IS_HOSTED && PREFS.updCheck && Date.now() - (PREFS.updAt || 0) > 7 * DAY) updCheck(false); }
+function updMaybe() { if (!IS_HOSTED && PREFS.updCheck && !PREFS.offline && Date.now() - (PREFS.updAt || 0) > 7 * DAY) updCheck(false); }
 
 const TOUR = [
   { t: 'Welcome to Anabasis', x: 'A writing and research desk for nonfiction: drafts, notes, sources and your research record in one project. Your work stays on this device. There’s no account and no server; Anabasis goes online only when you look up a source or back up to GitHub. This tour takes about two minutes.' },
@@ -12131,7 +12333,7 @@ async function tileBody(t, forExport, width) {
   if (t.type === 'image') { const a = t.asset && P.assets[t.asset]; return a ? `<img class="tl-img" src="${a.data}" alt="${esc(t.title || t.note || 'Image')}">` : none('Choose an image.'); }
   if (t.type === 'video') {
     const v = videoEmbed(t.url); if (!v) return none('Paste a YouTube, Vimeo or video-file link.');
-    if (forExport) return v.kind === 'file' ? `<video controls preload="metadata" src="${esc(v.src)}"></video>` : `<div class="tl-vid"><iframe src="${esc(v.src)}" title="${esc(t.title || 'Video')}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`;
+    if (forExport) return v.kind === 'file' ? `<video controls preload="metadata" src="${esc(v.src)}"></video>` : `<div class="tl-vid"><iframe src="${esc(v.src)}" title="${esc(t.title || 'Video')}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy" sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"></iframe></div>`;
     return `<a class="tl-vidph" href="${esc(t.url)}" target="_blank" rel="noopener"><span>▶</span><b>${esc(t.title || 'Video')}</b><small>${esc(v.host)} · plays in the exported page; opens in your browser here</small></a>`;
   }
   return '';
@@ -16954,7 +17156,7 @@ function printBook(B) {
     setTimeout(() => f.remove(), 120000);
   };
   window.addEventListener('message', done);
-  f.srcdoc = html; document.body.appendChild(f);
+  f.srcdoc = srcdocScripts(html, f); document.body.appendChild(f);
   return html;
 }
 COMMANDS.push(['Book for print: PDF at a trim size, with front matter', () => openBook()]);
@@ -17676,7 +17878,7 @@ function sendClip(to, clip) {
     else rec = null;
   }
   if (rec && rec.project) {
-    P = normalize(rec.project); curDocId = rec.curDocId;
+    P = normalize(rec.project); curDocId = rec.curDocId; ghUnsealToken();
     dirtyFile = rec.dirtyFile !== undefined ? !!rec.dirtyFile : true;
     dirtySince = dirtyFile ? (rec.dirtySince || Date.now()) : null;
     lastFileSave = rec.lastFileSave ? new Date(rec.lastFileSave) : null; lastFileName = rec.lastFileName || '';

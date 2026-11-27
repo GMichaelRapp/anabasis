@@ -61,7 +61,9 @@ Checkpoints are for the whole project. For one document, use **Drafts** in the d
 
 To set it up you need a GitHub account, a private repository, and a **fine-grained personal access token** limited to that one repository with **Contents: Read and write** permission. Make it on GitHub under Settings → Developer settings.
 
-- The token is kept in memory for the session. If you tick **Remember**, it’s stored in this browser’s localStorage, unencrypted, so anyone who can use your browser profile could read it. That’s why the token should be limited to one private repository.
+- Give the token **Only select repositories** with just the backup repository, **Contents: Read and write** and nothing else, and an expiration date (90 days is sensible). If it ever leaks, it reaches only those backups, and only until it expires. Anabasis warns if you use a classic token, which can reach all your repositories.
+- The token is kept in memory for the session. If you tick **Remember** while a locked project is open, it’s stored encrypted with that project’s password. Otherwise it’s stored in this browser’s localStorage unencrypted, so anyone who can use your browser profile could read it.
+- Anabasis won’t back up to a public repository without asking, and automatic backups never do.
 - **Picking up on another device:** enter the same repository and token there, then choose **Open a project…** in the GitHub dialog (or **From GitHub…** on Project home). When a newer backup of the open project turns up from another device, a notice offers to open it.
 - Backing up over a newer backup asks first, and automatic backups never do it. Nothing is lost either way, because every backup stays in the history.
 
@@ -85,7 +87,9 @@ It’s the copy to keep for years, or to hand to someone who doesn’t use Anaba
 - Encryption is AES-256-GCM, with a key made from your password by PBKDF2 (SHA-256, 600,000 iterations).
 - The password is never stored. **There is no way to recover a locked project if you forget the password**, and nobody, including the author, can open it for you.
 - A locked project is backed up to GitHub locked.
-- PDFs and archive photos are kept separately in the browser and aren’t locked.
+- The PDFs, ePubs and archive photos the project keeps in this browser are encrypted with the same password, and open only while the project is unlocked.
+- Passwords need at least 10 characters, and the commonest ones are refused. A phrase of three or four unrelated words is strong and easy to remember.
+- **Stepping away:** after 15 minutes with no typing or clicking, a locked project hides itself and asks for the password again. Choose the time (or never) in the lock settings, or press **Lock now** there to hide it at once.
 
 ## Privacy
 
@@ -101,7 +105,9 @@ Anabasis has no account, no server, no analytics and no advertising. Nobody can 
 | Back up to GitHub, or open a backup | api.github.com | your project file and token, to the repository you chose |
 | Check for a newer version | api.github.com | only the request for the latest version number |
 
-The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web. Socrates, the Oracle, Proofread, Close to your notes, coding and the research guide run entirely in the page. Evidence fingerprints are worked out in the browser; the files are never stored or sent. The full details are in [docs/privacy.md](https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md).
+**Work offline** (Settings) turns all of these off at once.
+
+The page’s content security policy blocks every other connection. Images in your documents are stored inside the project, never loaded from the web, and pictures lose their location (GPS) and camera details when you add them. Every web page Anabasis saves carries its own content security policy, so it can’t load anything from the internet either. Socrates, the Oracle, Proofread, Close to your notes, coding and the research guide run entirely in the page. Evidence fingerprints are worked out in the browser; the files are never stored or sent. The full details are in [docs/privacy.md](https://github.com/gmichaelrapp/anabasis/blob/main/docs/privacy.md).
 
 ## The project file format
 

@@ -8,7 +8,7 @@ Needs only the Python standard library. Every third-party file is committed unde
 assets/ with its version, license and SHA-256 recorded in vendor/manifest.json, so the build never
 touches the network and the same commit always produces the same file.
 """
-import argparse, base64, hashlib, json, pathlib, re, sys, urllib.parse
+import argparse, base64, hashlib, html.parser, json, pathlib, re, sys, urllib.parse
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC, VJ, CSL, DATA, ASSETS, DIST = (ROOT / d for d in ('src', 'vendor/js', 'vendor/csl', 'data', 'assets', 'dist'))
@@ -94,13 +94,43 @@ def build():
                  .replace('<!--@CSL@-->', lazy).replace('/*@VENDOR@*/', vendor).replace('/*@APP@*/', app))
 
 
+class _Scripts(html.parser.HTMLParser):
+    """The scripts a browser would run, read the way the browser reads them (not by pattern, since the app's own
+    code holds the text '<script>' in strings)."""
+    def __init__(self):
+        super().__init__(convert_charrefs=False); self.found, self._cur = [], None
+    def handle_starttag(self, tag, attrs):
+        if tag != 'script': return
+        a = dict(attrs); t = (a.get('type') or '').lower()
+        # a library kept as text until it's needed, then run by useLib(): its exact text may run too
+        lazy = t == 'text/plain' and (a.get('id') or '').startswith('lib-')
+        self._cur = [] if ((not t or t in ('text/javascript', 'module')) and 'src' not in a) or lazy else None
+    def handle_data(self, data):
+        if self._cur is not None: self._cur.append(data)
+    def handle_endtag(self, tag):
+        if tag == 'script' and self._cur is not None: self.found.append(''.join(self._cur)); self._cur = None
+
+
+def pin_scripts(html):
+    """Swap 'unsafe-inline' in the page's script-src for the SHA-256 of each script it runs.
+
+    The browser then runs the app's own scripts and nothing else: a script slipped into the page by a crafted file
+    is refused. Blocks of data (type="text/plain", "application/json") don't run, so they aren't listed."""
+    p = _Scripts(); p.feed(html); p.close()
+    hashes = ["'sha256-" + base64.b64encode(hashlib.sha256(t.encode('utf-8')).digest()).decode() + "'" for t in p.found]
+    if not hashes: sys.exit('no inline scripts found to pin')
+    before = "script-src 'unsafe-inline'"
+    if html.count(before) != 1: sys.exit('the content security policy has changed shape: expected exactly one ' + before)
+    return html.replace(before, 'script-src ' + ' '.join(dict.fromkeys(hashes)), 1)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--check', action='store_true', help='verify vendored files against vendor/manifest.json')
     ap.add_argument('--out', default=str(DIST / 'anabasis.html'))
     a = ap.parse_args()
     if a.check: check_manifest()
-    out = build()
+    out = pin_scripts(build())
     size = len(out.encode('utf-8'))
     if size > BUDGET: sys.exit(f'dist is {size / 1048576:.2f} MB, over the {BUDGET / 1048576:.0f} MB budget')
     version = re.search(r"const APP_VERSION = '([^']+)'", read(SRC / 'app.js')).group(1)

@@ -49,6 +49,8 @@ Coming back the other way, **Import Word** (Docs tab) brings in a `.docx` with i
 
 One self-contained `.html` file, with notes as links, figures inside the file, and equations drawn sharply at any size. It’s a good format for sending a draft to someone who doesn’t have Word, or for publishing.
 
+Like every web page Anabasis saves (the reviewer’s page, dashboards, a comparison of drafts, the fact-check sheet), it carries its own content security policy: it runs only the scripts written into it and loads nothing from the internet, so it’s safe to open and to pass on.
+
 ### E-book (ePub)
 
 An ePub with tappable notes, a table of contents from your headings, figures, and equations that scale. It opens in Apple Books, Kobo, Calibre and most readers. (Kindle reads ePub when sent through Send to Kindle.)

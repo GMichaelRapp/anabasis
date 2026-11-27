@@ -98,7 +98,8 @@ The whole app is a single HTML file of about 23 MB. Download it, open it in your
 - Notes, sources, the research desk or another document beside the writing, or in a window of their own on a second screen.
 - **Install it as an app** from the hosted copy (Settings → This browser → Install Anabasis, in Chrome or Edge, or Add to Dock in Safari): its own window and icon, and it works offline.
 - Text size, typeface and line spacing for the screen, separate from what you export; what’s new after each update; **⌘/Ctrl E** for what you opened last; and Send feedback in Help.
-- Optional password lock (AES-256-GCM) and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
+- Optional password lock (AES-256-GCM), covering the PDFs and photos the project keeps in the browser and hiding the project when you step away; and optional backup to a private GitHub repository, which also lets you pick up a project on another device.
+- **Built to be hard to attack**: only its own scripts can run (pinned by hash, with Trusted Types in Chrome and Edge), files from other people are cleaned twice on the way in, pictures lose their GPS and camera details, saved web pages lock themselves down, **Work offline** turns off everything that goes online, and every release is signed. See [SECURITY.md](SECURITY.md) for the details and how to check a download.
 
 | | |
 |---|---|

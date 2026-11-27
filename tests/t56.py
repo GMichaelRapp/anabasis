@@ -56,7 +56,7 @@ async def main():
         await ctx.add_init_script("delete window.showSaveFilePicker; if(!sessionStorage.getItem('t56'))localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0',myName:'Ada Ferro',orcDay:new Date().toISOString().slice(0,10)})); sessionStorage.setItem('t56','1')")
         pg = await ctx.new_page()
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' and 'Failed to load resource' not in m.text else None)
+        pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' and 'Failed to load resource' not in m.text and 'Executing inline event handler' not in m.text else None)  # the policy refusing a hostile handler as it's parsed is expected
         await pg.goto(URL); await pg.wait_for_timeout(1500)
         await pg.evaluate("() => { dirtyFile = false; return openStarter('thesis'); }"); await pg.wait_for_timeout(1300)
         await pg.evaluate("() => document.querySelectorAll('dialog[open]').forEach(d => d.close())")

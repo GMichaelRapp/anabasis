@@ -53,7 +53,9 @@ async def main():
         await ctx.add_init_script("delete window.showSaveFilePicker; delete window.showOpenFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,seenVersion:'99.0.0'}))")
         pg = await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.on('console', lambda m: errs.append('console:' + m.text) if m.type == 'error' else None)
+        # the hostile files carry onerror/onclick handlers: Chrome reports the page's policy refusing them as soon as the
+        # markup is parsed (even into an inert document, before it is cleaned). That report is the policy working, not a fault.
+        pg.on('console', lambda m: errs.append('console:' + m.text) if m.type == 'error' and 'Executing inline event handler' not in m.text else None)
         await pg.goto(URL); await pg.wait_for_timeout(1200)
         ok = True
         def check(name, cond, extra=''):

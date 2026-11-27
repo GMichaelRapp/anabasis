@@ -75,7 +75,8 @@ async def main():
         await pg.add_init_script("localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
         pg.on('console', lambda m: print('VIEW SCRIPT WARNING', m.text) if m.type == 'warning' else None)
         await pg.goto(URL); await pg.wait_for_timeout(1200)
-        await pg.add_script_tag(content=open(AXE).read())
+        # the app's Trusted Types policy (rightly) refuses a script added as text, so run axe through the debugger instead
+        await pg.evaluate('() => { ' + open(AXE).read() + '\n;if (!window.axe && typeof axe !== "undefined") window.axe = axe; }')
         total = {}
         for theme in ('light', 'dark'):
             await pg.evaluate(f"document.documentElement.dataset.theme='{theme}'")

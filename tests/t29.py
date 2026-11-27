@@ -19,7 +19,8 @@ async def main():
         await ctx.grant_permissions(['clipboard-read', 'clipboard-write'])
         pg = await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e)))
-        pg.on('console', lambda m: errs.append('console:' + m.text) if m.type == 'error' else None)
+        # hostile markup in this test carries event handlers: the page's policy refusing them as it's parsed is expected
+        pg.on('console', lambda m: errs.append('console:' + m.text) if m.type == 'error' and 'Executing inline event handler' not in m.text else None)
         await pg.goto(URL); await pg.wait_for_timeout(1500)
         await pg.evaluate("""() => {
           const a = addSource({ type: 'book', title: 'Anabasis', author: [{ family: 'Xenophon' }], issued: { 'date-parts': [[1897]] } }); a.osint = { rating: 'B2' };
