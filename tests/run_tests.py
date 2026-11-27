@@ -114,7 +114,7 @@ def main():
         print(f'{"PASS" if ok else "FAIL"}  {n:4} {time.time() - t0:5.1f}s  {SUITES.get(n, "")}' + ('' if ok else f'\n      {why}; see tests/out/{n}.log'))
         if not ok:
             failed.append(n)
-            for line in [l for l in text.splitlines() if l.startswith(('FAIL', 'ERRS', 'Traceback')) or 'Error' in l][:12]: print('      | ' + line[:300])
+            for line in [l for l in text.splitlines() if l.startswith(('FAIL', 'ERRS', 'Traceback', 'OVER BUDGET')) or 'Error' in l][:12]: print('      | ' + line[:300])
     srv.shutdown()
     print(f'\n{len(names) - len(failed)} of {len(names)} suites passed' + (f'; failed: {", ".join(failed)}' if failed else ''))
     sys.exit(1 if failed else 0)

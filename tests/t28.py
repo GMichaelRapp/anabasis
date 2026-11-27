@@ -73,7 +73,7 @@ async def main():
                 lt = await pg.evaluate("window.__lt")
                 block = round(sum(max(0, d - 50) for d in lt)); worst = round(max(lt) if lt else 0)
                 rows.append((name, block, worst, len(lt)))
-                if worst > WORST_BUDGET: bad.append(name)
+                if worst > WORST_BUDGET: bad.append(f'{name} (worst {worst} ms, {len(lt)} long tasks)')
             except Exception as e:
                 rows.append((name, -1, -1, 0)); bad.append(name + ' (could not run: ' + str(e).split('\n')[0][:80] + ')')
         # one-off actions: time from click to settled, and the longest freeze
