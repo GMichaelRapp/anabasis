@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.9.0';
+const APP_VERSION = '2.10.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -206,7 +206,7 @@ function normalize(p) {
         glossary: (Array.isArray(t.glossary) ? t.glossary : []).filter(g => g && typeof g === 'object' && g.term).map(g => ({ id: asStr(g.id) || uid('tg'), term: asStr(g.term), lang: L(g.lang), render: asStr(g.render), avoid: (Array.isArray(g.avoid) ? g.avoid : String(g.avoid || '').split(',')).map(x => asStr(x).trim()).filter(Boolean), note: asStr(g.note), translit: asStr(g.translit), created: asStr(g.created) || nowISO() })) }; }
   }
   out.sources = out.sources.filter(s => s && s.id).map(s => Object.assign({ id: s.id, csl: s.csl || {}, created: s.created || nowISO(), modified: s.modified || nowISO() }, s.osint && typeof s.osint === 'object' ? { osint: s.osint } : {}, typeof s.annotation === 'string' && s.annotation ? { annotation: s.annotation } : {}, typeof s.transcript === 'string' && s.transcript ? { transcript: s.transcript } : {}, s.pdfName ? { pdfName: s.pdfName } : {}, s.pdfOffset ? { pdfOffset: +s.pdfOffset || 0 } : {}, ST_OK.has(s.stype) ? { stype: s.stype } : {}, s.citeArchive ? { citeArchive: true } : {}, typeof s.zkey === 'string' && s.zkey ? { zkey: s.zkey.slice(0, 300) } : {},
-    Array.isArray(s.photos) && s.photos.length ? { photos: s.photos } : {}, Array.isArray(s.evidence) && s.evidence.length ? { evidence: s.evidence } : {}, s.read ? { read: s.read } : {}, s.prio ? { prio: 1 } : {}, s.rc ? { rc: s.rc } : {},
+    Array.isArray(s.photos) && s.photos.length ? { photos: s.photos } : {}, Array.isArray(s.evidence) && s.evidence.length ? { evidence: s.evidence } : {}, s.read ? { read: s.read } : {}, s.prio ? { prio: 1 } : {}, s.rc ? { rc: s.rc } : {}, Array.isArray(s.hls) && s.hls.length ? { hls: cleanHls(s.hls) } : {},
     s.lc && typeof s.lc === 'object' ? { lc: Object.fromEntries(['at', 'url', 'ts', 'st', 'err'].filter(k => s.lc[k] != null && s.lc[k] !== '').map(k => [k, k === 'err' ? 1 : String(s.lc[k]).slice(0, 300)]).filter(([k, v]) => k !== 'url' || WB_OK_N.test(v))) } : {}));
   { // datasets and dashboards (1.7)
     const arr = v => (Array.isArray(v) ? v : []), obj = v => v && typeof v === 'object' && !Array.isArray(v), strs = v => arr(v).map(rstr).filter(Boolean);
@@ -1907,7 +1907,9 @@ function allTags() { const s = new Set(); P.notes.forEach(n => n.tags.forEach(t 
 function cleanHl(h) {
   if (!Array.isArray(h)) return [];
   const f = v => Math.max(0, Math.min(1, +v || 0));
-  return h.filter(x => x && Number.isInteger(+x.p) && +x.p > 0 && Array.isArray(x.r)).slice(0, 40).map(x => ({ p: +x.p, r: x.r.filter(q => Array.isArray(q) && q.length === 4).slice(0, 80).map(q => q.map(v => Math.round(f(v) * 10000) / 10000)) })).filter(x => x.r.length);
+  return h.filter(x => x && Number.isInteger(+x.p) && +x.p > 0 && (Array.isArray(x.r) || (Number.isFinite(+x.a) && Number.isFinite(+x.z)))).slice(0, 40)
+    .map(x => (Array.isArray(x.r) ? { p: +x.p, r: x.r.filter(q => Array.isArray(q) && q.length === 4).slice(0, 80).map(q => q.map(v => Math.round(f(v) * 10000) / 10000)) } : { p: +x.p, a: Math.max(0, Math.round(+x.a)), z: Math.max(0, Math.round(+x.z)) }))
+    .filter(x => (x.r ? x.r.length : x.z > x.a));
 }
 function renderNoteList() {
   try { if (R.doc) rdHlRefresh(); } catch (e) { /* the reader isn't set up yet */ }
@@ -2483,7 +2485,7 @@ const COMMANDS = [
   ['Names & spellings', () => openNames()], ['Source audit', () => openAudit('all')], ['Permissions log: credits and rights for figures, tables and quotations', () => openPerms()], ['Check links: web sources against the Wayback Machine', () => openLinks()], ['Writing record & chapter status', () => openRecord()], ['Revision lens', () => toggleLens()],
   ['Add a comment on the selection', () => addComment()], ['Templates: front & back matter', () => openTemplates()], ['Chronology from dated notes', () => chronologyDoc()],
   ['Annotated bibliography', () => annotatedBibliography()], ['Literature grid: sources against your questions and themes', () => openDesk('lit')], ['Draft a literature review from the literature grid', () => lgReview()], ['Codes: the codebook and every coded passage', () => openDesk('codes')], ['Code the selected passage', () => openCodePick()], ['Check sources for retractions and corrections (Crossref)', () => openRetractions()], ['Find duplicate sources', () => openDups()], ['Research guide: stages, checklists, methods, glossary', () => openGuide()], ['Checklist: before you submit', () => openGuide('checks')], ['Glossary of research terms', () => openGuide('terms')], ['Reading list: sources to read', () => { srcSTFilter = 'rd:toread'; switchTab('sources'); renderSourceList(); }], ['Archive photos: box and folder, transcription, notes', () => openPhotos()], ['Interview transcript → quote notes', () => openTranscript()], ['Timeline of dated notes', () => { PREFS.boardGroup = 'timeline'; savePrefs(); openBoard(); }],
-  ['Read a PDF beside the draft', () => $('#btnReader').click()], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
+  ['Read a PDF or ePub beside the draft', () => $('#btnReader').click()], ['Reading list: what you’re reading, with how far you’ve got', () => { showReader(true); if (!R.doc) rdEmpty(); rdSideOpen(true, 'lib'); }], ['Mark an index entry', () => openIndexMark()], ['Index terms & preview', () => openIndexManager()], ['Start fresh (blank project or erase everything)', () => openFresh()],
   ['Project home: progress, pace, loose ends', () => openHome()], ['Calendar: what you wrote each day, what’s due, archive visits and interviews', () => openCalendar()], ['Add to the calendar…', () => openEvent('', todayKey())], ['Export the calendar (.ics)', () => calIcs()], ['Scratch pad (⌘/Ctrl Alt N)', () => padOpen(true)], ['Note trash: restore deleted notes', () => openTrash()], ['New note from a template…', () => openNoteTpls()], ['Recent documents, notes and sources (⌘/Ctrl E)', () => openSwitcher()], ['Special characters: accents, Greek, Cyrillic, transliteration marks (⌘/Ctrl Alt O)', () => openChars()], ['Transliterate…: Russian, Ukrainian, Greek, Arabic and more', () => openTranslit()], ['Language of this passage…', () => openLangMark()], ['Translation journal: glossary, decisions, a note on translation', () => { openJournal('trans'); }], ['Translate: original and translation side by side, a segment at a time', () => openDesk('translate')], ['Search inside sources: the text of your PDFs, photo transcriptions and transcripts', () => openFtx()], ['My library: sources shared by all your projects', () => openLibrary()], ['Submissions: pitches, editors, dates, fees and follow-ups', () => openSubs()], ['Send for review: a file a colleague comments on and suggests changes in, in any browser', () => openReviewSend()], ['Import a review: their comments and suggested changes into the draft', () => openReviewImport()], ['Read the text of a scanned PDF (OCR), in the reader', () => { if (!R.doc) { showReader(true); toast('Open the scanned PDF, then choose Read text.'); } else ocrPdf(); }], ['Add a pitch or submission', () => { openSubs(); $('#subAdd').click(); }], ['Save all of this project’s sources to my library', () => libAdd(P.sources).then(r => toast(`${r.added} added to the library${r.updated ? `, ${r.updated} updated` : ''}.`))], ['Chart from data (insert a figure)', () => { saveSelectionNow(); specTarget = null; openChart(); }], ['Map (insert a figure)', () => { saveSelectionNow(); specTarget = null; openMap(); }], ['Timeline figure from dated notes', () => { saveSelectionNow(); specTarget = null; openTimelineFig(); }], ['Relationship map: who’s connected to whom', () => { saveSelectionNow(); openRel(); }], ['Acronyms & abbreviations…', () => openAcronyms()], ['Insert list of abbreviations here', () => insertBlocksAtCursor(abbrPlaceholder())], ['Estimative language check on / off', () => { estOn = !(estOn ?? estDefaultOn()); runEstimative(); switchTab('outline'); }], ['Teleprompter (script mode)', () => openPrompter()], ['Back up to GitHub…', () => openGitHub()], ['Open a project from a GitHub backup (another device)…', () => openFromGitHub()], ['Save a draft of this document', () => openSaveDraft()], ['Drafts: compare versions side by side', () => openDrafts()], ['Insert: figure, chart, map, table, equation, cross-reference…', () => openInsertMenu(true)], ['Insert figure (image)', () => $('#fileFigure').click()], ['Insert table', () => $('#btnTable').click()], ['Ask Socrates: questions to start from', () => openSocrates()], ['The Oracle: talk your research through', () => openOracle()], ['Consult the Oracle on the selected passage', () => oracleConsult()], ['Send a copy for review or co-writing…', () => openSendCopy()], ['Take changes back from a collaborator’s copy…', () => openTakeBack()], ['Insert or edit an equation (TeX)', () => openEq()], ['Cross-reference: Figure 3, Table 2, Equation (4), a heading or chapter', () => openXref()], ['Turn TeX in $…$ and $$…$$ into equations (this document)', () => texTextToMath()], ['Insert list of figures & tables here', () => { insertBlocksAtCursor(lofPlaceholder()); }], ['Margin note at the cursor', () => addComment()], ['Show / hide margin notes', () => $('#btnMargin').click()], ['Substack: copy or download this document for a post', () => openSubstack()], ['Lock project with a password', () => openLockSettings()], ['Import Markdown notes (Notecards, Obsidian)', () => openMdImport()], ['New project… (book, article, series, white paper, brief, script)', () => openNewProject()],
   ['Find and replace in all documents', () => openFindAll()], ['Proofread: misspellings, mixed-up words, a and an, spacing (F7)', () => openProofread()], ['Abstract and keywords for this document', () => openAbstract()], ['House style rules', () => openHouse()], ['Project checkpoints: save, compare, restore', () => openCheckpoints()], ['Promo kit: social thread, subtitle, quote card', () => openPromo()], ['Quote card from the selection', () => openPromo('card')], ['Close to your notes: wording repeated without quotation marks', () => { PREFS.pxOn = true; savePrefs(); switchTab('outline'); renderCloseToNotes(); $('#pxList').scrollIntoView({ block: 'center' }); }], ['Corroboration check', () => { PREFS.corrOn = true; savePrefs(); switchTab('outline'); renderCorroboration(); }], ['Accessibility check', () => { switchTab('outline'); renderA11y(); $('#a11yList').scrollIntoView({ block: 'center' }); }],
   ['Take the tour', () => startTour()], ['Plan: outline your piece before drafting', () => openPlan()], ['Freewrite sprint', () => openFreewrite()], ['Reverse outline (every paragraph)', () => { switchTab('outline'); document.body.classList.add('side-open'); $('#olParas').checked = true; renderOutline(); }],
@@ -4760,14 +4762,14 @@ async function loadPdfjs() {
   pdfjs.GlobalWorkerOptions.workerPort = new Worker(URL.createObjectURL(new Blob([wsrc], { type: 'text/javascript' })));
   return pdfjs;
 }
-const R = { doc: null, name: '', sourceId: '', scale: 1, pages: [], labels: null, texts: {}, obs: null, renderGen: 0, buf: null };
+const R = { doc: null, kind: 'pdf', ep: null, name: '', sourceId: '', scale: 1, pages: [], labels: null, texts: {}, obs: null, renderGen: 0, buf: null };
 function readerOpen() { return !$('#reader').classList.contains('hidden'); }
 function showReader(on = true) {
   $('#reader').classList.toggle('hidden', !on); document.body.classList.toggle('reader-on', on);
   if (on) { const w = PREFS.readerWidth || Math.round(window.innerWidth * 0.42); $('#reader').style.width = Math.max(320, Math.min(w, window.innerWidth * 0.7)) + 'px'; fillReaderSources(); }
 }
 function fillReaderSources() {
-  $('#rdSource').innerHTML = '<option value="">Link this PDF to a source…</option><option value="__new">+ New source from this PDF</option>' +
+  $('#rdSource').innerHTML = `<option value="">Link this ${R.kind === 'epub' ? 'book' : 'PDF'} to a source…</option><option value="__new">+ New source from this ${R.kind === 'epub' ? 'book' : 'PDF'}</option>` +
     sortedSources().map(s => { const l = sourceLabel(s); return `<option value="${s.id}" ${s.id === R.sourceId ? 'selected' : ''}>${esc((l.who ? l.who + ', ' : '') + l.title).slice(0, 60)}</option>`; }).join('');
 }
 async function openPdfFile(file, sourceId = '') {
@@ -4775,7 +4777,8 @@ async function openPdfFile(file, sourceId = '') {
   await openPdfData(buf, file.name, sourceId);
 }
 async function openPdfData(buf, name, sourceId = '') {
-  showReader(true);
+  if (isEpub(buf, name)) return openEpubData(buf, name, sourceId);
+  showReader(true); rdBeforeOpen();
   $('#rdPages').innerHTML = '<div class="rd-empty">Opening…</div>';
   let lib;
   try { lib = await loadPdfjs(); } catch (e) { console.error(e); $('#rdPages').innerHTML = '<div class="rd-empty">This browser couldn’t start the PDF reader.</div>'; return; }
@@ -4784,7 +4787,8 @@ async function openPdfData(buf, name, sourceId = '') {
   let doc;
   try { doc = await lib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false, enableXfa: false }).promise; }
   catch (e) { $('#rdPages').innerHTML = `<div class="rd-empty">Couldn’t open that PDF${e && e.name === 'PasswordException' ? ' (it’s password-protected)' : ''}.</div>`; return; }
-  Object.assign(R, { doc, name, sourceId: sourceId || '', pages: [], texts: {}, labels: null });
+  Object.assign(R, { doc, kind: 'pdf', ep: null, outline: null, name, sourceId: sourceId || '', pages: [], texts: {}, labels: null, ocr: null });
+  $('#reader').classList.remove('is-epub'); rdSpreadClass();
   try { R.labels = await doc.getPageLabels(); } catch (e) { R.labels = null; }
   const s = P.sources.find(x => x.id === R.sourceId);
   $('#rdOffset').value = s && s.pdfOffset ? s.pdfOffset : '';
@@ -4792,27 +4796,34 @@ async function openPdfData(buf, name, sourceId = '') {
   fillReaderSources();
   const first = await doc.getPage(1), vp1 = first.getViewport({ scale: 1 });
   const avail = $('#rdPages').clientWidth - 28;
-  R.scale = PREFS.readerZoom || Math.max(0.5, Math.min(2.2, avail / vp1.width));
   R.base = { w: vp1.width, h: vp1.height };
+  R.scale = PREFS.readerZoom || Math.max(rdSpreadOn() ? 0.2 : 0.5, Math.min(2.2, rdFitScale(avail)));
   layoutPages();
   if (R.sourceId) { pdfStore.set(R.sourceId, { name, buf: R.buf }).catch(() => {}); }
   else suggestSourceFromPdf();
+  rdAfterOpen();
 }
 function layoutPages() {
+  if (R.kind === 'epub') return epLayout();
   const box = $('#rdPages'); box.innerHTML = ''; R.pages = []; R.renderGen++;
   if (R.obs) R.obs.disconnect();
-  R.obs = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) renderPage(+en.target.dataset.n); }), { root: box, rootMargin: '800px 0px' });
+  R.obs = new IntersectionObserver(ents => ents.forEach(en => { if (en.isIntersecting) renderPage(+en.target.dataset.n); }), { root: box, rootMargin: '1200px 0px' });
+  if (rdSpreadOn() && R.doc.numPages > 2) { const sp = document.createElement('div'); sp.className = 'rd-spacer'; sp.style.width = Math.floor(R.base.w * R.scale) + 'px'; sp.style.height = '1px'; box.appendChild(sp); }
   for (let i = 1; i <= R.doc.numPages; i++) {
     const d = document.createElement('div'); d.className = 'rd-page'; d.dataset.n = i;
     d.style.width = Math.floor(R.base.w * R.scale) + 'px'; d.style.height = Math.floor(R.base.h * R.scale) + 'px';
-    d.innerHTML = `<span class="rd-pnum">${esc(pageLabel(i))}</span>`;
+    d.innerHTML = `<span class="rd-pnum" data-l="${esc(pageLabel(i))}"></span>`;
     box.appendChild(d); R.pages.push({ div: d, done: false }); R.obs.observe(d);
   }
   $('#rdOf').textContent = '/ ' + R.doc.numPages;
   $('#rdZoom').textContent = Math.round(R.scale * 100) + '%';
 }
-async function renderPage(n) {
-  const rec = R.pages[n - 1]; if (!rec || rec.done) return; rec.done = true;
+function renderPage(n) {
+  const rec = R.pages[n - 1]; if (!rec) return Promise.resolve(); if (rec.done) return rec.ready || Promise.resolve();
+  rec.done = true; if (R.kind === 'epub') return Promise.resolve();
+  return (rec.ready = renderPage0(n, rec));
+}
+async function renderPage0(n, rec) {
   const gen = R.renderGen, page = await R.doc.getPage(n); if (gen !== R.renderGen) return;
   const vp = page.getViewport({ scale: R.scale }), d = rec.div, dpr = window.devicePixelRatio || 1;
   d.style.width = Math.floor(vp.width) + 'px'; d.style.height = Math.floor(vp.height) + 'px';
@@ -4827,8 +4838,9 @@ async function renderPage(n) {
   if (R.findQ) markFind(d, R.findQ);
   rdHlRefresh(n);
 }
-function pageLabel(n) { return R.labels && R.labels[n - 1] ? R.labels[n - 1] : String(n); }
+function pageLabel(n) { if (R.kind === 'epub') return epChLoc(n).short; return R.labels && R.labels[n - 1] ? R.labels[n - 1] : String(n); }
 function printedPage(n) {
+  if (R.kind === 'epub') return epChLoc(n).loc;
   const off = parseInt($('#rdOffset').value, 10);
   if (!isNaN(off) && off !== 0) return String(n - off);
   if (R.labels && R.labels[n - 1]) return R.labels[n - 1];
@@ -4839,19 +4851,21 @@ function currentPage() {
   let cur = 1; for (const p of R.pages) { if (p.div.offsetTop <= top) cur = +p.div.dataset.n; else break; }
   return cur;
 }
-function goPage(n) { n = Math.max(1, Math.min(R.doc?.numPages || 1, n)); const p = R.pages[n - 1]; if (p) $('#rdPages').scrollTop = p.div.offsetTop - 8; $('#rdPage').value = n; }
+function goPage(n, f = 0) { n = Math.max(1, Math.min(R.doc?.numPages || 1, n)); const p = R.pages[n - 1]; if (p) $('#rdPages').scrollTop = p.div.offsetTop - 8 + Math.round((f || 0) * p.div.offsetHeight); $('#rdPage').value = n; }
 $('#rdPages').addEventListener('scroll', debounce(() => { if (R.doc) $('#rdPage').value = currentPage(); }, 80));
 $('#rdPage').addEventListener('keydown', e => { if (e.key === 'Enter') goPage(parseInt(e.target.value, 10) || 1); });
 $('#rdPrev').addEventListener('click', () => R.doc && goPage(currentPage() - 1));
 $('#rdNext').addEventListener('click', () => R.doc && goPage(currentPage() + 1));
 function setZoom(z) {
-  if (!R.doc) return; const cur = currentPage();
-  R.scale = Math.max(0.4, Math.min(3, z)); PREFS.readerZoom = R.scale; savePrefs(); layoutPages(); goPage(cur);
+  if (!R.doc) return;
+  if (R.kind === 'epub') { const at = rdPosNow(); R.scale = Math.max(0.7, Math.min(1.8, z)); PREFS.epubSize = R.scale; savePrefs(); $('#rdPages').style.setProperty('--ep-fs', R.scale); $('#rdZoom').textContent = Math.round(R.scale * 100) + '%'; goPage(at.p, at.f); rdHlRefresh(); return; }
+  const cur = currentPage();
+  R.scale = Math.max(0.2, Math.min(3, z)); PREFS.readerZoom = R.scale; savePrefs(); layoutPages(); goPage(cur);
 }
 $('#rdZoomIn').addEventListener('click', () => setZoom(R.scale * 1.15));
 $('#rdZoomOut').addEventListener('click', () => setZoom(R.scale / 1.15));
-$('#rdFit').addEventListener('click', () => { PREFS.readerZoom = 0; if (R.doc) setZoom(($('#rdPages').clientWidth - 28) / R.base.w); PREFS.readerZoom = 0; savePrefs(); });
-$('#rdClose').addEventListener('click', () => { if (rrOn) rrToggle(false); showReader(false); $('#rdSelBar').classList.add('hidden'); });
+$('#rdFit').addEventListener('click', () => { if (R.kind === 'epub') { setZoom(1); return; } PREFS.readerZoom = 0; if (R.doc) setZoom(rdFitScale($('#rdPages').clientWidth - 28)); PREFS.readerZoom = 0; savePrefs(); });
+$('#rdClose').addEventListener('click', () => { if (rrOn) rrToggle(false); rtsStop(); rdSavePos(); showReader(false); $('#rdSelBar').classList.add('hidden'); $('#rdHlPop').classList.add('hidden'); });
 $('#rdOpen').addEventListener('click', () => $('#filePdf').click());
 $('#filePdf').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) openPdfFile(f, R.pendingSource || ''); R.pendingSource = ''; });
 $('#rdOffset').addEventListener('change', () => { const s = P.sources.find(x => x.id === R.sourceId); if (s) { s.pdfOffset = parseInt($('#rdOffset').value, 10) || 0; markDirty(); } updateSelBar(); });
@@ -4860,18 +4874,21 @@ $('#rdSource').addEventListener('change', async e => {
   if (v === '__new') { const s = await sourceFromPdf(); if (s) { R.sourceId = s.id; fillReaderSources(); } else e.target.value = ''; }
   else R.sourceId = v;
   rdHlRefresh();
-  if (R.sourceId && R.buf) { const s = P.sources.find(x => x.id === R.sourceId); s.pdfName = R.name; evAdd(s, new File([R.buf], R.name || 'document.pdf', { type: 'application/pdf' })).catch(() => {}); markDirty(); pdfStore.set(R.sourceId, { name: R.name, buf: R.buf }).then(() => toast('PDF linked to the source and kept in this browser for next time.')).catch(() => toast('Linked. (This browser couldn’t store the PDF itself, so you’ll reopen the file next time.)')); }
+  rdSideRender(); rdSavePos();
+  if (R.sourceId && R.buf) { const s = P.sources.find(x => x.id === R.sourceId); s.pdfName = R.name; evAdd(s, new File([R.buf], R.name || 'document.pdf', { type: R.kind === 'epub' ? 'application/epub+zip' : 'application/pdf' })).catch(() => {}); markDirty(); pdfStore.set(R.sourceId, rdRec()).then(() => toast((R.kind === 'epub' ? 'Book' : 'PDF') + ' linked to the source and kept in this browser for next time.')).catch(() => toast('Linked. (This browser couldn’t store the PDF itself, so you’ll reopen the file next time.)')); }
 });
 /* resize handle */
 $('#rdResize').addEventListener('pointerdown', e => {
   e.preventDefault(); const startX = e.clientX, startW = $('#reader').offsetWidth;
   const mv = ev => { const w = Math.max(320, Math.min(window.innerWidth * 0.7, startW + (startX - ev.clientX))); $('#reader').style.width = w + 'px'; };
-  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); PREFS.readerWidth = $('#reader').offsetWidth; savePrefs(); if (R.doc && !PREFS.readerZoom) $('#rdFit').click(); };
+  const up = () => { document.removeEventListener('pointermove', mv); document.removeEventListener('pointerup', up); PREFS.readerWidth = $('#reader').offsetWidth; savePrefs(); rdRefit(); };
   document.addEventListener('pointermove', mv); document.addEventListener('pointerup', up);
 });
 /* text of a page (cached) */
 async function pageText(n) {
   if (R.texts[n] != null) return R.texts[n];
+  if (R.kind === 'epub') return (R.texts[n] = R.ep.ch[n - 1] ? R.ep.ch[n - 1].text : '');
+  if (R.ocr && R.ocr[n - 1]) return R.ocr[n - 1];
   const page = await R.doc.getPage(n), tc = await page.getTextContent();
   return (R.texts[n] = tc.items.map(i => i.str + (i.hasEOL ? '\n' : '')).join(''));
 }
@@ -4884,6 +4901,7 @@ async function pdfMeta() {
 }
 async function sourceFromPdf() {
   if (!R.doc) return null;
+  if (R.kind === 'epub') return sourceFromEpub();
   const { info, doi } = await pdfMeta();
   let csl = null;
   if (doi) { try { csl = await lookupId(doi); takePartial(csl); } catch (e) { csl = null; } }
@@ -4899,10 +4917,11 @@ async function sourceFromPdf() {
   return s;
 }
 async function suggestSourceFromPdf() {
+  if (R.kind === 'epub') return suggestSourceFromEpub();
   // if a source with this DOI already exists, link it automatically
   try {
     const { doi } = await pdfMeta();
-    if (doi) { const s = P.sources.find(x => (x.csl.DOI || '').toLowerCase() === doi.toLowerCase()); if (s) { R.sourceId = s.id; fillReaderSources(); pdfStore.set(s.id, { name: R.name, buf: R.buf }).catch(() => {}); toast('Matched this PDF to “' + (s.csl.title || 'source') + '” by its DOI.'); return; } }
+    if (doi) { const s = P.sources.find(x => (x.csl.DOI || '').toLowerCase() === doi.toLowerCase()); if (s) { R.sourceId = s.id; fillReaderSources(); pdfStore.set(s.id, rdRec()).catch(() => {}); toast('Matched this PDF to “' + (s.csl.title || 'source') + '” by its DOI.'); return; } }
   } catch (e) {}
   $('#rdSource').classList.add('nudge'); setTimeout(() => $('#rdSource').classList.remove('nudge'), 2500);
 }
@@ -4916,8 +4935,9 @@ function readerSelection() {
   const text = sel.toString().replace(/(\w)-\s*\n\s*(\w)/g, '$1$2').replace(/\s*\n\s*/g, ' ').replace(/\s{2,}/g, ' ').trim();
   if (!text) return null;
   const a = +pg.dataset.n, b = pg2 ? +pg2.dataset.n : a;
+  if (R.kind === 'epub') return Object.assign({ text }, epSelLoc(sel.getRangeAt(0), a));
   const pa = printedPage(Math.min(a, b)), pb = printedPage(Math.max(a, b));
-  return { text, page: pa === pb ? pa : pa + '–' + pb, hl: selectionHl(sel.getRangeAt(0)) };
+  return { text, page: pa === pb ? pa : pa + '–' + pb, label: 'page', hl: selectionHl(sel.getRangeAt(0)) };
 }
 function selectionHl(range) {
   const by = {};
@@ -4938,17 +4958,19 @@ function selectionHl(range) {
 // draw the highlights of this source's notes on the pages already rendered, with a marker in the margin to open the note
 function rdHlRefresh(only) {
   if (!R.doc) return;
-  const notes = R.sourceId ? P.notes.filter(n => n.sourceId === R.sourceId && n.pdfHl) : [];
+  if (R.kind === 'epub') return epHlRefresh();
+  const notes = R.sourceId ? P.notes.filter(n => n.sourceId === R.sourceId && n.pdfHl) : [], plain = rdHls();
   R.pages.forEach((rec, i) => {
     const n = i + 1; if (only && only !== n) return; if (!rec.done) return;
     $$('.rd-hl-layer,.rd-pin-layer', rec.div).forEach(e => e.remove());
-    const here = notes.flatMap(note => note.pdfHl.filter(h => h.p === n).map(h => ({ note, h }))); if (!here.length) return;
+    const here = notes.flatMap(note => note.pdfHl.filter(h => h.p === n && h.r).map(h => ({ note, h }))), mine = plain.filter(h => h.p === n && h.r);
+    if (!here.length && !mine.length) return;
     const layer = document.createElement('div'); layer.className = 'rd-hl-layer';
-    layer.innerHTML = here.map(({ note, h }) => h.r.map(q => `<span class="rd-hl k-${esc(note.kind)}" style="left:${q[0] * 100}%;top:${q[1] * 100}%;width:${q[2] * 100}%;height:${q[3] * 100}%"></span>`).join('')).join('');
+    layer.innerHTML = mine.map(h => h.r.map(q => `<span class="rd-hl c-${h.c}" data-hl="${h.id}" style="left:${q[0] * 100}%;top:${q[1] * 100}%;width:${q[2] * 100}%;height:${q[3] * 100}%"></span>`).join('')).join('') + here.map(({ note, h }) => h.r.map(q => `<span class="rd-hl k-${esc(note.kind)}" style="left:${q[0] * 100}%;top:${q[1] * 100}%;width:${q[2] * 100}%;height:${q[3] * 100}%"></span>`).join('')).join('');
     // the markers sit above the text, in the page's right margin, so they can be clicked
     const pins = document.createElement('div'); pins.className = 'rd-pin-layer';
     pins.innerHTML = here.map(({ note, h }) => `<button class="rd-hl-pin k-${esc(note.kind)}" data-hl-note="${note.id}" style="top:${h.r[0][1] * 100}%" title="${esc((note.title || 'Note') + ' · open the note')}" aria-label="Open the note: ${esc(note.title || 'Note')}"></button>`).join('');
-    const tl = $('.textLayer', rec.div); rec.div.insertBefore(layer, tl || null); rec.div.appendChild(pins);
+    const tl = $('.textLayer', rec.div); rec.div.insertBefore(layer, tl || null); if (here.length) rec.div.appendChild(pins);
   });
 }
 $('#rdPages').addEventListener('click', e => {
@@ -4957,33 +4979,38 @@ $('#rdPages').addEventListener('click', e => {
   if (rrOn) { const li = $(`#rrList [data-rr="${id}"]`); if (li) { li.scrollIntoView({ block: 'center', behavior: 'smooth' }); li.classList.remove('flash'); void li.offsetWidth; li.classList.add('flash'); } return; }
   switchTab('notes'); openNote(id);
 });
+// while a passage is being dragged over, the bar waits, so it never appears under the pointer and stretches the selection
+var rdDragging = false;
+$('#rdPages').addEventListener('pointerdown', e => { if (e.button === 0) rdDragging = true; });
+document.addEventListener('pointerup', () => { if (rdDragging) { rdDragging = false; setTimeout(updateSelBar, 0); } });
 function updateSelBar() {
+  if (rdDragging) return;
   const s = readerOpen() && readerSelection();
   $('#rdSelBar').classList.toggle('hidden', !s);
-  if (s) $('#rdSelPage').textContent = `p. ${s.page} · ${wc(s.text)} words`;
+  if (s) $('#rdSelPage').textContent = `${locAbbr(s.label)} ${s.page} · ${wc(s.text)} words`;
+  if (s) $('#rdHlPop').classList.add('hidden');
 }
 document.addEventListener('selectionchange', debounce(updateSelBar, 120));
 $('#rdSelBar').addEventListener('mousedown', e => e.preventDefault());
 $('#rdSelBar').addEventListener('click', async e => {
-  const k = e.target.closest('button')?.dataset.k; if (!k) return;
+  const btn = e.target.closest('button'); if (!btn) return;
   const s = readerSelection(); if (!s) return;
+  if (btn.dataset.c) { rdHlAdd(s, btn.dataset.c); return; }
+  const k = btn.dataset.k; if (!k) return;
+  if (k === 'insert') { rdInsertDraft(s); return; }
   if (rrOn) {
     const t = $('#rrText'), cur = t.value.trim();
     t.value = (cur ? cur + '\n\n' : '') + (k === 'quote' ? `“${s.text}”` : s.text);
-    $('#rrKind').value = k; $('#rrPage').value = s.page; $('#rrPage').dataset.manual = '1';
+    $('#rrKind').value = k; $('#rrPage').value = s.page; $('#rrPage').dataset.manual = '1'; $('#rrPage').dataset.label = s.label || 'page';
     R.pendingHl = (R.pendingHl || []).concat(s.hl || []);
     getSelection().removeAllRanges(); updateSelBar(); t.focus(); t.setSelectionRange(t.value.length, t.value.length);
     toast(k === 'quote' ? 'Quote added to the note pad. Add your comment, then save.' : 'Passage added to the note pad. Rewrite it in your own words.');
     return;
   }
-  if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, { name: R.name, buf: R.buf }).catch(() => {}); }
-  const n = newNote(); n.kind = k; n.sourceId = R.sourceId; n.locator = s.page; n.label = 'page';
-  n.body = s.text; n.title = s.text.split(/\s+/).slice(0, 7).join(' ') + (wc(s.text) > 7 ? '…' : '');
-  if (s.hl && s.hl.length) n.pdfHl = s.hl;
-  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); rdHlRefresh();
+  const n = await rdNoteFrom(s, k); if (!n) return;
   getSelection().removeAllRanges(); updateSelBar();
   if (k === 'paraphrase') { openNote(n.id, true); toast('Paraphrase started from the passage. Rewrite it in your own words.'); }
-  else toast(`Quote note saved (p. ${s.page}).`);
+  else toast(`Quote note saved (${locAbbr(n.label)} ${s.page}).`);
 });
 /* ---------- Read and take notes (2.5): the PDF on one side, a note pad on the other ----------
    The writing steps aside; the reader widens; notes go to the PDF's source with the page filled in as you
@@ -4991,14 +5018,14 @@ $('#rdSelBar').addEventListener('click', async e => {
 let rrOn = false, rrEditing = '';
 function rrSource() { return P.sources.find(x => x.id === R.sourceId) || null; }
 // the page the reader is on, as printed in the book (offset applied), and back
-const rrPrinted = () => R.doc ? printedPage(currentPage()) : '';
-function rrPdfPage(printed) { const s = rrSource(), n = parseInt(printed, 10); if (!n) return 0; return n + (s && s.pdfOffset ? +s.pdfOffset : 0); }
+const rrPrinted = () => !R.doc ? '' : R.kind === 'epub' ? epLocTop().loc : printedPage(currentPage());
+function rrPdfPage(printed) { if (R.kind === 'epub') return epFindLoc(printed); const s = rrSource(), n = parseInt(printed, 10); if (!n) return 0; return n + (s && s.pdfOffset ? +s.pdfOffset : 0); }
 function rrToggle(on = !rrOn) {
   if (on && !R.doc) { toast('Open a PDF first.'); return; }
   rrOn = on; document.body.classList.toggle('rr-on', on); $('#rrPane').classList.toggle('hidden', !on);
   $('#rdNotes').setAttribute('aria-pressed', on); $('#rdNotes').textContent = on ? 'Back to writing' : 'Take notes';
-  if (on) { $('.panel')?.classList.remove('open'); rrRender(); $('#rrPage').value = rrPrinted(); delete $('#rrPage').dataset.manual; setTimeout(() => { if (PREFS.readerZoom === 0 || !PREFS.readerZoom) $('#rdFit').click(); $('#rrText').focus(); }, 60); }
-  else { setTimeout(() => { if (R.doc && !PREFS.readerZoom) $('#rdFit').click(); }, 60); editor.focus({ preventScroll: true }); }
+  if (on) { $('.panel')?.classList.remove('open'); rrRender(); rrPgMode(); $('#rrPage').value = rrPrinted(); delete $('#rrPage').dataset.manual; delete $('#rrPage').dataset.label; setTimeout(() => { rdRefit(); $('#rrText').focus(); }, 60); }
+  else { setTimeout(rdRefit, 60); editor.focus({ preventScroll: true }); }
 }
 function rrRender() {
   const s = rrSource(), l = s ? sourceLabel(s) : null;
@@ -5006,7 +5033,7 @@ function rrRender() {
   const mine = s ? P.notes.filter(n => n.sourceId === s.id) : [];
   const num = n => parseInt(String(n.locator || '').replace(/[^\d].*$/, ''), 10) || 1e9;
   mine.sort((a, b) => num(a) - num(b) || String(a.created).localeCompare(String(b.created)));
-  $('#rrList').innerHTML = mine.length ? mine.map(n => `<li data-rr="${n.id}"><div class="rr-meta"><span class="rr-k">${esc((KINDS.find(k => k[0] === n.kind) || [, 'Note'])[1])}</span>${n.locator ? `<button class="small ghost" data-rr-go="${esc(n.locator)}" title="Go to this page in the PDF">p. ${esc(n.locator)}</button>` : ''}<button class="small ghost" data-rr-open="${n.id}" title="Open the full note">Open</button></div>${rrEditing === n.id
+  $('#rrList').innerHTML = mine.length ? mine.map(n => `<li data-rr="${n.id}"><div class="rr-meta"><span class="rr-k">${esc((KINDS.find(k => k[0] === n.kind) || [, 'Note'])[1])}</span>${n.locator ? `<button class="small ghost" data-rr-go="${esc(n.locator)}" title="Go to this place in the reader">${esc(locAbbr(n.label))} ${esc(n.locator)}</button>` : ''}<button class="small ghost" data-rr-open="${n.id}" title="Open the full note">Open</button></div>${rrEditing === n.id
       ? `<textarea class="rr-edit" data-rr-edit="${n.id}" rows="4" aria-label="Edit note">${esc(n.body)}</textarea>`
       : `<p class="rr-body" data-rr-ed="${n.id}" tabindex="0" title="Click to edit">${n.kind === 'quote' ? '“' + esc(n.body.slice(0, 600)) + '”' : esc(n.body.slice(0, 600))}${n.body.length > 600 ? '…' : ''}</p>`}</li>`).join('')
     : `<li class="rr-none">${s ? 'No notes on this source yet.' : 'Your notes on this PDF will appear here.'}</li>`;
@@ -5014,25 +5041,26 @@ function rrRender() {
 }
 async function rrSaveNote() {
   const body = $('#rrText').value.trim(); if (!body) { $('#rrText').focus(); return; }
-  if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, { name: R.name, buf: R.buf }).catch(() => {}); }
-  const n = newNote(); n.kind = $('#rrKind').value; n.sourceId = R.sourceId; n.locator = $('#rrPage').value.trim(); n.label = 'page';
+  if (!R.sourceId) { const src = await sourceFromPdf(); if (!src) return; R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, rdRec()).catch(() => {}); }
+  const n = newNote(); n.kind = $('#rrKind').value; n.sourceId = R.sourceId; n.locator = $('#rrPage').value.trim(); n.label = $('#rrPage').dataset.label || (R.kind === 'epub' ? epLocTop().label : 'page');
   n.body = body.replace(/^[“"](.*)[”"]$/s, n.kind === 'quote' ? '$1' : '$&');
   n.title = n.body.split(/\s+/).slice(0, 7).join(' ') + (wc(n.body) > 7 ? '…' : '');
   n.tags = $('#rrTags').value.split(',').map(x => x.trim()).filter(Boolean);
   if (R.pendingHl && R.pendingHl.length) n.pdfHl = cleanHl(R.pendingHl); R.pendingHl = [];
   P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); rdHlRefresh();
-  $('#rrText').value = ''; $('#rrKind').value = 'idea';
-  rrRender(); toast(`Note saved${n.locator ? ` (p. ${n.locator})` : ''}.`); $('#rrText').focus();
+  $('#rrText').value = ''; $('#rrKind').value = 'idea'; delete $('#rrPage').dataset.manual; delete $('#rrPage').dataset.label; $('#rrPage').value = rrPrinted();
+  rrRender(); toast(`Note saved${n.locator ? ` (${locAbbr(n.label)} ${n.locator})` : ''}.`); $('#rrText').focus();
 }
 $('#rdNotes').addEventListener('click', () => rrToggle());
 $('#rrDone').addEventListener('click', () => rrToggle(false));
 $('#rrForm').addEventListener('submit', e => { e.preventDefault(); rrSaveNote(); });
 $('#rrText').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); rrSaveNote(); } });
 $('#rrPage').addEventListener('input', e => { e.target.dataset.manual = '1'; });
+function rrPgMode() { const ep = R.kind === 'epub'; $('#rrPgL').textContent = ep ? 'at' : 'p.'; $('#rrPage').inputMode = ep ? 'text' : 'numeric'; $('#rrPage').setAttribute('aria-label', ep ? 'Where in the book' : 'Page'); $('#rrPage').style.width = ep ? '130px' : ''; }
 $('#rdPages').addEventListener('scroll', debounce(() => { if (rrOn && R.doc && !$('#rrPage').dataset.manual) $('#rrPage').value = rrPrinted(); }, 120));
 $('#rrList').addEventListener('click', e => {
   const go = e.target.closest('[data-rr-go]'), op = e.target.closest('[data-rr-open]'), ed = e.target.closest('[data-rr-ed]');
-  if (go) { const p = rrPdfPage(go.dataset.rrGo); if (p) goPage(p); }
+  if (go) { const p = rrPdfPage(go.dataset.rrGo); if (p > 0) goPage(p); }
   if (op) { rrToggle(false); openNote(op.dataset.rrOpen); }
   if (ed) { rrEditing = ed.dataset.rrEd; rrRender(); const t = $(`[data-rr-edit="${rrEditing}"]`); t.focus(); t.setSelectionRange(t.value.length, t.value.length); }
 });
@@ -5042,37 +5070,780 @@ $('#rrList').addEventListener('focusout', e => {
   const n = P.notes.find(x => x.id === id); if (n && n.body !== e.target.value) { n.body = e.target.value; n.modified = nowISO(); markDirty(); renderNoteList(); }
   rrEditing = ''; setTimeout(rrRender, 0);
 });
-/* find in PDF */
+/* find in PDF: the words on each rendered page are marked; Enter goes to the next match, and every match is listed */
 function markFind(div, q) {
-  $$('.textLayer span', div).forEach(sp => sp.classList.toggle('rd-hit', !!q && sp.textContent.toLowerCase().includes(q)));
+  $$('.textLayer span', div).forEach(sp => { sp.classList.remove('cur'); sp.classList.toggle('rd-hit', !!q && trFold(sp.textContent).includes(trFold(q))); });
 }
-$('#rdFind').addEventListener('keydown', async e => {
+$('#rdFind').addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.target.value = ''; rdFindClear(); return; }
   if (e.key !== 'Enter' || !R.doc) return;
-  const q = e.target.value.trim().toLowerCase(); R.findQ = q;
-  R.pages.forEach(p => p.done && markFind(p.div, q));
-  if (!q) { $('#rdFindN').textContent = ''; return; }
-  const start = currentPage(), N = R.doc.numPages;
-  $('#rdFindN').textContent = '…';
-  for (let k = 1; k <= N; k++) {
-    const n = ((start - 1 + k) % N) + 1;
-    const t = (await pageText(n)).toLowerCase().replace(/\s+/g, ' ');
-    if (t.includes(q)) { goPage(n); $('#rdFindN').textContent = 'p. ' + pageLabel(n); return; }
-  }
-  $('#rdFindN').textContent = 'not found';
+  e.preventDefault(); const q = e.target.value.trim();
+  if (!q) { rdFindClear(); return; }
+  if (R.found && R.found.q === q && R.found.list.length) rdFindStep(e.shiftKey ? -1 : 1); else rdFindAll(q);
 });
+$('#rdFind').addEventListener('search', e => { if (!e.target.value.trim()) rdFindClear(); });
 /* entry points */
 async function readSourcePdf(id) {
   const rec = await pdfStore.get(id).catch(() => null);
   if (rec && rec.buf) { openPdfData(rec.buf, rec.name || 'document.pdf', id); return; }
   R.pendingSource = id; showReader(true); $('#filePdf').click();
 }
-$('#btnReader').addEventListener('click', () => { if (R.doc) showReader(true); else { showReader(true); $('#filePdf').click(); } });
+$('#btnReader').addEventListener('click', () => { if (R.doc) showReader(true); else { showReader(true); rdEmpty(); } });
 document.addEventListener('dragover', e => { if ([...(e.dataTransfer?.types || [])].includes('Files')) e.preventDefault(); });
 document.addEventListener('drop', e => {
-  const f = [...(e.dataTransfer?.files || [])].find(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+  const f = [...(e.dataTransfer?.files || [])].find(f => /\.(pdf|epub)$/i.test(f.name) || f.type === 'application/pdf' || f.type === 'application/epub+zip');
   if (f) { e.preventDefault(); openPdfFile(f); return; }
   const d = [...(e.dataTransfer?.files || [])].find(f => /\.docx$/i.test(f.name)); if (d) { e.preventDefault(); importDocx(d); }
 });
+
+/* ================================================================
+   Reader (2.10): ePubs; contents, pages, highlights, find results and a reading list beside the page;
+   where you left off; paper, sepia and night; two pages; highlights without notes; quoting into the
+   draft; reading aloud. Everything stays in this browser: books and PDFs in IndexedDB, places in
+   localStorage, highlights in the project with their source.
+   ================================================================ */
+var RD = { tab: 'toc', thumbObs: null, finished: {}, hlFilter: '', popHl: '' };
+const locAbbr = l => ({ page: 'p.', chapter: 'ch.', section: 'sec.', paragraph: 'para.', line: 'line', folio: 'fol.' }[l || 'page'] || l);
+const HL_COLORS = [['y', 'Yellow'], ['g', 'Green'], ['b', 'Blue'], ['p', 'Pink']], HL_NAME = Object.fromEntries(HL_COLORS);
+const RD_HLKEYS = ['rd-q', 'rd-p', 'rd-cy', 'rd-cg', 'rd-cb', 'rd-cp', 'rd-find', 'rd-findcur', 'rd-tts'];
+const hlOK = () => !!(window.CSS && CSS.highlights && typeof Highlight === 'function');
+function rdRec() { return { name: R.name, buf: R.buf, kind: R.kind }; }
+function rdBeforeOpen() {
+  rtsStop(); rdSavePos(); rdFindClear(true); $('#rdFind').value = ''; $('#rdHlPop').classList.add('hidden'); R.found = null; RD.popHl = '';
+  if (hlOK()) RD_HLKEYS.forEach(k => CSS.highlights.delete(k));
+}
+function rdAfterOpen() {
+  $('#rdName').textContent = R.kind === 'epub' ? (R.ep.meta.title || R.name) : R.name; $('#rdName').title = R.name;
+  if (PREFS.rdSide && !$('#reader').classList.contains('rd-narrow')) rdSideShow(true);
+  rdSideRender(); rdThemeApply(); rrPgMode(); if (rrOn) { rrRender(); $('#rrPage').value = rrPrinted(); }
+  rdResume();
+}
+/* ---------- ePub: a zip of XHTML chapters; each chapter becomes one sheet in the reader ---------- */
+function isEpub(buf, name) {
+  if (/\.epub$/i.test(name || '')) return true;
+  try { const u = new Uint8Array(buf, 0, 60); return u[0] === 0x50 && u[1] === 0x4b && new TextDecoder().decode(u.subarray(30, 58)) === 'mimetypeapplication/epub+zip'; } catch (e) { return false; }
+}
+const EP_OPS = 'http://www.idpf.org/2007/ops', EP_XL = 'http://www.w3.org/1999/xlink';
+const epTags = (el, name) => (el ? [...el.getElementsByTagNameNS('*', name)] : []);
+const epKids = (el, name) => (el ? [...el.children].filter(c => c.localName === name) : []);
+function epPath(base, href) {
+  const raw = String(href || ''), i = raw.indexOf('#'), h = i < 0 ? raw : raw.slice(0, i), frag = i < 0 ? '' : raw.slice(i + 1);
+  let p; try { p = decodeURIComponent(new URL(h, 'https://ep.invalid/' + encodeURI(base)).pathname.slice(1)); } catch (e) { p = h; }
+  let f = frag; try { f = decodeURIComponent(frag); } catch (e) { /* as written */ }
+  return { path: p, frag: f };
+}
+const EP_KEEP = new Set('p div span h1 h2 h3 h4 h5 h6 em i b strong u s sub sup small a img figure figcaption blockquote ul ol li dl dt dd table thead tbody tfoot tr td th caption br hr pre code section article aside header footer cite q abbr ruby rt rp mark del ins var samp kbd big center'.split(' '));
+const EP_DROP = new Set('script style link meta title head iframe object embed form input button select textarea video audio canvas noscript template math svg base frame frameset applet'.split(' '));
+const epType = el => ((el.getAttributeNS && el.getAttributeNS(EP_OPS, 'type')) || el.getAttribute('epub:type') || '') + ' ' + (el.getAttribute('role') || '');
+/* a chapter's XHTML, rebuilt from a short list of elements: no scripts, styles, forms or remote images; the
+   book's images become local blob URLs; links inside the book are caught by the reader */
+function epClean(raw, base, n, pbT, imgUrl) {
+  let doc = new DOMParser().parseFromString(raw, 'application/xhtml+xml');
+  if (doc.getElementsByTagName('parsererror').length) doc = new DOMParser().parseFromString(raw, 'text/html');
+  const body = doc.body || epTags(doc, 'body')[0]; if (!body) return '';
+  const out = [];
+  const cls = el => { const c = (el.getAttribute('class') || '') + ' ' + (el.getAttribute('style') || ''), o = [];
+    if (/ital|font-style:\s*italic/i.test(c)) o.push('ep-i'); if (/\bbold|font-weight:\s*(bold|[6-9]00)/i.test(c)) o.push('ep-b');
+    if (/small-?caps|smcap|font-variant:\s*small-caps/i.test(c)) o.push('ep-sc'); if (/\bcent(er|re)|text-align:\s*center/i.test(c)) o.push('ep-c'); if (/\bright\b|text-align:\s*right/i.test(c)) o.push('ep-r');
+    return o.length ? ` class="${o.join(' ')}"` : ''; };
+  const walk = node => {
+    for (const c of node.childNodes) {
+      if (c.nodeType === 3) { out.push(esc(c.data)); continue; }
+      if (c.nodeType !== 1) continue;
+      const tag = c.localName.toLowerCase(), ty = epType(c), id = c.getAttribute('id');
+      const isPb = /pagebreak/.test(ty), pbl = isPb ? (c.getAttribute('title') || c.getAttribute('aria-label') || c.textContent || '').trim() : id && pbT[base + '#' + id];
+      if (pbl) out.push(`<span class="ep-pb" role="separator" data-pb="${esc(String(pbl).slice(0, 20))}" aria-label="Page ${esc(String(pbl).slice(0, 20))}"></span>`);
+      if (isPb) continue;
+      if (EP_DROP.has(tag)) {
+        if (tag === 'svg') { const im = epTags(c, 'image')[0], h = im && (im.getAttributeNS(EP_XL, 'href') || im.getAttribute('href')); const u = h ? imgUrl(epPath(base, h).path) : ''; if (u) out.push(`<img src="${u}" alt="">`); }
+        continue;
+      }
+      const keep = EP_KEEP.has(tag) ? (tag === 'center' ? 'div' : tag === 'big' ? 'span' : tag) : null;
+      if (!keep) { walk(c); continue; }
+      let a = id ? ` id="ep${n}-${esc(id)}"` : '';
+      const lang = c.getAttribute('xml:lang') || c.getAttribute('lang'); if (lang && /^[A-Za-z-]{2,20}$/.test(lang)) a += ` lang="${lang}"`;
+      const dir = c.getAttribute('dir'); if (dir === 'rtl' || dir === 'ltr') a += ` dir="${dir}"`;
+      if (keep === 'img') {
+        const src = c.getAttribute('src') || '', u = /^data:image\//i.test(src) ? src : /^[a-z]+:/i.test(src) ? '' : imgUrl(epPath(base, src).path);
+        if (!u) { const alt = c.getAttribute('alt'); if (alt) out.push(`<span class="ep-alt" data-alt="${esc(alt.slice(0, 200))}"></span>`); continue; }
+        out.push(`<img${a} src="${esc(u)}" alt="${esc(c.getAttribute('alt') || '')}" loading="lazy">`); continue;
+      }
+      a += cls(c);
+      if (keep === 'a') { const h = c.getAttributeNS(EP_XL, 'href') || c.getAttribute('href'); if (h) { if (/^(https?:|mailto:)/i.test(h)) a += ` href="${esc(h)}" target="_blank" rel="noopener noreferrer"`; else if (!/^[a-z]+:/i.test(h)) { const t = epPath(base, h); a += ` href="#" data-ep="${esc(t.path + '#' + t.frag)}"`; } } }
+      if (keep === 'td' || keep === 'th') ['colspan', 'rowspan'].forEach(k => { const v = c.getAttribute(k); if (/^\d{1,3}$/.test(v || '')) a += ` ${k}="${v}"`; });
+      if (keep === 'ol') { const st = c.getAttribute('start'); if (/^\d{1,5}$/.test(st || '')) a += ` start="${st}"`; }
+      if (keep === 'br' || keep === 'hr') { out.push(`<${keep}${a}>`); continue; }
+      out.push(`<${keep}${a}>`); walk(c); out.push(`</${keep}>`);
+    }
+  };
+  walk(body);
+  return out.join('');
+}
+/* a chapter's text, with a line break between blocks so words in different paragraphs don't run together;
+   nodes are [text node, where it starts in that text], so offsets in the text and places in the page agree */
+const EP_BLOCK = /^(p|div|h[1-6]|li|blockquote|figcaption|figure|dt|dd|tr|pre|section|article|aside|header|footer|table|ul|ol|dl|hr|br)$/;
+function epTextOf(root) {
+  const nodes = []; let text = '';
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT); let x;
+  while ((x = w.nextNode())) {
+    if (x.nodeType === 1) { if (EP_BLOCK.test(x.localName) && text && !text.endsWith('\n')) text += '\n'; continue; }
+    nodes.push([x, text.length]); text += x.data;
+  }
+  return { text, nodes };
+}
+function epText(html) { const t = document.createElement('template'); t.innerHTML = html; return epTextOf(t.content).text; }
+async function epubParse(buf, noImages = false) {
+  const files = await unzip(buf.slice(0)), dec = new TextDecoder('utf-8');
+  const get = p => files[p] || files[encodeURI(p)] || null, txt = p => { const b = get(p); return b ? dec.decode(b) : null; };
+  const xml = t => { if (!t) return null; const d = new DOMParser().parseFromString(t, 'application/xml'); return d.getElementsByTagName('parsererror').length ? null : d; };
+  const cont = xml(txt('META-INF/container.xml')); if (!cont) throw new Error('not an ePub');
+  const enc = txt('META-INF/encryption.xml');
+  if (get('META-INF/rights.xml') || (enc && /CipherReference[^>]+URI\s*=\s*["'][^"']+\.(x?html?|opf|ncx)["']/i.test(enc))) throw Object.assign(new Error('drm'), { drm: true });
+  const opfPath = (epTags(cont, 'rootfile')[0] || { getAttribute: () => '' }).getAttribute('full-path'); const opf = xml(txt(opfPath)); if (!opf) throw new Error('no package');
+  const man = {}; epTags(opf, 'item').forEach(it => { const id = it.getAttribute('id'); if (id) man[id] = { id, href: epPath(opfPath, it.getAttribute('href')).path, type: it.getAttribute('media-type') || '', props: it.getAttribute('properties') || '' }; });
+  const spineEl = epTags(opf, 'spine')[0];
+  const spine = epTags(spineEl, 'itemref').map(r => man[r.getAttribute('idref')]).filter(x => x && /html/i.test(x.type || 'html') && get(x.href));
+  const md = epTags(opf, 'metadata')[0], dc = k => epTags(md, k).map(e => e.textContent.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const meta = { title: dc('title')[0] || '', creators: dc('creator'), date: dc('date')[0] || '', publisher: dc('publisher')[0] || '', lang: dc('language')[0] || '', ids: dc('identifier') };
+  let toc = [], pageList = [];
+  const navItem = Object.values(man).find(x => /\bnav\b/.test(x.props));
+  if (navItem && txt(navItem.href)) {
+    let nd = new DOMParser().parseFromString(txt(navItem.href), 'application/xhtml+xml'); if (nd.getElementsByTagName('parsererror').length) nd = new DOMParser().parseFromString(txt(navItem.href), 'text/html');
+    const navs = epTags(nd, 'nav'), tn = navs.find(n => /\btoc\b/.test(epType(n))) || navs[0];
+    const walk = (ol, d) => epKids(ol, 'li').forEach(li => {
+      const a = epKids(li, 'a')[0] || epKids(li, 'span')[0];
+      if (a) { const h = a.getAttribute('href'); toc.push(Object.assign({ t: a.textContent.replace(/\s+/g, ' ').trim(), d }, h ? epPath(navItem.href, h) : { path: '', frag: '' })); }
+      const sub = epKids(li, 'ol')[0]; if (sub) walk(sub, d + 1);
+    });
+    if (tn) { const ol = epKids(tn, 'ol')[0] || epTags(tn, 'ol')[0]; if (ol) walk(ol, 0); }
+    const pl = navs.find(n => /page-list/.test(epType(n))); if (pl) epTags(pl, 'a').forEach(a => pageList.push(Object.assign({ label: a.textContent.trim() }, epPath(navItem.href, a.getAttribute('href')))));
+  }
+  if (!toc.length || !pageList.length) {
+    const ncxIt = man[spineEl && spineEl.getAttribute('toc')] || Object.values(man).find(x => /ncx/.test(x.type)), ncx = ncxIt && xml(txt(ncxIt.href));
+    if (ncx && !toc.length) { const walk = (el, d) => epKids(el, 'navPoint').forEach(np => { const lab = epTags(epKids(np, 'navLabel')[0], 'text')[0], c = epKids(np, 'content')[0]; if (lab && c) toc.push(Object.assign({ t: lab.textContent.replace(/\s+/g, ' ').trim(), d }, epPath(ncxIt.href, c.getAttribute('src')))); walk(np, d + 1); }); walk(epTags(ncx, 'navMap')[0], 0); }
+    if (ncx && !pageList.length) epTags(ncx, 'pageTarget').forEach(pt => { const lab = epTags(pt, 'text')[0], c = epKids(pt, 'content')[0]; if (lab && c) pageList.push(Object.assign({ label: lab.textContent.trim() }, epPath(ncxIt.href, c.getAttribute('src')))); });
+  }
+  const pbT = {}; pageList.forEach(x => { if (x.frag) pbT[x.path + '#' + x.frag] = x.label; });
+  const urls = [], imgs = {};
+  const imgUrl = p => {
+    if (noImages) return get(p) ? 'about:blank' : '';
+    if (imgs[p] !== undefined) return imgs[p]; const b = get(p); if (!b) return (imgs[p] = '');
+    const type = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', svg: 'image/svg+xml', webp: 'image/webp', avif: 'image/avif' }[(p.split('.').pop() || '').toLowerCase()] || 'application/octet-stream';
+    const u = URL.createObjectURL(new Blob([b], { type })); urls.push(u); return (imgs[p] = u);
+  };
+  const ch = spine.map((it, i) => ({ href: it.href, html: epClean(txt(it.href) || '', it.href, i + 1, pbT, imgUrl) }));
+  toc.forEach(x => { x.p = spine.findIndex(s => s.href === x.path) + 1; }); toc = toc.filter(x => x.p > 0 && x.t).slice(0, 2000);
+  const first = {}; toc.forEach(x => { if (!(x.p in first)) first[x.p] = x.t; });
+  let last = ''; const labels = ch.map((c, i) => (last = first[i + 1] || last));
+  return { meta, toc, ch, labels, urls, pages: pageList.length > 0 };
+}
+/* chapter numbers and titles for citing: "3" (chapter 3) when the title gives a number, else the title (a section) */
+function epNum(t) {
+  const m = /^\s*(?:chapter|chap\.?|ch\.?|kapitel|chapitre|cap[ií]tulo|capitolo|hoofdstuk)\s+([0-9]{1,4}|[ivxlcdm]{1,8})\b/i.exec(t) || /^\s*([0-9]{1,3})(?:[.:)\s—–-]|$)/.exec(t) || /^\s*([IVXLC]{1,6})(?:[.:)—–]|$)/.exec(t);
+  return m ? m[1] : '';
+}
+function epChLocOf(ep, n) {
+  const t = (ep.labels[n - 1] || '').trim(), num = epNum(t);
+  if (num) return { loc: num, label: 'chapter', short: t.slice(0, 48) || 'Chapter ' + num };
+  if (t) return { loc: t.slice(0, 60), label: 'section', short: t.slice(0, 48) };
+  return { loc: 'front matter', label: 'section', short: 'Front matter' }; // before the first entry in the contents
+}
+const epChLoc = n => (R.ep ? epChLocOf(R.ep, n) : { loc: String(n), label: 'page', short: String(n) });
+const epParas = div => $$('.ep-body p', div).filter(p => p.textContent.trim());
+async function openEpubData(buf, name, sourceId = '') {
+  showReader(true); rdBeforeOpen();
+  $('#rdPages').innerHTML = '<div class="rd-empty">Opening…</div>';
+  let ep;
+  try { ep = await epubParse(buf); if (!ep.ch.length) throw new Error('empty'); }
+  catch (e) { console.warn(e); $('#rdPages').innerHTML = `<div class="rd-empty">${e && e.drm ? 'This ePub is locked with DRM, so it can’t be opened here. Anabasis opens DRM-free ePubs, such as those from Project Gutenberg, Standard Ebooks and publishers that sell without DRM.' : 'Couldn’t open that ePub.'}</div>`; return; }
+  if (R.doc) { try { R.doc.destroy(); } catch (e) { /* gone */ } }
+  R.buf = buf.slice(0);
+  Object.assign(R, { doc: { numPages: ep.ch.length, destroy: () => ep.urls.forEach(u => URL.revokeObjectURL(u)) }, kind: 'epub', ep, outline: null, name, sourceId: sourceId || '', pages: [], texts: {}, labels: null, ocr: null, base: { w: 640, h: 900 } });
+  $('#reader').classList.add('is-epub'); rdSpreadClass(); $('#rdOffset').value = '';
+  fillReaderSources();
+  R.scale = PREFS.epubSize || 1;
+  layoutPages();
+  if (R.sourceId) pdfStore.set(R.sourceId, rdRec()).catch(() => {}); else suggestSourceFromPdf();
+  rdAfterOpen();
+}
+function epLayout() {
+  const box = $('#rdPages'); box.innerHTML = ''; R.pages = []; R.renderGen++; if (R.obs) R.obs.disconnect();
+  box.style.setProperty('--ep-fs', R.scale);
+  const lang = R.ep.meta.lang && /^[A-Za-z-]{2,20}$/.test(R.ep.meta.lang) ? R.ep.meta.lang : '';
+  R.ep.ch.forEach((c, i) => {
+    const d = document.createElement('div'); d.className = 'rd-page ep-ch'; d.dataset.n = i + 1; if (lang) d.lang = lang;
+    d.innerHTML = `<div class="ep-body">${c.html}</div><span class="rd-pnum" data-l="${esc(epChLoc(i + 1).short)}"></span>`;
+    box.appendChild(d); R.pages.push({ div: d, done: true });
+  });
+  let base = 0, lastLab = null;
+  R.pages.forEach((p, i) => { const c = R.ep.ch[i], lab = R.ep.labels[i]; if (lab !== lastLab) base = 0; c.pbase = base; c.np = epParas(p.div).length; base += c.np; lastLab = lab; const T = epTextOf($('.ep-body', p.div)); c.text = T.text; p.nodes = T.nodes; });
+  R.ep.total = R.ep.ch.reduce((a, c) => a + c.text.length, 0) || 1;
+  R.ep.hasPb = !!$('.ep-pb', box);
+  $('#rdOf').textContent = '/ ' + R.ep.ch.length; $('#rdOf').title = 'Chapters and sections';
+  $('#rdZoom').textContent = Math.round(R.scale * 100) + '%';
+  $$('img', box).forEach(im => im.addEventListener('load', () => rdHlSoon(), { once: true }));
+  rdHlRefresh(); if (R.findQ) rdMarkFindAll(R.findQ);
+}
+/* text offsets in a chapter ↔ ranges, in one walk for many */
+function epNodes(n) {
+  const rec = R.pages[n - 1]; if (!rec) return null;
+  return rec.nodes || (rec.nodes = epTextOf($('.ep-body', rec.div)).nodes);
+}
+function epRanges(n, pairs) {
+  const nodes = epNodes(n); if (!nodes || !nodes.length) return pairs.map(() => null);
+  const at = off => { let lo = 0, hi = nodes.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (nodes[m][1] <= off) lo = m; else hi = m - 1; } const [nd, p0] = nodes[lo]; return [nd, Math.max(0, Math.min(off - p0, nd.data.length))]; };
+  return pairs.map(([a, z]) => { try { const r = document.createRange(); r.setStart(...at(a)); r.setEnd(...at(Math.max(a, z))); return r; } catch (e) { return null; } });
+}
+function epOffset(n, node, off) {
+  const nodes = epNodes(n) || []; if (!nodes.length) return 0;
+  if (node.nodeType === 3) { const e = nodes.find(x => x[0] === node); if (e) return e[1] + Math.min(off, node.data.length); }
+  const r = document.createRange(); try { r.setStart(node, off); } catch (e) { return 0; }
+  let lo = 0, hi = nodes.length; while (lo < hi) { const m = (lo + hi) >> 1; if (r.comparePoint(nodes[m][0], 0) < 0) lo = m + 1; else hi = m; } // first text node at or after the point
+  if (lo >= nodes.length) { const l = nodes[nodes.length - 1]; return l[1] + l[0].data.length; }
+  return nodes[lo][1];
+}
+/* where a point is, as it would be cited: the printed page when the book marks its pages, else chapter and paragraph */
+function epLocAt(n, node, off, endNode, endOff) {
+  const box = $('#rdPages'), el = node.nodeType === 1 ? (node.childNodes[off] || node) : node;
+  if (R.ep.hasPb) {
+    const pbs = $$('.ep-pb', box), before = x => pbs.filter(pb => pb === x || (pb.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING)).pop();
+    const a = before(el), b = endNode ? before(endNode.nodeType === 1 ? (endNode.childNodes[endOff] || endNode) : endNode) : a;
+    const pa = a ? a.dataset.pb : pbs[0] ? pbs[0].dataset.pb : '', pb = b ? b.dataset.pb : pa;
+    if (pa) return { loc: pa === pb ? pa : pa + '–' + pb, label: 'page' };
+  }
+  const L = epChLoc(n), rec = R.pages[n - 1], ps = epParas(rec.div); if (!ps.length) return { loc: L.loc, label: L.label };
+  let i = ps.findIndex(p => p.contains(el) || (p.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_PRECEDING)); if (i < 0) i = ps.length - 1;
+  return { loc: `${L.loc}, para. ${R.ep.ch[n - 1].pbase + i + 1}`, label: L.label };
+}
+function epSelLoc(rg, n) {
+  const rec = R.pages[n - 1], body = $('.ep-body', rec.div), r = rg.cloneRange();
+  if (!body.contains(r.startContainer)) r.setStart(body, 0);
+  if (!body.contains(r.endContainer)) r.setEnd(body, body.childNodes.length);
+  const a = epOffset(n, r.startContainer, r.startOffset), z = Math.max(a, epOffset(n, r.endContainer, r.endOffset));
+  const L = epLocAt(n, r.startContainer, r.startOffset, rg.endContainer, rg.endOffset);
+  return { page: L.loc, label: L.label, hl: [{ p: n, a, z }] };
+}
+// the place at the top of the view, for the note pad
+function epLocTop() {
+  if (!R.ep || !R.pages.length) return { loc: '', label: 'page' };
+  const n = currentPage(), rec = R.pages[n - 1], top = $('#rdPages').getBoundingClientRect().top + 30;
+  const p = epParas(rec.div).find(x => x.getBoundingClientRect().bottom > top);
+  return p ? epLocAt(n, p, 0) : { loc: epChLoc(n).loc, label: epChLoc(n).label };
+}
+function epScrollTo(el) { const box = $('#rdPages'); box.scrollTop += el.getBoundingClientRect().top - box.getBoundingClientRect().top - 40; $('#rdPage').value = currentPage(); }
+// a cited place back to the book: returns a chapter to go to, or -1 when it has scrolled there itself
+function epFindLoc(loc) {
+  loc = String(loc || '').trim(); if (!loc || !R.ep) return 0;
+  if (R.ep.hasPb) { const f = loc.split(/[–-]/)[0].trim(), pb = $$('.ep-pb', $('#rdPages')).find(x => x.dataset.pb === f); if (pb) { epScrollTo(pb); return -1; } }
+  const m = /^(.*?)(?:,\s*para\.\s*(\d+))?$/.exec(loc), head = m[1].trim(), para = +m[2] || 0;
+  const n = R.ep.ch.findIndex((c, i) => epChLoc(i + 1).loc === head) + 1; if (!n) return 0;
+  if (para) for (let j = n; j <= R.ep.ch.length && R.ep.labels[j - 1] === R.ep.labels[n - 1]; j++) { const c = R.ep.ch[j - 1]; if (para > c.pbase && para <= c.pbase + c.np) { const p = epParas(R.pages[j - 1].div)[para - c.pbase - 1]; if (p) { epScrollTo(p); return -1; } } }
+  return n;
+}
+$('#rdPages').addEventListener('click', e => {
+  const a = e.target.closest('a[data-ep]'); if (!a || R.kind !== 'epub') return;
+  e.preventDefault(); const [path, frag] = a.dataset.ep.split('#'), n = R.ep.ch.findIndex(c => c.href === path) + 1; if (!n) return;
+  const el = frag && document.getElementById(`ep${n}-${frag}`); if (el) epScrollTo(el); else goPage(n);
+});
+function epIsbn(ids) { for (const x of ids || []) { const d = String(x).replace(/^urn:isbn:/i, '').replace(/[^0-9Xx]/g, ''); if (/^97[89]\d{10}$/.test(d) || /^\d{9}[\dXx]$/.test(d)) return d.toUpperCase(); } return ''; }
+function epCsl(meta, name) {
+  const csl = { type: 'book', title: meta.title || String(name || '').replace(/\.epub$/i, '').replace(/[_-]+/g, ' ') };
+  const au = meta.creators.map(c => (/,/.test(c) ? splitName(c) : nameFromOsint(c) || { literal: c })).filter(Boolean); if (au.length) csl.author = au;
+  const y = (meta.date.match(/\b(1[5-9]|20)\d{2}\b/) || [])[0]; if (y) csl.issued = { 'date-parts': [[+y]] };
+  if (meta.publisher) csl.publisher = meta.publisher;
+  const isbn = epIsbn(meta.ids); if (isbn) csl.ISBN = isbn;
+  if (meta.lang) csl.language = meta.lang;
+  return csl;
+}
+async function sourceFromEpub() {
+  const s = addSource(epCsl(R.ep.meta, R.name)); s.pdfName = R.name; markDirty();
+  toast('Source created from the book’s own details. Check the title, author and date.');
+  return s;
+}
+function suggestSourceFromEpub() {
+  const m = R.ep.meta, isbn = epIsbn(m.ids), t = (m.title || '').toLowerCase().trim();
+  const s = P.sources.find(x => (isbn && String(x.csl.ISBN || '').replace(/[^0-9X]/gi, '').toUpperCase() === isbn) || (t && String(x.csl.title || '').toLowerCase().trim() === t && x.csl.type === 'book'));
+  if (s) { R.sourceId = s.id; fillReaderSources(); pdfStore.set(s.id, rdRec()).catch(() => {}); toast('Matched this book to “' + (s.csl.title || 'source') + '”.'); return; }
+  $('#rdSource').classList.add('nudge'); setTimeout(() => $('#rdSource').classList.remove('nudge'), 2500);
+}
+/* ---------- highlights in an ePub: CSS custom highlights, so the book's text is never changed ---------- */
+const rdHlSoon = debounce(() => rdHlRefresh(), 250);
+function epHlRefresh() {
+  if (!hlOK() || !R.ep) return;
+  const sets = { 'rd-q': [], 'rd-p': [], 'rd-cy': [], 'rd-cg': [], 'rd-cb': [], 'rd-cp': [] }, by = {}, pins = [];
+  const add = (p, a, z, k, note) => (by[p] = by[p] || []).push([a, z, k, note]);
+  (R.sourceId ? P.notes.filter(n => n.sourceId === R.sourceId && n.pdfHl) : []).forEach(nt => nt.pdfHl.forEach((h, i) => { if (h.a != null) add(h.p, h.a, h.z, ['paraphrase', 'summary'].includes(nt.kind) ? 'rd-p' : 'rd-q', i ? null : nt); }));
+  rdHls().forEach(h => { if (h.a != null) add(h.p, h.a, h.z, 'rd-c' + h.c); });
+  Object.entries(by).forEach(([p, list]) => { list.sort((x, y) => x[0] - y[0]); epRanges(+p, list).forEach((r, i) => { if (!r) return; sets[list[i][2]].push(r); if (list[i][3]) pins.push({ p: +p, r, note: list[i][3] }); }); });
+  Object.entries(sets).forEach(([k, rs]) => { if (rs.length) CSS.highlights.set(k, new Highlight(...rs)); else CSS.highlights.delete(k); });
+  $$('.rd-pin-layer', $('#rdPages')).forEach(e => e.remove());
+  const byP = {}; pins.forEach(x => (byP[x.p] = byP[x.p] || []).push(x));
+  Object.entries(byP).forEach(([p, list]) => {
+    const div = R.pages[p - 1].div, top0 = div.getBoundingClientRect().top, layer = document.createElement('div'); layer.className = 'rd-pin-layer';
+    layer.innerHTML = list.map(({ r, note }) => { const q = r.getClientRects()[0]; return q ? `<button class="rd-hl-pin k-${esc(note.kind)}" data-hl-note="${note.id}" style="top:${Math.round(q.top - top0)}px" title="${esc((note.title || 'Note') + ' · open the note')}" aria-label="Open the note: ${esc(note.title || 'Note')}"></button>` : ''; }).join('');
+    div.appendChild(layer);
+  });
+}
+new ResizeObserver(() => { if (R.kind === 'epub' && R.doc) rdHlSoon(); $('#reader').classList.toggle('rd-narrow', $('#reader').offsetWidth > 0 && $('#reader').offsetWidth < 560); }).observe($('#reader'));
+/* ---------- plain highlights: kept on the source, s.hls = [{ id, c, text, loc, label, h: [parts as for notes], at }] ---------- */
+function rdHlItems() { const s = rrSource(); return s && Array.isArray(s.hls) ? s.hls : []; }
+function rdHls() { return rdHlItems().flatMap(x => (x.h || []).map(h => Object.assign({ id: x.id, c: x.c }, h))); }
+function cleanHls(list) {
+  return (Array.isArray(list) ? list : []).filter(x => x && typeof x === 'object' && x.id).slice(0, 5000).map(x => ({ id: asStr(x.id), c: HL_NAME[x.c] ? x.c : 'y', text: asStr(x.text).slice(0, 5000), loc: asStr(x.loc).slice(0, 80), label: LOCATOR_LABELS.includes(x.label) ? x.label : 'page', h: cleanHl(x.h), at: asStr(x.at) || nowISO() })).filter(x => x.h.length || x.text);
+}
+async function rdEnsureSource() {
+  if (R.sourceId && rrSource()) return rrSource();
+  const src = await sourceFromPdf(); if (!src) return null;
+  R.sourceId = src.id; fillReaderSources(); pdfStore.set(src.id, rdRec()).catch(() => {}); rdSavePos(); if (rrOn) rrRender();
+  return src;
+}
+async function rdHlAdd(sel, c) {
+  const src = await rdEnsureSource(); if (!src) return;
+  src.hls = src.hls || [];
+  const item = { id: uid('hl'), c, text: sel.text, loc: sel.page, label: sel.label || 'page', h: cleanHl(sel.hl), at: nowISO() };
+  src.hls.push(item); PREFS.rdColor = c; savePrefs(); src.modified = nowISO(); markDirty();
+  getSelection().removeAllRanges(); updateSelBar(); rdHlRefresh(); if (RD.shown === 'hls') rdSideRender();
+  toast(`Highlighted (${locAbbr(item.label)} ${item.loc}).`, { label: 'Undo', fn: () => rdHlDel(item.id) });
+}
+function rdHlDel(id) { const s = rrSource(); if (!s || !s.hls) return; s.hls = s.hls.filter(x => x.id !== id); if (!s.hls.length) delete s.hls; markDirty(); rdHlRefresh(); $('#rdHlPop').classList.add('hidden'); if (RD.shown === 'hls') rdSideRender(); }
+function rdHlNote(id, draft = false) {
+  const s = rrSource(), x = s && (s.hls || []).find(h => h.id === id); if (!x) return null;
+  const n = newNote(); Object.assign(n, { kind: 'quote', sourceId: s.id, locator: x.loc, label: x.label, body: x.text, title: x.text.split(/\s+/).slice(0, 7).join(' ') + (wc(x.text) > 7 ? '…' : '') });
+  if (x.h.length) n.pdfHl = x.h;
+  P.notes.unshift(n); s.hls = s.hls.filter(h => h.id !== id); if (!s.hls.length) delete s.hls;
+  renderNoteList(); renderBoard(); markDirty(); rdHlRefresh(); $('#rdHlPop').classList.add('hidden'); if (RD.shown === 'hls') rdSideRender(); if (rrOn) rrRender();
+  if (draft) rdQuoteIn(n); else toast('The highlight is a quote note now.', { label: 'Open', fn: () => { if (rrOn) rrToggle(false); switchTab('notes'); openNote(n.id); } });
+  return n;
+}
+// a click on a plain highlight offers its colour, a note or the draft
+function rdHlAt(x, y) {
+  const pg = document.elementFromPoint(x, y)?.closest('#rdPages .rd-page'); if (!pg) return '';
+  const inside = q => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom;
+  if (R.kind !== 'epub') { const sp = $$('.rd-hl[data-hl]', pg).find(e => inside(e.getBoundingClientRect())); return sp ? sp.dataset.hl : ''; }
+  const n = +pg.dataset.n, mine = rdHls().filter(h => h.p === n && h.a != null).sort((a, b) => a.a - b.a);
+  const rs = epRanges(n, mine.map(h => [h.a, h.z])); const i = rs.findIndex(r => r && [...r.getClientRects()].some(inside));
+  return i < 0 ? '' : mine[i].id;
+}
+$('#rdPages').addEventListener('click', e => {
+  if (e.target.closest('a,button') || !getSelection().isCollapsed) return;
+  const id = rdHlAt(e.clientX, e.clientY), pop = $('#rdHlPop');
+  if (!id) { pop.classList.add('hidden'); return; }
+  RD.popHl = id; const it = rdHlItems().find(h => h.id === id);
+  $$('[data-c]', pop).forEach(b => b.setAttribute('aria-pressed', b.dataset.c === it.c));
+  pop.classList.remove('hidden');
+  const rb = $('#reader').getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  pop.style.left = Math.max(8, Math.min(rb.width - w - 8, e.clientX - rb.left - w / 2)) + 'px';
+  pop.style.top = Math.max(8, Math.min(rb.height - h - 8, e.clientY - rb.top + 14)) + 'px';
+  $('[data-c]', pop).focus({ preventScroll: true });
+});
+$('#rdHlPop').addEventListener('mousedown', e => e.preventDefault());
+$('#rdHlPop').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return; const id = RD.popHl, it = rdHlItems().find(h => h.id === id); if (!it) return;
+  if (b.dataset.c) { it.c = b.dataset.c; markDirty(); rdHlRefresh(); $$('#rdHlPop [data-c]').forEach(x => x.setAttribute('aria-pressed', x.dataset.c === it.c)); if (RD.shown === 'hls') rdSideRender(); return; }
+  if (b.dataset.hx === 'del') rdHlDel(id);
+  if (b.dataset.hx === 'note') rdHlNote(id);
+  if (b.dataset.hx === 'draft') rdHlNote(id, true);
+});
+$('#rdHlPop').addEventListener('keydown', e => { if (e.key === 'Escape') { $('#rdHlPop').classList.add('hidden'); } });
+/* ---------- notes and quotations from the reader ---------- */
+async function rdNoteFrom(sel, k) {
+  const src = await rdEnsureSource(); if (!src) return null;
+  const n = newNote(); n.kind = k; n.sourceId = src.id; n.locator = sel.page; n.label = sel.label || 'page';
+  n.body = sel.text; n.title = sel.text.split(/\s+/).slice(0, 7).join(' ') + (wc(sel.text) > 7 ? '…' : '');
+  if (sel.hl && sel.hl.length) n.pdfHl = cleanHl(sel.hl);
+  P.notes.unshift(n); renderNoteList(); renderBoard(); markDirty(); rdHlRefresh(); if (rrOn) rrRender();
+  return n;
+}
+async function rdInsertDraft(sel) {
+  const n = await rdNoteFrom(sel, 'quote'); if (!n) return;
+  getSelection().removeAllRanges(); updateSelBar(); rdQuoteIn(n);
+}
+// a short quotation runs into the sentence at the cursor; a long one, or one with no sentence to join, is a block
+function rdQuoteIn(n) {
+  let blk = savedRange && editor.contains(savedRange.startContainer) ? savedRange.startContainer : null;
+  blk = blk && (blk.nodeType === 3 ? blk.parentElement : blk); blk = blk && blk.closest('p,li,h1,h2,h3,blockquote');
+  const run = wc(n.body) < 100 && !/\n\s*\n/.test(n.body) && blk && blk.matches('p,li') && blk.textContent.trim();
+  if (!run) { insertNote(n); return; }
+  let h = noteToHTML(n).replace(/^<p>/, '').replace(/<\/p>$/, '');
+  const c = savedRange.startContainer, before = c.nodeType === 3 ? c.data.slice(0, savedRange.startOffset) : '';
+  if (before && !/[\s (“‘"']$/.test(before)) h = ' ' + h;
+  insertHTMLAtCursor(h);
+  toast(`Quoted in “${curDoc().title || 'document'}” with its citation (${locAbbr(n.label)} ${n.locator}).`);
+}
+/* ---------- where you left off: per file, in this browser; a reading list with progress ---------- */
+const RDAT_KEY = 'commonplace.rdat';
+function rdAtAll() { try { const v = JSON.parse(lsGet(RDAT_KEY) || '{}'); return v && typeof v === 'object' ? v : {}; } catch (e) { return {}; } }
+function rdKey() { return R.sourceId ? 's:' + R.sourceId : R.buf ? 'f:' + R.name + ':' + R.buf.byteLength : ''; }
+function rdPosNow() {
+  const p = currentPage(), rec = R.pages[p - 1]; if (!rec) return { p: 1, f: 0 };
+  const top = $('#rdPages').scrollTop + 8 - rec.div.offsetTop; return { p, f: Math.max(0, Math.min(0.999, top / Math.max(1, rec.div.offsetHeight))) };
+}
+function rdProgress(at) {
+  if (R.kind === 'epub' && R.ep && R.ep.total) { let a = 0; for (let i = 0; i < at.p - 1; i++) a += R.ep.ch[i].text.length; return Math.min(1, (a + at.f * R.ep.ch[at.p - 1].text.length) / R.ep.total); }
+  return R.doc ? Math.min(1, (at.p - 1 + at.f) / R.doc.numPages) : 0;
+}
+function rdSavePos() {
+  if (!R.doc || !R.pages.length || !$('#rdPages .rd-page')) return; const k = rdKey(); if (!k) return;
+  const at = rdPosNow(), all = rdAtAll();
+  all[k] = { p: at.p, f: Math.round(at.f * 1000) / 1000, n: R.doc.numPages, pr: Math.round(rdProgress(at) * 1000) / 1000, at: nowISO(), loc: R.kind === 'epub' ? epChLoc(at.p).short : 'p. ' + printedPage(at.p) };
+  Object.keys(all).sort((a, b) => String(all[b].at).localeCompare(String(all[a].at))).slice(300).forEach(x => delete all[x]);
+  lsSet(RDAT_KEY, JSON.stringify(all));
+}
+function rdResume() {
+  if (R.noResume) { R.noResume = false; return; }
+  const v = rdAtAll()[rdKey()], s = rrSource();
+  if (s && s.read === 'toread') { s.read = 'reading'; s.modified = nowISO(); markDirty(); try { renderSourceList(); } catch (e) { /* list not shown */ } }
+  if (!v || v.n !== R.doc.numPages || (v.p <= 1 && v.f < 0.02)) return;
+  const go = () => goPage(v.p, v.f); go(); if (R.kind === 'epub') setTimeout(go, 350);
+  toast(`Picked up where you left off: ${v.loc || 'p. ' + v.p}.`, { label: 'Start at the beginning', fn: () => goPage(1) });
+}
+function rdFinishCheck() {
+  const box = $('#rdPages'), s = rrSource(); if (!s || s.read === 'read' || RD.finished[s.id] || !R.doc) return;
+  const last = R.pages[R.pages.length - 1]; if (!last || last.div.getBoundingClientRect().bottom > box.getBoundingClientRect().bottom + 4) return;
+  RD.finished[s.id] = 1;
+  toast(`At the end of “${(sourceLabel(s).title || 'this source').slice(0, 60)}”.`, { label: 'Mark as read', fn: () => { s.read = 'read'; delete s.prio; s.modified = nowISO(); markDirty(); try { renderSourceList(); } catch (e) { /* list not shown */ } rdSideRender(); toast('Marked as read.'); } });
+}
+$('#rdPages').addEventListener('scroll', debounce(() => { if (!R.doc) return; rdSavePos(); rdFinishCheck(); rdTocMark(); rdThumbMark(); }, 450));
+$('#rdPages').addEventListener('scroll', () => $('#rdHlPop').classList.add('hidden'), { passive: true });
+window.addEventListener('pagehide', () => { try { rdSavePos(); } catch (e) { /* closing */ } });
+async function rdStoredIds() { try { return new Set((await pdfStore.keys() || []).map(String).filter(k => k.startsWith('pdf:')).map(k => k.slice(4))); } catch (e) { return new Set(); } }
+async function rdLibrary() {
+  const have = await rdStoredIds(), at = rdAtAll();
+  const rows = P.sources.filter(s => have.has(s.id) || s.read === 'reading' || s.read === 'toread').map(s => ({ s, have: have.has(s.id), v: at['s:' + s.id] || null }));
+  const when = r => (r.v ? r.v.at : '') || '';
+  return {
+    reading: rows.filter(r => r.s.read === 'reading').sort((a, b) => when(b).localeCompare(when(a))),
+    toread: rows.filter(r => r.s.read === 'toread').sort((a, b) => (b.s.prio || 0) - (a.s.prio || 0) || when(b).localeCompare(when(a))),
+    other: rows.filter(r => r.s.read !== 'reading' && r.s.read !== 'toread').sort((a, b) => when(b).localeCompare(when(a))),
+  };
+}
+function rdLibRow(r, sel = true) {
+  const l = sourceLabel(r.s), pr = r.v ? Math.round((r.v.pr || 0) * 100) : 0;
+  const m = [l.who ? esc(srcShort(r.s)) : '', r.v ? `${esc(r.v.loc || '')} · ${pr}% · ${esc(relTime(r.v.at))}` : r.have ? 'not opened yet' : 'the file isn’t in this browser'].filter(Boolean).join(' · ');
+  return `<li><button data-lib="${r.s.id}" title="${r.have ? 'Open it where you left off' : 'Choose the file to open it'}">${r.s.prio ? '★ ' : ''}${esc((l.title || r.s.pdfName || 'Untitled').slice(0, 90))}</button><span class="m">${m}</span>${r.v ? `<span class="rd-prog" role="progressbar" aria-label="Read" aria-valuenow="${pr}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pr}%"></i></span>` : ''}${sel ? `<select data-libst="${r.s.id}" aria-label="Reading list status">${READ_ST.map(([k, t]) => `<option value="${k}" ${(r.s.read || '') === k ? 'selected' : ''}>${t}</option>`).join('')}</select>` : ''}</li>`;
+}
+async function rdLibHTML() {
+  if (!P) return '';
+  const L = await rdLibrary(), g = (t, rows) => rows.length ? `<h5>${t}</h5><ul class="rd-lib">${rows.map(r => rdLibRow(r)).join('')}</ul>` : '';
+  const h = g('Reading', L.reading) + g('To read', L.toread) + g('Kept in this browser', L.other);
+  return h || '<p class="rd-hint">Your reading list is the sources you mark To read or Reading, and every PDF or ePub kept in this browser. Mark a source To read in its details, or link the file you’re reading to a source.</p>';
+}
+async function rdEmpty() {
+  if (R.doc) return;
+  if (PREFS.rdSide && !$('#reader').classList.contains('rd-narrow')) rdSideShow(true);
+  rdSideRender();
+  const box = $('#rdPages');
+  $('#rdPage').value = 1; $('#rdOf').textContent = '/ 0'; $('#rdName').textContent = 'Reader';
+  box.innerHTML = `<div class="rd-empty">Open a PDF or an ePub, or drop one anywhere on this window.<br><br>Select a passage to quote it, highlight it, or put it straight into the draft with its page. Files linked to a source are kept in this browser, not in your project file.<br><br><button class="primary" id="rdEmptyOpen">Open a file…</button><div id="rdEmptyLib"></div></div>`;
+  box.scrollTop = 0;
+  const L = await rdLibrary(), rows = [...L.reading, ...L.toread.filter(r => r.have), ...L.other].slice(0, 6);
+  const t = $('#rdEmptyLib'); if (t && rows.length) t.innerHTML = `<div class="rd-emptylib"><h5>Pick up where you left off</h5><ul class="rd-lib">${rows.map(r => rdLibRow(r, false)).join('')}</ul></div>`;
+}
+$('#rdPages').addEventListener('click', e => { if (e.target.id === 'rdEmptyOpen') $('#filePdf').click(); });
+document.addEventListener('click', e => { const b = e.target.closest('#reader [data-lib]'); if (b) readSourcePdf(b.dataset.lib); });
+document.addEventListener('change', e => {
+  const sel = e.target.closest('#reader [data-libst]'); if (!sel) return;
+  const s = P.sources.find(x => x.id === sel.dataset.libst); if (!s) return;
+  if (sel.value) s.read = sel.value; else delete s.read; if (s.read === 'read') delete s.prio; s.modified = nowISO(); markDirty(); try { renderSourceList(); } catch (er) { /* list not shown */ } rdSideRender();
+});
+/* ---------- the side panel ---------- */
+function rdSideShow(on) { $('#rdSide').classList.toggle('hidden', !on); $('#rdSideBtn').setAttribute('aria-pressed', on); }
+function rdSideOpen(on = $('#rdSide').classList.contains('hidden'), tab) {
+  if (tab) RD.tab = tab; rdSideShow(on); PREFS.rdSide = on ? 1 : 0; PREFS.rdTab = RD.tab; savePrefs();
+  if (on) { rdSideRender(); $(`#rdSide [data-rt="${RD.tab}"]`)?.focus({ preventScroll: true }); }
+}
+RD.tab = ['toc', 'thumbs', 'hls', 'found', 'lib'].includes(PREFS.rdTab) ? PREFS.rdTab : 'toc';
+$('#rdSideBtn').addEventListener('click', () => rdSideOpen());
+$('#rdSide .rd-tabs').addEventListener('click', e => { const b = e.target.closest('[data-rt]'); if (b) { RD.tab = b.dataset.rt; PREFS.rdTab = RD.tab; savePrefs(); rdSideRender(); } });
+$('#rdSide .rd-tabs').addEventListener('keydown', e => {
+  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return; e.preventDefault();
+  const tabs = $$('#rdSide [data-rt]').filter(b => b.offsetParent), i = tabs.indexOf(document.activeElement);
+  const j = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  tabs[j].focus(); tabs[j].click();
+});
+let rdSideGen = 0;
+async function rdSideRender() {
+  if ($('#rdSide').classList.contains('hidden')) return;
+  // the tab shown: the one chosen, unless there's nothing open (the reading list) or it's a book (no page thumbnails)
+  const tab = !R.doc ? 'lib' : R.kind === 'epub' && RD.tab === 'thumbs' ? 'toc' : RD.tab; RD.shown = tab;
+  $$('#rdSide [data-rt]').forEach(b => { b.setAttribute('aria-selected', b.dataset.rt === tab); b.tabIndex = b.dataset.rt === tab ? 0 : -1; });
+  const box = $('#rdTab'), my = ++rdSideGen; box.setAttribute('aria-label', { toc: 'Contents', thumbs: 'Pages', hls: 'Highlights', found: 'Find results', lib: 'Reading list' }[tab]);
+  if (RD.thumbObs) { RD.thumbObs.disconnect(); RD.thumbObs = null; }
+  let h = '';
+  if (tab === 'toc') h = await rdTocHTML();
+  else if (tab === 'thumbs') h = rdThumbsHTML();
+  else if (tab === 'hls') h = rdHlsHTML();
+  else if (tab === 'found') h = rdFoundHTML();
+  else h = await rdLibHTML();
+  if (my !== rdSideGen) return;
+  box.innerHTML = h;
+  if (tab === 'thumbs') rdThumbsWire();
+  if (tab === 'toc') rdTocMark();
+  if (tab === 'found') $('#rdTab .on')?.scrollIntoView({ block: 'nearest' });
+}
+async function rdPdfOutline() {
+  if (R.outline) return R.outline; const doc = R.doc, out = [];
+  try {
+    const walk = async (items, d) => { for (const it of items || []) { if (out.length > 800) return; let p = 0; try { let dest = it.dest; if (typeof dest === 'string') dest = await doc.getDestination(dest); if (Array.isArray(dest) && dest[0] != null) p = typeof dest[0] === 'number' ? dest[0] + 1 : (await doc.getPageIndex(dest[0])) + 1; } catch (e) { /* no page */ } out.push({ t: (it.title || '').trim(), p, d: Math.min(d, 3) }); await walk(it.items, d + 1); } };
+    await walk(await doc.getOutline(), 0);
+  } catch (e) { /* none */ }
+  if (doc === R.doc) R.outline = out;
+  return out;
+}
+async function rdTocHTML() {
+  const list = R.kind === 'epub' ? R.ep.toc.map(x => ({ t: x.t, p: x.p, d: Math.min(x.d, 3), f: x.frag })) : await rdPdfOutline();
+  if (!list.length) return `<p class="rd-hint">${R.kind === 'epub' ? 'This book has no table of contents.' : 'This PDF has no table of contents. <b>Pages</b> shows every page.'}</p>`;
+  return `<ol class="rd-toc">${list.map((x, i) => `<li class="d${x.d}"><button data-tp="${x.p}" data-tf="${esc(x.f || '')}" data-ti="${i}" ${x.p ? '' : 'disabled'}>${esc(x.t || '—')}</button></li>`).join('')}</ol>`;
+}
+function rdTocMark() {
+  if (RD.shown !== 'toc' || $('#rdSide').classList.contains('hidden')) return;
+  const cur = currentPage(), bs = $$('#rdTab [data-tp]'); let on = null;
+  bs.forEach(b => { if (+b.dataset.tp && +b.dataset.tp <= cur) on = b; });
+  bs.forEach(b => b.classList.toggle('on', b === on)); if (on) on.setAttribute('aria-current', 'true');
+}
+$('#rdTab').addEventListener('click', e => {
+  const t = e.target.closest('[data-tp]'); if (t) { const n = +t.dataset.tp, f = t.dataset.tf, el = R.kind === 'epub' && f && document.getElementById(`ep${n}-${f}`); if (el) epScrollTo(el); else goPage(n); rdTocMark(); if ($('#reader').classList.contains('rd-narrow')) rdSideOpen(false); return; }
+  const g = e.target.closest('[data-tg]'); if (g) { goPage(+g.dataset.tg); rdThumbMark(); return; }
+  const fi = e.target.closest('[data-fi]'); if (fi) { R.found.i = +fi.dataset.fi - 1; rdFindStep(1); return; }
+  const hl = e.target.closest('[data-hlgo]'); if (hl) { rdHlGo(hl.dataset.hlgo); return; }
+  const hf = e.target.closest('[data-hlf]'); if (hf) { RD.hlFilter = hf.dataset.hlf; rdSideRender(); return; }
+  const hx = e.target.closest('[data-hlx]'); if (hx) rdHlExport(hx.dataset.hlx);
+});
+$('#rdTab').addEventListener('keydown', e => { const hl = e.target.closest('[data-hlgo]'); if (hl && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); rdHlGo(hl.dataset.hlgo); } });
+function rdThumbsHTML() {
+  if (!R.doc || R.kind === 'epub') return '';
+  const ar = R.base.h / R.base.w, cur = currentPage();
+  return `<div class="rd-thumbs">${Array.from({ length: R.doc.numPages }, (_, i) => `<button data-tg="${i + 1}" class="${i + 1 === cur ? 'on' : ''}" aria-label="Page ${esc(pageLabel(i + 1))}" ${i + 1 === cur ? 'aria-current="page"' : ''}><span class="th" style="height:${Math.round(86 * ar)}px"></span>${esc(pageLabel(i + 1))}</button>`).join('')}</div>`;
+}
+function rdThumbsWire() {
+  const doc = R.doc;
+  RD.thumbObs = new IntersectionObserver(ents => ents.forEach(async en => {
+    if (!en.isIntersecting) return; const b = en.target; RD.thumbObs && RD.thumbObs.unobserve(b);
+    try {
+      const page = await doc.getPage(+b.dataset.tg); if (doc !== R.doc) return;
+      const vp = page.getViewport({ scale: 172 / page.getViewport({ scale: 1 }).width }), c = document.createElement('canvas');
+      c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height); await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+      const th = $('.th', b); if (th) { th.style.height = 'auto'; th.appendChild(c); }
+    } catch (e) { /* skipped */ }
+  }), { root: $('#rdTab'), rootMargin: '300px 0px' });
+  $$('#rdTab [data-tg]').forEach(b => RD.thumbObs.observe(b));
+  rdThumbMark(true);
+}
+function rdThumbMark(scroll) {
+  if (RD.shown !== 'thumbs' || $('#rdSide').classList.contains('hidden')) return;
+  const cur = currentPage(); $$('#rdTab [data-tg]').forEach(b => { const on = +b.dataset.tg === cur; b.classList.toggle('on', on); if (on) { b.setAttribute('aria-current', 'page'); b.scrollIntoView({ block: 'nearest' }); } else b.removeAttribute('aria-current'); });
+}
+/* highlights list and export */
+function rdHlSorted() { return rdHlItems().slice().sort((a, b) => ((a.h[0] || {}).p || 0) - ((b.h[0] || {}).p || 0) || ((a.h[0] || {}).a ?? ((a.h[0] || {}).r || [[0, 0]])[0][1]) - ((b.h[0] || {}).a ?? ((b.h[0] || {}).r || [[0, 0]])[0][1])); }
+function rdHlsHTML() {
+  if (!R.sourceId) return '<p class="rd-hint">Select a passage and choose a colour to highlight it. Highlights are kept with the source, so link this file to one (the first highlight does it for you).</p>';
+  const all = rdHlSorted(); if (!all.length) return '<p class="rd-hint">No highlights yet. Select a passage and choose a colour in the bar that appears. Highlights are for marking as you read; turn any of them into a quote note later.</p>';
+  const list = all.filter(x => !RD.hlFilter || x.c === RD.hlFilter), cnt = c => all.filter(x => x.c === c).length;
+  return `<div class="rd-hlf" role="group" aria-label="Show"><button class="small ${RD.hlFilter ? 'ghost' : ''}" data-hlf="" aria-pressed="${!RD.hlFilter}">All ${all.length}</button>${HL_COLORS.filter(([c]) => cnt(c)).map(([c, t]) => `<button class="small ${RD.hlFilter === c ? '' : 'ghost'}" data-hlf="${c}" aria-pressed="${RD.hlFilter === c}"><span class="rd-sw c-${c}" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;border-width:1px"></span> ${cnt(c)}<span class="sr-only"> ${t}</span></button>`).join('')}</div>
+    <ul>${list.map(x => `<li class="rd-hli" style="--hl:var(--hl-${x.c})" data-hlgo="${x.id}" tabindex="0" title="Go to it"><q>${esc(x.text.slice(0, 280))}${x.text.length > 280 ? '…' : ''}</q><span>${esc(locAbbr(x.label))} ${esc(x.loc)} · ${HL_NAME[x.c]}</span></li>`).join('')}</ul>
+    <div class="rd-hlx"><button data-hlx="copy">Copy as text</button><button data-hlx="md">Download (.md)</button><button data-hlx="notes" title="Each highlight becomes a quote note">Make notes of these</button></div>`;
+}
+function rdHlGo(id) {
+  const x = rdHlItems().find(h => h.id === id), h = x && x.h[0]; if (!h) return;
+  if (R.kind === 'epub' && h.a != null) { const r = epRanges(h.p, [[h.a, h.z]])[0]; if (r) { const box = $('#rdPages'); box.scrollTop += r.getBoundingClientRect().top - box.getBoundingClientRect().top - 80; $('#rdPage').value = currentPage(); } else goPage(h.p); }
+  else goPage(h.p, h.r && h.r[0] ? Math.max(0, h.r[0][1] - 0.08) : 0);
+  if ($('#reader').classList.contains('rd-narrow')) rdSideOpen(false);
+}
+function rdHlText(list, md) {
+  const s = rrSource(), l = s ? sourceLabel(s) : { who: '', title: R.name };
+  const head = md ? `# Highlights: ${l.title}\n\n${l.who ? l.who + ', ' : ''}*${l.title}*\n\n` : `Highlights: ${l.who ? l.who + ', ' : ''}${l.title}\n\n`;
+  return head + list.map(x => md ? `> ${x.text.replace(/\n+/g, ' ')}\n\n— ${locAbbr(x.label)} ${x.loc} · ${HL_NAME[x.c].toLowerCase()}\n` : `“${x.text}” (${locAbbr(x.label)} ${x.loc})`).join(md ? '\n' : '\n\n') + '\n';
+}
+async function rdHlExport(how) {
+  const list = rdHlSorted().filter(x => !RD.hlFilter || x.c === RD.hlFilter); if (!list.length) return;
+  if (how === 'copy') { try { await navigator.clipboard.writeText(rdHlText(list, false)); toast(`${orcPl(list.length, 'highlight', 'highlights')} copied.`); } catch (e) { toast('This browser didn’t allow copying. Use Download instead.'); } return; }
+  if (how === 'md') { const s = rrSource(); download(`Highlights - ${((s && sourceLabel(s).title) || R.name).replace(/[\\/:*?"<>|]+/g, ' ').slice(0, 60)}.md`, rdHlText(list, true), 'text/markdown'); return; }
+  if (how === 'notes') {
+    if (!(await ask('Make notes of these highlights', `${orcPl(list.length, 'highlight becomes a quote note', 'highlights become quote notes')}, with ${list.length === 1 ? 'its' : 'their'} pages, and leave${list.length === 1 ? 's' : ''} the highlight list.`, 'Make notes'))) return;
+    list.forEach(x => { const n = newNote(); Object.assign(n, { kind: 'quote', sourceId: R.sourceId, locator: x.loc, label: x.label, body: x.text, title: x.text.split(/\s+/).slice(0, 7).join(' ') + (wc(x.text) > 7 ? '…' : '') }); if (x.h.length) n.pdfHl = x.h; P.notes.unshift(n); });
+    const s = rrSource(), ids = new Set(list.map(x => x.id)); s.hls = s.hls.filter(x => !ids.has(x.id)); if (!s.hls.length) delete s.hls;
+    renderNoteList(); renderBoard(); markDirty(); rdHlRefresh(); rdSideRender(); if (rrOn) rrRender(); toast(`${orcPl(list.length, 'quote note', 'quote notes')} made.`);
+  }
+}
+/* ---------- find: every match, with its page and the words around it ---------- */
+function rdFindClear(quiet) {
+  R.findQ = ''; R.found = null; $('#rdFindN').textContent = '';
+  R.pages.forEach(p => p.done && R.kind !== 'epub' && markFind(p.div, ''));
+  if (hlOK()) { CSS.highlights.delete('rd-find'); CSS.highlights.delete('rd-findcur'); }
+  if (!quiet && RD.shown === 'found') rdSideRender();
+}
+function rdMarkFindAll(q) {
+  if (R.kind !== 'epub') { R.pages.forEach(p => p.done && markFind(p.div, q)); return; }
+  if (!hlOK()) return; const rs = [], Q = trFold(q);
+  R.ep.ch.forEach((c, i) => { const T = trFold(c.text), at = []; let k = 0; while ((k = T.indexOf(Q, k)) >= 0 && at.length < 400) { at.push([k, k + Q.length]); k += Q.length; } epRanges(i + 1, at).forEach(r => r && rs.push(r)); });
+  if (rs.length) CSS.highlights.set('rd-find', new Highlight(...rs)); else CSS.highlights.delete('rd-find');
+}
+async function rdFindAll(q) {
+  const doc = R.doc, N = doc.numPages, list = [];
+  R.findQ = q; R.found = { q, list, i: -1, busy: true, more: false }; rdMarkFindAll(q);
+  $('#rdFindN').textContent = '…'; if (RD.shown === 'found') rdSideRender();
+  for (let n = 1; n <= N; n++) {
+    if (doc !== R.doc || !R.found || R.found.q !== q) return;
+    const t = await pageText(n);
+    ftxFind(t, q).forEach((h, k) => { if (list.length < 1000) list.push({ n, k, at: h.at, pre: rdSnip(h.pre, -1), hit: h.hit, post: rdSnip(h.post, 1) }); else R.found.more = true; });
+    if (n % 20 === 0) $('#rdFindN').textContent = Math.round(n / N * 100) + '%';
+  }
+  R.found.busy = false;
+  if (!list.length) { $('#rdFindN').textContent = 'not found'; if (RD.shown === 'found') rdSideRender(); return; }
+  const cur = currentPage(); let i = list.findIndex(h => h.n >= cur); if (i < 0) i = 0;
+  R.found.i = i - 1;
+  if (!$('#rdSide').classList.contains('hidden')) RD.tab = 'found';
+  else if (list.length > 1 && !$('#reader').classList.contains('rd-narrow')) { RD.tab = 'found'; rdSideShow(true); }
+  await rdFindStep(1);
+  rdSideRender();
+}
+async function rdFindStep(d) {
+  const F = R.found; if (!F || !F.list.length) return;
+  F.i = (F.i + d + F.list.length) % F.list.length; const h = F.list[F.i];
+  $('#rdFindN').textContent = `${F.i + 1} / ${F.list.length}${F.more ? '+' : ''}`;
+  $$('#rdTab [data-fi]').forEach(b => b.classList.toggle('on', +b.dataset.fi === F.i)); $('#rdTab .on')?.scrollIntoView({ block: 'nearest' });
+  if (R.kind === 'epub') {
+    const r = epRanges(h.n, [[h.at, h.at + h.hit.length]])[0]; if (!r) { goPage(h.n); return; }
+    if (hlOK()) CSS.highlights.set('rd-findcur', new Highlight(r));
+    const box = $('#rdPages'), rt = r.getBoundingClientRect(), bt = box.getBoundingClientRect();
+    if (rt.top < bt.top + 40 || rt.bottom > bt.bottom - 60) box.scrollTop += rt.top - bt.top - box.clientHeight * 0.35;
+    $('#rdPage').value = h.n; return;
+  }
+  const rec = R.pages[h.n - 1]; if (!rec) return;
+  if (currentPage() !== h.n) goPage(h.n);
+  await renderPage(h.n); if (R.found !== F) return;
+  markFind(rec.div, F.q);
+  const hits = $$('.textLayer span.rd-hit', rec.div), sp = hits[Math.min(h.k, hits.length - 1)];
+  $$('.textLayer span.cur', $('#rdPages')).forEach(x => x.classList.remove('cur'));
+  if (sp) { sp.classList.add('cur'); const box = $('#rdPages'), rt = sp.getBoundingClientRect(), bt = box.getBoundingClientRect(); if (rt.top < bt.top + 40 || rt.bottom > bt.bottom - 60) box.scrollTop += rt.top - bt.top - box.clientHeight * 0.35; }
+}
+// the words either side of a match, cut at a word, not in the middle of one
+function rdSnip(t, side) {
+  t = t.replace(/…/g, ''); if (t.length <= 56) return t;
+  return side < 0 ? '…' + t.slice(-56).replace(/^\S*\s/, '') : t.slice(0, 56).replace(/\s\S*$/, '') + '…';
+}
+function rdFoundHTML() {
+  const F = R.found;
+  if (!F) return '<p class="rd-hint">Type in <b>Find</b> and press Enter: every match is listed here with its page and the words around it. Enter goes to the next one, Shift+Enter back.</p>';
+  if (!F.list.length) return `<p class="rd-hint">${F.busy ? 'Searching…' : `No matches for “${esc(F.q)}”.${R.kind !== 'epub' && R.doc && !R.ocr ? ' If this is a scan, choose <b>Read text</b> first.' : ''}`}</p>`;
+  const pages = new Set(F.list.map(h => h.n)).size; let last = 0;
+  return `<p class="rd-hint">${orcPl(F.list.length, 'match', 'matches')}${F.more ? ' (the first 1,000)' : ''} ${R.kind === 'epub' ? `in ${orcPl(pages, 'chapter', 'chapters')}` : `on ${orcPl(pages, 'page', 'pages')}`}.</p><ol class="rd-fnd">${F.list.map((h, i) => { const head = h.n !== last ? `<li><b>${R.kind === 'epub' ? esc(epChLoc(h.n).short) : 'p. ' + esc(printedPage(h.n))}</b></li>` : ''; last = h.n; return head + `<li><button data-fi="${i}" class="${i === F.i ? 'on' : ''}">${esc(h.pre)}<mark>${esc(h.hit)}</mark>${esc(h.post)}</button></li>`; }).join('')}</ol>`;
+}
+/* ---------- view: paper, sepia, night; one page or two; book or plain type ---------- */
+const rdSpreadOn = () => !!PREFS.rdSpread && R.kind !== 'epub';
+function rdSpreadClass() { $('#rdPages').classList.toggle('spread', rdSpreadOn()); }
+function rdFitScale(avail) { return rdSpreadOn() ? (avail - 8) / (2 * R.base.w) : avail / R.base.w; }
+function rdRefit() { if (R.doc && R.kind !== 'epub' && !PREFS.readerZoom) { const cur = currentPage(); R.scale = Math.max(0.2, Math.min(3, rdFitScale($('#rdPages').clientWidth - 28))); layoutPages(); goPage(cur); } }
+function rdThemeApply() {
+  const t = ['sepia', 'night'].includes(PREFS.rdTheme) ? PREFS.rdTheme : 'paper', rd = $('#reader');
+  rd.classList.toggle('th-sepia', t === 'sepia'); rd.classList.toggle('th-night', t === 'night');
+  $$('#rdViewPop [name=rdTheme]').forEach(i => { i.checked = i.value === t; });
+  $$('#rdViewPop [name=rdSpread]').forEach(i => { i.checked = i.value === (PREFS.rdSpread ? 'two' : 'one'); });
+  $$('#rdViewPop [name=rdFont]').forEach(i => { i.checked = i.value === (PREFS.epubFont === 'sans' ? 'sans' : 'serif'); });
+  $('#rdPages').classList.toggle('ep-sans', PREFS.epubFont === 'sans');
+}
+function rdViewPop(on = $('#rdViewPop').classList.contains('hidden')) { $('#rdViewPop').classList.toggle('hidden', !on); $('#rdViewBtn').setAttribute('aria-expanded', on); if (on) { rdThemeApply(); $('#rdViewPop input:checked')?.focus(); } }
+$('#rdViewBtn').addEventListener('click', e => { e.stopPropagation(); rdViewPop(); });
+document.addEventListener('click', e => { if (!$('#rdViewPop').classList.contains('hidden') && !e.target.closest('#rdViewPop,#rdViewBtn')) rdViewPop(false); });
+$('#rdViewPop').addEventListener('keydown', e => { if (e.key === 'Escape') { rdViewPop(false); $('#rdViewBtn').focus(); } });
+$('#rdViewPop').addEventListener('change', e => {
+  const i = e.target; if (!i.name) return;
+  if (i.name === 'rdTheme') PREFS.rdTheme = i.value === 'paper' ? '' : i.value;
+  if (i.name === 'rdFont') { const at = R.doc ? rdPosNow() : null; PREFS.epubFont = i.value === 'sans' ? 'sans' : ''; rdThemeApply(); if (at && R.kind === 'epub') { goPage(at.p, at.f); rdHlSoon(); } }
+  if (i.name === 'rdSpread') { PREFS.rdSpread = i.value === 'two' ? 1 : 0; rdSpreadClass(); if (R.doc && R.kind !== 'epub') { if (PREFS.readerZoom) { const cur = currentPage(); layoutPages(); goPage(cur); } else rdRefit(); } }
+  savePrefs(); rdThemeApply();
+});
+rdThemeApply();
+/* ---------- read aloud, a sentence at a time, page after page ---------- */
+var RTS = { on: false, paused: false, n: 0, list: [], i: 0, gen: 0 };
+const rtsLang = () => (R.kind === 'epub' && R.ep && R.ep.meta.lang ? R.ep.meta.lang : (() => { try { return docLang(); } catch (e) { return 'en'; } })());
+function rtsSents(n) {
+  const rec = R.pages[n - 1]; if (!rec) return [];
+  const out = [], lang = rtsLang();
+  let seg = null; try { seg = Intl.Segmenter ? new Intl.Segmenter(lang, { granularity: 'sentence' }) : null; } catch (e) { seg = null; }
+  const blocks = R.kind === 'epub' ? $$('.ep-body :is(p,h1,h2,h3,h4,h5,h6,li,figcaption,dt,dd,td,th,pre)', rec.div).filter(b => !b.querySelector('p,li,h1,h2,h3,h4,h5,h6,dt,dd,td,th')) : [$('.textLayer', rec.div)].filter(Boolean);
+  blocks.forEach(blk => {
+    const nodes = []; let text = '';
+    const w = document.createTreeWalker(blk, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, { acceptNode: x => x.nodeType === 1 ? (x.matches('.ep-pb,sup,rt,.endOfContent') ? NodeFilter.FILTER_REJECT : x.localName === 'br' ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) : NodeFilter.FILTER_ACCEPT });
+    let x; while ((x = w.nextNode())) { if (x.nodeType === 1) { text += '\n'; continue; } nodes.push({ n: x, at: text.length }); text += x.data; }
+    if (!nodes.length || !text.trim()) return;
+    const spans = seg ? [...seg.segment(text)].map(s => [s.index, s.index + s.segment.length]) : (text.match(/[^.!?]+[.!?]+["”’)]*\s*|[^.!?]+$/g) || [text]).reduce((a, s) => { const st = a.length ? a[a.length - 1][1] : 0; a.push([st, st + s.length]); return a; }, []);
+    const pos = off => { let k = nodes.length - 1; while (k > 0 && nodes[k].at > off) k--; const y = nodes[k]; return [y.n, Math.max(0, Math.min(off - y.at, y.n.data.length))]; };
+    spans.forEach(([a, z]) => {
+      const raw = text.slice(a, z); if (!raw.trim()) return;
+      a += raw.length - raw.trimStart().length; z -= raw.length - raw.trimEnd().length;
+      const say = text.slice(a, z).replace(/(\p{L})-\s*\n\s*(\p{L})/gu, '$1$2').replace(/\s+/g, ' ').trim(); if (!/[\p{L}\p{N}]/u.test(say)) return;
+      const r = document.createRange(); try { r.setStart(...pos(a)); r.setEnd(...pos(z)); } catch (e) { return; }
+      out.push({ r, say });
+    });
+  });
+  return out;
+}
+async function rtsLoad(n, from) {
+  const my = RTS.gen;
+  for (; n <= R.doc.numPages; n++) {
+    if (R.kind !== 'epub') await renderPage(n);
+    if (my !== RTS.gen) return false;
+    const list = rtsSents(n);
+    if (list.length) {
+      RTS.n = n; RTS.list = list; RTS.i = 0;
+      if (from === 'sel') { const c = getSelection().getRangeAt(0); const k = list.findIndex(s => s.r.compareBoundaryPoints(Range.END_TO_START, c) >= 0 || s.r.isPointInRange(c.startContainer, c.startOffset)); if (k > 0) RTS.i = k; }
+      else if (from === 'top') { const t = $('#rdPages').getBoundingClientRect().top + 4; const k = list.findIndex(s => s.r.getBoundingClientRect().bottom > t); if (k > 0) RTS.i = k; }
+      return true;
+    }
+    from = '';
+  }
+  return false;
+}
+function rtsMark(r) {
+  if (hlOK()) { if (r) CSS.highlights.set('rd-tts', new Highlight(r)); else CSS.highlights.delete('rd-tts'); }
+  if (!r) return; const box = $('#rdPages'), rt = r.getBoundingClientRect(), bt = box.getBoundingClientRect();
+  if (rt.top < bt.top + 30 || rt.bottom > bt.bottom - 50) box.scrollTo({ top: box.scrollTop + rt.top - bt.top - box.clientHeight * 0.3, behavior: 'smooth' });
+}
+function rtsVoice(lang) {
+  const all = speechSynthesis.getVoices(), l2 = lang.toLowerCase().split('-')[0];
+  // the voice chosen for Read aloud, if it speaks the language; otherwise one on this computer (never an online voice you didn't choose)
+  return all.find(v => v.voiceURI === PREFS.ttsVoice && (v.lang || '').toLowerCase().startsWith(l2)) || all.find(v => (v.lang || '').toLowerCase().startsWith(l2) && v.localService) || null;
+}
+function rtsSpeak() {
+  if (!RTS.on) return;
+  const s = RTS.list[RTS.i];
+  if (!s) { const my = RTS.gen; rtsLoad(RTS.n + 1, '').then(ok => { if (my !== RTS.gen) return; if (ok) rtsSpeak(); else { rtsStop(); toast('Finished reading.'); } }); return; }
+  rtsMark(s.r); $('#rdTtsPos').textContent = `${R.kind === 'epub' ? epChLoc(RTS.n).short : 'p. ' + printedPage(RTS.n)} · ${RTS.i + 1} / ${RTS.list.length}`;
+  const u = new SpeechSynthesisUtterance(s.say), lang = rtsLang(); u.rate = +PREFS.ttsRate || 1; u.lang = lang; const v = rtsVoice(lang); if (v) u.voice = v;
+  const my = RTS.gen;
+  u.onend = () => { if (RTS.on && !RTS.paused && my === RTS.gen) { RTS.i++; rtsSpeak(); } };
+  u.onerror = e => { if (e.error === 'interrupted' || e.error === 'canceled') return; if (RTS.on && my === RTS.gen) { RTS.i++; rtsSpeak(); } };
+  speechSynthesis.speak(u);
+}
+async function rtsStart() {
+  if (!ttsOK()) { toast('This browser can’t read aloud.'); return; }
+  if (!R.doc) { toast('Open a PDF or an ePub first.'); return; }
+  if (TTS.on) ttsStop();
+  speechSynthesis.cancel(); RTS.gen++; RTS.on = true; RTS.paused = false;
+  const sel = getSelection(), inSel = sel.rangeCount && !sel.isCollapsed && $('#rdPages').contains(sel.anchorNode);
+  let n = currentPage(); if (inSel) { const pg = (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('.rd-page'); if (pg) n = +pg.dataset.n; }
+  $('#rdTts').classList.remove('hidden'); $('#rdRead').setAttribute('aria-pressed', 'true'); $('#rdTtsRate').value = String(PREFS.ttsRate || 1); rtsUI();
+  const ok = await rtsLoad(n, inSel ? 'sel' : 'top');
+  if (!RTS.on) return;
+  if (!ok) { rtsStop(); toast(R.kind === 'epub' ? 'Nothing to read from here.' : 'There’s no text to read from here. For a scanned PDF, choose Read text first.'); return; }
+  if (inSel) sel.removeAllRanges();
+  rtsSpeak();
+}
+function rtsStop() { if (!RTS.on && $('#rdTts').classList.contains('hidden')) return; RTS.on = false; RTS.paused = false; RTS.gen++; if (ttsOK()) speechSynthesis.cancel(); rtsMark(null); $('#rdTts').classList.add('hidden'); $('#rdRead').setAttribute('aria-pressed', 'false'); }
+function rtsPause() { if (!RTS.on) return; RTS.paused = !RTS.paused; RTS.gen++; if (RTS.paused) speechSynthesis.cancel(); else rtsSpeak(); rtsUI(); }
+function rtsSkip(d) {
+  if (!RTS.on) return; RTS.gen++; speechSynthesis.cancel(); RTS.paused = false;
+  const i = RTS.i + d; if (i >= RTS.list.length) { RTS.i = RTS.list.length; } else RTS.i = Math.max(0, i);
+  rtsUI(); rtsSpeak();
+}
+function rtsUI() { $('#rdTtsPlay').textContent = RTS.paused ? 'Resume' : 'Pause'; }
+$('#rdRead').addEventListener('click', () => (RTS.on ? rtsStop() : rtsStart()));
+$('#rdTtsPlay').addEventListener('click', rtsPause);
+$('#rdTtsPrev').addEventListener('click', () => rtsSkip(-1));
+$('#rdTtsNext').addEventListener('click', () => rtsSkip(1));
+$('#rdTtsStop').addEventListener('click', rtsStop);
+$('#rdTtsRate').addEventListener('change', e => { PREFS.ttsRate = +e.target.value || 1; savePrefs(); if ($('#ttsRate')) $('#ttsRate').value = String(PREFS.ttsRate); if (RTS.on && !RTS.paused) { RTS.gen++; speechSynthesis.cancel(); rtsSpeak(); } });
 
 /* ================================================================
    Index
@@ -9558,6 +10329,11 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.10.0': ['The reader opens ePubs (DRM-free ones), with a quote’s printed page when the book marks its pages, or its chapter and paragraph when it doesn’t. Search inside sources reads them too.',
+    'Beside the page (☰): the contents, thumbnails of a PDF’s pages, your highlights, every match for Find with the words around it, and a reading list that shows how far you’ve got. Each PDF or book reopens where you left off.',
+    'Highlight in four colours without making a note; click one to recolour it, note it or put it in the draft. List them, filter by colour, download them as Markdown, or make them all quote notes at once.',
+    'Insert in draft quotes the passage at your cursor with its citation and page: a short one runs into your sentence, a long one becomes a block quotation.',
+    'Read aloud in the reader, sentence by sentence and on to the next page or chapter; and a view for paper, sepia or night, two pages side by side, and book or plain type for ePubs.'],
   '2.9.0': ['Socrates reads your draft: Question the draft finds sweeping words, claims of cause, unnamed authorities, hedges, round numbers and facts without a source, and deals questions that suit each one.',
     'Four more walks with Socrates: steelman the other side, a pre-mortem, competing explanations (weighed the way intelligence analysts do), and define your terms. And 111 new questions in five new kinds: ethics, method, policy, the scholarly conversation, and scene and character.',
     'Socrates remembers the questions you take, doesn’t deal them again, and brings back old ones still open.',
@@ -13115,6 +13891,7 @@ function ttsSpeak() {
 }
 function ttsStart(fromCursor = true) {
   if (!ttsOK()) { toast('This browser can’t read aloud.'); return; }
+  if (typeof RTS !== 'undefined' && RTS && RTS.on) rtsStop();
   speechSynthesis.cancel();
   TTS.list = ttsSentences(); if (!TTS.list.length) { toast('Nothing to read yet.'); return; }
   TTS.i = 0;
@@ -14973,6 +15750,10 @@ async function ftxIndex(onProgress) {
     const have = await ftxStore.get(id).catch(() => null);
     if (have && have.size === size && have.name === rec.name) { FTX[id] = Object.assign(have, { ok: true }); if (have.scanned) scanned.push(id); continue; }
     onProgress && onProgress(i + 1, ids.length, rec.name);
+    if (rec.kind === 'epub' || isEpub(rec.buf, rec.name)) {
+      try { const ep = await epubParse(rec.buf, true), v = { name: rec.name, size, pages: ep.ch.map(c => epText(c.html)), labels: ep.ch.map((c, k) => epChLocOf(ep, k + 1).short), ep: true, scanned: false, at: nowISO() }; FTX[id] = Object.assign(v, { ok: true }); ftxStore.set(id, v).catch(() => {}); } catch (e) { console.warn('index', id, e); }
+      continue;
+    }
     try {
       lib = lib || await loadPdfjs();
       const doc = await lib.getDocument({ data: new Uint8Array(rec.buf.slice(0)), isEvalSupported: false, enableXfa: false }).promise;
@@ -15002,7 +15783,7 @@ function ftxSearch(q) {
   P.sources.forEach(s => {
     const R = [];
     const ix = FTX[s.id];
-    if (ix) ix.pages.forEach((t, i) => ftxFind(t, q).forEach(h => R.push(Object.assign(h, { kind: 'pdf', page: i + 1, label: ix.labels && ix.labels[i] ? ix.labels[i] : String(i + 1) }))));
+    if (ix) ix.pages.forEach((t, i) => ftxFind(t, q).forEach(h => R.push(Object.assign(h, { kind: 'pdf', ep: !!ix.ep, page: i + 1, label: ix.labels && ix.labels[i] ? ix.labels[i] : String(i + 1) }))));
     (s.photos || []).forEach(ph => ftxFind(ph.text || '', q).forEach(h => R.push(Object.assign(h, { kind: 'photo', photo: ph.id, where: [ph.box && 'box ' + ph.box, ph.folder && 'folder ' + ph.folder, ph.item && 'item ' + ph.item].filter(Boolean).join(', ') || ph.name }))));
     if (s.transcript) ftxFind(s.transcript, q).forEach(h => { const line = s.transcript.slice(0, h.at).split('\n').length, ts = (s.transcript.split('\n')[line - 1] || '').match(/\b\d{1,2}:\d{2}(?::\d{2})?\b/); R.push(Object.assign(h, { kind: 'tr', where: ts ? ts[0] : 'line ' + line })); });
     ftxFind([s.annotation, s.csl && s.csl.abstract].filter(Boolean).join('\n'), q).forEach(h => R.push(Object.assign(h, { kind: 'meta' })));
@@ -15027,7 +15808,7 @@ function ftxRun() {
   FTXR = ftxSearch(q);
   const total = FTXR.reduce((a, x) => a + x.R.length, 0);
   $('#ftxList').innerHTML = FTXR.length ? `<p class="small muted">${total} ${total === 1 ? 'place' : 'places'} in ${FTXR.length} ${FTXR.length === 1 ? 'source' : 'sources'}</p>` + FTXR.map((x, si) => `<section class="ftx-src"><h4>${esc(srcShort(x.s))} <span class="muted small">${x.R.length}</span></h4><ul>${x.R.slice(0, 12).map((h, hi) =>
-    `<li><button class="ftx-hit" data-ftx="${si}:${hi}"><span class="ftx-where">${h.kind === 'pdf' ? 'p. ' + esc(h.label) : h.kind === 'photo' ? esc(h.where) : h.kind === 'tr' ? esc(h.where) : 'notes'}</span><span>${esc(h.pre)}<mark>${esc(h.hit)}</mark>${esc(h.post)}</span></button></li>`).join('')}${x.R.length > 12 ? `<li class="muted small">${x.R.length - 12} more</li>` : ''}</ul></section>`).join('')
+    `<li><button class="ftx-hit" data-ftx="${si}:${hi}"><span class="ftx-where">${h.kind === 'pdf' ? (h.ep ? '' : 'p. ') + esc(h.label) : h.kind === 'photo' ? esc(h.where) : h.kind === 'tr' ? esc(h.where) : 'notes'}</span><span>${esc(h.pre)}<mark>${esc(h.hit)}</mark>${esc(h.post)}</span></button></li>`).join('')}${x.R.length > 12 ? `<li class="muted small">${x.R.length - 12} more</li>` : ''}</ul></section>`).join('')
     : `<p class="muted">“${esc(q)}” isn’t in any PDF, transcription or transcript.</p>`;
 }
 $('#ftxQ').addEventListener('input', debounce(ftxRun, 200));
@@ -15036,7 +15817,7 @@ $('#ftxList').addEventListener('click', async e => {
   const b = e.target.closest('[data-ftx]'); if (!b) return;
   const [si, hi] = b.dataset.ftx.split(':').map(Number), x = FTXR[si], h = x && x.R[hi]; if (!h) return;
   $('#ftxDlg').close();
-  if (h.kind === 'pdf') { const rec = await pdfStore.get(x.s.id).catch(() => null); if (!rec) return; await openPdfData(rec.buf, rec.name || 'document.pdf', x.s.id); setTimeout(() => { goPage(h.page); const f = $('#rdFind'); if (f) f.value = h.hit; }, 400); }
+  if (h.kind === 'pdf') { const rec = await pdfStore.get(x.s.id).catch(() => null); if (!rec) return; R.noResume = true; await openPdfData(rec.buf, rec.name || 'document.pdf', x.s.id); setTimeout(() => { goPage(h.page); const f = $('#rdFind'); if (f) f.value = h.hit; }, 400); }
   else if (h.kind === 'photo') { PH.src = x.s.id; PH.cur = h.photo; openPhotos(x.s.id); }
   else if (h.kind === 'tr') openTranscript(x.s.id);
   else { switchTab('sources'); openSource(x.s.id); }

@@ -91,6 +91,7 @@ async def main():
         check('a damaged abstract in a file is mended on opening', norm['text'] == '5' and norm['keywords'] == [] and norm['limit'] == 0 and norm['shape'] == 'humanities', norm)
 
         # ---- Read and take notes
+        await pg.evaluate("localStorage.removeItem('commonplace.rdat')")  # open at the first page, not where an earlier step left off
         await pg.set_input_files('#filePdf', FIX); await pg.wait_for_timeout(2500)
         await pg.click('#rdNotes'); await pg.wait_for_timeout(500)
         await pg.wait_for_function("() => document.querySelectorAll('#rdPages .rd-page .textLayer span').length > 6", timeout=30000)  # slow machines: wait for the text layer

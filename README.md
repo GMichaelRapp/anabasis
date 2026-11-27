@@ -45,7 +45,8 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 
 **Research**
 - Five example projects to learn from or build on: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece.
-- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A PDF reader sits beside the draft, or with **Take notes** fills the screen with a note pad beside it (quotes from the PDF, pages filled in), and a web clipper captures from other tabs.
+- Notes and quotes on a board you can pile, pin, tag and drag into a draft. A reader for PDFs and DRM-free ePubs sits beside the draft, or with **Take notes** fills the screen with a note pad beside it (quotes with their pages filled in), and a web clipper captures from other tabs.
+- **The reader**: contents and page thumbnails beside the page, highlights in four colours with no note needed (listed, filtered, exported as Markdown), quotes straight into the draft with their citation, reading aloud, every Find match in a list, paper, sepia and night, two pages side by side, and each PDF or book reopening where you left off, with a reading list that shows how far you've got. An ePub quote gets the printed page when the book marks its pages, or its chapter and paragraph.
 - Interview transcripts from caption files (.srt, .vtt), text or Word, turned into quote notes with timestamps.
 - Imports Markdown notes from Obsidian and similar tools, and Word documents (footnotes included).
 - **The Oracle**, a conversation partner beside the writing in the manner of ELIZA, the 1960s MIT chatbot: no AI, nothing online. It turns what you say into questions, answers from your own notes and sources ("what have I written about…", "how many claims need a source?"), files notes, questions and journal entries as you talk, argues the other side of a claim, and reads a selected passage back to you with questions. It starts the day where you left off and wraps it up into the journal, says what to work on next from your deadlines, follow-ups and an editor's queries, and knows where revision, editing marks and submissions stand. Its manner is yours to set: gentle, plain or blunt. It keeps track of the conversation: a “yes” or a “hmm” is answered against what it just asked, it notices when you're tired or repeating yourself, and it knows your sources' authors by name. It understands word endings, small typos and negation, answers long messages at their most telling sentence, points out related notes and sources (a word-weighted search of your project, built in the browser), and picks up from your last conversation if you saved it to the journal.
@@ -60,7 +61,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 - **A literature grid** that sets your sources against your questions and themes, and drafts a **literature review** from it, a cited section for each theme; and **qualitative coding**: a codebook, coded passages and notes, counts by source, and the codes that turn up together.
 - **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image (or have a typed page read for you, offline), and make quote notes that cite the box and folder.
 - **Translation**: translation notes that keep the original beside your translation, a glossary checked as you write, standard transliteration for Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic, a special-characters palette, and a workspace for translating a passage segment by segment.
-- **Search inside sources**: the full text of your PDFs, photo transcriptions and interview transcripts, opened at the page. Scanned PDFs are read on your computer (Tesseract), never uploaded.
+- **Search inside sources**: the full text of your PDFs, ePubs, photo transcriptions and interview transcripts, opened at the page. Scanned PDFs are read on your computer (Tesseract), never uploaded.
 - **My library**: a shelf of sources and their notes in your browser, to add to any project.
 - A reading list, a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
 - Pseudonyms used in every export while the project keeps the real names, with each person's consent recorded and checked.
@@ -112,7 +113,7 @@ The whole app is a single HTML file of about 13 MB. Download it, open it in your
 
 **New to Anabasis? Follow the [quick start](docs/quick-start.md):** blank page to finished PDF in twelve illustrated steps.
 
-For more depth on any feature, see the **[wiki](https://github.com/gmichaelrapp/anabasis/wiki)**: citations and sources, notes and the board, reading PDFs, the research journal, Socrates and the Oracle, the checks, and every export.
+For more depth on any feature, see the **[wiki](https://github.com/gmichaelrapp/anabasis/wiki)**: citations and sources, notes and the board, reading PDFs and ePubs, the research journal, Socrates and the Oracle, the checks, and every export.
 
 1. Download `anabasis.html` from the [latest release](https://github.com/gmichaelrapp/anabasis/releases/latest).
 2. Open it in your browser. A short tour and a sample project show you around.

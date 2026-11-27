@@ -457,10 +457,11 @@ table.rec input[type=date]{width:auto;padding:3px 6px} table.rec select{width:au
 .rd-name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .rd-bar2{flex-wrap:wrap;gap:4px}
 .rd-bar2 input#rdPage{width:46px;text-align:center;padding:3px 4px}
-.rd-bar2 input#rdFind{width:130px;padding:3px 6px}
+.rd-bar2 input#rdFind{width:112px;padding:3px 6px}
 .rd-bar2 .sep{width:1px;height:18px;background:var(--line);margin:0 3px}
 .rd-off{display:flex;gap:4px;align-items:center;margin:0 0 0 auto;font-size:11px}
 .rd-off input{width:44px;padding:3px 4px}
+.rd-pages:focus{outline:none}.rd-pages:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .rd-pages{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:0}
 .rd-page{position:relative;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.4);flex:none}
 .rd-page canvas{position:absolute;left:0;top:0}
@@ -492,6 +493,7 @@ table.rec input[type=date]{width:auto;padding:3px 6px} table.rec select{width:au
 .rd-hl-pin.k-paraphrase,.rd-hl-pin.k-summary{background:var(--accent)}
 .rd-hl-pin:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .rd-pnum{position:absolute;bottom:-12px;right:0;font:10px var(--ui);color:#ddd}
+.rd-pnum::before{content:attr(data-l)}.rd-pnum{user-select:none}
 .rd-empty{color:#e5e7eb;text-align:center;max-width:340px;margin-top:20%;font-size:13px;line-height:1.5}
 .rd-selbar{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 10px;box-shadow:var(--shadow);z-index:6;white-space:nowrap}
 .textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;letter-spacing:normal;word-spacing:normal;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;z-index:0;--min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
@@ -505,6 +507,127 @@ table.rec input[type=date]{width:auto;padding:3px 6px} table.rec select{width:au
 .textLayer.selecting .endOfContent{top:0}
 .textLayer span.rd-hit{background:rgba(255,200,0,.45);border-radius:2px}
 body.reader-on .panel{position:fixed;right:0;top:48px;bottom:0;z-index:40;box-shadow:var(--shadow)}
+/* reader 2.10: side panel, ePubs, view, highlights, reading aloud */
+.rd-main{flex:1;display:flex;min-height:0;position:relative}
+.rd-main .rd-pages{flex:1;min-width:0}
+.rd-side{width:236px;flex:none;display:flex;flex-direction:column;min-height:0;background:var(--panel);border-right:1px solid var(--line)}
+.rd-tabs{display:flex;flex-wrap:wrap;gap:2px;padding:6px 6px 0;border-bottom:1px solid var(--line)}
+.rd-tabs button{min-height:28px;padding:2px 8px;font-size:12.5px;border:0;border-radius:6px 6px 0 0;background:none;color:var(--muted)}
+.rd-tabs button[aria-selected="true"]{background:var(--bg);color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--accent)}
+.rd-tabs button[hidden]{display:none}
+.rd-tab{flex:1;overflow:auto;padding:8px 6px 16px;font-size:13.5px}
+.rd-tab ol,.rd-tab ul{list-style:none;margin:0;padding:0}
+.rd-toc button{display:block;width:100%;text-align:left;border:0;background:none;padding:4px 6px;min-height:0;border-radius:5px;font-size:13.5px;line-height:1.35;color:var(--ink)}
+.rd-toc button:hover{background:var(--bg)}
+.rd-toc button.on{background:var(--accent-soft);font-weight:700}
+.rd-toc .d1 button{padding-left:18px}.rd-toc .d2 button{padding-left:30px;font-size:13px}.rd-toc .d3 button{padding-left:42px;font-size:13px}
+.rd-thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px 8px;padding:2px}
+.rd-thumbs button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:3px;border:0;background:none;min-height:0;font-size:11.5px;color:var(--muted)}
+.rd-thumbs .th{width:86px;background:#fff;box-shadow:0 0 0 1px var(--line);display:block}
+.rd-thumbs canvas{display:block;width:100%;height:100%}
+.rd-thumbs button.on .th{box-shadow:0 0 0 2px var(--accent)}
+.rd-thumbs button.on{color:var(--ink);font-weight:700}
+.rd-tab .rd-hint{color:var(--muted);font-size:13px;line-height:1.45;padding:4px 6px}
+.rd-tab h5{margin:10px 6px 4px;font-size:12.5px;color:var(--muted)}
+.rd-tab h5:first-child{margin-top:2px}
+.rd-hlf{display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:0 4px 6px}
+.rd-hlf button{min-height:26px;font-size:12px;padding:2px 8px}
+.rd-hli{display:grid;gap:2px;padding:6px 6px 6px 10px;margin:0 0 6px;border-left:4px solid var(--hl);border-radius:3px;background:var(--bg);cursor:pointer}
+.rd-hli:hover,.rd-hli:focus-visible{background:var(--accent-soft)}
+.rd-hli q{quotes:none;font:14px/1.45 var(--display,Georgia,serif);color:var(--ink)}
+.rd-hli span{font-size:12px;color:var(--muted)}
+.rd-hlx{display:flex;gap:4px;flex-wrap:wrap;padding:6px 4px;border-top:1px solid var(--line2);margin-top:6px}
+.rd-hlx button{min-height:28px;font-size:12.5px}
+.rd-fnd li button{display:block;width:100%;text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;background:none;padding:5px 6px;min-height:0;border-radius:5px;font-size:13px;line-height:1.4;color:var(--ink)}
+.rd-fnd li button:hover,.rd-fnd li button.on{background:var(--accent-soft)}
+.rd-fnd b{display:block;font-size:11.5px;color:var(--muted)}
+.rd-fnd mark,.ftx-hit mark{background:var(--sun-soft);color:inherit;border-radius:2px;padding:0 1px}
+.rd-lib{list-style:none;margin:0;padding:0}
+.rd-lib li{padding:7px 6px;border-bottom:1px solid var(--line2);display:grid;gap:3px}
+.rd-lib li > button{display:block;width:100%;text-align:left;white-space:normal;border:0;background:none;padding:0;min-height:0;font-size:13.5px;font-weight:700;color:var(--ink);line-height:1.3}
+.rd-lib li > button:hover{text-decoration:underline}
+.rd-lib .m{font-size:12px;color:var(--muted)}
+.rd-prog{height:4px;border-radius:2px;background:var(--line2);overflow:hidden}
+.rd-prog i{display:block;height:100%;background:var(--accent)}
+.rd-lib select{width:auto;min-height:26px;font-size:12px;padding:1px 4px;justify-self:start}
+.rd-emptylib{margin-top:18px;text-align:left;background:var(--panel);color:var(--ink);border-radius:8px;padding:10px 12px;max-width:360px;font-size:13.5px}
+.rd-emptylib h5{margin:0 0 6px;font-size:13px}
+.rd-emptylib .rd-lib li > button{color:var(--accent)}
+.rd-emptylib .rd-lib li{border-color:var(--line2)}
+.rd-emptylib .m{color:var(--muted);font-size:12px}
+.rd-viewpop{position:absolute;right:8px;top:84px;z-index:8;background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:8px 12px;display:grid;gap:6px;font-size:13.5px}
+.rd-viewpop fieldset{border:0;margin:0;padding:0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.rd-viewpop legend{float:left;width:56px;font-size:12.5px;color:var(--muted);padding:0}
+.rd-viewpop label{display:inline-flex;gap:4px;align-items:center;margin:0}
+.reader.is-epub .rd-v-pdf,.reader:not(.is-epub) .rd-v-ep{display:none}
+.reader.is-epub #rdOcr,.reader.is-epub .rd-off,.reader.is-epub [data-rt="thumbs"]{display:none}
+.rd-pages.spread{flex-direction:row;flex-wrap:wrap;justify-content:center;align-content:flex-start;gap:14px 4px}
+.rd-spacer{visibility:hidden;flex:none}
+.reader.is-epub .rd-pages{padding-bottom:65vh}
+/* ePub chapters: one sheet each */
+.rd-page.ep-ch{width:min(100%,calc(40em * var(--ep-fs,1) + 96px));height:auto;padding:44px 48px 40px;background:var(--ep-bg,#fffdf8);color:var(--ep-ink,#1d1f22);font:calc(17.5px * var(--ep-fs,1))/1.62 var(--display,Georgia,serif);overflow-wrap:break-word}
+.rd-pages.ep-sans .ep-ch{font-family:var(--ui);line-height:1.58}
+.ep-body :is(h1,h2,h3,h4,h5,h6){font-family:inherit;line-height:1.25;margin:1.2em 0 .6em;color:inherit}
+.ep-body h1{font-size:1.6em}.ep-body h2{font-size:1.35em}.ep-body h3{font-size:1.15em}
+.ep-body p{margin:0 0 .8em}
+.ep-body blockquote{margin:0 0 .8em 1.4em}
+.ep-body img{max-width:100%;height:auto}
+.ep-body figure{margin:1em 0;text-align:center}
+.ep-body table{border-collapse:collapse;font-size:.9em}.ep-body td,.ep-body th{border:1px solid color-mix(in srgb,currentColor 25%,transparent);padding:3px 6px}
+.ep-body a{color:var(--ep-link,#24456e)}
+.ep-body sup a{text-decoration:none}
+.ep-pb{display:inline;user-select:none}
+.ep-pb::before{content:attr(data-pb);display:inline-block;font:11px/1.3 var(--ui);font-style:normal;font-weight:400;color:color-mix(in srgb,currentColor 55%,transparent);border:1px solid color-mix(in srgb,currentColor 25%,transparent);border-radius:3px;padding:0 3px;margin:0 2px;vertical-align:.15em;text-indent:0}
+/* a page break between paragraphs sits in the margin, not on a line of its own */
+.ep-body > .ep-pb,.ep-body :is(section,div,article,aside,header,footer,blockquote) > .ep-pb{display:block;height:0;text-align:right;transform:translate(40px,.35em)}
+.ep-ch .rd-pnum{bottom:-14px;color:#ddd}
+.ep-alt::before{content:"[" attr(data-alt) "]";font-style:italic;opacity:.7}
+.ep-i{font-style:italic}.ep-b{font-weight:700}.ep-sc{font-variant:small-caps;letter-spacing:.03em}.ep-c{text-align:center}.ep-r{text-align:right}
+:root{--hl-y:#e2bd3c;--hl-g:#4fae69;--hl-b:#4b97e0;--hl-p:#e0719f}
+.ep-ch .rd-hl-pin{right:14px}
+::highlight(rd-q){background-color:rgba(224,176,79,.42)}
+::highlight(rd-p){background-color:rgba(56,189,248,.28)}
+::highlight(rd-cy){background-color:rgba(245,213,101,.6)}
+::highlight(rd-cg){background-color:rgba(127,205,145,.5)}
+::highlight(rd-cb){background-color:rgba(120,184,245,.45)}
+::highlight(rd-cp){background-color:rgba(242,151,190,.5)}
+::highlight(rd-find){background-color:rgba(255,200,0,.45)}
+::highlight(rd-findcur){background-color:rgba(255,140,0,.75)}
+::highlight(rd-tts){background-color:rgba(56,189,248,.35)}
+.rd-hl.c-y{background:rgba(245,213,101,.6)}.rd-hl.c-g{background:rgba(127,205,145,.5)}.rd-hl.c-b{background:rgba(120,184,245,.45)}.rd-hl.c-p{background:rgba(242,151,190,.5)}
+.textLayer span.rd-hit.cur{background:rgba(255,140,0,.6)}
+.rd-sws{display:inline-flex;gap:4px;align-items:center;padding:0 2px}
+.rd-sw{width:22px;height:22px;min-height:0;padding:0;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line)}
+.rd-sw.c-y{background:#f5d565}.rd-sw.c-g{background:#7fcd91}.rd-sw.c-b{background:#78b8f5}.rd-sw.c-p{background:#f297be}
+.rd-sw:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.rd-sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.rd-selbar{left:8px;right:8px;width:max-content;margin:0 auto;transform:none;max-width:calc(100% - 16px);flex-wrap:wrap;justify-content:center;border-radius:16px;white-space:normal}
+.rd-hlpop{position:absolute;z-index:7;display:flex;gap:6px;align-items:center;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px 8px;box-shadow:var(--shadow);max-width:calc(100% - 16px)}
+.rd-bar2 .icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.rd-bar2 #rdRead[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.rd-aa{font:700 14px var(--display,Georgia,serif);letter-spacing:-.02em}
+#rdFindN{min-width:0;white-space:nowrap}
+.rd-tts{display:flex;align-items:center;gap:8px;padding:5px 10px;background:color-mix(in srgb,var(--sun) 14%,var(--panel));border-top:1px solid var(--line);font-size:13px}
+.rd-tts select{width:auto;min-height:28px;font-size:12.5px}
+.rd-tts button{min-height:28px}
+.rd-tts .spacer{flex:1}
+/* page colours */
+.reader.th-sepia{background:#6d6254}
+.reader.th-night{background:#15171a}
+.reader.th-sepia .rd-page:not(.ep-ch) canvas,.reader.th-sepia .rd-thumbs canvas{filter:sepia(.5) saturate(1.15) brightness(.95)}
+.reader.th-night .rd-page:not(.ep-ch) canvas,.reader.th-night .rd-thumbs canvas{filter:invert(.9) hue-rotate(180deg)}
+.reader.th-night .rd-page:not(.ep-ch){background:#1a1a1a}
+.reader.th-night .rd-hl{mix-blend-mode:screen;opacity:.55}
+.reader.th-sepia{--ep-bg:#f3e9d4;--ep-ink:#45382a;--ep-link:#7a4a1a}
+.reader.th-night{--ep-bg:#1d2025;--ep-ink:#d6d2c9;--ep-link:#9dbbe3}
+.reader.th-night .rd-empty{color:#c9cdd2}
+.reader.rd-narrow .rd-side{position:absolute;left:0;top:0;bottom:0;z-index:6;box-shadow:var(--shadow);width:min(280px,86%)}
+@media (max-width:700px){
+  .rd-side{position:absolute;left:0;top:0;bottom:0;z-index:6;box-shadow:var(--shadow);width:min(280px,86%)}
+  .rd-page.ep-ch{padding:26px 24px 30px}
+  .ep-body > .ep-pb,.ep-body :is(section,div,article,aside,header,footer,blockquote) > .ep-pb{transform:translate(22px,.35em)}
+  .rd-viewpop{top:auto;bottom:60px;left:8px;right:8px}
+}
 /* index marks & dialogs */
 #editor .ixm{display:inline-block;width:.9em;cursor:pointer;user-select:none}
 #editor .ixm::before{content:"⌗";font:600 .7em var(--ui);color:var(--accent);opacity:.65;vertical-align:.3em}
@@ -2306,7 +2429,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   <input type="file" id="fileMdDir" webkitdirectory directory multiple hidden>
   <input type="file" id="fileFigure" accept="image/png,image/jpeg,image/gif,image/webp,image/svg+xml" multiple hidden>
   <input type="file" id="fileCsl" accept=".json,.bib,.ris,.txt,application/json" hidden>
- <input type="file" id="filePdf" accept=".pdf,application/pdf" hidden>
+ <input type="file" id="filePdf" accept=".pdf,application/pdf,.epub,application/epub+zip" hidden>
   <input type="file" id="fileDocx" accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
 </header>
 
@@ -2372,7 +2495,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
         <div class="row"><input type="search" id="qSources" placeholder="Search sources"><button id="btnNewSource" class="primary">+ New</button></div>
         <div class="chips" id="srcChips"></div>
         <div class="row"><input id="quickId" placeholder="Paste a URL, DOI or ISBN"><button id="btnQuickId">Add</button></div>
-        <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read a PDF</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
+        <div class="row"><button id="btnReader" style="flex:1" title="Read a PDF or ePub beside your draft and turn passages into quote notes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 14.5h8M8 18h5"/></svg> Read PDF / ePub</button><button id="btnClipper" style="flex:1" title="A bookmark button that clips any web page into Anabasis"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 17M8 16.5 20 7"/></svg> Web clipper</button></div>
         <div class="row"><button id="btnImportCsl" style="flex:1" title="Zotero CSL-JSON, BibTeX (.bib), RIS (.ris), or an OSINT Citation Generator list">Import…</button><button id="btnExportRefs" style="flex:1" title="Your sources as BibTeX, RIS or CSL-JSON, for Zotero, EndNote, Mendeley or LaTeX">Export…</button><div class="menu src-more"><button id="btnSrcMore" style="width:100%" aria-haspopup="menu" aria-expanded="false" title="Source audit, link check and permissions">Tools ▾</button><div class="menu-pop" id="srcMoreMenu" role="menu"><button id="btnAudit" role="menuitem" title="Which sources each chapter leans on, quoted words, unused sources"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Source audit</span></button><button id="btnLinks" role="menuitem" title="Ask the Internet Archive whether each web source is still there, and keep a saved copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>Check links</span></button><button id="btnZotero" role="menuitem" title="Follow a library file that Zotero keeps up to date (Better BibTeX auto-export)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14L5 19h14"/></svg><span>Zotero library file</span></button><button id="btnLibrary" role="menuitem" title="Sources kept in this browser for every project: save them here, add them to any project"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16M9 4v16M14 5l4 15M20 20H2"/></svg><span>My library</span></button><button id="btnFtx" role="menuitem" title="Find a word or phrase in the text of every attached PDF, photo transcription and transcript"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5M8.5 11h5"/></svg><span>Search inside sources</span></button><button id="btnPhotos" role="menuitem" title="Photos of documents from an archive visit: file them by box and folder, transcribe them, make notes"><span>Archive photos</span></button><button id="btnRetract" role="menuitem" title="Ask Crossref whether any source with a DOI has been retracted, withdrawn or corrected"><span>Check for retractions</span></button><button id="btnDups" role="menuitem" title="The same work added twice: merge them, keeping every citation and note"><span>Find duplicates</span></button><button id="btnPerms" role="menuitem" title="Credits and permissions for every figure and table, and quotations by source"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="m9 12 2 2 4-4"/></svg><span>Permissions log</span></button></div></div></div>
       </div>
       <ul class="list" id="sourceList"></ul>
@@ -2582,7 +2705,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <label class="sr-only" for="rrText">New note</label>
       <textarea id="rrText" rows="5" placeholder="Write a note as you read. Select a passage in the PDF to quote it here."></textarea>
       <div class="rr-row"><select id="rrKind" aria-label="Kind of note"><option value="idea">Idea</option><option value="quote">Quote</option><option value="paraphrase">Paraphrase</option><option value="summary">Summary</option></select>
-        <label class="rr-pg">p. <input id="rrPage" inputmode="numeric" aria-label="Page"></label>
+        <label class="rr-pg"><span id="rrPgL">p.</span> <input id="rrPage" inputmode="numeric" aria-label="Page"></label>
         <input id="rrTags" placeholder="Tags, comma-separated" aria-label="Tags">
         <button class="primary" id="rrSave">Save note</button></div>
       <p class="small muted">Ctrl+Enter saves. The page follows the PDF as you scroll; type one to fix it. Tags stay for the next note.</p>
@@ -2597,15 +2720,35 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   </aside>
   <aside class="reader hidden" id="reader">
     <div class="rd-resize" id="rdResize" title="Drag to resize"></div>
-    <div class="rd-bar"><button id="rdOpen" title="Open a PDF file">Open…</button><b class="rd-name" id="rdName">PDF reader</b><select id="rdSource" aria-label="Linked source"></select><button class="small" id="rdNotes" aria-pressed="false" title="Read and take notes side by side">Take notes</button><button class="icon ghost" id="rdClose" aria-label="Close reader">✕</button></div>
+    <div class="rd-bar"><button id="rdOpen" title="Open a PDF or ePub file">Open…</button><b class="rd-name" id="rdName">Reader</b><select id="rdSource" aria-label="Linked source"></select><button class="small" id="rdNotes" aria-pressed="false" title="Read and take notes side by side">Take notes</button><button class="icon ghost" id="rdClose" aria-label="Close reader">✕</button></div>
     <div class="rd-bar rd-bar2">
+      <button class="ghost icon" id="rdSideBtn" aria-pressed="false" aria-controls="rdSide" aria-label="Contents and reading list" title="Contents, pages, highlights, find results and your reading list">☰</button>
       <button class="ghost icon" id="rdPrev" title="Previous page">‹</button><input id="rdPage" aria-label="Page" value="1"><span class="small muted" id="rdOf">/ 0</span><button class="ghost icon" id="rdNext" title="Next page">›</button>
       <span class="sep"></span><button class="ghost icon" id="rdZoomOut" title="Zoom out">−</button><span class="small" id="rdZoom">100%</span><button class="ghost icon" id="rdZoomIn" title="Zoom in">+</button><button class="ghost small" id="rdFit" title="Fit width">Fit</button>
-      <span class="sep"></span><input type="search" id="rdFind" placeholder="Find (Enter)"><span class="small muted" id="rdFindN"></span>
+      <span class="sep"></span><input type="search" id="rdFind" placeholder="Find (Enter)" aria-label="Find in this document"><span class="small muted" id="rdFindN" aria-live="polite"></span>
+      <span class="sep"></span><button class="ghost icon" id="rdRead" aria-pressed="false" aria-label="Read aloud" title="Read aloud from where you are"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18V6L7.5 9.5z"/><path d="M15.5 9a4.2 4.2 0 0 1 0 6M18 6.5a7.8 7.8 0 0 1 0 11"/></svg></button><button class="ghost icon rd-aa" id="rdViewBtn" aria-expanded="false" aria-controls="rdViewPop" aria-label="View" title="View: paper, sepia or night; one page or two">Aa</button>
       <button class="ghost small" id="rdOcr" title="Read the text of a scanned PDF, on this computer, so you can search and quote it">Read text</button><label class="rd-off" title="If PDF page 15 is printed page 1, enter 14">Page offset <input id="rdOffset" inputmode="numeric" placeholder="0"></label>
     </div>
-    <div class="rd-pages" id="rdPages"><div class="rd-empty">Open a PDF, or drop one anywhere on this window.<br><br>Select a passage to turn it into a quote note with the page number filled in. PDFs linked to a source are kept in this browser, not in your project file.</div></div>
-    <div class="rd-selbar hidden" id="rdSelBar"><button class="primary" data-k="quote">Quote note</button><button data-k="paraphrase">Paraphrase note</button><span class="small muted" id="rdSelPage"></span></div>
+    <div class="rd-viewpop hidden" id="rdViewPop" role="group" aria-label="View">
+      <fieldset><legend>Page</legend><label><input type="radio" name="rdTheme" value="paper"> Paper</label><label><input type="radio" name="rdTheme" value="sepia"> Sepia</label><label><input type="radio" name="rdTheme" value="night"> Night</label></fieldset>
+      <fieldset class="rd-v-pdf"><legend>Layout</legend><label><input type="radio" name="rdSpread" value="one"> One page</label><label><input type="radio" name="rdSpread" value="two"> Two pages</label></fieldset>
+      <fieldset class="rd-v-ep"><legend>Type</legend><label><input type="radio" name="rdFont" value="serif"> Book</label><label><input type="radio" name="rdFont" value="sans"> Plain</label></fieldset>
+    </div>
+    <div class="rd-main">
+      <nav class="rd-side hidden" id="rdSide" aria-label="Reader side panel">
+        <div class="rd-tabs" role="tablist" aria-label="Show"><button role="tab" data-rt="toc" aria-selected="true">Contents</button><button role="tab" data-rt="thumbs" aria-selected="false">Pages</button><button role="tab" data-rt="hls" aria-selected="false">Highlights</button><button role="tab" data-rt="found" aria-selected="false">Found</button><button role="tab" data-rt="lib" aria-selected="false">Reading list</button></div>
+        <div class="rd-tab" id="rdTab" role="tabpanel"></div>
+      </nav>
+      <div class="rd-pages" id="rdPages" tabindex="0" role="region" aria-label="Pages"><div class="rd-empty">Open a PDF or an ePub, or drop one anywhere on this window.<br><br>Select a passage to turn it into a quote note with the page number filled in. Files linked to a source are kept in this browser, not in your project file.</div></div>
+    </div>
+    <div class="rd-tts hidden" id="rdTts" role="region" aria-label="Reading aloud">
+      <button class="small primary-soft" id="rdTtsPlay">Pause</button><button class="small ghost" id="rdTtsPrev" aria-label="Previous sentence" title="Previous sentence">‹</button><button class="small ghost" id="rdTtsNext" aria-label="Next sentence" title="Next sentence">›</button>
+      <span class="muted small" id="rdTtsPos"></span><span class="spacer"></span>
+      <select id="rdTtsRate" aria-label="Speed"><option value="0.8">0.8×</option><option value="0.9">0.9×</option><option value="1">1×</option><option value="1.15">1.15×</option><option value="1.3">1.3×</option><option value="1.5">1.5×</option><option value="1.75">1.75×</option></select>
+      <button class="small" id="rdTtsStop">Stop</button>
+    </div>
+    <div class="rd-selbar hidden" id="rdSelBar"><button class="primary" data-k="quote">Quote note</button><button data-k="paraphrase">Paraphrase note</button><button data-k="insert" title="Quote it in the draft at the cursor, with its citation">Insert in draft</button><span class="rd-sws" role="group" aria-label="Highlight"><button class="rd-sw c-y" data-c="y" title="Highlight in yellow" aria-label="Highlight in yellow"></button><button class="rd-sw c-g" data-c="g" title="Highlight in green" aria-label="Highlight in green"></button><button class="rd-sw c-b" data-c="b" title="Highlight in blue" aria-label="Highlight in blue"></button><button class="rd-sw c-p" data-c="p" title="Highlight in pink" aria-label="Highlight in pink"></button></span><span class="small muted" id="rdSelPage"></span></div>
+    <div class="rd-hlpop hidden" id="rdHlPop" role="group" aria-label="Highlight"><span class="rd-sws"><button class="rd-sw c-y" data-c="y" aria-label="Yellow"></button><button class="rd-sw c-g" data-c="g" aria-label="Green"></button><button class="rd-sw c-b" data-c="b" aria-label="Blue"></button><button class="rd-sw c-p" data-c="p" aria-label="Pink"></button></span><button class="small" data-hx="note">Make a note</button><button class="small" data-hx="draft">Insert in draft</button><button class="small ghost" data-hx="del">Remove</button></div>
   </aside>
 
   <aside class="panel hidden" id="panel">
@@ -3930,10 +4073,18 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>Freewrite</b>: a timed sprint (optionally with no deleting) saved as a note and linked to the plan item it was about.</li>
       <li>In the <b>Outline</b> tab, drag ⠿ to move whole sections (or single paragraphs, with <i>paragraphs</i> ticked, which gives a reverse outline). ← and → promote and demote headings. Notes renumber automatically, and <i>Undo move</i> reverses the last change.</li>
     </ul>
-    <h4>PDF reader</h4>
+    <h4>Reader: PDFs and ePubs</h4>
     <ul>
+      <li><b>ePubs</b> open in the reader like PDFs: <b>Read PDF / ePub</b> in the Sources tab, drop one on the window, or link one to a source. DRM-free books only (Project Gutenberg, Standard Ebooks, and publishers that sell without DRM). Each chapter is a sheet; <b>− +</b> change the size of the type. When the book marks its printed pages, a quote gets the page; otherwise it gets the chapter and paragraph (<i>ch. 3, para. 12</i>), or the section’s title when the chapter has no number. A new source comes from the book’s own title, author, publisher, date and ISBN.</li>
+      <li><b>☰</b> opens a panel beside the page: <b>Contents</b> (the PDF’s or book’s own), <b>Pages</b> (thumbnails of a PDF), <b>Highlights</b>, <b>Found</b> (every match for Find) and <b>Reading list</b>.</li>
+      <li><b>Where you left off</b>: a PDF or book reopens at the place you stopped, kept in this browser. Opening a source marked <i>To read</i> moves it to <i>Reading</i>; at the end you’re offered <b>Mark as read</b>. The <b>Reading list</b> tab shows what you’re reading and want to read, with how far you’ve got.</li>
+      <li><b>Aa</b> (View): <b>Paper</b>, <b>Sepia</b> or <b>Night</b>; <b>One page</b> or <b>Two pages</b> side by side for a PDF; <b>Book</b> or <b>Plain</b> type for an ePub.</li>
+      <li><b>Highlights without notes</b>: select a passage and choose a colour. Click a highlight to change its colour, make it a quote note, put it in the draft or remove it. The <b>Highlights</b> tab lists them in order, by colour if you like, to copy, download as Markdown, or turn into quote notes all at once. They’re kept with the source in the project file.</li>
+      <li><b>Insert in draft</b> quotes the selection at the draft’s cursor, with its citation and page, and keeps it as a quote note. A short quotation runs into your sentence; a long one becomes a block quotation.</li>
+      <li><b>Read aloud</b> (the speaker) reads from the top of what you can see, or from the passage you’ve selected, a sentence at a time and on to the next page or chapter. It uses the speed and voice of Read aloud for the draft.</li>
+      <li><b>Find</b> lists every match in <b>Found</b>, with its page or chapter and the words around it. Enter goes to the next, Shift+Enter back, Esc clears.</li>
       <li><b>Take notes</b> (in the reader’s top bar) sets the writing aside: the PDF on the left, a note pad on the right. Write a note and press <kbd>Ctrl</kbd>+<kbd>Enter</kbd>; select a passage in the PDF and click <b>Quote note</b> to put it in the pad, then add your comment. Notes go to the PDF’s source, with the page filled in as you scroll. Click a note in the list to edit it, or its page to go there. <b>Back to writing</b> returns.</li>
-      <li><b>Read a PDF</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
+      <li><b>Read PDF / ePub</b> (Sources tab), drop a PDF on the window, or click <b>Attach PDF / Read PDF</b> on a source. The reader opens beside your draft, and you can drag its left edge to resize it.</li>
       <li>Select a passage, then click <b>Quote note</b> (saved with the page number) or <b>Paraphrase note</b> (opens so you can rewrite it). If the PDF’s page numbers differ from the printed ones, set the <b>page offset</b> (PDF page 15 = printed 1 → 14). PDFs with built-in page labels are handled automatically.</li>
       <li>Quote and paraphrase notes made in the reader leave a <b>highlight</b> on the PDF, yellow for quotes and blue for paraphrases, with a marker in the margin that opens the note (or finds it in the note pad). The highlights are kept with the notes, so they come back whenever you open the PDF.</li>
       <li>Link the PDF to a source with the menu at the top, or choose <i>New source from this PDF</i>. That uses the PDF’s DOI when it has one, otherwise its title, author and date. Linked PDFs are kept in this browser so they reopen from the source, but they’re never put in your project file.</li>

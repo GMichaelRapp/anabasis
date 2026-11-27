@@ -276,7 +276,7 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
-      <a href="#new">New in 2.9</a><a href="#showcase">Showcase</a>
+      <a href="#new">New in 2.10</a><a href="#showcase">Showcase</a>
       <a href="#route">What it does</a>
       <a href="#yours">Your work</a>
       <a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
@@ -312,21 +312,67 @@ section{padding:96px 0 0}
         <figcaption>The editor. Citations format as you type, and the notes and bibliography rebuild as you write.</figcaption>
       </figure>
 
-      <p class="new"><b>New in 2.9</b> <span>Socrates reads your draft and walks you through steelmanning, a pre-mortem and competing explanations; the Oracle starts your day where you left off and says what to work on next. <a href="#new">See what’s new</a></span></p>
+      <p class="new"><b>New in 2.10</b> <span>The reader opens ePubs, highlights in four colours, quotes straight into your draft with the page, reads aloud, and keeps your place in every book. <a href="#new">See what’s new</a></span></p>
     </div>
   </div>
 
   <section id="new" aria-labelledby="new-h">
     <div class="wrap">
       <div class="head">
-        <p class="kicker">New in version 2.9</p>
-        <h2 id="new-h">Better questions, and a better day</h2>
-        <p>Socrates now reads your draft for the places that need a question and walks you through four more methods. The Oracle knows where the project stands, starts your day where you left off, and ends it in the journal. Still no AI, and nothing online.</p>
+        <p class="kicker">New in version 2.10</p>
+        <h2 id="new-h">A reader that keeps your place</h2>
+        <p>The reader beside your draft now opens ePubs as well as PDFs, highlights without making a note of everything, quotes straight into the draft with the citation and page, reads aloud, and opens every book where you left off. Still no AI, and nothing online.</p>
       </div>
       <div class="n26">
         <figure class="lead">
+          <div class="frame"><img src="img/epub-detail.png" loading="lazy" width="1100" height="688" alt="An ePub in the reader beside a draft: the book’s contents on the left, chapter 2 open, a passage selected and the bar for quoting it showing p. 13, the printed page."></div>
+          <figcaption><b>ePubs, with their pages</b>Read PDF / ePub, or drop a book on the window.<span>DRM-free ePubs open chapter by chapter, beside your draft. When the book marks its printed pages, a quote gets the page; when it doesn’t, the chapter and paragraph. The source comes from the book’s own title, author, publisher and ISBN.</span></figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/hls-detail.png" loading="lazy" width="1100" height="688" alt="Three highlights in yellow, green and pink in a chapter, listed in the reader’s Highlights tab with their pages, filters by colour, and buttons to copy, download or make notes of them."></div>
+          <figcaption><b>Highlights, no note needed.</b> Four colours, for evidence, things to check, good sentences, whatever you like. List them by colour, download them as Markdown, or make them quote notes when you’re ready.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/insert-detail.png" loading="lazy" width="1100" height="688" alt="A passage from the book quoted in the middle of a sentence in the draft, in quotation marks with its footnote, and the passage still highlighted in the reader."></div>
+          <figcaption><b>Straight into the draft.</b> Select a passage and choose Insert in draft: it runs into your sentence in quotation marks, cited with its page, and stays a quote note.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/aloud-detail.png" loading="lazy" width="1100" height="688" alt="The reader at night, white text on a dark page, reading aloud with the current sentence shaded and the controls at the bottom."></div>
+          <figcaption><b>Read aloud, and read at night.</b> The reader reads a sentence at a time and on through the chapter, shading each one. Paper, sepia or night, and two pages side by side for a PDF.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/readlist-detail.png" loading="lazy" width="1100" height="688" alt="The reader’s Reading list: a book being read, 52 percent through, in chapter 2, and two sources to read, starred first."></div>
+          <figcaption><b>Where you left off.</b> Every PDF and book reopens at your place. The reading list shows what you’re reading and what’s next, with how far you’ve got.</figcaption>
+        </figure>
+      </div>
+      <ul class="also26">
+        <li><h3>Contents and pages</h3><p>The book’s or PDF’s own contents, and thumbnails of every page, beside the page.</p></li>
+        <li><h3>Every match, in a list</h3><p>Find lists each match with its page and the words around it.</p></li>
+        <li><h3>Two pages side by side</h3><p>A PDF as a spread, the first page alone as in a printed book.</p></li>
+        <li><h3>Chapter and paragraph</h3><p>For an ebook with no pages: ch. 3, para. 12, as Chicago and MLA ask.</p></li>
+        <li><h3>Search inside ePubs</h3><p>Search inside sources reads your books too, by chapter.</p></li>
+        <li><h3>Mark as read</h3><p>Reach the end and it offers to move the source off your reading list.</p></li>
+      </ul>
+      <p class="since">The 2.7 to 2.9 features are in the showcase below. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
+      <div class="n26-links">
+        <a class="btn primary" href="app/">Try 2.10 in your browser</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki/Reading-PDFs">How the reader works</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase" aria-labelledby="show-h">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">Showcase</p>
+        <h2 id="show-h">What came before 2.10</h2>
+        <p>Every feature from the last three releases, as it looks in the app: from questioning a draft to finishing a book and working in other languages.</p>
+      </div>
+      <div class="n26 gallery">
+        <figure>
           <div class="frame"><img src="img/scan-detail.png" loading="lazy" width="1100" height="688" alt="Socrates’ Question the draft: five places in a chapter worth a question, a sweeping word, a claim of cause, an unnamed authority, a fact without a source and a hedged claim, each with buttons for questions about it."></div>
-          <figcaption><b>Socrates reads your draft</b>Socrates → Question the draft.<span>He reads a chapter, or the whole book, for the places a careful reader will stop: claims of cause, sweeping words, certainty, unnamed authorities, facts in a paragraph with no citation, hedges and round numbers. Each comes with questions that suit it, about that sentence; or examine it, or go to it. A pattern, not a verdict.</span></figcaption>
+          <figcaption><b>Socrates reads your draft.</b> He reads a chapter, or the whole book, for the places a careful reader will stop: claims of cause, sweeping words, certainty, unnamed authorities, facts in a paragraph with no citation, hedges and round numbers. Each comes with questions that suit it, about that sentence; or examine it, or go to it. A pattern, not a verdict.</figcaption>
         </figure>
         <figure>
           <div class="frame"><img src="img/steelman-detail.png" loading="lazy" width="1100" height="688" alt="Steelman the other side: Socrates asks who disagrees, the writer makes their case, and Socrates offers a passage from the project that bears on it."></div>
@@ -344,32 +390,7 @@ section{padding:96px 0 0}
           <div class="frame"><img src="img/wrap-detail.png" loading="lazy" width="1100" height="688" alt="The Oracle’s wrap-up: what was done, what’s still open and the first thing next time, filed in the journal, and a maxim from Delphi."></div>
           <figcaption><b>Wrap up the day.</b> What you got done, what’s left and the first thing next time go into the journal, for tomorrow’s check-in. Its manner is yours to set: gentle, plain or blunt.</figcaption>
         </figure>
-      </div>
-      <ul class="also26">
-        <li><h3>Pre-mortem</h3><p>Imagine the piece failed, say why, and see the warnings your project already shows.</p></li>
-        <li><h3>Define your terms</h3><p>Pin a word down, then see every place you already use it.</p></li>
-        <li><h3>111 new questions</h3><p>Ethics, method, policy, the scholarly conversation, and scene and character: 475 in all.</p></li>
-        <li><h3>What to work on next</h3><p>Ask the Oracle, and it lists deadlines, follow-ups, an editor’s queries and open steps, most pressing first.</p></li>
-        <li><h3>Socrates remembers</h3><p>Questions you take aren’t dealt again, and an old one still open comes back.</p></li>
-        <li><h3>Install it as an app</h3><p>Its own window and icon, and it works offline: Settings → This browser in the hosted copy.</p></li>
-      </ul>
-      <p class="since">The 2.7 and 2.8 features are in the showcase below. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
-      <div class="n26-links">
-        <a class="btn primary" href="app/">Try 2.9 in your browser</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki">Read the guide</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">Everything new</a>
-      </div>
-    </div>
-  </section>
 
-  <section id="showcase" aria-labelledby="show-h">
-    <div class="wrap">
-      <div class="head">
-        <p class="kicker">Showcase</p>
-        <h2 id="show-h">What came before 2.9</h2>
-        <p>Every feature from the last two releases, as it looks in the app: from finishing a book to working in other languages.</p>
-      </div>
-      <div class="n26 gallery">
         <figure>
           <div class="frame"><img src="img/revision-detail.png" loading="lazy" width="1100" height="688" alt="Research desk, Revision: three chapters in a table with words, sentence length, long sentences, passive voice, hedges, clichés, adverbs, buried verbs and grade level, a few numbers shaded, and the revision checklist for the selected chapter below."></div>
           <figcaption><b>A revision pass.</b> Every chapter side by side: sentence length and variety, passive voice and hedges per thousand words, clichés, adverbs, buried verbs and grade level, with the numbers worth a look shaded. Each chapter has a revision checklist, dated as you tick it, and opens with the revision lens on, which now also finds clichés, same-length runs, pet words, adverbs and buried verbs.</figcaption>

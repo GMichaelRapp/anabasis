@@ -35,7 +35,7 @@ async def main():
     await pg.click('#rdZoomIn'); await pg.wait_for_timeout(400); print('zoom:', await pg.inner_text('#rdZoom'))
     await pg.click('#rdClose')
     sid = await pg.evaluate("R.sourceId")
-    await pg.evaluate(f"readSourcePdf('{sid}')"); await pg.wait_for_selector('.rd-page[data-n="1"] .textLayer span', timeout=20000); print('reopen from source ok:', await pg.inner_text('#rdName'))
+    await pg.evaluate(f"readSourcePdf('{sid}')"); await pg.wait_for_selector('.rd-page .textLayer span', timeout=20000); print('reopen from source ok:', await pg.inner_text('#rdName'), '| at p.', await pg.evaluate("currentPage()"))
     await pg.click('#rdClose')
     # ---- index
     await pg.click('#editor p >> nth=1'); await pg.keyboard.press('End')

@@ -12,7 +12,7 @@ Anabasis is a word processor for research writing that runs as a single web page
 - **[Citations and styles](Citations-and-Styles)**: citing as you write, locators and note text, the 55 styles, and changing style at any time.
 - **[Sources](Sources)**: adding sources by DOI, ISBN or web address, importing from Zotero and BibTeX, source types and ratings, the reading list, the source audit, retractions, duplicates, evidence fingerprints, searching inside sources, and My library across projects.
 - **[Notes and the board](Notes-and-the-Board)**: quote, paraphrase, summary and idea notes, linking notes to each other, and sorting them on the board before you draft.
-- **[Reading PDFs](Reading-PDFs)**: the PDF reader, quote and paraphrase notes with page numbers and highlights, and Take notes, which puts the PDF and a note pad side by side.
+- **[Reading PDFs and ePubs](Reading-PDFs)**: the reader, for PDFs and DRM-free ePubs; quote and paraphrase notes with page numbers, highlights in four colours, quoting straight into the draft, reading aloud, where you left off and the reading list; and Take notes, which puts the PDF or book and a note pad side by side.
 - **[Archive photos](Archive-Photos)**: photos from an archive visit, filed by box and folder, transcribed, and turned into notes that cite where each document came from.
 - **[Languages and translation](Languages-and-Translation)**: writing in 27 languages, passages in another language, transliteration, special characters, translation notes, the glossary and the translation workspace.
 

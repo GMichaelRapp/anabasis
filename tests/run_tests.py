@@ -60,6 +60,7 @@ SUITES = {
     't53': 'the revision desk, a book for print, submission packages, a Zotero library file, reviewer marks, the faster citation engine',
     't54': 'Socrates questions the draft, four more walks, new kinds of question, and remembers the questions you take',
     't55': 'the Oracle on revision, editing marks, submissions and the calendar; check-in, wrap-up and what next; its manner; a script lint and a long conversation',
+    't56': 'the reader: ePubs, contents and thumbnails, where you left off and the reading list, paper, sepia and night, two pages, highlights without notes, quoting into the draft, reading aloud, the list of find results',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

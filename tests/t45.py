@@ -11,7 +11,7 @@ COVER = {
     'Your privacy': 'Projects-and-Saving', 'Where things are': 'Getting-Started', 'Your screen & your toolbar': 'Getting-Started',
     'Getting sources in': 'Sources', 'Writing': 'Citations-and-Styles', 'Citation styles, Zotero, Pandoc & LaTeX': 'Citations-and-Styles',
     'OSINT Style Guide citations': 'Citations-and-Styles', 'Sources': 'Sources', 'Checking links': 'Sources', 'Credits & permissions': 'Sources',
-    'Notecards & the board': 'Notes-and-the-Board', 'Notes': 'Notes-and-the-Board', 'PDF reader': 'Reading-PDFs',
+    'Notecards & the board': 'Notes-and-the-Board', 'Notes': 'Notes-and-the-Board', 'Reader: PDFs and ePubs': 'Reading-PDFs',
     'The research journal': 'Research-Journal', 'Checking the draft': 'Checking-the-Draft', 'Acronyms, estimative language & scripts': 'Checking-the-Draft',
     'Listening to the draft': 'Checking-the-Draft', 'Saving': 'Projects-and-Saving', 'Saving & exporting': 'Exporting',
     'Copies for reviewers and submission': 'Exporting', 'Substack, imports, autosave & locking': 'Exporting', 'Project home': 'Getting-Started',

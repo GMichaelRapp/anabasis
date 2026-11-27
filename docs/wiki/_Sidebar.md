@@ -8,7 +8,7 @@
 - [Citations and styles](Citations-and-Styles)
 - [Sources](Sources)
 - [Notes and the board](Notes-and-the-Board)
-- [Reading PDFs](Reading-PDFs)
+- [Reading PDFs and ePubs](Reading-PDFs)
 - [Archive photos](Archive-Photos)
 - [Languages and translation](Languages-and-Translation)
 

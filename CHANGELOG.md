@@ -4,6 +4,23 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.10.0] — 2026-11-27
+
+### Added
+- **ePubs in the reader.** DRM-free ePubs (Project Gutenberg, Standard Ebooks, publishers that sell without DRM) open like PDFs: from **Read PDF / ePub**, by dropping the file, or from their source. Each chapter is a sheet, with the book's italics, headings, lists, tables and pictures, and type that **− +** make larger or smaller. Nothing in the book runs or loads from the web. A quote gets the printed page when the book marks its pages (its page list or page-break marks), otherwise its chapter and paragraph (*ch. 3, para. 12*), or the section's title when it has no number. A new source takes the book's title, author, publisher, date, language and ISBN, and a book with the ISBN or title of a source already in the project links to it. A locked book says so.
+- **A side panel in the reader (☰)**: **Contents** (the PDF's outline or the book's table of contents, with where you are marked), **Pages** (thumbnails of a PDF's pages), **Highlights**, **Found** and **Reading list**. On a narrow reader it opens over the page.
+- **Where you left off.** A PDF or book reopens at the page you stopped on, kept in this browser. Opening a source marked *To read* moves it to *Reading*, and reaching the end offers **Mark as read**. The **Reading list** tab shows what you're reading and want to read, with how far you've got and when you last read it, and changes their status. An empty reader lists them too.
+- **Highlights without notes**, in yellow, green, blue and pink, from the selection bar. Click one to change its colour, make it a quote note, put it in the draft or remove it. The **Highlights** tab lists them in reading order, all or one colour at a time, to copy, download as Markdown, or turn into quote notes at once. They're kept with the source in the project file.
+- **Insert in draft**: the selected passage goes in at the draft's cursor with its citation and page, and is kept as a quote note. A short quotation runs into your sentence; a long one becomes a block quotation.
+- **Read aloud in the reader**, from the top of the view or a selected passage, a sentence at a time with the sentence shaded, on to the next page or chapter, with pause, a sentence back or on, and speed.
+- **Find lists every match** under **Found**, with its page or chapter and the words around it. Enter goes to the next, Shift+Enter back, Esc clears; in an ePub every match is shaded.
+- **View (Aa)**: **Paper**, **Sepia** or **Night** (a PDF's pages turn dark, its text light); **One page** or **Two pages** side by side for a PDF, the first page alone as in a book; **Book** or **Plain** type for an ePub.
+- **Search inside sources** reads ePubs too, by chapter.
+
+### Changed
+- The reader's toolbar: read aloud and the view are icons; Find is a little narrower.
+- The reader renders pages a little further ahead of where you are.
+
 ## [2.9.0] — 2026-11-26
 
 ### Added
