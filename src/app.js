@@ -237,7 +237,29 @@ function normalize(p) {
     out.trash = (Array.isArray(out.trash) ? out.trash : []).filter(t => t && typeof t === 'object' && t.note && typeof t.note === 'object' && t.note.id && !(Date.now() - new Date(t.at || 0) > keep))
       .map(t => ({ at: rstr(t.at) || nowISO(), note: Object.assign(newNote(), t.note, { id: String(t.note.id), tags: Array.isArray(t.note.tags) ? t.note.tags.map(rstr).filter(Boolean) : [] }) })).slice(0, 1000);
   }
-  return out;
+  (out.notes || []).forEach(n => { ['x', 'y'].forEach(k => { if (n[k] != null && !Number.isFinite(+n[k])) delete n[k]; else if (n[k] != null) n[k] = +n[k]; }); });
+  return hardenProject(out);
+}
+/* A project file can come from someone else: a co-author's copy, a file sent by email. The interface writes ids,
+   the references to them, colors, kinds, statuses and positions into HTML attributes, so whatever the file says,
+   those values may not hold a character that could end an attribute or start a tag. Ids Anabasis makes never do;
+   a crafted file loses those characters and nothing else. Free text (titles, notes, quotations) is escaped where
+   it's shown, and documents are cleaned by DOMPurify, so they're left as they are. */
+const HARDEN_KEY = /^(id|pid|ref|pile|parent|color|kind|stype|status|role|read|sha256)$|Ids?$/;
+const HARDEN_BAD = /["'<>`\\\u0000-\u001f]/g;
+function hardenProject(p) {
+  const seen = new Set();
+  const walk = (o, depth) => {
+    if (!o || typeof o !== 'object' || depth > 12 || seen.has(o)) return; seen.add(o);
+    for (const k of Object.keys(o)) {
+      const v = o[k];
+      if (typeof v === 'string') { if (HARDEN_KEY.test(k) && HARDEN_BAD.test(v)) o[k] = v.replace(HARDEN_BAD, ''); HARDEN_BAD.lastIndex = 0; }
+      else if (Array.isArray(v) && /Ids$/.test(k)) o[k] = v.map(x => (typeof x === 'string' ? x.replace(HARDEN_BAD, '') : x));
+      else if (v && typeof v === 'object' && k !== 'csl') walk(v, depth + 1);
+    }
+  };
+  walk(p, 0);
+  return p;
 }
 /* a dashboard tile, tidied: used for saved dashboards and for the copies data-linked figures, tables and numbers keep */
 function normTile(t) {
@@ -596,7 +618,7 @@ function refsHTML(out, forExport = false) {
   if (!forExport && h) h = `<span class="gen-label">Generated from your citations and updated as you write</span>` + h;
   return h;
 }
-const htmlToText = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
+const htmlToText = h => { const t = document.createElement('template'); t.innerHTML = h; return t.content.textContent; };
 
 /* ---------------- editor ---------------- */
 const editor = $('#editor');
@@ -2768,7 +2790,7 @@ async function exportDocx(doc, opt = {}) {
   } catch (e) { console.error(e); toast('Couldn’t build the Word file: ' + e.message); }
 }
 const docxMark = el => { const a = el.getAttribute && el.getAttribute('data-anchor'); return a ? [new docx.Bookmark({ id: a, children: [new docx.TextRun({ text: '' })] })] : []; }; // a place cross-references can link to
-/* A display equation as a Word paragraph: a Word equation, centred; a numbered one has its number at the right margin */
+/* A display equation as a Word paragraph: a Word equation, centered; a numbered one has its number at the right margin */
 function eqToDocx(el, ctx) {
   const D = docx, tex = el.getAttribute('data-tex'), n = el.dataset.n, om = mathOMML(tex, true), W = ctx.textW || 9360, sp = { before: 120, after: 120 };
   if (!om) return new D.Paragraph({ alignment: D.AlignmentType.CENTER, spacing: sp, children: [new D.TextRun({ text: tex + (n ? `    (${n})` : ''), font: 'Cambria Math', size: ctx.size })] });
@@ -5415,7 +5437,7 @@ function rdHlNote(id, draft = false) {
   if (draft) rdQuoteIn(n); else toast('The highlight is a quote note now.', { label: 'Open', fn: () => { if (rrOn) rrToggle(false); switchTab('notes'); openNote(n.id); } });
   return n;
 }
-// a click on a plain highlight offers its colour, a note or the draft
+// a click on a plain highlight offers its color, a note or the draft
 function rdHlAt(x, y) {
   const pg = document.elementFromPoint(x, y)?.closest('#rdPages .rd-page'); if (!pg) return '';
   const inside = q => x >= q.left && x <= q.right && y >= q.top && y <= q.bottom;
@@ -5636,8 +5658,8 @@ function rdThumbMark(scroll) {
 /* highlights list and export */
 function rdHlSorted() { return rdHlItems().slice().sort((a, b) => ((a.h[0] || {}).p || 0) - ((b.h[0] || {}).p || 0) || ((a.h[0] || {}).a ?? ((a.h[0] || {}).r || [[0, 0]])[0][1]) - ((b.h[0] || {}).a ?? ((b.h[0] || {}).r || [[0, 0]])[0][1])); }
 function rdHlsHTML() {
-  if (!R.sourceId) return '<p class="rd-hint">Select a passage and choose a colour to highlight it. Highlights are kept with the source, so link this file to one (the first highlight does it for you).</p>';
-  const all = rdHlSorted(); if (!all.length) return '<p class="rd-hint">No highlights yet. Select a passage and choose a colour in the bar that appears. Highlights are for marking as you read; turn any of them into a quote note later.</p>';
+  if (!R.sourceId) return '<p class="rd-hint">Select a passage and choose a color to highlight it. Highlights are kept with the source, so link this file to one (the first highlight does it for you).</p>';
+  const all = rdHlSorted(); if (!all.length) return '<p class="rd-hint">No highlights yet. Select a passage and choose a color in the bar that appears. Highlights are for marking as you read; turn any of them into a quote note later.</p>';
   const list = all.filter(x => !RD.hlFilter || x.c === RD.hlFilter), cnt = c => all.filter(x => x.c === c).length;
   return `<div class="rd-hlf" role="group" aria-label="Show"><button class="small ${RD.hlFilter ? 'ghost' : ''}" data-hlf="" aria-pressed="${!RD.hlFilter}">All ${all.length}</button>${HL_COLORS.filter(([c]) => cnt(c)).map(([c, t]) => `<button class="small ${RD.hlFilter === c ? '' : 'ghost'}" data-hlf="${c}" aria-pressed="${RD.hlFilter === c}"><span class="rd-sw c-${c}" style="width:12px;height:12px;display:inline-block;vertical-align:-1px;border-width:1px"></span> ${cnt(c)}<span class="sr-only"> ${t}</span></button>`).join('')}</div>
     <ul>${list.map(x => `<li class="rd-hli" style="--hl:var(--hl-${x.c})" data-hlgo="${x.id}" tabindex="0" title="Go to it"><q>${esc(x.text.slice(0, 280))}${x.text.length > 280 ? '…' : ''}</q><span>${esc(locAbbr(x.label))} ${esc(x.loc)} · ${HL_NAME[x.c]}</span></li>`).join('')}</ul>
@@ -7236,7 +7258,7 @@ $('#tkOk').addEventListener('click', () => {
    On a figure or table: data-credit (the credit line, added to the caption in every export),
    data-rights (status), data-holder (whom to ask), data-rnote (fees, dates, terms; never exported).
    ================================================================ */
-const RIGHTS = [['', 'Not set'], ['own', 'Yours (you made or took it)'], ['pd', 'Public domain'], ['open', 'Open licence (e.g. CC BY)'], ['fair', 'Fair use or fair dealing'], ['needed', 'Permission needed'], ['asked', 'Permission requested'], ['granted', 'Permission granted'], ['refused', 'Permission refused']];
+const RIGHTS = [['', 'Not set'], ['own', 'Yours (you made or took it)'], ['pd', 'Public domain'], ['open', 'Open license (e.g. CC BY)'], ['fair', 'Fair use or fair dealing'], ['needed', 'Permission needed'], ['asked', 'Permission requested'], ['granted', 'Permission granted'], ['refused', 'Permission refused']];
 const RIGHTS_TODO = new Set(['needed', 'asked', 'refused']);
 let crFig = null;
 function openCredit(fig) {
@@ -7710,7 +7732,7 @@ function mathMarkup(tex, display) { // MathJax's SVG for one equation, as markup
 function mathProblem(tex) { // a sentence about what's wrong, or ''
   if (!tex.trim()) return 'Type the equation in TeX, for example x^2 + y^2 = r^2.';
   let m; try { m = MathJax.tex2mml(tex, { display: true }); } catch (e) { return e.message; }
-  const er = /data-mjx-error="([^"]*)"/.exec(m); if (er) return er[1].replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x([0-9A-F]+);/gi, (x, h) => String.fromCodePoint(parseInt(h, 16))) + '.';
+  const er = /data-mjx-error="([^"]*)"/.exec(m); if (er) return er[1].replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x([0-9A-F]+);/gi, (x, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&amp;/g, '&') + '.';
   const un = /<mtext mathcolor="red">(\\[^<]*)<\/mtext>/.exec(m); if (un) return `${un[1]} isn’t a command MathJax knows.`;
   return '';
 }
@@ -8257,7 +8279,7 @@ function substackBuild(doc) {
     if (cap) f.append(cap); // caption below the image, as on Substack
   });
   $$('img', box).forEach((img, i) => { const src = img.getAttribute('src') || ''; if (src.startsWith('data:')) images.push({ src, alt: img.alt }); });
-  $$('sup.fnref', box).forEach(s => { const n = s.textContent; s.innerHTML = `<a href="#fn-${n}" id="fnref-${n}">${n}</a>`; });
+  $$('sup.fnref', box).forEach(s => { const n = esc(s.textContent); s.innerHTML = `<a href="#fn-${n}" id="fnref-${n}">${n}</a>`; });
   $$('mark', box).length;
   const flags = $$('mark', box).length;
   let notes = '';
@@ -8970,7 +8992,7 @@ function openMap(spec) {
   $('#mpDlg').showModal(); mpRender(); mpPanel(); mpTools();
 }
 let mpOld = null;
-function mpTools() { $$('#mpTools [data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === mpMode)); $('#mpHint').textContent = { pan: 'Drag to move the map; scroll or use + / − to zoom. Click a marker, route or area to edit it.', shade: MP.provinces ? 'Click a province or region to shade it (countries outside province coverage shade whole). Click again to clear.' : 'Click countries to shade them with the chosen key. Click again to clear.', marker: 'Click the map to place a marker, or search for a place above.', route: 'Click points along the route; double-click (or Finish) to end it. Esc cancels.', area: 'Click around the area; double-click (or Finish) to close it. Esc cancels.' }[mpMode]; $('#mpFinish').classList.toggle('hidden', !mpDraft); $('#mpKeys').innerHTML = MP.keys.map(k => `<button class="mp-key ${k.id === mpKey ? 'on' : ''}" data-k="${k.id}" title="${esc(k.label || 'Key')}"><i style="background:${k.hatch ? `repeating-linear-gradient(45deg,${k.color} 0 2px,${tint(k.color, .82)} 2px 5px)` : tint(k.color, .45)};border-color:${k.color}"></i>${esc(k.label || { a: 'Blue', b: 'Orange', c: 'Green', n: 'Grey', h: 'Hatched' }[k.id] || 'Key')}</button>`).join(''); }
+function mpTools() { $$('#mpTools [data-m]').forEach(b => b.classList.toggle('on', b.dataset.m === mpMode)); $('#mpHint').textContent = { pan: 'Drag to move the map; scroll or use + / − to zoom. Click a marker, route or area to edit it.', shade: MP.provinces ? 'Click a province or region to shade it (countries outside province coverage shade whole). Click again to clear.' : 'Click countries to shade them with the chosen key. Click again to clear.', marker: 'Click the map to place a marker, or search for a place above.', route: 'Click points along the route; double-click (or Finish) to end it. Esc cancels.', area: 'Click around the area; double-click (or Finish) to close it. Esc cancels.' }[mpMode]; $('#mpFinish').classList.toggle('hidden', !mpDraft); $('#mpKeys').innerHTML = MP.keys.map(k => `<button class="mp-key ${k.id === mpKey ? 'on' : ''}" data-k="${k.id}" title="${esc(k.label || 'Key')}"><i style="background:${k.hatch ? `repeating-linear-gradient(45deg,${k.color} 0 2px,${tint(k.color, .82)} 2px 5px)` : tint(k.color, .45)};border-color:${k.color}"></i>${esc(k.label || { a: 'Blue', b: 'Orange', c: 'Green', n: 'Gray', h: 'Hatched' }[k.id] || 'Key')}</button>`).join(''); }
 function mpRender() {
   const st = $('#mpStage'); const draft = mpDraft && mpDraft.pts.length ? Object.assign({}, MP, mpDraft.kind === 'route' ? { routes: [...MP.routes, { id: '_d', pts: mpDraft.pts, key: mpKey, arrow: false }] } : { areas: [...MP.areas, { id: '_d', pts: mpDraft.pts, key: mpKey }] }) : MP;
   const r = mapSVG(draft); st.innerHTML = r.svg; mpProj = r.proj;
@@ -9054,7 +9076,7 @@ $('#mpResults').addEventListener('click', e => {
 /* the layer list */
 function mpPanel() {
   const K = k => MP.keys.find(x => x.id === k);
-  const keyOpts = (sel, none) => (none ? `<option value="" ${!sel ? 'selected' : ''}>Black</option>` : '') + MP.keys.map(k => `<option value="${k.id}" ${k.id === sel ? 'selected' : ''}>${esc(k.label || { a: 'Blue', b: 'Orange', c: 'Green', n: 'Grey', h: 'Hatched' }[k.id])}</option>`).join('');
+  const keyOpts = (sel, none) => (none ? `<option value="" ${!sel ? 'selected' : ''}>Black</option>` : '') + MP.keys.map(k => `<option value="${k.id}" ${k.id === sel ? 'selected' : ''}>${esc(k.label || { a: 'Blue', b: 'Orange', c: 'Green', n: 'Gray', h: 'Hatched' }[k.id])}</option>`).join('');
   const shaded = Object.entries(MP.countries), regs = Object.entries(MP.regions || {});
   $('#mpLegend').innerHTML = MP.keys.map(k => `<div class="mp-lk"><i style="background:${k.hatch ? `repeating-linear-gradient(45deg,${k.color} 0 2px,${tint(k.color, .82)} 2px 5px)` : tint(k.color, .45)};border-color:${k.color}"></i><input data-key="${k.id}" value="${esc(k.label)}" placeholder="${k.hatch ? 'e.g. Occupied since 2022' : 'Legend label, e.g. NATO members'}"></div>`).join('');
   $('#mpItems').innerHTML = (shaded.length ? `<div class="mp-grp">Shaded countries</div>` + shaded.map(([n, k]) => `<div class="mp-it"><span>${esc(n)}</span><select data-cty="${esc(n)}">${keyOpts(k)}</select><button class="ghost small" data-delc="${esc(n)}" title="Clear">✕</button></div>`).join('') : '') +
@@ -10331,7 +10353,7 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
 const WHATS_NEW = {
   '2.10.0': ['The reader opens ePubs (DRM-free ones), with a quote’s printed page when the book marks its pages, or its chapter and paragraph when it doesn’t. Search inside sources reads them too.',
     'Beside the page (☰): the contents, thumbnails of a PDF’s pages, your highlights, every match for Find with the words around it, and a reading list that shows how far you’ve got. Each PDF or book reopens where you left off.',
-    'Highlight in four colours without making a note; click one to recolour it, note it or put it in the draft. List them, filter by colour, download them as Markdown, or make them all quote notes at once.',
+    'Highlight in four colors without making a note; click one to recolor it, note it or put it in the draft. List them, filter by color, download them as Markdown, or make them all quote notes at once.',
     'Insert in draft quotes the passage at your cursor with its citation and page: a short one runs into your sentence, a long one becomes a block quotation.',
     'Read aloud in the reader, sentence by sentence and on to the next page or chapter; and a view for paper, sepia or night, two pages side by side, and book or plain type for ePubs.'],
   '2.9.0': ['Socrates reads your draft: Question the draft finds sweeping words, claims of cause, unnamed authorities, hedges, round numbers and facts without a source, and deals questions that suit each one.',
@@ -11099,8 +11121,7 @@ const ORC_DEV = [
   () => 'What would have to be true for you to be wrong?'];
 // Socrates' stems are written in the writer's own voice; the Oracle asks them of you
 function orcStem(st, subj) {
-  st = st.replace(/\bAm I\b/g, 'Are you').replace(/\bI am\b/g, 'you are').replace(/\bI’m\b/g, 'you’re').replace(/\bI’ve\b/g, 'you’ve').replace(/\bI’d\b/g, 'you’d').replace(/\bI\b/g, 'you').replace(/\bmyself\b/g, 'yourself').replace(/\bmy\b/g, 'your').replace(/\bMy\b/g, 'Your').replace(/\bme\b/g, 'you').replace(/\bmine\b/g, 'yours')
-    .replace(/\bhave you\b(?= (read|tested|dismissed|looked|tried|put))/g, 'have you').replace(/\bwould you say\b/g, 'would you say');
+  st = st.replace(/\bAm I\b/g, 'Are you').replace(/\bI am\b/g, 'you are').replace(/\bI’m\b/g, 'you’re').replace(/\bI’ve\b/g, 'you’ve').replace(/\bI’d\b/g, 'you’d').replace(/\bI\b/g, 'you').replace(/\bmyself\b/g, 'yourself').replace(/\bmy\b/g, 'your').replace(/\bMy\b/g, 'Your').replace(/\bme\b/g, 'you').replace(/\bmine\b/g, 'yours');
   let i = 0; return orcCap(st.replace(/___/g, () => (i++ === 0 && subj ? subj : '___')));
 }
 function orcCounter(claim) {
@@ -13064,9 +13085,9 @@ const J_TPL = {
   osint: { label: 'Open-source investigation', methods: 'Collect: [platforms, satellite imagery, registries, archived pages].\nVerify each item: original source, date (metadata, shadows, weather, archived copies) and place (geolocation against [maps or imagery]).\nArchive every item at collection time with URL, time and a hash or screenshot.', data: 'Sources: [platforms, imagery providers, databases]. Tools: [ ].\nArchive: [where copies are kept]. A search log is in the Searches section.', scope: 'Period and area: [ ]. What open sources can’t show: [ ].\nConfidence language: [the scale you’ll use].', ethics: 'Personal data and minors: [blur, withhold, don’t publish]. Graphic material: [handling].\nYour own safety and accounts: [separate accounts, no direct contact]. No deception or access to closed systems.' },
   docs: { label: 'Document or content analysis', methods: 'Corpus: [which documents, speeches, articles or posts], selected by [rule].\nCoding: [categories], defined before reading, revised once after a pilot of [number] items.\nRecord every coding decision in the log.', data: 'Where the corpus comes from: [archive, database, scraping], and how you saved it.\nSize: [number of items].', scope: 'Dates and outlets in and out: [ ]. What the texts say is not what happened: say what claims the analysis can support.', ethics: 'Copyright and terms of service for collected material: [ ]. Private individuals named in the corpus: [ ].' },
   cases: { label: 'Case study or comparison', methods: 'Cases: [A, B, C], chosen because [they differ on X and are alike on Y].\nFor each case, the same questions: [list]. Process tracing from [cause] to [outcome].\nLook for the case that would break the argument.', data: 'For each case: [main sources, secondary literature, data].', scope: 'What the cases can and can’t generalize to. Cases left out, and why: [ ].', ethics: '[Usually light; note any interviews, closed sources or sensitive subjects.]' },
-  data: { label: 'Data analysis', methods: 'Data: [dataset], variables [ ].\nCleaning: [steps], logged so they can be repeated. Analysis: [descriptive, regression, time series].\nKeep the code and a copy of the raw data unchanged.', data: 'Source and version: [ ]. Licence: [ ]. Download date: [ ].\nKnown problems: [missing values, changes in definitions].', scope: 'Period and units: [ ]. Correlation isn’t cause: say what would.', ethics: 'Personal or identifiable data: [anonymised, aggregated]. Licence terms for republishing: [ ].' },
+  data: { label: 'Data analysis', methods: 'Data: [dataset], variables [ ].\nCleaning: [steps], logged so they can be repeated. Analysis: [descriptive, regression, time series].\nKeep the code and a copy of the raw data unchanged.', data: 'Source and version: [ ]. License: [ ]. Download date: [ ].\nKnown problems: [missing values, changes in definitions].', scope: 'Period and units: [ ]. Correlation isn’t cause: say what would.', ethics: 'Personal or identifiable data: [anonymized, aggregated]. License terms for republishing: [ ].' },
   lit: { label: 'Literature review', methods: 'Search [databases] with [terms]; logged in Searches.\nInclude: [criteria]. Exclude: [criteria]. Screen titles, then abstracts, then full text.\nFor each work, note argument, evidence and method.', data: 'Databases and catalogs: [ ]. Reference manager: Sources in this project.', scope: 'Years, languages and kinds of publication: [ ]. Gray literature: [in or out].', ethics: '[Usually none.]' },
-  reporting: { label: 'Investigative reporting', methods: 'Documents: [records, filings, leaks], each checked for authenticity.\nPeople: [sources], each claim corroborated by a second source or a document.\nRight of reply: put every claim to [the people and organisations] before publication.', data: 'Records requests: [agency, date filed, status].\nDocuments held: [where, how secured].', scope: 'What the story claims, and what it doesn’t. Allegations you couldn’t stand up are left out.', ethics: 'Source protection: [how you’ll communicate, what you won’t keep].\nLegal review: [who, when]. Fairness: time given to respond, and the response used fairly.' },
+  reporting: { label: 'Investigative reporting', methods: 'Documents: [records, filings, leaks], each checked for authenticity.\nPeople: [sources], each claim corroborated by a second source or a document.\nRight of reply: put every claim to [the people and organizations] before publication.', data: 'Records requests: [agency, date filed, status].\nDocuments held: [where, how secured].', scope: 'What the story claims, and what it doesn’t. Allegations you couldn’t stand up are left out.', ethics: 'Source protection: [how you’ll communicate, what you won’t keep].\nLegal review: [who, when]. Fairness: time given to respond, and the response used fairly.' },
 };
 async function jApplyTpl(key) {
   const T = J_TPL[key]; if (!T) return;
@@ -13948,7 +13969,7 @@ function citeKeys(sources = P.sources) {
   });
   return keys;
 }
-const texEsc = s => String(s || '').replace(/\\/g, '\\textbackslash{}').replace(/([&%$#_{}])/g, '\\$1').replace(/~/g, '\\textasciitilde{}').replace(/\^/g, '\\textasciicircum{}');
+const texEsc = s => String(s || '').replace(/\\/g, '\u0000').replace(/([&%$#_{}])/g, '\\$1').replace(/\u0000/g, '\\textbackslash{}').replace(/~/g, '\\textasciitilde{}').replace(/\^/g, '\\textasciicircum{}');
 const BIB_OUT = { 'article-journal': 'article', 'article-magazine': 'article', 'article-newspaper': 'article', article: 'article', book: 'book', chapter: 'incollection', 'paper-conference': 'inproceedings', report: 'report', thesis: 'thesis', webpage: 'online', 'post-weblog': 'online', post: 'online', dataset: 'dataset', manuscript: 'unpublished', 'motion_picture': 'video', broadcast: 'video', interview: 'misc', 'personal_communication': 'letter', map: 'misc', legislation: 'legislation', 'legal_case': 'jurisdiction', speech: 'misc', document: 'misc' };
 const cslDate = d => { const p = d && d['date-parts'] && d['date-parts'][0]; if (p && p[0]) return p.map((x, i) => i ? String(x).padStart(2, '0') : String(x)).join('-'); return d && d.raw ? String(d.raw) : ''; };
 const bibNames = list => (list || []).map(n => n.literal ? `{${n.literal}}` : [n.family && (n['non-dropping-particle'] ? n['non-dropping-particle'] + ' ' : '') + n.family, n.given].filter(Boolean).join(', ')).join(' and ');
@@ -14026,7 +14047,7 @@ function pandocCite(c, keys) {
 }
 function latexCite(c, keys) {
   const one = it => { const post = it.locator ? (it.label && it.label !== 'page' ? (LOC_PANDOC[it.label] || it.label) + '~' : '') + texEsc(it.locator) + (it.suffix ? ', ' + texEsc(it.suffix) : '') : texEsc(it.suffix || ''); const pre = texEsc(it.prefix || ''); return (pre ? `[${pre}]` : '') + (pre || post ? `[${post}]` : '') + `{${keys.get(it.id) || 'missing-source'}}`; };
-  if (c.items.length === 1) return `\\autocite${one(c.items[0]).replace(/^\[/, '[')}` + (c.note ? `\\footnote{${texEsc(c.note)}}` : '');
+  if (c.items.length === 1) return `\\autocite${one(c.items[0])}` + (c.note ? `\\footnote{${texEsc(c.note)}}` : '');
   return `\\autocites${c.items.map(one).join('')}` + (c.note ? `\\footnote{${texEsc(c.note)}}` : '');
 }
 /* images in the exported body move to files beside the text */
@@ -14495,6 +14516,10 @@ function popDiff(peer, keys) {
   keys.forEach(k => { const j = JSON.stringify(P[k]); if (peer.shared[k] !== j) { out[k] = P[k]; peer.shared[k] = j; any = true; } });
   return any ? out : null;
 }
+// Messages go only to our own origin. A page opened from a file has no origin that can be named, so there it's
+// '*'; each side also checks that a message comes from the window it opened or was opened by.
+const POP_TO = /^https?:\/\//.test(location.origin) ? location.origin : '*';
+const popFromUs = e => POP_TO === '*' ? !/^https?:/.test(e.origin) : e.origin === location.origin;
 // main window side
 const popSync = debounce(() => {
   if (POPOUT || !POPS.size) return;
@@ -14505,15 +14530,15 @@ const popSync = debounce(() => {
     if (peer.pid !== P.id) { popState(w, peer); continue; }
     const d = popDiff(peer, [...SYNC_KEYS, 'docs']); if (curDocId !== peer.cur) { (d || (d === null && false)); }
     const msg = d || {}; if (curDocId !== peer.cur) { msg.curDocId = curDocId; peer.cur = curDocId; }
-    if (Object.keys(msg).length) w.postMessage({ app: 'anabasis', t: 'patch', colls: msg }, '*');
+    if (Object.keys(msg).length) w.postMessage({ app: 'anabasis', t: 'patch', colls: msg }, POP_TO);
   }
 }, 500);
 function popState(w, peer) {
   syncEditor(); peer.pid = P.id; peer.cur = curDocId; peer.shared = {}; [...SYNC_KEYS, 'docs'].forEach(k => { peer.shared[k] = JSON.stringify(P[k]); });
-  w.postMessage({ app: 'anabasis', t: 'state', project: P, curDocId, theme: document.documentElement.dataset.theme }, '*');
+  w.postMessage({ app: 'anabasis', t: 'state', project: P, curDocId, theme: document.documentElement.dataset.theme }, POP_TO);
 }
 window.addEventListener('message', e => {
-  const m = e.data; if (!m || m.app !== 'anabasis') return;
+  const m = e.data; if (!m || m.app !== 'anabasis' || !popFromUs(e)) return;
   if (POPOUT) { if (e.source === window.opener) popoutMsg(m); return; }
   const w = e.source, peer = POPS.get(w); if (!peer) return;
   if (m.t === 'hello') { peer.ready = true; popState(w, peer); return; }
@@ -14544,12 +14569,12 @@ function popRun(c, a) {
 let popPeer = { shared: {} }, popPending = false, popReady = false;
 function popCmd(c, a) {
   if (!window.opener || window.opener.closed) return;
-  if (popReady) { const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*'); } // changes first, so the command sees them
-  window.opener.postMessage({ app: 'anabasis', t: 'cmd', c, a }, '*');
+  if (popReady) { const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, POP_TO); } // changes first, so the command sees them
+  window.opener.postMessage({ app: 'anabasis', t: 'cmd', c, a }, POP_TO);
 }
 const popPush = debounce(() => {
   if (!POPOUT || !popReady || !window.opener || window.opener.closed) return;
-  const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*');
+  const d = popDiff(popPeer, SYNC_KEYS); if (d) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, POP_TO);
 }, 300);
 function popoutMsg(m) {
   if (m.t === 'state') {
@@ -14590,8 +14615,8 @@ async function popoutBoot() {
   dataInsert = async t => { popCmd('dataInsert', { t }); toast('Inserted in the main window.'); };
   refreshFromData = async o => { popCmd('dataRefresh', { ds: (o && o.ds) || '' }); return null; };
   document.addEventListener('focusout', () => setTimeout(popRefresh, 50));
-  window.addEventListener('beforeunload', () => { popPush.flush ? popPush.flush() : null; const d = popDiff(popPeer, SYNC_KEYS); if (d && window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, '*'); window.opener && !window.opener.closed && window.opener.postMessage({ app: 'anabasis', t: 'bye' }, '*'); });
-  window.opener.postMessage({ app: 'anabasis', t: 'hello', view: POPOUT.view }, '*');
+  window.addEventListener('beforeunload', () => { popPush.flush ? popPush.flush() : null; const d = popDiff(popPeer, SYNC_KEYS); if (d && window.opener && !window.opener.closed) window.opener.postMessage({ app: 'anabasis', t: 'patch', colls: d }, POP_TO); window.opener && !window.opener.closed && window.opener.postMessage({ app: 'anabasis', t: 'bye' }, '*'); });
+  window.opener.postMessage({ app: 'anabasis', t: 'hello', view: POPOUT.view }, POP_TO);
   setTimeout(() => { if (!popReady) $('#popWait').innerHTML = '<div><b>The main Anabasis window didn’t answer.</b><p>Close this window and open it again from Anabasis.</p></div>'; }, 4000);
   const watch = setInterval(() => { if (!window.opener || window.opener.closed) { clearInterval(watch); $('#popWait').classList.remove('hidden'); $('#popWait').innerHTML = '<div><b>The main window was closed.</b><p>Changes made here from now on can’t be kept. Close this window.</p></div>'; } }, 2000);
 }
@@ -16549,7 +16574,7 @@ function prcCompose(f, s) {
 }
 const prcFields = () => ({ cred: $('#prcCred').value, genre: $('#prcGenre').value, verb: $('#prcVerb').value, thesis: $('#prcThesis').value, how: $('#prcHow').value, method: $('#prcMethod').value, purpose: $('#prcPurpose').value, aim: $('#prcAim').value, audience: $('#prcAudience').value, tone: $('#prcTone').value });
 const htmlToPlain = h => { const d = document.createElement('div'); d.innerHTML = h; return d.textContent; };
-const plainToMd = h => h.replace(/<i>(.*?)<\/i>/g, '*$1*').replace(/<[^>]+>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+const plainToMd = h => h.replace(/<i>(.*?)<\/i>/g, '*$1*').replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 function prcPreview() {
   if (!prcSrc) return;
   const html = prcCompose(prcFields(), prcSrc);

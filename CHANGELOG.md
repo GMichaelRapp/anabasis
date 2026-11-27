@@ -4,21 +4,30 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+### Security
+- **A crafted project file could run script.** Ids, the references to them, colors, kinds and statuses in a project file were written into the interface without being checked, so a file made to attack Anabasis (sent as a co-author’s copy, say) could run code when opened. Opening a project now holds those values to a safe shape; ids Anabasis makes are never changed. Found while reviewing GitHub’s CodeQL scan.
+- A footnote number read back from a page is treated as text, and HTML is read as text in an inert template, so nothing in it loads.
+- Messages between the main window and a pop-out window go only to Anabasis’s own origin when it’s served from a website, and each side checks where a message came from.
+
+### Fixed
+- LaTeX export: a backslash in the text became `\textbackslash\{\}` instead of `\textbackslash{}`.
+- Markdown from précis and MathJax error messages decoded `&amp;lt;` twice.
+
 ## [2.10.0] — 2026-11-27
 
 ### Added
-- **ePubs in the reader.** DRM-free ePubs (Project Gutenberg, Standard Ebooks, publishers that sell without DRM) open like PDFs: from **Read PDF / ePub**, by dropping the file, or from their source. Each chapter is a sheet, with the book's italics, headings, lists, tables and pictures, and type that **− +** make larger or smaller. Nothing in the book runs or loads from the web. A quote gets the printed page when the book marks its pages (its page list or page-break marks), otherwise its chapter and paragraph (*ch. 3, para. 12*), or the section's title when it has no number. A new source takes the book's title, author, publisher, date, language and ISBN, and a book with the ISBN or title of a source already in the project links to it. A locked book says so.
-- **A side panel in the reader (☰)**: **Contents** (the PDF's outline or the book's table of contents, with where you are marked), **Pages** (thumbnails of a PDF's pages), **Highlights**, **Found** and **Reading list**. On a narrow reader it opens over the page.
-- **Where you left off.** A PDF or book reopens at the page you stopped on, kept in this browser. Opening a source marked *To read* moves it to *Reading*, and reaching the end offers **Mark as read**. The **Reading list** tab shows what you're reading and want to read, with how far you've got and when you last read it, and changes their status. An empty reader lists them too.
-- **Highlights without notes**, in yellow, green, blue and pink, from the selection bar. Click one to change its colour, make it a quote note, put it in the draft or remove it. The **Highlights** tab lists them in reading order, all or one colour at a time, to copy, download as Markdown, or turn into quote notes at once. They're kept with the source in the project file.
-- **Insert in draft**: the selected passage goes in at the draft's cursor with its citation and page, and is kept as a quote note. A short quotation runs into your sentence; a long one becomes a block quotation.
+- **ePubs in the reader.** DRM-free ePubs (Project Gutenberg, Standard Ebooks, publishers that sell without DRM) open like PDFs: from **Read PDF / ePub**, by dropping the file, or from their source. Each chapter is a sheet, with the book’s italics, headings, lists, tables and pictures, and type that **− +** make larger or smaller. Nothing in the book runs or loads from the web. A quote gets the printed page when the book marks its pages (its page list or page-break marks), otherwise its chapter and paragraph (*ch. 3, para. 12*), or the section’s title when it has no number. A new source takes the book’s title, author, publisher, date, language and ISBN, and a book with the ISBN or title of a source already in the project links to it. A locked book says so.
+- **A side panel in the reader (☰)**: **Contents** (the PDF’s outline or the book’s table of contents, with where you are marked), **Pages** (thumbnails of a PDF’s pages), **Highlights**, **Found** and **Reading list**. On a narrow reader it opens over the page.
+- **Where you left off.** A PDF or book reopens at the page you stopped on, kept in this browser. Opening a source marked *To read* moves it to *Reading*, and reaching the end offers **Mark as read**. The **Reading list** tab shows what you’re reading and want to read, with how far you’ve got and when you last read it, and changes their status. An empty reader lists them too.
+- **Highlights without notes**, in yellow, green, blue and pink, from the selection bar. Click one to change its color, make it a quote note, put it in the draft or remove it. The **Highlights** tab lists them in reading order, all or one color at a time, to copy, download as Markdown, or turn into quote notes at once. They’re kept with the source in the project file.
+- **Insert in draft**: the selected passage goes in at the draft’s cursor with its citation and page, and is kept as a quote note. A short quotation runs into your sentence; a long one becomes a block quotation.
 - **Read aloud in the reader**, from the top of the view or a selected passage, a sentence at a time with the sentence shaded, on to the next page or chapter, with pause, a sentence back or on, and speed.
 - **Find lists every match** under **Found**, with its page or chapter and the words around it. Enter goes to the next, Shift+Enter back, Esc clears; in an ePub every match is shaded.
-- **View (Aa)**: **Paper**, **Sepia** or **Night** (a PDF's pages turn dark, its text light); **One page** or **Two pages** side by side for a PDF, the first page alone as in a book; **Book** or **Plain** type for an ePub.
+- **View (Aa)**: **Paper**, **Sepia** or **Night** (a PDF’s pages turn dark, its text light); **One page** or **Two pages** side by side for a PDF, the first page alone as in a book; **Book** or **Plain** type for an ePub.
 - **Search inside sources** reads ePubs too, by chapter.
 
 ### Changed
-- The reader's toolbar: read aloud and the view are icons; Find is a little narrower.
+- The reader’s toolbar: read aloud and the view are icons; Find is a little narrower.
 - The reader renders pages a little further ahead of where you are.
 
 ## [2.9.0] — 2026-11-26
@@ -28,20 +37,20 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 - **Four more walks with Socrates**, each ending in a summary for the journal:
   - **Steelman the other side**: your position, who disagrees most seriously, their case at its strongest, a passage from your project that bears on it, what you concede, your answer and your position now. Their case can be kept as a note tagged *counterargument*.
   - **Pre-mortem**: imagine the piece failed and say why, three ways, then see the warnings your project already shows (claims without sources, contested claims, TKs, unanswered queries, weak sources, falling behind) and choose a first step, which can go on your next steps.
-  - **Competing explanations**: Heuer's analysis of competing hypotheses. Explanations and evidence, a grid of consistent and inconsistent, weighed so the explanation with the least evidence against it leads; evidence that fits everything is pointed out. The explanations can become hypotheses in the journal.
-  - **Define your terms**: a definition, an example that counts and one that doesn't, then every place you already use the word, and a final definition kept as a note.
+  - **Competing explanations**: Heuer’s analysis of competing hypotheses. Explanations and evidence, a grid of consistent and inconsistent, weighed so the explanation with the least evidence against it leads; evidence that fits everything is pointed out. The explanations can become hypotheses in the journal.
+  - **Define your terms**: a definition, an example that counts and one that doesn’t, then every place you already use the word, and a final definition kept as a note.
 - **111 new questions in five new kinds**: ethics, harm and responsibility; method and research design; policy and recommendations; the scholarly conversation; and scene, character and story. 475 questions in 24 kinds. White papers and briefs lean toward policy, narratives toward scene, investigations toward ethics, theses toward method and the scholarly conversation.
-- **Socrates remembers** the questions you take (kept in the project file), doesn't deal them again, and brings an old one still open back under *From before*, with **Answer it**, **Examine it** and **Not now**.
-- **The Oracle knows the project as it stands**: “what should I work on next?” (overdue chapters, follow-ups, an editor's queries, review keys, your next steps, claims without sources, TKs, the least revised chapter, most pressing first), “which chapter is weakest?”, “any queries from my editor?”, “what's out on submission?” and “what's coming up?”.
-- **Starting and ending the day**: the check-in starts from what you logged last time and meant to do first, and adds what's coming up, open editing marks and an old question from Socrates. **Wrap up** asks what you got done, what's left and the first thing next time, and files them in the journal.
-- **The Oracle's manner**: gentle, plain or blunt, in Settings or by telling it (“be blunt”). Gentle and blunt replies come first in that manner.
+- **Socrates remembers** the questions you take (kept in the project file), doesn’t deal them again, and brings an old one still open back under *From before*, with **Answer it**, **Examine it** and **Not now**.
+- **The Oracle knows the project as it stands**: “what should I work on next?” (overdue chapters, follow-ups, an editor’s queries, review keys, your next steps, claims without sources, TKs, the least revised chapter, most pressing first), “which chapter is weakest?”, “any queries from my editor?”, “what’s out on submission?” and “what’s coming up?”.
+- **Starting and ending the day**: the check-in starts from what you logged last time and meant to do first, and adds what’s coming up, open editing marks and an old question from Socrates. **Wrap up** asks what you got done, what’s left and the first thing next time, and files them in the journal.
+- **The Oracle’s manner**: gentle, plain or blunt, in Settings or by telling it (“be blunt”). Gentle and blunt replies come first in that manner.
 - **A bigger script**: 30 new subjects (openings, endings, cutting, length, structure, rejection, publishing, feedback, the reader, voice, titles, perfectionism, procrastination, reading too long, interviews, archives, quotations, translation, data, theory, money, deadlines, submissions, editors and more), and the Oracle hands **steelman:**, **pre-mortem**, **competing explanations:** and **define:** to Socrates.
 
 - **Install as an app** from inside Anabasis: in the hosted copy, Settings → This browser → **Install Anabasis** (Chrome and Edge), or the steps for Safari and iPhone. It opens in its own window with a Dock or Start menu icon, and works offline. The downloaded file explains that browsers install apps only from a website, and links to the hosted copy.
 
 ### Changed
-- A design pass: the Revision table scrolls sideways on a phone instead of breaking into unlabelled numbers; line and paragraph numbers step aside on a phone, where there's no margin for them (they still go into every export); the special-characters palette fits a phone screen; the Oracle's message box sits clear of the Writing button on a phone; weighed evidence in Competing explanations is shown as C and I rather than menus; Settings' tick boxes wrap their notes neatly.
-- The Oracle's quick buttons are **Check in**, **What next?**, **Coming up**, **Argue the other side**, **Wrap up** and **Help**.
+- A design pass: the Revision table scrolls sideways on a phone instead of breaking into unlabelled numbers; line and paragraph numbers step aside on a phone, where there’s no margin for them (they still go into every export); the special-characters palette fits a phone screen; the Oracle’s message box sits clear of the Writing button on a phone; weighed evidence in Competing explanations is shown as C and I rather than menus; Settings’ tick boxes wrap their notes neatly.
+- The Oracle’s quick buttons are **Check in**, **What next?**, **Coming up**, **Argue the other side**, **Wrap up** and **Help**.
 - “Done for today” is now the three-question wrap-up.
 
 ### Fixed
@@ -69,18 +78,18 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 - A tidying pass over the look of the app, checked screen by screen in light, dark and on a phone:
   - **Settings** is grouped into sections (the writing page on screen; starting and saving; this browser), one option to a line.
   - The **source** and **note** panels keep their main actions as buttons and move the rest (Save to library, Transcript, PDF, Photos, Split, Save as template, Delete) to a quieter row beneath.
-  - The **research desk** keeps its tabs on one line and the view's tools on the next.
+  - The **research desk** keeps its tabs on one line and the view’s tools on the next.
   - Each thread in the Research tab has an eye to show or hide its highlight, in place of a dot.
   - The project name in the top bar and the chapter title take the room they need before toolbar buttons do; on a phone the save state is one word.
-  - The Docs tab's tools sit in a tidy two-column grid; Help's links are buttons like the rest.
+  - The Docs tab’s tools sit in a tidy two-column grid; Help’s links are buttons like the rest.
   - Menus never draw their arrow over their words; time fields match the others.
-  - Claims that need a source or are contested don't repeat it under the chip.
-  - Empty states: the trash's Empty button and Submissions' CSV only show when there's something to act on; an empty Submissions window is narrower.
+  - Claims that need a source or are contested don’t repeat it under the chip.
+  - Empty states: the trash’s Empty button and Submissions’ CSV only show when there’s something to act on; an empty Submissions window is narrower.
 
 ### Fixed
 - **One word count everywhere.** The document bar, the binder and Drafts could each give a different count, and words at the end of one paragraph and the start of the next were sometimes counted as one. All three now use the same count.
 - Words per minute in Page setup only shows for a video script.
-- What's new after an update always reaches back to the feature release it patches, so updating to a patch doesn't hide what the release brought.
+- What’s new after an update always reaches back to the feature release it patches, so updating to a patch doesn’t hide what the release brought.
 
 ## [2.7.2] — 2026-11-26
 
@@ -88,37 +97,37 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 - **Slush pile**: select a passage and press ⌘/Ctrl Alt J (or Mark → Move to the slush pile) to cut it from the draft into the pile, with Undo; *Copy the selection to the slush pile* keeps it in the draft too. Deleted documents go to the pile with their title, style and language. Open it from the Docs tab or the command search to search it, add a note to a piece, filter by document, and put a piece back at the cursor or make it a document or a note. Kept in the project file; never exported.
 
 ### Fixed
-- A message with an Undo button shown while a window was open sat behind the window's backdrop, where it couldn't be clicked. It now shows over the window.
+- A message with an Undo button shown while a window was open sat behind the window’s backdrop, where it couldn’t be clicked. It now shows over the window.
 
 ## [2.7.1] — 2026-11-26
 
 ### Fixed
-- Search inside sources: a long place, such as an archive photo's box, folder and item, ran over the words found; places now wrap in their own column, and a PDF hit always shows its page.
+- Search inside sources: a long place, such as an archive photo’s box, folder and item, ran over the words found; places now wrap in their own column, and a PDF hit always shows its page.
 
 ## [2.7.0] — 2026-11-26
 
 ### Added
-- **Writing in other languages.** Page setup → Language sets a document's language from 27: spell-checking, quotation marks („ “, « », 「 」), Proofread, smart quotes, word counts (characters for Chinese and Japanese), reading aloud and citation terms (CSL locales: "Hrsg.", "trad.") follow it; Arabic, Hebrew, Persian and Urdu run right to left. Word, web and e-book exports carry the language and direction. **Mark → Language of this passage** marks a quotation or name in another language.
+- **Writing in other languages.** Page setup → Language sets a document’s language from 27: spell-checking, quotation marks („ “, « », 「 」), Proofread, smart quotes, word counts (characters for Chinese and Japanese), reading aloud and citation terms (CSL locales: “Hrsg.”, “trad.”) follow it; Arabic, Hebrew, Persian and Urdu run right to left. Word, web and e-book exports carry the language and direction. **Mark → Language of this passage** marks a quotation or name in another language.
 - **Transliteration** (Mark → Transliterate…): Russian (ALA-LC, BGN/PCGN, simple), Ukrainian (national, ALA-LC), Bulgarian, Serbian, modern Greek (ELOT 743), ancient Greek and Arabic (ALA-LC).
 - **Special characters** (⌘/Ctrl Alt O): a palette that stays open, with accented letters, polytonic Greek, Cyrillic, transliteration marks, punctuation and symbols.
-- **Translation notes**: a note kind holding the original, its language and transliteration, and the translator; inserted with the original in the note, in brackets, in the text, or not at all, with "My translation." or "Trans. X." added.
+- **Translation notes**: a note kind holding the original, its language and transliteration, and the translator; inserted with the original in the note, in brackets, in the text, or not at all, with “My translation.” or “Trans. X.” added.
 - **Translation in the research journal**: languages, transliteration system, how notes are inserted, and a **glossary** of terms and renderings, with renderings decided against flagged in the draft (Outline → Glossary, with Replace). **Note on translation** writes the front-matter note; the glossary exports as a document or CSV.
-- **Translation workspace** (Research desk → Translate): the original split into paragraph or sentence segments, translated beside it with transliteration and glossary checks as you type; ⌘/Ctrl Enter marks a segment done; join segments, filter to what's left, make a note from a segment, and finish as a document, side by side, or CSV.
+- **Translation workspace** (Research desk → Translate): the original split into paragraph or sentence segments, translated beside it with transliteration and glossary checks as you type; ⌘/Ctrl Enter marks a segment done; join segments, filter to what’s left, make a note from a segment, and finish as a document, side by side, or CSV.
 - **Search inside sources** (Sources → Search inside sources): the full text of linked PDFs, archive photo transcriptions, transcripts and abstracts, ignoring case and accents; a hit opens the PDF at its page, the photo or the transcript. PDF text is kept in the browser, not the project file.
-- **Offline OCR**: **Read the text** on an archive photo fills its transcription, and **Read text** in the PDF reader reads a scanned PDF's pages so they can be searched and quoted. Tesseract runs in the browser; nothing is sent anywhere.
+- **Offline OCR**: **Read the text** on an archive photo fills its transcription, and **Read text** in the PDF reader reads a scanned PDF’s pages so they can be searched and quoted. Tesseract runs in the browser; nothing is sent anywhere.
 - **My library** (Sources → My library): sources and their notes kept in this browser for use in every project, matched by DOI, ISBN or title, year and author; export and import the shelf as a file.
 - **Submissions** (Project home, or the command search): outlet, editor, pitch or piece, date sent, status, fee, follow-up and notes; follow-ups go on the calendar and in the .ics export; CSV export.
 - **Review round-trip**: Export → For a reviewer makes one web page anyone can comment on and suggest changes to in a browser; Export → Import a review puts their comments in the margin and their changes in as suggestions under their name, located by context so they land correctly after further edits, with a draft saved first and unplaced notes listed.
 
 ### Changed
-- The page's content security policy allows WebAssembly (`'wasm-unsafe-eval'`), which the offline text reader needs. The addresses it may connect to are unchanged.
+- The page’s content security policy allows WebAssembly (`'wasm-unsafe-eval'`), which the offline text reader needs. The addresses it may connect to are unchanged.
 - The file is larger (about 22 MB) because it carries the text reader and its English model, and 24 citation locales.
-- Margin comments show their author when it isn't you.
+- Margin comments show their author when it isn’t you.
 
 ## [2.6.3] — 2026-11-26
 
 ### Fixed
-- The Notes tab's new row of buttons (Scratch pad, Templates…, Trash) overflowed the sidebar, cutting off Trash. **From a template…** is now **Templates…**, and the row wraps if it has to.
+- The Notes tab’s new row of buttons (Scratch pad, Templates…, Trash) overflowed the sidebar, cutting off Trash. **From a template…** is now **Templates…**, and the row wraps if it has to.
 
 ## [2.6.2] — 2026-11-25
 
@@ -138,11 +147,11 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 ## [2.6.1] — 2026-11-25
 
 ### Added
-- **Draft a literature review** from the literature grid (research desk, Templates, Export → Other formats, or the command search): a new document with an introduction, a section for each theme or research question holding every source's summary as a cited sentence, a prompt to compare them, the sources with notes but no summary and those silent on the theme, then *Gaps and open questions* and *What this review sets up* (where the *How I'll use it* column goes). Citations sit after the full stop in notes styles and before it in author-date styles; the prompts are highlighted.
+- **Draft a literature review** from the literature grid (research desk, Templates, Export → Other formats, or the command search): a new document with an introduction, a section for each theme or research question holding every source’s summary as a cited sentence, a prompt to compare them, the sources with notes but no summary and those silent on the theme, then *Gaps and open questions* and *What this review sets up* (where the *How I’ll use it* column goes). Citations sit after the full stop in notes styles and before it in author-date styles; the prompts are highlighted.
 - **Literature review** in Plan → Templates: question and scope, themes with agreements, disagreements and key studies, gaps, and what the review sets up.
 
 ### Changed
-- The literature grid's **Make a document** is now **Grid as a document**, beside **Draft a literature review**.
+- The literature grid’s **Make a document** is now **Grid as a document**, beside **Draft a literature review**.
 
 ## [2.6.0] — 2026-11-25
 
@@ -159,10 +168,10 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ### Also added
 - **A wiki** with in-depth pages on getting started, saving and privacy, citations, sources, notes and the board, reading PDFs, the research journal, Socrates, the Oracle, checking the draft and exporting. The pages live in `docs/wiki/` and a workflow (`wiki.yml`) publishes them to the GitHub wiki on every push. `tools/guide/wiki_shots.py` remakes their screenshots from the thesis example, and a new test suite (t45) checks the links, the pictures, the sidebar and that every section of Help has a page or is on the list still to write.
-- **Proofread in the toolbar's ⋯ menu**, as well as F7 and the command search.
+- **Proofread in the toolbar’s ⋯ menu**, as well as F7 and the command search.
 
 ### Fixed
-- Help said Proofread was under "Tools" and the abstract under "Document setup"; they're in the toolbar's ⋯ menu and Page setup.
+- Help said Proofread was under “Tools” and the abstract under “Document setup”; they’re in the toolbar’s ⋯ menu and Page setup.
 - The lock dialog shared its ids with Check links, so **Lock project** on a locked project opened Check links instead.
 
 ## [2.5.1] — 2026-11-25
@@ -173,9 +182,9 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 ## [2.5.0] — 2026-11-25
 
 ### Added
-- **Proofread** (F7, or Tools): the errors a browser's spell checker misses or doesn't explain, in the document you're in. About 400 common misspellings (data/proofread.txt, including the military and political vocabulary of this kind of writing: *battalion*, *bureaucracy*, *lieutenant*, *maneuver*, *sovereignty*, *surveillance*); mixed-up words only in the places they're almost always wrong ("would of", "more then", "its not", "your welcome", "their is", "to loose", "an affect on", "who's own"; *calvary* when horse soldiers are nearby); twenty garbled stock phrases ("for all intensive purposes", "free reign", "tow the line"); *a* and *an* by the sound of the next word (an honest, a unit, a European, an FBI); doubled words; spaces before punctuation and missing after; two spaces; doubled punctuation; a lower-case letter after a full stop (but not after e.g., i.e., et al., p. and other abbreviations); a lone "i"; brackets and quotation marks that never close. Each finding shows its sentence, with **Fix**, **Show** and **Ignore** (kept in the project, as `proofIgnore`); **Fix all spellings** does the spellings at once. Fixes keep the formatting around them. Citations, notes and maths are skipped. No grammar engine and nothing online.
-- **Abstract and keywords** (Export menu, Document setup, or Tools): a form that builds the abstract a part at a time, with parts for a research article (background, aim, method, findings, conclusion), an essay or chapter (context, question, argument, evidence, contribution) or a report (purpose, scope, findings, recommendations), or written whole. **Suggest from the draft** fills empty parts with the draft's own sentences that sound like each part; the parts join into the abstract until you edit it; the count turns red over the word limit. **Suggest keywords** offers the names and terms this document uses more than the rest of the project (words and two-word phrases weighted against the project, recorded names, your sources' authors, threads used in the document), never everyday words. Kept with the document (`meta.abstract`). With **Include** on, it goes under the title in Word (set apart and justified), PDF, the web page, ePub, Markdown, the Pandoc package (`abstract:` and `keywords:` in the front matter), the archive and LaTeX (an `abstract` environment).
-- **Read and take notes**: **Take notes** in the PDF reader sets the writing aside and puts a note pad beside the PDF. Notes save with Ctrl+Enter to the PDF's source (one is made from the PDF if it isn't linked yet), with the printed page filled in from where you are in the PDF, the kind of note and tags (which stay for the next note). A passage selected in the PDF goes into the pad as a quote, with its page, to comment on before saving. The pad lists the source's notes in page order; click one to edit it in place, or its page to go there. On a narrow screen the PDF sits above the pad.
+- **Proofread** (F7, or Tools): the errors a browser’s spell checker misses or doesn’t explain, in the document you’re in. About 400 common misspellings (data/proofread.txt, including the military and political vocabulary of this kind of writing: *battalion*, *bureaucracy*, *lieutenant*, *maneuver*, *sovereignty*, *surveillance*); mixed-up words only in the places they’re almost always wrong (“would of”, “more then”, “its not”, “your welcome”, “their is”, “to loose”, “an affect on”, “who’s own”; *calvary* when horse soldiers are nearby); twenty garbled stock phrases (“for all intensive purposes”, “free reign”, “tow the line”); *a* and *an* by the sound of the next word (an honest, a unit, a European, an FBI); doubled words; spaces before punctuation and missing after; two spaces; doubled punctuation; a lower-case letter after a full stop (but not after e.g., i.e., et al., p. and other abbreviations); a lone “i”; brackets and quotation marks that never close. Each finding shows its sentence, with **Fix**, **Show** and **Ignore** (kept in the project, as `proofIgnore`); **Fix all spellings** does the spellings at once. Fixes keep the formatting around them. Citations, notes and maths are skipped. No grammar engine and nothing online.
+- **Abstract and keywords** (Export menu, Document setup, or Tools): a form that builds the abstract a part at a time, with parts for a research article (background, aim, method, findings, conclusion), an essay or chapter (context, question, argument, evidence, contribution) or a report (purpose, scope, findings, recommendations), or written whole. **Suggest from the draft** fills empty parts with the draft’s own sentences that sound like each part; the parts join into the abstract until you edit it; the count turns red over the word limit. **Suggest keywords** offers the names and terms this document uses more than the rest of the project (words and two-word phrases weighted against the project, recorded names, your sources’ authors, threads used in the document), never everyday words. Kept with the document (`meta.abstract`). With **Include** on, it goes under the title in Word (set apart and justified), PDF, the web page, ePub, Markdown, the Pandoc package (`abstract:` and `keywords:` in the front matter), the archive and LaTeX (an `abstract` environment).
+- **Read and take notes**: **Take notes** in the PDF reader sets the writing aside and puts a note pad beside the PDF. Notes save with Ctrl+Enter to the PDF’s source (one is made from the PDF if it isn’t linked yet), with the printed page filled in from where you are in the PDF, the kind of note and tags (which stay for the next note). A passage selected in the PDF goes into the pad as a quote, with its page, to comment on before saving. The pad lists the source’s notes in page order; click one to edit it in place, or its page to go there. On a narrow screen the PDF sits above the pad.
 
 ## [2.4.0] — 2026-11-25
 
@@ -242,7 +251,7 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 - **One Insert menu** (the plus in the toolbar) for everything that goes into the page: image, chart, map, timeline, relationship map, table, equation, cross-reference, index entry, list of figures and tables, list of abbreviations. The toolbar keeps what you do while writing.
 - **Export is grouped** by purpose: share and print; review, co-write and submit; other formats; the project file.
 - **Sources → Tools** holds the source audit, link check and permissions log.
-- **Sidebar tabs have icons**, each in its tab’s colour, as signposts.
+- **Sidebar tabs have icons**, each in its tab’s color, as signposts.
 - The tour and the sample document point to the new places.
 - Comparing two versions of a collection ignores the order of fields, so pop-out windows and co-writing only see real changes.
 
@@ -276,7 +285,7 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 
 ### Added
 - **Data in the writing.** On a dashboard, **Insert** on a table tile puts it in the document as a real table (sorted and with the columns the tile shows), titled and with a source line, numbered with the other tables and exported to Word and PDF like any table. **Insert as table** in the Data view does the same for a whole dataset (up to 300 rows). **Insert** on a number tile drops its value into the sentence at the caret, as one piece, with **Cite the source** a click away.
-- **Kept in step with the data.** Figures, tables and numbers taken from a dataset remember it. **Update from data** (command palette; **Update the writing** in the Data view; the table toolbar for one table) redraws them in every document, open or not, and updates their source lines; a caption you rewrote is left alone. Replacing a dataset's data offers to update the writing straight away, and deleting one says how much of the writing will keep its last values.
+- **Kept in step with the data.** Figures, tables and numbers taken from a dataset remember it. **Update from data** (command palette; **Update the writing** in the Data view; the table toolbar for one table) redraws them in every document, open or not, and updates their source lines; a caption you rewrote is left alone. Replacing a dataset’s data offers to update the writing straight away, and deleting one says how much of the writing will keep its last values.
 - Linked tables and figures are marked on screen (never in print or exports). Click a linked number to see where it comes from; **Unlink** on a number or table keeps it as it is and stops it following the data. Editing a linked figure by hand unlinks it, and says so.
 
 ### Changed
@@ -306,7 +315,7 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 ## [1.5.0] — 2026-11-23
 
 ### Added
-- **Pick up on another device.** The GitHub dialog's **Open a project…** (and **From GitHub…** on Project home) lists every project backed up to the repository and opens the newest backup. When a newer backup of the open project turns up from another device, a notice offers to open it, checked when the app starts, when a project opens and when you come back to the tab.
+- **Pick up on another device.** The GitHub dialog’s **Open a project…** (and **From GitHub…** on Project home) lists every project backed up to the repository and opens the newest backup. When a newer backup of the open project turns up from another device, a notice offers to open it, checked when the app starts, when a project opens and when you come back to the tab.
 - **This week**, a weekly review in the Journal: words written each day, log entries, searches, sources, notes and checked claims, hypothesis changes, questions answered, review keys coming due. Step back through earlier weeks; **Week summary** makes a document.
 - **Next steps**: a new kind of log entry with a box to tick. Open ones show in This week, the Research tab and the research memo.
 - **Research design templates**: prompts for eight methods (archival, interviews, open-source investigation, document analysis, case studies, data analysis, literature review, investigative reporting), filled into empty fields or added below.
@@ -316,7 +325,7 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 - The fact-check sheet records who checked each claim and when, lists the page or other location of each citation, and can be made as a document in the project. The claims CSV includes the checker.
 - Backing up to GitHub over a newer backup from another device now asks first; automatic backups skip it and show the notice instead.
 - The thesis and investigation examples include a next step.
-- Build and publishing workflows moved to current GitHub Actions (Node 24), and publishing to GitHub Pages retries once if GitHub can't find the upload.
+- Build and publishing workflows moved to current GitHub Actions (Node 24), and publishing to GitHub Pages retries once if GitHub can’t find the upload.
 
 ## [1.4.0] — 2026-11-23
 
@@ -333,12 +342,12 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 ## [1.3.0] — 2026-11-23
 
 ### Added
-- **55 citation styles**, grouped by field in the style menu: Chicago 17th and 18th (with ibid., archives cited place first, or an annotated bibliography), MLA with notes, MHRA, New Hart's Rules, Oxford, SBL, APA 6th and annotated, APSA, AJPS, ISA, ASA, AAA, four Harvard variants, OSCOLA, Bluebook, AMA, NLM/Vancouver, CSE, Nature, Science, Cell, The Lancet, BMJ, ACS, RSC, APS, AIP, AGU, Springer, Elsevier, IEEE, ASCE and ISO 690.
+- **55 citation styles**, grouped by field in the style menu: Chicago 17th and 18th (with ibid., archives cited place first, or an annotated bibliography), MLA with notes, MHRA, New Hart’s Rules, Oxford, SBL, APA 6th and annotated, APSA, AJPS, ISA, ASA, AAA, four Harvard variants, OSCOLA, Bluebook, AMA, NLM/Vancouver, CSE, Nature, Science, Cell, The Lancet, BMJ, ACS, RSC, APS, AIP, AGU, Springer, Elsevier, IEEE, ASCE and ISO 690.
 - **Export references** (Sources → Export…) as BibTeX/BibLaTeX, RIS or CSL-JSON, for all sources or only those cited in the open document. Each source gets a stable, readable key (`tuchman1962guns`).
 - **Pandoc / Quarto package** and **LaTeX package** exports: the document with citations as keys (`[@key, p. 12]` or `\autocite`), its bibliography, the citation style and its images, zipped with a README.
 - **Suggest mode**: typing and deleting become suggestions signed with your name, to accept or reject one at a time or all at once, with undo. Word exports keep them as tracked changes; **Word import** brings tracked changes back as suggestions and Word comments as margin notes on the same words.
 - **Example projects**: a thesis chapter, a long-form article, a white paper, a book proposal and an investigative piece, each with sources, notes, a plan, threads, claims, review keys and questions (New → Or open a finished example).
-- **Listen**: read the draft aloud from the cursor with the system's voices, highlighting each sentence; pause, skip, speed and voice; note numbers and citations read only if you want them.
+- **Listen**: read the draft aloud from the cursor with the system’s voices, highlighting each sentence; pause, skip, speed and voice; note numbers and citations read only if you want them.
 - **Your name** in Settings, used on suggestions and new margin notes.
 
 ### Changed
@@ -348,13 +357,13 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
 ## [1.2.0] — 2026-11-23
 
 ### Added
-- **Works on any screen.** The top bar, the document bar and the toolbar now adapt to the window: buttons that don't fit move into a **⋯** menu at the end of their bar, in order of how often they're needed, so every tool stays one tap away. Drafts, Record and Page setup, which were hidden on small screens before, are now always reachable.
+- **Works on any screen.** The top bar, the document bar and the toolbar now adapt to the window: buttons that don’t fit move into a **⋯** menu at the end of their bar, in order of how often they’re needed, so every tool stays one tap away. Drafts, Record and Page setup, which were hidden on small screens before, are now always reachable.
 - **Phones and tablets.** The sidebar is a drawer that a tap beside it closes, the page fills the screen, dialogs open full screen, touch targets are larger, and text fields no longer make iPhone zoom in.
 - **Install on iPhone, iPad and Android.** The hosted copy on GitHub Pages can be added to the Home Screen (or installed from the browser menu). It opens full screen and works offline. The downloaded file is unchanged and still needs nothing.
-- **Customize the toolbar.** Hide the buttons you don't use (they wait in the ⋯ menu, and their shortcuts keep working), or keep **Essentials only**.
-- **Keyboard shortcuts sheet.** Press **?** when you're not typing, or Ctrl/⌘+/.
+- **Customize the toolbar.** Hide the buttons you don’t use (they wait in the ⋯ menu, and their shortcuts keep working), or keep **Essentials only**.
+- **Keyboard shortcuts sheet.** Press **?** when you’re not typing, or Ctrl/⌘+/.
 - **Undo for research marks.** Marking, unmarking and deleting a thread or question can be undone with Ctrl/⌘+Z, Redo with Ctrl/⌘+Shift+Z, or **Undo** in the message that appears.
-- **Typewriter scrolling and paragraph dimming outside focus mode.** Turn them on from the toolbar's ⋯ menu, or choose in Settings whether they apply in focus mode only or always. Research marks can be hidden in focus mode.
+- **Typewriter scrolling and paragraph dimming outside focus mode.** Turn them on from the toolbar’s ⋯ menu, or choose in Settings whether they apply in focus mode only or always. Research marks can be hidden in focus mode.
 - **☰ puts the sidebar away** on a wide screen too, for more room on the page.
 
 ### Changed
@@ -369,16 +378,16 @@ The release to hand to people who have never heard of Anabasis: co-writing witho
   - **Threads** (T): named, colored highlights that follow a theme, argument or person through the whole piece. Step through a thread from the Research tab, read it straight through in manuscript order, or turn it into a working document.
   - **Claims** (C): a claims register. Anabasis finds the citations inside a claim or right after it and flags claims with no source, claims resting only on sources rated D–E or 4–5, and supported claims edited since they were checked. Statuses: not checked, supported, needs a source, contested, cut. Export a printable **fact-check sheet** with full citations, or a CSV.
   - **Review keys** (R): a passage to come back to, with a reason and a due date. Due keys appear in the Research tab and on Project home; mark them done or snooze them a week.
-  - **Questions** (Q): link passages to open research questions (shared with Plan), and record what you've found.
-- A **Research** tab in the sidebar: threads, the current document's claims, what's due for review, and open questions.
-- The **research desk**: threads read through, the claims register, an **evidence grid** of claims against sources with each source's rating, review keys by due date, questions, and **Everything about…**, which gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names & spellings, and can make a dossier document from the results.
+  - **Questions** (Q): link passages to open research questions (shared with Plan), and record what you’ve found.
+- A **Research** tab in the sidebar: threads, the current document’s claims, what’s due for review, and open questions.
+- The **research desk**: threads read through, the claims register, an **evidence grid** of claims against sources with each source’s rating, review keys by due date, questions, and **Everything about…**, which gathers every paragraph, note, source and marked passage that mentions a name or term, including its other spellings from Names & spellings, and can make a dossier document from the results.
 - Project home lists claims that need checking among the loose ends, and a **Due for review** card.
 - File format: new top-level `threads`, `claims` and `reviewKeys`, and `span.rm` marks in document HTML (see docs/file-format.md). Older versions of Anabasis open these files and keep the marks as plain text spans.
 
 ## [1.0.4] — 2026-11-23
 
 ### Fixed
-- Typing in the source form no longer freezes the page. Each pause used to rebuild the citation formatter, redraw every source and reformat the whole document (about two seconds on a large project). Now the formatter is reused, only the edited row and the preview are redrawn, and the document's notes update a moment after you stop typing, and only if it cites that source.
+- Typing in the source form no longer freezes the page. Each pause used to rebuild the citation formatter, redraw every source and reformat the whole document (about two seconds on a large project). Now the formatter is reused, only the edited row and the preview are redrawn, and the document’s notes update a moment after you stop typing, and only if it cites that source.
 - Searching sources and notes, and find-in-all-documents, stay responsive on large projects (one pass to count citations, documents read once per search session, debounced lists).
 - Returning to a chapter, or exporting it, reuses its formatted citations when nothing has changed.
 
@@ -447,6 +456,22 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
+[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.0...HEAD
+[2.10.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.0
+[2.9.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.9.0
+[2.8.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.8.0
+[2.7.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.7.3
+[2.7.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.7.2
+[2.7.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.7.1
+[2.7.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.7.0
+[2.6.3]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.6.3
+[2.6.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.6.2
+[2.6.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.6.1
+[2.6.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.6.0
+[2.5.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.5.1
+[2.5.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.5.0
+[2.4.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.4.0
+[2.3.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.3.0
 [2.2.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.2.0
 [2.1.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.1.0
 [2.0.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.0.0
