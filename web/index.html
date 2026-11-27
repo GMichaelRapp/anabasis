@@ -77,7 +77,9 @@ p{margin:0}
 .brand{display:flex;align-items:center;gap:9px;color:var(--ink);text-decoration:none;font:700 23px/1 var(--display);font-variant:small-caps;letter-spacing:.06em}
 .brand svg{width:28px;height:28px;flex:none}
 .top nav{display:flex;gap:22px;margin-left:auto;font-size:15px}
-.top nav a{color:var(--muted);text-decoration:none}
+.top nav a{color:var(--muted);text-decoration:none;white-space:nowrap}
+@media (max-width:1180px){.top nav .wide{display:none}}
+@media (max-width:860px){.top nav .mid{display:none}}
 .top nav a:hover{color:var(--ink);text-decoration:underline}
 
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:10px 20px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:700 16px/1.2 var(--ui);text-decoration:none;white-space:nowrap}
@@ -276,11 +278,14 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
-      <a href="#new">New in 2.11</a><a href="#showcase">Showcase</a>
+      <a href="#new">New in 2.11</a>
+      <a class="wide" href="#showcase">Showcase</a>
       <a href="#route">What it does</a>
-      <a href="#yours">Your work</a>
-      <a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
-      <a href="https://github.com/gmichaelrapp/anabasis">Source code</a> <a href="https://zerohistory.net/tools/">More tools</a>
+      <a class="wide" href="#yours">Your work</a>
+      <a href="story/">The story</a>
+      <a class="wide" href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a>
+      <a class="mid" href="https://github.com/gmichaelrapp/anabasis">Source code</a>
+      <a class="mid" href="https://zerohistory.net/tools/">More tools</a>
     </nav>
     <a class="btn primary" href="app/">Open Anabasis</a>
   </div>
@@ -650,6 +655,7 @@ section{padding:96px 0 0}
     <div>
       <h2>Learn</h2>
       <ul>
+        <li><a href="story/">How Anabasis was built</a></li>
         <li><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/quick-start.md">Quick start</a></li>
         <li><a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">What’s new</a></li>
         <li><a href="https://github.com/gmichaelrapp/anabasis/blob/main/docs/file-format.md">File format</a></li>

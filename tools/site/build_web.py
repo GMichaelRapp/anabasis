@@ -6,6 +6,7 @@
 
 site/
   index.html                 the front page (web/index.html, with version and size filled in)
+  story/index.html           how Anabasis was built, in the author's words (web/story/index.html)
   anabasis.html              the app as a download (served with Content-Disposition: attachment)
   app/                       the hosted, installable app (tools/site/build_site.py)
   fonts/, img/               the page's own fonts and images: it loads nothing from elsewhere
@@ -39,6 +40,14 @@ HEADERS = """{P}/*
   X-Frame-Options: DENY
 
 {P}/index.html
+  Content-Security-Policy: {CSP}
+  X-Frame-Options: DENY
+
+{P}/story/
+  Content-Security-Policy: {CSP}
+  X-Frame-Options: DENY
+
+{P}/story/index.html
   Content-Security-Policy: {CSP}
   X-Frame-Options: DENY
 
@@ -81,6 +90,12 @@ def main(out=SITE, base='/'):
     if base != '/':  # relative links resolve under the path, with or without a trailing slash in the address
         page = page.replace('<meta charset="utf-8">', f'<meta charset="utf-8">\n<base href="{base}">', 1)
     (out / 'index.html').write_text(page, encoding='utf-8')
+    # The story sits one level down, so it always gets a <base>: its links are written relative to the front page.
+    story = (ROOT / 'web' / 'story' / 'index.html').read_text(encoding='utf-8').replace('{{VERSION}}', version)
+    assert '{{' not in story, 'unfilled placeholder in web/story/index.html'
+    story = story.replace('<meta charset="utf-8">', f'<meta charset="utf-8">\n<base href="{base}">', 1)
+    (out / 'story').mkdir()
+    (out / 'story' / 'index.html').write_text(story, encoding='utf-8')
     (out / 'fonts').mkdir()
     for f in FONTS: shutil.copy(ROOT / 'assets' / 'fonts' / f'{f}.woff2', out / 'fonts')
     (out / 'img').mkdir()
