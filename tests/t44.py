@@ -93,10 +93,12 @@ async def main():
         # ---- Read and take notes
         await pg.set_input_files('#filePdf', FIX); await pg.wait_for_timeout(2500)
         await pg.click('#rdNotes'); await pg.wait_for_timeout(500)
+        await pg.wait_for_function("() => document.querySelectorAll('#rdPages .rd-page .textLayer span').length > 6", timeout=30000)  # slow machines: wait for the text layer
         lay = await pg.evaluate("() => ({ on: document.body.classList.contains('rr-on'), main: getComputedStyle($('#main')).display, pane: !$('#rrPane').classList.contains('hidden'), left: $('#reader').getBoundingClientRect().left < $('#rrPane').getBoundingClientRect().left })")
         check('Take notes puts the PDF on the left and a note pad on the right, the writing set aside', lay['on'] and lay['main'] == 'none' and lay['pane'] and lay['left'], lay)
         await pg.fill('#rrText', 'Timetables made the plan rigid.'); await pg.fill('#rrTags', 'war plans')
-        await pg.press('#rrText', 'Control+Enter'); await pg.wait_for_timeout(400)
+        await pg.press('#rrText', 'Control+Enter')
+        await pg.wait_for_function("() => $('#rrText').value === ''", timeout=10000)
         sel = await pg.evaluate("""() => { const sp = [...document.querySelectorAll('#rdPages .rd-page .textLayer span')].filter(s => s.textContent.trim().length > 20)[2]; if (!sp) return ''; const r = document.createRange(); r.selectNodeContents(sp); const s = getSelection(); s.removeAllRanges(); s.addRange(r); return sp.textContent.trim(); }""")
         await pg.wait_for_timeout(350)
         await pg.click('#rdSelBar [data-k="quote"]'); await pg.wait_for_timeout(200)
