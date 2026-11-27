@@ -17,6 +17,7 @@
 - [Literature grid and codes](Literature-Grid-and-Codes)
 - [Socrates](Socrates)
 - [The Oracle](The-Oracle)
+- [The Quartermaster](The-Quartermaster)
 
 **Finishing**
 - [Checking the draft](Checking-the-Draft)

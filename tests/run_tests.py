@@ -64,6 +64,7 @@ SUITES = {
     't57': 'hardening against crafted project files: ids, references, colors and kinds without markup; footnote numbers as text; HTML read without loading; LaTeX and Markdown escaping; messages between windows',
     't58': 'a fuzzed hostile project: script payloads in every field, every view visited, every saved web page opened; nothing runs, nothing is fetched',
     't59': '2.10.2 security: Trusted Types and the hashed script policy, password checks, the idle lock, encrypted PDFs and token in a locked project, Work offline, the public-repository guard, photo metadata, saved pages, framing',
+    't60': 'the Quartermaster: recording, pastes told apart, pause and changes it didn’t see, tamper checks, reopening, anchors, a hostile ledger, the report and its replay, locked projects, speed',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

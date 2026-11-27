@@ -722,6 +722,13 @@ body.mg-narrow .mg-card:not(.mg-collapsed){left:auto;right:0;width:min(260px,70v
 #btnMargin:not(.on){opacity:.55}
 .lock-badge{display:none;padding:2px 4px}
 body.locked .lock-badge{display:inline-block}
+/* 2.11: the Quartermaster */
+.qm-badge{display:inline-flex;align-items:center;gap:5px;font:12px var(--ui);color:var(--accent);background:var(--accent-soft);border:1px solid transparent;border-radius:999px;padding:2px 9px;margin-right:6px;cursor:pointer;white-space:nowrap}
+.qm-badge.hidden{display:none}.qm-badge i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.qm-badge.paused{color:var(--muted);background:transparent;border-color:var(--line)}.qm-badge.paused i{background:transparent;border:1.5px solid currentColor;width:5px;height:5px}
+.qm-keep{padding-left:18px}.qm-keep li{margin:6px 0}.qm-check{font-weight:600}.qm-check.ok{color:#2c6b3f}.qm-check.bad{color:var(--danger)}
+.qm-opts{border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px 10px;margin:12px 0 0}.qm-opts legend{font-weight:600;padding:0 4px}.qm-opts label{display:block;margin:6px 0}
+[data-theme=dark] .qm-check.ok{color:#7fc796}
 /* 2.10.2: a locked project hidden while you're away; only the password box shows */
 body.idle-locked > :not(#pwDlg):not(script):not(style){visibility:hidden}
 body.idle-locked #pwDlg::backdrop{background:var(--bg,#fff)}
@@ -2516,11 +2523,13 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <select id="docStyle" aria-label="Citation style" data-minw="130"></select>
       <div class="spacer pb-flex"></div>
       <span class="tgt hidden" id="tgtBar"><i id="tgtFill"></i></span>
+      <button id="qmBadge" class="qm-badge hidden" data-nomenu type="button" aria-label="Quartermaster ledger"><i aria-hidden="true"></i><span>Ledger</span></button>
       <span class="wc" id="wordCount" data-pri="6" data-label="" data-nomenu></span>
       <button id="btnSplit" class="ghost" data-pri="5" data-label="Beside the writing" aria-label="Beside the writing" title="Notes, sources, the research desk or another document beside the writing (Ctrl+\\)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M12 4v16M15 8h3M15 11h3M15 14h2"/></svg></button>
       <button id="btnMargin" class="ghost" data-pri="5" data-label="Show or hide margin notes" aria-label="Margin notes" title="Show or hide margin notes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M17.5 8.5h1.5M17.5 12h1.5"/></svg><span class="mg-n"></span></button>
       <button id="btnPageSetup" class="ghost" data-pri="3" data-label="Page setup" aria-label="Page setup" title="Title block, fonts, spacing, bibliography options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Page setup</span></button>
       <button id="btnVersions" class="ghost" data-pri="2" data-label="Drafts" aria-label="Drafts" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span></button>
+      <button id="btnQM" class="ghost" data-pri="6" data-label="Quartermaster: an honest account of how this was written" aria-label="Quartermaster" title="The Quartermaster: keep an honest account of how this document is written, and save it as a report"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3M9 7.5h6M9 11h6M9 14.5h3"/></svg><span class="lbl">Quartermaster</span></button>
       <button id="btnRecord" class="ghost" data-pri="4" data-label="Record" aria-label="Record" title="Daily words, streak, chapter status and deadlines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M20.5 4l-4.5 4-3-2.5L8 9"/></svg><span class="lbl">Record</span></button>
       <button id="btnListen" class="ghost" data-pri="5" data-label="Listen: read aloud" aria-label="Listen: read the draft aloud" title="Read the draft aloud from the cursor, highlighting each sentence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><span class="lbl">Listen</span></button>
       <button id="btnFocus" class="ghost" data-pri="1" data-label="Focus mode" aria-label="Focus mode" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Focus</span></button>
@@ -3457,6 +3466,12 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   </div>
   <footer><button id="pwFresh" class="ghost danger hidden">Forgot it? Start without this copy</button><button id="pwCancel">Cancel</button><button id="pwOk" class="primary">Unlock</button></footer>
 </div></dialog>
+<!-- 2.11: the Quartermaster -->
+<dialog id="qmDlg" class="wide" aria-labelledby="qmTitle"><div class="dlg">
+  <h3 id="qmTitle">The Quartermaster</h3>
+  <div class="body" id="qmBody"></div>
+  <footer id="qmFoot"></footer>
+</div></dialog>
 <dialog id="lockDlg"><div class="dlg">
   <h3>This project is locked</h3>
   <div class="body"><p>The project file and this browser’s copy are encrypted with your password (AES-256). You’ll be asked for it when you open the file, or when Anabasis starts.</p>
@@ -4062,6 +4077,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <li><b>Export → Substack post</b> copies the document ready to paste: notes become a numbered Notes section, figures stay images, and tables are drawn as images because Substack has no tables. The .zip package has the post and every image, in case something doesn’t paste.</li>
       <li><b>Import .md</b> (Notes tab) takes a whole folder, such as Notecards or an Obsidian vault, or a few files. Subfolders can become board piles.</li>
       <li><b>Autosave to file</b> (Settings, Chrome and Edge): after you save the project once, Anabasis writes to the same .json a few seconds after you stop typing. After a restart the browser may ask for one click (<i>Resume autosave</i>) before it can write again.</li>
+      <li><b>The Quartermaster</b> (the ledger button in the document bar, or its ⋯ menu) keeps an honest account of how a document is written, if you turn it on: snapshots as you write, and where pasted text came from. Save it as a report with a replay to show your process. It records no keystrokes and nothing outside Anabasis, stays in your project file, and shows a process rather than proving who wrote anything.</li>
       <li><b>Lock project</b> (Export menu) encrypts the project file and everything this browser keeps for it, PDFs and archive photos included, with a password (AES-256, PBKDF2). There’s no recovery if you forget it. After 15 minutes away it hides itself and asks for the password again (change that, or <b>Lock now</b>, in the lock settings).</li>
     </ul>
     <h4>Project home</h4>

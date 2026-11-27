@@ -70,6 +70,10 @@ Photos carry more than pixels: where they were taken (GPS), the camera and its s
 
 Every web page Anabasis saves (a document, a reviewer’s page, a dashboard, a comparison of drafts, a fact-check sheet) carries its own content security policy: it can run only the scripts written into it and load nothing from the internet, except a dashboard’s YouTube and Vimeo tiles and the video files they link.
 
+## The Quartermaster
+
+The Quartermaster is off until you turn it on for a document. While it's on, it keeps a ledger in that document: snapshots of the text every couple of minutes of writing, and for each paste whether it came from outside Anabasis, your notes, a quotation or elsewhere in the project (with the pasted text, so the report can mark it). It records no keystrokes and nothing outside Anabasis. The ledger stays in your project file, locked with it if the project is locked, and goes nowhere unless you save a report or back up to GitHub. A copy you send to a collaborator leaves it out. A report holds only what you choose when you save it; with the replay, it shows everything the document said along the way. See the [wiki page](https://github.com/gmichaelrapp/anabasis/wiki/The-Quartermaster).
+
 ## Files from other people
 
 A project file is data, but a crafted one could try to smuggle in code. Anabasis cleans every document, draft and note when it opens a file. Scripts, event handlers, `javascript:` links, frames, forms and remote images are removed before anything reaches the page.

@@ -4,6 +4,21 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.11.0] — 2026-11-27
+
+### Added
+- **The Quartermaster**: an honest account of how a document is written, for writers who want to show their process. Off until you turn it on for a document (the ledger button in the document bar). While it's on, it keeps a ledger in the document: a snapshot of the text every couple of minutes of writing, and for each paste whether it came from outside Anabasis, your notes, a quotation with its source, or elsewhere in the project. It records no keystrokes and nothing outside Anabasis. A badge shows while it's keeping the ledger; pause, resume or delete it at any time.
+- **The Quartermaster report**: one self-contained web page with the account (when, how many sessions, how long, words now, what was pasted from where), a chart of words over time, the text marked by where it came from, a replay of the writing, and whether the ledger is intact. Every report says plainly that it shows a process and doesn't prove who wrote anything. Your name, the replay and the titles of notes you used go in only if you choose.
+- **Tamper evidence.** Each entry carries the SHA-256 of the entry before it, so an entry changed, dropped or reordered later breaks the chain; the report checks it again in the reader's browser. A ledger moved to another document or project shows that too. With GitHub backup on, each backup commit names each ledger's latest link and is recorded in the ledger, so the backups show when it existed.
+- Changes made while the ledger was paused, or in another browser or an older version, are caught when the document opens or the ledger resumes, and shown as such.
+
+### Security
+- A ledger in a project file is checked entry by entry when the file opens: known kinds of entry only, numbers as numbers, dates as dates, ids in a safe set of characters, and caps on size. Anything malformed is dropped (and the chain shows it); a ledger too large to read is set aside and the rest of the project opens. The report holds the ledger as escaped data, draws everything as text, runs only its own script under its own content security policy, and loads nothing.
+- A copy sent to a collaborator leaves the ledgers out. Saving a report from a locked project asks first, because the report isn't locked.
+
+### Tests
+- New suite `t60`: recording, pastes told apart, pause and changes made elsewhere, every kind of tampering, reopening, anchors, a hostile ledger, the report and its replay, an edited report, locked projects, and snapshot speed on a 180,000-word document.
+
 ## [2.10.2] — 2026-11-27
 
 A security release: more layers between anything hostile and your work, and less of your work leaving with what you send.
@@ -484,7 +499,8 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
-[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.10.2...HEAD
+[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.11.0...HEAD
+[2.11.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.11.0
 [2.10.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.2
 [2.10.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.1
 [2.10.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.0

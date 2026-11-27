@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.10.2';
+const APP_VERSION = '2.11.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -131,6 +131,7 @@ const todayISOof = iso => { const d = iso && !isNaN(new Date(iso)) ? new Date(is
 function normalize(p) {
   p = migrateProject(p);
   if (p && Array.isArray(p.docs)) p.docs = p.docs.filter(x => x && typeof x === 'object').map(x => Object.assign(x, { html: scrubHTML(asStr(x.html)), title: asStr(x.title), snapshots: Array.isArray(x.snapshots) ? x.snapshots.filter(v => v && typeof v === 'object').map(v => Object.assign(v, { html: scrubHTML(asStr(v.html)), name: asStr(v.name) })) : [] }));
+  if (p && Array.isArray(p.docs)) p.docs.forEach(qmClean); // the Quartermaster's ledgers (2.11), checked entry by entry
   // an abstract (2.5): text, keywords and settings, whatever a damaged or hand-edited file holds
   if (p && Array.isArray(p.docs)) p.docs.forEach(x => { const a = x.meta && x.meta.abstract; if (!a) return; if (typeof a !== 'object') { delete x.meta.abstract; return; }
     x.meta.abstract = { shape: ABS_SHAPES[a.shape] ? a.shape : 'humanities', parts: a.parts && typeof a.parts === 'object' ? Object.fromEntries(Object.entries(a.parts).map(([k, v]) => [k, asStr(v)])) : {}, text: asStr(a.text), keywords: Array.isArray(a.keywords) ? a.keywords.map(asStr).filter(Boolean).slice(0, 30) : [], limit: Math.max(0, parseInt(a.limit, 10) || 0), include: a.include !== false, auto: !!a.auto }; });
@@ -411,7 +412,7 @@ function download(name, text, type) {
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
 }
-function projectJSON() { syncEditor(); return JSON.stringify(Object.assign({}, P, { app: 'Anabasis', format: FORMAT, appVersion: APP_VERSION, saved: nowISO() }), null, 2); }
+function projectJSON() { syncEditor(); qmFlush(); return JSON.stringify(Object.assign({}, P, { app: 'Anabasis', format: FORMAT, appVersion: APP_VERSION, saved: nowISO() }), null, 2); }
 async function saveProject(saveAs = false) {
   let text; try { text = await projectFileText(); } catch (e) { toast(e.message); return; }
   const types = [{ description: 'Anabasis project', accept: { 'application/json': ['.json'] } }];
@@ -769,6 +770,321 @@ editor.addEventListener('input', () => { if (tipLive) tipCheck(); });
 let lastSig = '';
 let savedRange = null;
 function curDoc() { return P.docs.find(d => d.id === curDocId); }
+/* ================================================================
+   The Quartermaster (2.11): an honest account of how a document was written. Off until the writer
+   turns it on for a document; then it keeps a ledger in the document (doc.ledger): a snapshot of the
+   text every couple of minutes of writing (as a difference from the one before), and where pasted
+   text came from: outside Anabasis, the writer's own notes, a quotation with its source, or text
+   moved within the project. Each entry carries the SHA-256 of the entry before it, so an entry
+   changed, dropped or reordered later breaks the chain. It records no keystrokes, nothing outside
+   Anabasis, and never leaves this computer unless the writer saves a report or backs up to GitHub.
+   It shows a process; it can't prove who wrote a document, and the report says so.
+   Everything in a ledger is treated as hostile when it is read back (qmClean).
+   ================================================================ */
+const QM_KINDS = { start: 1, snap: 1, paste: 1, pause: 1, resume: 1, anchor: 1 };
+const QM_SRC = { outside: 1, note: 1, quote: 1, moved: 1 };
+const QM_MAX_EVENTS = 200000, QM_MAX_CHARS = 40e6, QM_SNAP_MS = 120e3, QM_GAP_MS = 5 * 60e3, QM_X_MAX = 20000;
+const QM_ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?Z$/, QM_B64 = /^[A-Za-z0-9+/=]{0,44}$/, QM_ID = /^[\w-]{1,80}$/;
+const QM_SET_ASIDE = [];
+let qmDirty = false, qmLastSnap = 0;
+const qmStable = v => Array.isArray(v) ? '[' + v.map(qmStable).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + qmStable(v[k])).join(',') + '}' : JSON.stringify(v);
+const qmHash = e => sha256B64(e.t + '\n' + e.k + '\n' + e.p + '\n' + qmStable(e.d));
+const qmNorm = s => String(s || '').replace(/ /g, ' ').replace(/\s+/g, ' ').trim();
+const qmWords = paras => paras.reduce((n, t) => n + wc(t), 0);
+const qmOn = d => !POPOUT && !!(d && d.ledger && d.ledger.on);
+const QM_BLOCK = 'p,h1,h2,h3,h4,h5,h6,li,blockquote,pre,figcaption,dt,dd,tr';
+function qmParasOf(d) { // the document's text, one entry per block, from its saved markup (never the live page, which adds figure numbers)
+  if (d.id === curDocId) syncEditor();
+  const doc = new DOMParser().parseFromString('<body>' + (d.html || '') + '</body>', 'text/html'), out = [];
+  doc.body.querySelectorAll(QM_BLOCK).forEach(el => { if (el.querySelector(QM_BLOCK)) return; const t = el.tagName === 'TR' ? [...el.cells].map(c => qmNorm(c.textContent)).join(' | ') : qmNorm(el.textContent); if (t.replace(/[ |]/g, '')) out.push(t); });
+  return out;
+}
+function qmDiff(a, b) {
+  let i = 0; const n = Math.min(a.length, b.length); while (i < n && a[i] === b[i]) i++;
+  let j = 0; while (j < n - i && a[a.length - 1 - j] === b[b.length - 1 - j]) j++;
+  return { a: i, r: a.length - i - j, s: b.slice(i, b.length - j) };
+}
+const qmApply = (paras, d) => paras.slice(0, d.a).concat(d.s, paras.slice(d.a + d.r));
+function qmReplay(L, upto = Infinity) { let p = []; for (let i = 0; i < L.events.length && i <= upto; i++) { const e = L.events[i]; if (e.k === 'snap') p = qmApply(p, e.d); } return p; }
+const qmQuick = s => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return 'f' + (h >>> 0).toString(36) + '.' + s.length; }
+const QM_OK = new WeakSet();
+function qmPrev(L) { // the text as of the last snapshot: a cache beside the chain (checked once, rebuilt from the chain if it doesn't match)
+  if (QM_OK.has(L)) return L.last;
+  if (!(Array.isArray(L.last) && L.text === qmQuick(L.last.join('\n')))) { L.last = qmReplay(L); L.text = qmQuick(L.last.join('\n')); }
+  QM_OK.add(L); return L.last;
+}
+function qmAppend(d, k, data) {
+  const L = d.ledger, e = { t: nowISO(), k, d: data, p: L.head || '' };
+  L.events.push(e); L.head = qmHash(e); L.size = (L.size || 0) + JSON.stringify(data).length;
+  if (L.size > QM_MAX_CHARS * 0.95 || L.events.length > QM_MAX_EVENTS * 0.95) { L.on = false; toast('The Quartermaster’s ledger for this document is full, so it has stopped. Save a report to keep it, then delete the ledger to start a new one.'); qmUI(); }
+  markDirty(); return e;
+}
+function qmSnap(d, flags) {
+  if (!qmOn(d)) return false;
+  const L = d.ledger, prev = qmPrev(L), now = qmParasOf(d), df = qmDiff(prev, now);
+  if (!df.r && !df.s.length) return false;
+  qmAppend(d, 'snap', Object.assign({ a: df.a, r: df.r, s: df.s, w: qmWords(now) }, flags || {}));
+  L.last = now; L.text = qmQuick(now.join('\n')); qmLastSnap = Date.now();
+  return true;
+}
+function qmFlush() { const d = P && curDoc(); if (qmDirty && qmOn(d)) { qmDirty = false; qmSnap(d); } }
+editor.addEventListener('input', () => { qmDirty = true; });
+setInterval(() => { if (qmDirty && Date.now() - qmLastSnap >= QM_SNAP_MS) qmFlush(); }, 15e3);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') qmFlush(); });
+function qmOutside(d) { // edits made while the ledger wasn't watching (paused, another browser, an older version)
+  if (qmOn(d)) qmSnap(d, { out: 1 });
+}
+/* where pasted text came from */
+let qmDocTextCache = { k: '', t: '' };
+function qmProjectText() {
+  const k = P.docs.map(x => x.id + x.modified).join('|'); if (qmDocTextCache.k === k) return qmDocTextCache.t;
+  const t = P.docs.map(x => qmNorm(htmlToText(x.html || ''))).join(' \u0001 '); qmDocTextCache = { k, t }; return t;
+}
+function qmSource(norm) {
+  if (norm.length >= 12) {
+    const n = P.notes.find(n => n.body && qmNorm(n.body).includes(norm));
+    if (n) return { src: n.kind === 'quote' && n.sourceId ? 'quote' : 'note', ref: QM_ID.test(n.id) ? n.id : undefined };
+    const d = curDoc(), last = d && d.ledger ? (d.ledger.last || []).join(' ') : '';
+    if (last.includes(norm) || qmProjectText().includes(norm)) return { src: 'moved' };
+  }
+  return { src: 'outside' };
+}
+function qmPasted(text, via = 'paste', note = null) {
+  const d = P && curDoc(); if (!qmOn(d)) return;
+  const norm = qmNorm(text); if (!norm) return;
+  qmSnap(d); // what was typed before, kept apart from what came in
+  const s = note ? { src: note.kind === 'quote' && note.sourceId ? 'quote' : 'note', ref: QM_ID.test(note.id) ? note.id : undefined } : qmSource(norm);
+  const data = { src: s.src, via, w: wc(norm), x: norm.slice(0, QM_X_MAX) }; if (s.ref) data.ref = s.ref;
+  qmAppend(d, 'paste', data); qmDirty = true; qmLastSnap = 0; // the pasted text goes into the next snapshot at once
+}
+/* reading a ledger back: everything checked, anything malformed dropped (which the chain then shows) */
+const qmInt = v => Number.isInteger(v) && v >= 0 && v < 1e9;
+function qmValid(e) {
+  if (!e || typeof e !== 'object' || Array.isArray(e) || !QM_KINDS[e.k] || typeof e.t !== 'string' || !QM_ISO.test(e.t) || typeof e.p !== 'string' || !QM_B64.test(e.p)) return 0;
+  const d = e.d; if (!d || typeof d !== 'object' || Array.isArray(d)) return 0;
+  const keys = Object.keys(d), only = (...ks) => keys.every(k => ks.includes(k)) && Object.keys(e).every(k => ['t', 'k', 'd', 'p'].includes(k));
+  switch (e.k) {
+    case 'start': return only('doc', 'project') && QM_ID.test(d.doc) && QM_ID.test(d.project) ? 1 : 0;
+    case 'snap': {
+      if (!only('a', 'r', 's', 'w', 'out', 'pre') || !qmInt(d.a) || !qmInt(d.r) || !qmInt(d.w) || !Array.isArray(d.s) || ('out' in d && d.out !== 1) || ('pre' in d && d.pre !== 1)) return 0;
+      let n = 0; for (const t of d.s) { if (typeof t !== 'string') return 0; n += t.length; } return n + 1;
+    }
+    case 'paste': return only('src', 'via', 'w', 'x', 'ref') && QM_SRC[d.src] && (d.via === 'paste' || d.via === 'insert') && qmInt(d.w) && typeof d.x === 'string' && d.x.length <= QM_X_MAX && (!('ref' in d) || QM_ID.test(d.ref)) ? d.x.length + 1 : 0;
+    case 'pause': case 'resume': return only() ? 1 : 0;
+    case 'anchor': return only('sha', 'at') && /^[0-9a-f]{7,64}$/.test(d.sha) && QM_ISO.test(d.at) ? 1 : 0;
+  }
+  return 0;
+}
+function qmClean(doc) {
+  if (!('ledger' in doc)) return;
+  const L = doc.ledger, aside = why => { delete doc.ledger; QM_SET_ASIDE.push(why); };
+  if (!L || typeof L !== 'object' || Array.isArray(L) || !Array.isArray(L.events)) return aside('damaged');
+  if (L.events.length > QM_MAX_EVENTS) return aside('too long');
+  let chars = 0; const ev = [];
+  for (const e of L.events) { const n = qmValid(e); if (!n) continue; chars += n; if (chars > QM_MAX_CHARS) return aside('too large'); ev.push(e); }
+  const last = Array.isArray(L.last) && L.last.every(t => typeof t === 'string') && L.last.reduce((n, t) => n + t.length, 0) < QM_MAX_CHARS ? L.last : [];
+  doc.ledger = { v: 1, on: L.on === true, events: ev, head: typeof L.head === 'string' && QM_B64.test(L.head) ? L.head : '', last, text: typeof L.text === 'string' && /^f[0-9a-z]{1,8}\.\d{1,9}$/.test(L.text) ? L.text : '', size: chars };
+}
+function qmAsideToast() {
+  if (!QM_SET_ASIDE.length) return;
+  toast(`A Quartermaster ledger in this project was ${QM_SET_ASIDE[0] === 'damaged' ? 'damaged' : 'larger than Anabasis reads'}, so it was set aside. Everything else opened normally.`);
+  QM_SET_ASIDE.length = 0;
+}
+/* is it intact? */
+function qmVerify(d) {
+  const L = d.ledger; let prev = '';
+  for (let i = 0; i < L.events.length; i++) { const e = L.events[i]; if (e.p !== prev) return { ok: false, at: i, t: e.t }; prev = qmHash(e); }
+  if (L.events.length && L.head !== prev) return { ok: false, at: L.events.length, t: L.events[L.events.length - 1].t };
+  const g = L.events[0];
+  return { ok: true, n: L.events.length, bound: !!(g && g.k === 'start' && g.d.doc === d.id && g.d.project === P.id) };
+}
+/* what it adds up to */
+function qmSummary(d) {
+  const L = d.ledger, E = L.events, times = E.filter(e => e.k === 'snap' || e.k === 'paste').map(e => Date.parse(e.t));
+  const sessions = []; let cur = null;
+  times.forEach(t => { if (cur && t - cur.end <= QM_GAP_MS) cur.end = t; else sessions.push(cur = { start: t, end: t }); });
+  const ms = sessions.reduce((n, s) => n + (s.end - s.start) + QM_SNAP_MS, 0);
+  const by = { outside: 0, note: 0, quote: 0, moved: 0 }; let pastes = { outside: 0, note: 0, quote: 0, moved: 0 };
+  E.filter(e => e.k === 'paste').forEach(e => { by[e.d.src] += e.d.w; pastes[e.d.src]++; });
+  const snaps = E.filter(e => e.k === 'snap'), pre = snaps.length && snaps[0].d.pre ? snaps[0].d.w : 0;
+  const out = snaps.filter(e => e.d.out).length, anchors = E.filter(e => e.k === 'anchor');
+  return { sessions, ms, by, pastes, pre, out, anchors, words: snaps.length ? snaps[snaps.length - 1].d.w : 0, first: E.length ? E[0].t : '', last: E.length ? E[E.length - 1].t : '', series: snaps.map(e => [Date.parse(e.t), e.d.w]) };
+}
+const qmDay = iso => new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+const qmDur = ms => { const m = Math.round(ms / 60e3); return m < 60 ? `${m} minute${m === 1 ? '' : 's'}` : `${Math.floor(m / 60)} h ${m % 60} min`; };
+/* the dialog */
+function openQM() {
+  const d = curDoc(); if (!d) return; qmFlush();
+  const L = d.ledger, body = $('#qmBody');
+  if (!L) {
+    $('#qmTitle').textContent = 'The Quartermaster';
+    body.innerHTML = `<p>The Quartermaster keeps an honest account of how <b>${esc(d.title || 'this document')}</b> is written: when you work on it, how it grows, and where pasted text came from. You can save it as a report to show your process to a teacher, editor or reader.</p>
+      <ul class="qm-keep"><li><b>It keeps</b> a snapshot of the text every couple of minutes while you write, and for each paste whether it came from outside Anabasis, your notes, a quotation with its source, or elsewhere in this project.</li>
+      <li><b>It never keeps</b> keystrokes, anything outside Anabasis, your clipboard beyond what you paste here, or anything about you.</li>
+      <li><b>It stays</b> in your project file. Nothing leaves this computer unless you save a report or back up to GitHub. You can pause it or delete it at any time.</li></ul>
+      <p class="small muted">It shows a process; it can’t prove who wrote something, and its report says so.</p>`;
+    $('#qmFoot').innerHTML = `<button id="qmClose">Not now</button><button id="qmStart" class="primary">Keep a ledger for this document</button>`;
+  } else {
+    const v = qmVerify(d), s = qmSummary(d);
+    $('#qmTitle').textContent = L.on ? 'The Quartermaster is keeping a ledger' : 'The Quartermaster’s ledger (paused)';
+    body.innerHTML = `<p>${L.events.length.toLocaleString()} entries since ${esc(qmDay(s.first))}: ${s.sessions.length} session${s.sessions.length === 1 ? '' : 's'}, about ${esc(qmDur(s.ms))} of writing, ${s.words.toLocaleString()} words now.</p>
+      <p class="qm-check ${v.ok && v.bound ? 'ok' : 'bad'}">${v.ok ? (v.bound ? 'Intact: no entry has been changed since it was recorded.' : 'Intact, but it was started in another document or project.') : `Changed after it was recorded, at entry ${v.at + 1} (${esc(qmDay(v.t))}).`}</p>
+      <fieldset class="qm-opts"><legend>Save a report</legend>
+        <label><input type="checkbox" id="qmReplay" checked> Include the replay <span class="muted">(everything the document said along the way, including passages you later cut)</span></label>
+        <label><input type="checkbox" id="qmName" ${PREFS.myName ? 'checked' : ''}> Show my name${PREFS.myName ? ` (${esc(PREFS.myName)})` : ' <span class="muted">(set it in Settings)</span>'}</label>
+        <label><input type="checkbox" id="qmNotes"> Show the titles of notes I used</label>
+      </fieldset>`;
+    $('#qmFoot').innerHTML = `<button id="qmDelete" class="danger">Delete ledger…</button><button id="qmPause">${L.on ? 'Pause' : 'Resume'}</button><button id="qmReport">Save report…</button><button id="qmClose" class="primary">Done</button>`;
+  }
+  $('#qmDlg').showModal();
+}
+$('#qmDlg').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const d = curDoc(); if (!d) return;
+  if (b.id === 'qmClose') $('#qmDlg').close();
+  else if (b.id === 'qmStart') {
+    d.ledger = { v: 1, on: true, events: [], head: '', last: [], text: qmQuick(''), size: 0 };
+    qmAppend(d, 'start', { doc: d.id, project: P.id }); qmSnap(d, { pre: 1 });
+    $('#qmDlg').close(); qmUI(); toast('The Quartermaster is keeping a ledger for this document.');
+  } else if (b.id === 'qmPause') {
+    const L = d.ledger; if (!L) return;
+    if (L.on) { qmFlush(); qmSnap(d); qmAppend(d, 'pause', {}); L.on = false; toast('Paused. Anything you change now shows in the report as made while the ledger was paused.'); }
+    else { L.on = true; qmAppend(d, 'resume', {}); qmSnap(d, { out: 1 }); toast('The Quartermaster is keeping the ledger again.'); }
+    qmUI(); openQM();
+  } else if (b.id === 'qmDelete') {
+    $('#qmDlg').close();
+    if (await ask('Delete this ledger?', 'The Quartermaster’s record of how this document was written goes. The document itself isn’t touched. Copies in your saved project files, checkpoints and GitHub backups stay as they were.', 'Delete ledger')) { delete d.ledger; markDirty(); qmUI(); toast('Ledger deleted.'); }
+  } else if (b.id === 'qmReport') {
+    const opt = { replay: $('#qmReplay').checked, name: $('#qmName').checked && PREFS.myName ? PREFS.myName : '', notes: $('#qmNotes').checked };
+    if (LOCK && !(await ask('The report isn’t locked', 'This project is locked, but the report is an ordinary web page: anyone with the file can read this document and, with the replay, how it changed.', 'Save report'))) return;
+    download(fileSafe(d.title || 'Untitled') + ' - Quartermaster report.html', qmReportHTML(d, opt), 'text/html');
+    toast('Report saved. It opens in any browser and contacts nothing.');
+  }
+});
+function qmUI() {
+  const d = P && curDoc(), L = d && d.ledger, b = $('#qmBadge');
+  b.classList.toggle('hidden', !L); b.classList.toggle('paused', !!(L && !L.on));
+  b.querySelector('span').textContent = L && !L.on ? 'Ledger paused' : 'Ledger';
+  b.title = L ? (L.on ? 'The Quartermaster is keeping a ledger of how this document is written. Click to pause it or save a report.' : 'The Quartermaster’s ledger is paused. Click to resume it.') : '';
+}
+$('#qmBadge').addEventListener('click', openQM);
+$('#btnQM').addEventListener('click', openQM);
+/* after a GitHub backup: the commit holds the ledger, so the backup's time anchors it */
+function qmBackupNote() {
+  return P.docs.filter(d => d.ledger && d.ledger.head).slice(0, 5).map(d => `Quartermaster ledger ${d.id.slice(-6)}: ${d.ledger.events.length} entries, link ${d.ledger.head.slice(0, 16)}`).join('\n');
+}
+function qmAnchor(sha) { if (!/^[0-9a-f]{7,64}$/.test(sha || '')) return; P.docs.forEach(d => { if (qmOn(d)) qmAppend(d, 'anchor', { sha, at: nowISO() }); }); }
+/* the report: one self-contained page, its own policy (pageCSP), one script for the replay and for checking the chain */
+function qmReportScript() {
+  var D = JSON.parse(document.getElementById('qm-data').textContent), E = D.events;
+  function stable(v) { if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']'; if (v && typeof v === 'object') return '{' + Object.keys(v).sort().map(function (k) { return JSON.stringify(k) + ':' + stable(v[k]); }).join(',') + '}'; return JSON.stringify(v); }
+  function b64(buf) { var s = '', u = new Uint8Array(buf); for (var i = 0; i < u.length; i++) s += String.fromCharCode(u[i]); return btoa(s); }
+  var out = document.getElementById('qm-live');
+  if (out && window.crypto && crypto.subtle) {
+    (async function () {
+      var prev = '', enc = new TextEncoder();
+      for (var i = 0; i < E.length; i++) {
+        var e = E[i]; if (e.p !== prev) { out.textContent = 'Checked in this browser just now: the ledger was changed after it was recorded, at entry ' + (i + 1) + '.'; out.className = 'bad'; return; }
+        prev = b64(await crypto.subtle.digest('SHA-256', enc.encode(e.t + '\n' + e.k + '\n' + e.p + '\n' + stable(e.d))));
+      }
+      var g = E[0], bound = g && g.k === 'start' && g.d.doc === D.doc && g.d.project === D.project;
+      out.textContent = 'Checked in this browser just now: all ' + E.length + ' entries link up' + (bound ? '.' : ', but the ledger was started in another document or project.');
+      out.className = bound ? 'ok' : 'bad';
+    })();
+  } else if (out) out.textContent = 'This browser can’t run the check here.';
+  var view = document.getElementById('rp-view'); if (!view) return;
+  var frames = [], paras = [], marks = [], keys = {};
+  function step(p, d) { return p.slice(0, d.a).concat(d.s, p.slice(d.a + d.r)); }
+  E.forEach(function (e) {
+    if (e.k === 'snap') { var d = e.d; paras = step(paras, d); if (frames.length % 40 === 0) keys[frames.length] = paras; frames.push({ t: e.t, d: d, a: d.a, n: d.s.length, w: d.w, out: !!d.out, pre: !!d.pre }); }
+    else if (e.k === 'paste' && e.d.w >= 30 && e.d.src === 'outside') marks.push({ i: frames.length, kind: 'outside' });
+  });
+  frames.forEach(function (f, i) { if (f.out) marks.push({ i: i, kind: 'out' }); });
+  var range = document.getElementById('rp-range'), when = document.getElementById('rp-when'), play = document.getElementById('rp-play'), speed = document.getElementById('rp-speed'), track = document.getElementById('rp-marks');
+  if (!frames.length) { when.textContent = 'Nothing written yet.'; return; }
+  range.max = String(frames.length - 1);
+  marks.forEach(function (m) { var s = document.createElement('span'); s.className = 'mk ' + m.kind; s.style.left = (frames.length > 1 ? 100 * Math.min(m.i, frames.length - 1) / (frames.length - 1) : 0) + '%'; s.title = m.kind === 'out' ? 'Changed while the ledger wasn’t keeping track' : 'A large paste from outside Anabasis'; track.appendChild(s); });
+  function show(i) {
+    var f = frames[i], k0 = i - i % 40, p = keys[k0]; for (var j = k0 + 1; j <= i; j++) p = step(p, frames[j].d);
+    view.textContent = '';
+    p.forEach(function (t, k) { var p = document.createElement('p'); p.textContent = t; if (k >= f.a && k < f.a + f.n) p.className = f.pre ? 'pre' : f.out ? 'out' : 'chg'; view.appendChild(p); });
+    var c = view.querySelector('.chg,.out'); if (c) view.scrollTop = Math.max(0, c.offsetTop - view.offsetTop - 24); // the replay's own box, never the page
+    when.textContent = new Date(f.t).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) + ' · ' + f.w.toLocaleString() + ' words' + (f.pre ? ' · already written when the ledger began' : f.out ? ' · changed while the ledger wasn’t keeping track' : '');
+    range.value = String(i);
+  }
+  var timer = null;
+  function stop() { clearInterval(timer); timer = null; play.textContent = 'Play'; }
+  play.addEventListener('click', function () {
+    if (timer) { stop(); return; }
+    if (+range.value >= frames.length - 1) show(0);
+    play.textContent = 'Pause';
+    timer = setInterval(function () { var i = +range.value + 1; if (i >= frames.length) { stop(); return; } show(i); }, 1000 / (+speed.value || 1));
+  });
+  speed.addEventListener('change', function () { if (timer) { stop(); play.click(); } });
+  range.addEventListener('input', function () { stop(); show(+range.value); });
+  show(frames.length - 1);
+}
+function qmReportHTML(d, opt) {
+  qmFlush(); const L = d.ledger, v = qmVerify(d), s = qmSummary(d), paras = qmParasOf(d);
+  const key = t => String(t).toLowerCase().replace(/[^\p{L}\s]/gu, ' ').replace(/\s+/g, ' ').trim(); // letters only: quotation marks, note numbers and punctuation don't count
+  const src = L.events.filter(e => e.k === 'paste' && e.d.src !== 'moved').map(e => ({ src: e.d.src, x: key(e.d.x), ref: e.d.ref }));
+  const noteTitle = ref => { const n = opt.notes && ref && P.notes.find(n => n.id === ref); return n ? n.title || '' : ''; };
+  const sentence = t => { const n = key(t); if (n.split(' ').length < 4) return null; return src.find(p => p.x.includes(n)) || null; };
+  let prevM = null;
+  const textHTML = paras.map(p => (prevM = null, '<p>') + (p.match(/[^.!?…]+[.!?…]*["”’)\]]*\s*|.+$/g) || [p]).map(t => {
+    let m = sentence(t); const k = key(t);
+    if (!m && prevM && k && k.split(' ').length < 4 && prevM.x.includes(k)) m = prevM; // “The sea! the sea!”: a short piece goes with the sentence before it
+    prevM = m; if (!m) return esc(t);
+    const ti = noteTitle(m.ref); return `<span class="src-${m.src}"${ti ? ` title="${esc('From your note: ' + ti)}"` : ''}>${esc(t)}</span>`;
+  }).join('') + '</p>').join('');
+  const n = (k, one, many) => `${s.by[k].toLocaleString()} word${s.by[k] === 1 ? '' : 's'} ${s.pastes[k] === 1 ? one : many.replace('#', s.pastes[k])}`;
+  const rows = [
+    ['Written', `${esc(qmDay(s.first))} to ${esc(qmDay(s.last))}, in ${s.sessions.length} session${s.sessions.length === 1 ? '' : 's'} (about ${esc(qmDur(s.ms))} of writing)`],
+    ['Words now', s.words.toLocaleString()],
+    s.pre ? ['Already there', `${s.pre.toLocaleString()} words were in the document when the ledger began`] : null,
+    s.pastes.outside ? ['Pasted from outside Anabasis', n('outside', 'in one paste', 'in # pastes')] : ['Pasted from outside Anabasis', 'none'],
+    s.pastes.note ? ['From your notes', n('note', 'from one note', 'from # notes')] : null,
+    s.pastes.quote ? ['Quoted with a source', n('quote', 'in one quotation', 'in # quotations')] : null,
+    s.pastes.moved ? ['Moved within the project', n('moved', 'in one move', 'in # moves')] : null,
+    s.out ? ['Changed while not kept', `${s.out} time${s.out === 1 ? '' : 's'} the document changed while the ledger was paused or wasn’t open`] : null,
+  ].filter(Boolean).map(([k, v2]) => `<tr><th>${esc(k)}</th><td>${v2}</td></tr>`).join('');
+  // words over time
+  let chart = '';
+  if (s.series.length > 1) {
+    const W = 640, H = 150, x0 = s.series[0][0], x1 = s.series[s.series.length - 1][0], ymax = Math.max(10, ...s.series.map(p => p[1]));
+    const X = t => (36 + (W - 48) * (x1 > x0 ? (t - x0) / (x1 - x0) : 0)).toFixed(1), Y = w => (H - 22 - (H - 34) * w / ymax).toFixed(1);
+    chart = `<figure class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Words in the document over time, from ${esc(qmDay(s.first))} to ${esc(qmDay(s.last))}"><line x1="36" y1="${H - 22}" x2="${W - 12}" y2="${H - 22}" class="ax"/><text x="32" y="${Number(Y(ymax)) + 4}" class="lb" text-anchor="end">${ymax.toLocaleString()}</text><text x="32" y="${H - 18}" class="lb" text-anchor="end">0</text><text x="36" y="${H - 4}" class="lb">${esc(qmDay(s.first))}</text><text x="${W - 12}" y="${H - 4}" class="lb" text-anchor="end">${esc(qmDay(s.last))}</text><polyline points="${s.series.map(p => X(p[0]) + ',' + Y(p[1])).join(' ')}" class="ln"/></svg><figcaption>Words in the document over time</figcaption></figure>`;
+  }
+  const anchors = s.anchors.length ? `Backed up to GitHub ${s.anchors.length} time${s.anchors.length === 1 ? '' : 's'}, from ${esc(qmDay(s.anchors[0].d.at))} to ${esc(qmDay(s.anchors[s.anchors.length - 1].d.at))} (commits ${s.anchors.slice(-5).map(a => esc(a.d.sha.slice(0, 7))).join(', ')}${s.anchors.length > 5 ? ', …' : ''}). Each backup holds the ledger as it was then, so anyone with access to that repository can compare.` : 'Not backed up to GitHub, so nothing outside this computer shows when the ledger existed.';
+  const chain = v.ok ? (v.bound ? `Intact: none of its ${v.n.toLocaleString()} entries has been changed since it was recorded.` : 'Its entries link up, but it was started in another document or project.') : `Changed after it was recorded, at entry ${v.at + 1} (${esc(qmDay(v.t))}).`;
+  const data = opt.replay ? JSON.stringify({ doc: d.id, project: P.id, events: L.events }).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029') : '';
+  const css = `body{font:16px/1.55 Georgia,"Times New Roman",serif;color:#1c1f24;background:#fbfaf7;margin:0}main{max-width:760px;margin:0 auto;padding:40px 22px 60px}
+h1{font-size:26px;line-height:1.2;margin:0 0 4px}h2{font:600 15px/1.3 -apple-system,"Segoe UI",Arial,sans-serif;letter-spacing:.02em;margin:34px 0 10px;color:#2f4f7f}
+.by{color:#5f6670;margin:0 0 20px;font-size:14px}.honest{border-left:3px solid #2f4f7f;background:#eef2f8;padding:12px 16px;font-size:15px;margin:20px 0}
+table{border-collapse:collapse;width:100%;font-size:15px}th,td{text-align:left;vertical-align:top;padding:7px 10px 7px 0;border-bottom:1px solid #e3dfd7}th{font-weight:600;width:38%;font-family:-apple-system,"Segoe UI",Arial,sans-serif;font-size:13.5px;color:#3c4249}
+.chart{margin:18px 0}.chart svg{width:100%;height:auto}.ax{stroke:#c9c3b8}.ln{fill:none;stroke:#2f4f7f;stroke-width:2;stroke-linejoin:round}.lb{font:11px -apple-system,"Segoe UI",Arial,sans-serif;fill:#6b6f76}figcaption{font-size:13px;color:#6b6f76}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;font:13.5px -apple-system,"Segoe UI",Arial,sans-serif;margin:8px 0 14px}.legend span{display:inline-flex;align-items:center;gap:6px}.legend i{display:inline-block;width:26px;height:14px;border-radius:2px;border:1px solid #c9c3b8}
+.text p{margin:0 0 .8em}.src-outside,.k-outside{background:repeating-linear-gradient(135deg,#f6dfa8 0 5px,#fbecc9 5px 10px)}.src-note,.k-note{background:radial-gradient(#9cc0ea 1.2px,#e2edf9 1.3px) 0 0/6px 6px}.src-quote,.k-quote{background:#dcefe0;box-shadow:inset 0 -2px #4f9a63}.k-typed{background:#fff}
+.rp{border:1px solid #ddd8cf;border-radius:8px;background:#fff;padding:12px}.rp-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font:14px -apple-system,"Segoe UI",Arial,sans-serif}.rp-bar input[type=range]{flex:1;min-width:160px}
+#rp-marks{position:relative;height:8px;margin:2px 0 8px}.mk{position:absolute;top:0;width:3px;height:8px;margin-left:-1px;background:#c98a1b}.mk.out{background:#a33a2c}
+#rp-view{max-height:420px;overflow:auto;border-top:1px solid #eee;padding-top:10px;font-size:15px}#rp-view p{margin:0 0 .7em}#rp-view .chg{background:#fff3c4}#rp-view .out{background:#f8dcd7}#rp-view .pre{background:#eef0f3}
+button,select{font:inherit;font-size:14px;padding:5px 12px;border:1px solid #b9b3a8;border-radius:6px;background:#fff;color:#1c1f24;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #2f4f7f;outline-offset:2px}
+.ok{color:#2c6b3f}.bad{color:#a33a2c;font-weight:600}.small{font-size:13.5px;color:#5f6670}footer{margin-top:40px;font-size:13px;color:#6b6f76}
+@media print{.rp{display:none}body{background:#fff}}`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>${esc(d.title || 'Untitled')}: Quartermaster report</title><style>${css}</style></head><body><main>
+<h1>${esc(d.title || 'Untitled')}</h1><p class="by">Quartermaster report${opt.name ? ' · ' + esc(opt.name) : ''} · saved ${esc(qmDay(nowISO()))}</p>
+<p class="honest">This report shows how this document was written in Anabasis: when, in how many sessions, and where pasted text came from. It doesn’t prove who wrote it. Someone could type out text from elsewhere, and a record made on a person’s own computer can be fabricated, though backup dates help show when it existed. Read it as part of a conversation about the writing, not a verdict.</p>
+<h2>The account</h2><table>${rows}</table>${chart}
+<h2>The text, by where it came from</h2>
+<div class="legend"><span><i class="k-typed"></i>Written here</span><span><i class="k-outside"></i>Pasted from outside Anabasis</span><span><i class="k-note"></i>From the writer’s notes</span><span><i class="k-quote"></i>Quoted with a source</span></div>
+<p class="small">A sentence is marked when its words still match what was pasted. Pasted text that was then rewritten shows as written here. Text moved within the writer’s own project isn’t marked.</p>
+<div class="text">${textHTML || '<p class="small">The document is empty.</p>'}</div>
+${opt.replay ? `<h2>The replay</h2><div class="rp"><div class="rp-bar"><button id="rp-play" type="button">Play</button><input id="rp-range" type="range" min="0" max="0" value="0" aria-label="Moment in the writing"><label>Speed <select id="rp-speed"><option value="1">1 step a second</option><option value="4" selected>4 a second</option><option value="12">12 a second</option></select></label></div><div id="rp-marks" aria-hidden="true"></div><p id="rp-when" class="small" aria-live="polite"></p><div id="rp-view"></div></div><p class="small">Each step is a snapshot the Quartermaster took while the document was being written, about every two minutes of writing. Yellow marks what changed; red marks changes made while the ledger was paused or wasn’t open; marks above the scrubber show large pastes from outside.</p>` : ''}
+<h2>Is the ledger intact?</h2><p class="${v.ok && v.bound ? 'ok' : 'bad'}">${chain}</p>${opt.replay ? '<p id="qm-live" class="small">Checking in this browser…</p>' : ''}<p class="small">${anchors}</p>
+<p class="small">Each entry carries a fingerprint (SHA-256) of the entry before it, so changing, removing or reordering an entry later breaks the chain. That shows the ledger hasn’t been edited, not that it is genuine: a whole ledger can be made up from scratch, which the backup dates make harder.</p>
+<footer>Made by the Quartermaster in Anabasis ${esc(APP_VERSION)}. This page loads nothing from the internet and sends nothing anywhere.</footer></main>
+${opt.replay ? `<script type="application/json" id="qm-data">${data}<\/script><script>(${qmReportScript.toString()})()<\/script>` : ''}</body></html>`;
+}
 function syncEditor() {
   const d = P && curDoc(); if (!d) return;
   const h = stripCp(editor.innerHTML);
@@ -816,6 +1132,7 @@ function titleBlockHTML(doc) {
 function openDoc(id, skipSync = false) {
   rcTouch('d', id);
   if (!skipSync) syncEditor();
+  if (P && curDoc()) qmFlush();
   const d = P.docs.find(x => x.id === id) || P.docs[0];
   if (!d) return;
   if (boardOn) closeBoard();
@@ -825,9 +1142,10 @@ function openDoc(id, skipSync = false) {
   if (relOn) closeRel();
   if (typeof deskOn !== 'undefined' && deskOn) closeDesk();
   if (typeof TTS !== 'undefined' && TTS.on) ttsStop();
-  curDocId = d.id;
+  curDocId = d.id; qmDirty = false; qmLastSnap = 0;
   editor.innerHTML = d.html || '<p><br></p>'; tidyTopLevel(); prepFigureDom(editor); hydrateImages(); renumberFigures();
   $('#docTitle').value = d.title;
+  qmUI(); if (qmOn(d)) setTimeout(() => { if (curDocId === d.id) qmOutside(d); }, 0);
   $('#docStyle').value = d.style;
   $('#titleBlock').innerHTML = titleBlockHTML(d);
   applyLayout($('#page'), d);
@@ -1025,6 +1343,7 @@ editor.addEventListener('paste', e => {
   const cd = e.clipboardData; if (!cd) return;
   const html = cd.getData('text/html');
   e.preventDefault();
+  qmPasted(cd.getData('text/plain') || (html ? htmlToText(html) : ''));
   if (html) document.execCommand('insertHTML', false, sanitize(html));
   else {
     const t = cd.getData('text/plain');
@@ -2099,6 +2418,7 @@ function noteToHTML(n, { withCite = true, heading = '' } = {}) {
 }
 function insertNote(n) {
   if (!n) return;
+  qmPasted(n.body || '', 'insert', n);
   insertBlocksAtCursor(noteToHTML(n));
   toast('Note inserted into “' + (curDoc().title || 'document') + '”');
 }
@@ -2369,7 +2689,7 @@ document.addEventListener('keydown', e => {
 });
 window.addEventListener('beforeunload', e => { if (dirtyFile) { syncEditor(); lsSet(STORE_KEY, sessionRecord()); e.preventDefault(); e.returnValue = ''; } });
 
-function renderAll() { try { padSync(); trashCount(); slushCount(); } catch (e) { /* set up below */ } $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); }
+function renderAll() { try { padSync(); trashCount(); slushCount(); } catch (e) { /* set up below */ } $('#projTitle').value = P.title; renderDocList(); renderNoteList(); renderSourceList(); if (typeof renderResearch === 'function') renderResearch(); if (!POPOUT && POPS.size) popSync(); setTimeout(qmAsideToast, 1800); }
 
 /* ================================================================
    Drafting & research tools
@@ -5576,6 +5896,7 @@ function rdQuoteIn(n) {
   let h = noteToHTML(n).replace(/^<p>/, '').replace(/<\/p>$/, '');
   const c = savedRange.startContainer, before = c.nodeType === 3 ? c.data.slice(0, savedRange.startOffset) : '';
   if (before && !/[\s (“‘"']$/.test(before)) h = ' ' + h;
+  qmPasted(n.body || '', 'insert', n);
   insertHTMLAtCursor(h);
   toast(`Quoted in “${curDoc().title || 'document'}” with its citation (${locAbbr(n.label)} ${n.locator}).`);
 }
@@ -7187,6 +7508,7 @@ $('#scOk').addEventListener('click', () => {
   P.collab = P.collab || { sent: [] };
   P.collab.sent = [{ id, at, to, note: $('#scNote').value.trim(), ...collabBase() }, ...P.collab.sent].slice(0, 5);
   const copy = Object.assign(JSON.parse(projectJSON()), { copyOf: { send: id, from, to, at, note: $('#scNote').value.trim() } });
+  copy.docs.forEach(x => { delete x.ledger; }); // the Quartermaster's ledgers stay with the writer
   delete copy.collab; // what you've sent other people stays with you
   $('#scDlg').close(); markDirty();
   download(fileSafe(P.title) + ' - for ' + fileSafe(to) + '.json', JSON.stringify(copy, null, 2), 'application/json');
@@ -9815,7 +10137,7 @@ async function ghBackup(manual = true) {
     }
     const text = await projectFileText(), b64 = bytesToB64(new TextEncoder().encode(text));
     const words = P.docs.reduce((n, d) => n + docWords(d), 0);
-    const message = `Back up “${LOCK ? 'locked project' : P.title}”: ${words.toLocaleString()} words, ${P.docs.length} document${P.docs.length === 1 ? '' : 's'}, ${P.notes.length} notes`;
+    const qmNote = qmBackupNote(), message = `Back up “${LOCK ? 'locked project' : P.title}”: ${words.toLocaleString()} words, ${P.docs.length} document${P.docs.length === 1 ? '' : 's'}, ${P.notes.length} notes` + (qmNote ? '\n\n' + qmNote : '');
     let ref = null, sha = '';
     try { ref = await gh(`${R}/git/ref/heads/${encodeURIComponent(branch)}`); } catch (e) { if (e.status !== 404 && e.status !== 409) throw e; }
     if (ref) { // another device backed this project up since this browser last did: don't quietly bury its work
@@ -9836,7 +10158,7 @@ async function ghBackup(manual = true) {
       await gh(`${R}/git/refs/heads/${encodeURIComponent(branch)}`, { method: 'PATCH', body: { sha: commit.sha } });
       sha = commit.sha;
     }
-    c.paths[P.id] = path; c.last = { at: nowISO(), pid: P.id }; if (sha) ghSeen()[P.id] = sha; savePrefs(); ghBarHide();
+    c.paths[P.id] = path; c.last = { at: nowISO(), pid: P.id }; if (sha) { ghSeen()[P.id] = sha; qmAnchor(sha); } savePrefs(); ghBarHide();
     ghStatus(`Backed up ${relTime(nowISO())} to ${c.repo} → ${path}`);
     if (manual) toast('Backed up to GitHub.'); else $('#saveState') && ($('#saveState').title = 'Last GitHub backup: ' + new Date().toLocaleTimeString());
   } catch (e) { ghStatus(e.message, true); if (manual) toast(e.message); else toast('GitHub backup failed: ' + e.message); throw e; }
@@ -10550,6 +10872,9 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.11.0': ['The Quartermaster keeps an honest account of how a document is written, if you turn it on: snapshots as you write, and whether pasted text came from outside, your notes or a quotation. Find it in the document bar.',
+    'Save it as a report to show your process to a teacher or editor: when you wrote, how the piece grew, the text marked by where it came from, and a replay. It opens in any browser and contacts nothing.',
+    'Each entry is chained to the one before, so a ledger changed later shows it, and GitHub backups record when it existed. It shows a process, not proof, and the report says so.'],
   '2.10.2': ['Security, in layers: only Anabasis’s own scripts can run, anything written into the page is cleaned again on the way, and every web page you save locks itself down the same way.',
     'Locking covers everything: PDFs, ePubs and archive photos in a locked project are encrypted too, and it hides itself when you step away (Lock now hides it at once). Pictures lose their GPS and camera details when you add them.',
     'Work offline (Settings) turns off everything that goes online. GitHub backups won’t go to a public repository without asking. Releases are signed, so you can check where your copy came from.'],
@@ -13609,6 +13934,7 @@ editor.addEventListener('paste', e => {
   if (!sgOn) return;
   e.preventDefault(); e.stopImmediatePropagation();
   const text = (e.clipboardData && e.clipboardData.getData('text/plain')) || ''; if (!text) return;
+  qmPasted(text);
   const sel = getSelection(); if (!sel.rangeCount) return; const r = sel.getRangeAt(0).cloneRange();
   sgEdit('paste a suggestion', () => { if (!r.collapsed) { const d = sgDelete(r); if (d && d.last) { r.setStartAfter(d.last); r.collapse(true); } } sgInsert(r, text.replace(/\s*\r?\n\s*/g, ' ')); });
 }, true);
