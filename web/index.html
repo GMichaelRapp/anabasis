@@ -278,7 +278,7 @@ section{padding:96px 0 0}
       Anabasis
     </a>
     <nav aria-label="On this page">
-      <a href="#new">New in 2.11</a>
+      <a href="#new">New in 2.12</a>
       <a class="wide" href="#showcase">Showcase</a>
       <a href="#route">What it does</a>
       <a class="wide" href="#yours">Your work</a>
@@ -317,21 +317,76 @@ section{padding:96px 0 0}
         <figcaption>The editor. Citations format as you type, and the notes and bibliography rebuild as you write.</figcaption>
       </figure>
 
-      <p class="new"><b>New in 2.11</b> <span>The Quartermaster keeps an honest account of how a document was written, if you turn it on, and saves it as a report with a replay. <a href="#new">See what’s new</a></span></p>
+      <p class="new"><b>New in 2.12</b> <span>Themes, workspaces, tasks for each chapter and section, Excalidraw sketches, handwritten notecards, and a Socrates and an Oracle that listen better. <a href="#new">See what’s new</a></span></p>
     </div>
   </div>
 
   <section id="new" aria-labelledby="new-h">
     <div class="wrap">
       <div class="head">
-        <p class="kicker">New in version 2.11</p>
-        <h2 id="new-h">An honest account of the writing</h2>
-        <p>Anyone can be asked to show how a piece of writing came to be. The Quartermaster, if you turn it on, keeps a ledger as you write: snapshots of the draft, and where pasted text came from. Save it as a report with a replay for a teacher, an editor or a reader. It records no keystrokes and nothing outside Anabasis, and it says plainly that it shows a process, not proof.</p>
+        <p class="kicker">New in version 2.12</p>
+        <h2 id="new-h">A desk arranged the way you work</h2>
+        <p>The first week of public use brought a list. Anabasis 2.12 answers it: themes, including your own colors; any part full screen with another beside it; task lists for a chapter or a single section; drafting colors; sketches drawn with Excalidraw; and the index cards you wrote by hand, brought in as notes.</p>
       </div>
       <div class="n26">
         <figure class="lead">
+          <div class="frame"><img src="img/sketch-detail.png" loading="lazy" width="1100" height="688" alt="Excalidraw open over a chapter: a hand-drawn box labeled Supply column with an arrow to an oval labeled The army, the drawing tools along the top, and Save to document at the bottom right."></div>
+          <figcaption><b>Sketches</b>Insert, then Sketch.<span>Draw a diagram with Excalidraw and it goes into the document as a figure, in every export. Click it to draw more. Excalidraw comes with Anabasis and runs sealed off from your project, with no way online.</span></figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/themes-detail.png" loading="lazy" width="1100" height="688" alt="The Themes window: Map sheet, Night march, Parchment, High contrast and Your own, with the custom theme’s colors and its contrast checks, each passing."></div>
+          <figcaption><b>Themes, and your own.</b> Map sheet, Night march, Parchment and High contrast. Or choose your own colors: Anabasis checks each for contrast as you go, and fixes text that would be hard to read.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/workspace-detail.png" loading="lazy" width="1100" height="688" alt="A workspace with notes filling most of the screen and sources in a narrower pane beside them, and a bar at the bottom with Swap, Change and Exit."></div>
+          <figcaption><b>Workspaces.</b> Any part full screen with another beside it: notes large and sources small, sources large and the writing small. Swap them with one click.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/tasks-detail.png" loading="lazy" width="1100" height="688" alt="The Tasks window for a chapter: a list for the whole document and one for the section Living off the land, with a task, a due date and a field for adding more; the section’s heading shows a count of two."></div>
+          <figcaption><b>Tasks for any part.</b> Press Tasks for a list attached to the chapter, or to the section you’re in. Due dates show on Project home and remind you when you open the chapter.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/colors-detail.png" loading="lazy" width="1100" height="688" alt="A chapter with one passage in blue marked rewrite and one in amber marked check the figure, the color menu open with its key and counts, and a Python code snippet in a gray box below."></div>
+          <figcaption><b>Drafting colors and code.</b> Color passages while you draft and write what each color means; exports leave the colors out. Code snippets stay exactly as typed, and never run.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/cards-detail.png" loading="lazy" width="1100" height="688" alt="The notecard converter: two typed cards, one read as a note titled Rations on the march with its source, page 112 and tags, waiting to be checked and added."></div>
+          <figcaption><b>Handwritten notecards.</b> Photograph your index cards, or type them, and check each before it becomes a note, with its source, page and tags filled in.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame"><img src="img/arrange-detail.png" loading="lazy" width="1100" height="688" alt="Project home being arranged: each card with buttons to move it, widen it or hide it, and new cards for tasks, pinned notes, a question from Socrates and a quick note."></div>
+          <figcaption><b>Project home, arranged.</b> Move, widen or hide its cards, and add tasks, pinned notes, a question from Socrates or a quick note.</figcaption>
+        </figure>
+      </div>
+      <ul class="also26">
+        <li><h3>Socrates, more careful</h3><p>Questions fit your words: “Are the Ten Thousand…”, “an FBI file”, a capital where the question starts.</p></li>
+        <li><h3>The Oracle, more like a person</h3><p>A pause before it answers, an “I see” now and then, and it comes back to what you said earlier. Still no AI.</p></li>
+        <li><h3>Readable in every theme</h3><p>Every theme is checked for contrast, including highlights and colored text, by the test suite on every build.</p></li>
+        <li><h3>Sealed sketches</h3><p>Excalidraw runs in a sandbox with no origin of its own, and every drawing is cleaned before it opens.</p></li>
+        <li><h3>Tested at scale</h3><p>A 300,000-word project with 1,500 sources, 780 task lists and 25 large drawings opens in seconds and types without stalls.</p></li>
+        <li><h3>Still one file</h3><p>About 27 MB, under a 50 MB ceiling. Offline, no account, no server, no tracking.</p></li>
+      </ul>
+      <p class="since">The 2.7 to 2.11 features are in the showcase below. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
+      <div class="n26-links">
+        <a class="btn primary" href="app/">Try 2.12 in your browser</a>
+        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki/Your-Desk">Themes, workspaces, tasks and sketches</a>
+        <a class="btn" href="story/">How Anabasis was built</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="showcase" aria-labelledby="show-h">
+    <div class="wrap">
+      <div class="head">
+        <p class="kicker">Showcase</p>
+        <h2 id="show-h">What came before 2.12</h2>
+        <p>Every feature from 2.7 to 2.11, as it looks in the app: from reading a book beside the draft and questioning it, to finishing a book, working in other languages, and showing how a piece was written.</p>
+      </div>
+      <div class="n26 gallery">
+
+        <figure>
           <div class="frame"><img src="img/report-detail.png" loading="lazy" width="1100" height="688" alt="A Quartermaster report: a paragraph saying what the report does and doesn’t show, then the account, with the dates written, four sessions, the words now and the words pasted from outside, from notes and quoted, and a chart of words over time."></div>
-          <figcaption><b>The report</b>One page that opens in any browser and contacts nothing.<span>When you wrote, in how many sessions, how the piece grew, and how many words came from outside, from your notes or from a quotation. Every report says what it can’t show.</span></figcaption>
+          <figcaption><b>The Quartermaster’s report</b>One page that opens in any browser and contacts nothing.<span>When you wrote, in how many sessions, how the piece grew, and how many words came from outside, from your notes or from a quotation. Every report says what it can’t show.</span></figcaption>
         </figure>
         <figure>
           <div class="frame"><img src="img/ledger-detail.png" loading="lazy" width="1100" height="688" alt="The Quartermaster window over a chapter: the ledger’s entries, sessions and words, a green line saying it is intact, and the choices for saving a report, with the Ledger badge in the document bar."></div>
@@ -345,32 +400,6 @@ section{padding:96px 0 0}
           <div class="frame"><img src="img/replay-detail.png" loading="lazy" width="1100" height="688" alt="The replay in the report: a play button, a scrubber with marks for large pastes, the date and word count of a snapshot, and the chapter as it stood then with the changed paragraph shaded."></div>
           <figcaption><b>The replay.</b> Every snapshot in order, from the first sentence to the last edit, with the changes shaded. Leave it out of a report if you’d rather not show what you cut.</figcaption>
         </figure>
-      </div>
-      <ul class="also26">
-        <li><h3>Hard to doctor</h3><p>Each entry is chained to the one before by its SHA-256, so a ledger changed later shows where. The report checks it again in the reader’s browser.</p></li>
-        <li><h3>Dated by your backups</h3><p>With GitHub backup on, each backup holds the ledger and is recorded in it, so the backups show when it existed.</p></li>
-        <li><h3>Nothing it shouldn’t</h3><p>No keystrokes, no clipboard beyond your pastes, nothing outside Anabasis. It stays in your project file.</p></li>
-        <li><h3>Fair to read</h3><p>No scores and no guesses about AI. The wiki explains how to read a report fairly, for teachers and editors.</p></li>
-        <li><h3>Security in layers</h3><p>Since 2.10.2, only Anabasis’s own scripts can run, files are cleaned twice, and locked projects lock their PDFs and photos too.</p></li>
-        <li><h3>Work offline</h3><p>One setting turns off everything that goes online. Photos lose their location and camera details as they come in.</p></li>
-      </ul>
-      <p class="since">The 2.7 to 2.10 features are in the showcase below. <a href="https://github.com/gmichaelrapp/anabasis/blob/main/CHANGELOG.md">The full changelog</a></p>
-      <div class="n26-links">
-        <a class="btn primary" href="app/">Try 2.11 in your browser</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/wiki/The-Quartermaster">How the Quartermaster works</a>
-        <a class="btn" href="https://github.com/gmichaelrapp/anabasis/blob/main/SECURITY.md">How Anabasis is kept safe</a>
-      </div>
-    </div>
-  </section>
-
-  <section id="showcase" aria-labelledby="show-h">
-    <div class="wrap">
-      <div class="head">
-        <p class="kicker">Showcase</p>
-        <h2 id="show-h">What came before 2.11</h2>
-        <p>Every feature from 2.7 to 2.10, as it looks in the app: from reading a book beside the draft and questioning it, to finishing a book and working in other languages.</p>
-      </div>
-      <div class="n26 gallery">
         <figure>
           <div class="frame"><img src="img/epub-detail.png" loading="lazy" width="1100" height="688" alt="An ePub in the reader beside a draft: the book’s contents on the left, chapter 2 open, a passage selected and the bar for quoting it showing p. 13, the printed page."></div>
           <figcaption><b>ePubs, with their pages</b>Read PDF / ePub, or drop a book on the window.<span>DRM-free ePubs open chapter by chapter, beside your draft. When the book marks its printed pages, a quote gets the page; when it doesn’t, the chapter and paragraph. The source comes from the book’s own title, author, publisher and ISBN.</span></figcaption>

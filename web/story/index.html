@@ -171,7 +171,7 @@ h1{font-size:clamp(40px,6vw,68px);letter-spacing:-.01em;margin-top:14px}
       <p class="lex"><b lang="grc">ἀνάβασις</b> <i>anabasis</i>, a going up; a march from the coast into the interior.</p>
       <h1>Why I built Anabasis</h1>
       <p class="byline">G. Michael Rapp, <time datetime="2026-11-27">November 27, 2026</time></p>
-      <p class="lede">I research alone, and drafting is the hardest part of the work for me. Anabasis began as a tool to make that part easier for one writer. In under a week it went through 35 releases and became something I’m willing to hand to strangers. This is how it got there, and why each step happened.</p>
+      <p class="lede">I research alone, and drafting is the hardest part of the work for me. Anabasis began as a tool to make that part easier for one writer. In under a week it went through 36 releases and became something I’m willing to hand to strangers. This is how it got there, and why each step happened.</p>
     </header>
 
     <div class="route">
@@ -232,12 +232,21 @@ h1{font-size:clamp(40px,6vw,68px);letter-spacing:-.01em;margin-top:14px}
         </div>
       </section>
 
+      <section class="leg" aria-labelledby="s-list">
+        <p class="stop"><b>2.12</b> <span>Nov. 28</span></p>
+        <div class="text">
+          <h2 id="s-list">The first list</h2>
+          <p>By the evening 2.11 came out, I had a list of what Anabasis still needed. Themes, including one you build from your own colors. A way to give notes or sources the whole screen with something else beside them. Task lists for a chapter, or for a single section. Colors for drafting, code snippets for documentation, a converter for the index cards I take by hand, Excalidraw for sketches, a home page you can arrange, and a Socrates and an Oracle that listen better.</p>
+          <p>The list was long enough to warrant one more release before the quiet period, so 2.12 went out the night before it began, with another security pass and a load test far bigger than any real project. Excalidraw runs sealed off in its own frame, because a drawing from someone else should never be a way in.</p>
+        </div>
+      </section>
+
       <section class="leg" aria-labelledby="s-how">
-        <p class="stop"><b>The work</b> <span>All 35 releases</span></p>
+        <p class="stop"><b>The work</b> <span>All 36 releases</span></p>
         <div class="text">
           <h2 id="s-how">Who made it, and how</h2>
           <p class="credit">I designed Anabasis and directed every decision in it. Claude, Anthropic’s AI model, wrote much of the code with me. The app itself contains no AI, and it never sends your writing to one.</p>
-          <p>Every release followed the same routine: update the version, changelog, help and wiki together; run all the test suites, 51 of them by 2.11; release through a GitHub workflow that builds, tests and signs the file; then check the download and the website.</p>
+          <p>Every release followed the same routine: update the version, changelog, help and wiki together; run all the test suites, 53 of them by 2.12; release through a GitHub workflow that builds, tests and signs the file; then check the download and the website.</p>
           <p>A few habits did most of the work. Decide what a feature is for, and what it isn’t, before building it. Write tests that find things, and when one fails for the wrong reason, fix the test instead of skipping it. State limits plainly. And keep what’s built: project files from 2.0 still open in 2.11.</p>
         </div>
       </section>
