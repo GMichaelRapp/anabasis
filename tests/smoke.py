@@ -4,8 +4,8 @@
     python tests/smoke.py --browser firefox
     python tests/smoke.py --browser webkit --http     serve over HTTP, as GitHub Pages does
 
-Opens the app, writes, cites, checks, makes a chart and a map, saves the project, reopens it and
-exports HTML and Word. Fails on any page error.
+Opens the app, writes, cites, checks, makes a chart and a map, switches theme, adds a task, draws a sketch
+in the sandboxed Excalidraw frame, saves the project, reopens it and exports HTML and Word. Fails on any page error.
 """
 import argparse, asyncio, functools, http.server, json, pathlib, sys, threading
 from playwright.async_api import async_playwright
@@ -38,6 +38,22 @@ async def run(browser, url):
         await pg.evaluate("$('#chDlg').close(); openMap()"); await pg.wait_for_timeout(2000)
         check('map draws', await pg.evaluate("$$('#mpStage svg path').length > 50"))
         await pg.evaluate("$('#mpDlg').close()")
+        # 2.12: a theme, a task, and a sketch drawn in the sandboxed frame
+        await pg.evaluate("setPalette('parchment')"); await pg.wait_for_timeout(200)
+        check('a theme applies', await pg.evaluate("document.documentElement.dataset.palette === 'parchment' && getComputedStyle(document.documentElement).getPropertyValue('--page').trim().toUpperCase() === '#FBF7EE'"))
+        await pg.evaluate("openTasks({}); $('#tkAdd').value = 'Check the dates'; taskAdd(); $('#taskDlg').close()")
+        check('a task list attaches to the document', await pg.evaluate("P.tasks.some(l => l.docId === curDocId && l.items.some(i => i.t === 'Check the dates'))"))
+        await pg.evaluate("(() => { const r = document.createRange(); r.selectNodeContents(editor.lastElementChild); r.collapse(false); savedRange = r; openSketch(); })()")
+        try:
+            await pg.wait_for_function("() => !$('#skSave').disabled", timeout=60000)
+            fr = pg.frame_locator('#skHost iframe'); await fr.locator('label:has([data-testid="toolbar-rectangle"])').click()
+            box = await pg.locator('#skHost iframe').bounding_box()
+            await pg.mouse.move(box['x'] + 300, box['y'] + 250); await pg.mouse.down(); await pg.mouse.move(box['x'] + 500, box['y'] + 360, steps=6); await pg.mouse.up()
+            await pg.wait_for_timeout(300); await pg.click('#skSave'); await pg.wait_for_function("() => !$('#skDlg').open", timeout=30000)
+            check('a sketch is drawn in Excalidraw and saved as a figure', await pg.evaluate("!!editor.querySelector('figure[data-sketch] img') && Object.values(P.sketches).some(s => s.elements.length === 1)"))
+        except Exception as e:
+            check('a sketch is drawn in Excalidraw and saved as a figure', False, str(e)[:200] + ' ' + await pg.inner_text('#skStatus'))
+        await pg.evaluate("setPalette('map')")
         async with pg.expect_download() as d: await pg.click('#btnSave')
         dl = await d.value; path = OUT / f'smoke-{browser}.json'; await dl.save_as(path)
         saved = json.loads(path.read_text())
