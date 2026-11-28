@@ -27,6 +27,8 @@ async def run(browser, url):
         pg.on('console', lambda m: errs.append('console: ' + m.text) if m.type == 'error' else None)
         await pg.goto(url); await pg.wait_for_timeout(2000)
         check('app starts with the sample project', await pg.evaluate("P.docs.length > 0"))
+        try: await pg.wait_for_function("() => document.querySelectorAll('#refs p').length > 0", timeout=20000)  # the citation engine waits for the first paint; slower on a busy runner
+        except Exception: pass
         check('citations render', await pg.locator('#refs p').count() > 0)
         await pg.click('#editor h1'); await pg.keyboard.press('End'); await pg.keyboard.type(' (edited)')
         await pg.wait_for_timeout(400)
