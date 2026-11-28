@@ -90,6 +90,9 @@ def build():
         if exc.count(ref) != 1: sys.exit(f'Excalidraw bundle changed shape: {ref}')
         exc = exc.replace(ref, '"data:font/woff2;base64,' + base64.b64encode((EX / f'{f}.woff2').read_bytes()).decode() + '"')
     nocmt = lambda t: safe(t).replace('<!--', '\\x3c!--')
+    # the app holds no keys: refuse a build if a vendored file brings one in (a Google API key, as Excalidraw's bundle once did)
+    for name, t in (('excalidraw', exc), ('excalidraw vendor chunk', read(EX / 'excalidraw-vendor.js'))):
+        if re.search(r'AIza[0-9A-Za-z_-]{35}|"apiKey"\s*:\s*"[^"]+"', t): sys.exit(f'{name} carries an API key; empty it in vendor/ (see vendor/manifest.json)')
     lazy += '<script type="text/plain" id="lib-excal-shim">' + safe(read(SRC / 'sketch' / 'shim.js')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-excal-boot">' + safe(read(SRC / 'sketch' / 'boot.js')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-react">/*! React 18.3.1 | MIT | (c) Meta Platforms, Inc. */' + nocmt(read(EX / 'react.production.min.js')) + '</script>\n'

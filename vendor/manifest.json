@@ -772,8 +772,8 @@
     "name": "Excalidraw",
     "version": "0.17.6",
     "license": "MIT",
-    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw.production.min.js",
-    "sha256": "27b133f845543f091aa518924b5b2fdd7eb52a9e490de100b9bc3bfd2ae2f314"
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw.production.min.js, with excalidraw.com's own Firebase settings (VITE_APP_FIREBASE_CONFIG) emptied: Anabasis has no collaboration server, and the file should carry no service keys",
+    "sha256": "e9c4c3d44f2617a489e3a5a2c4eaf8401bf9133600e01eddadbb87259b89fef1"
   },
   {
     "file": "vendor/excalidraw/excalidraw-vendor.js",
