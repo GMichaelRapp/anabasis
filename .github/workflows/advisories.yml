@@ -7,7 +7,7 @@ on:
     - cron: '17 9 * * 1'
   push:
     branches: [main]
-    paths: ['vendor/manifest.json', 'tools/check_advisories.py']
+    paths: ['vendor/manifest.json', 'vendor/advisories-accepted.json', 'tools/check_advisories.py']
   workflow_dispatch:
 
 permissions:

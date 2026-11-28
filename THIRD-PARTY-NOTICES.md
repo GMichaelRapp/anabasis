@@ -21,6 +21,9 @@ Anabasis bundles the following open-source software, data and fonts in `dist/ana
 | [MathJax](https://www.mathjax.org) | 3.2.2 | © 2009–2023 The MathJax Consortium | Apache-2.0 | equations |
 | [Chart.js](https://www.chartjs.org) | 4.6.1 | © 2014–2024 Chart.js contributors | MIT | charts |
 | [d3-array](https://github.com/d3/d3-array), [d3-geo](https://github.com/d3/d3-geo) | 3.2.5, 3.1.2 | © Mike Bostock | ISC | map projections |
+| [Excalidraw](https://github.com/excalidraw/excalidraw) | 0.17.6 | © 2020 Excalidraw | MIT | sketches (runs only in the sandboxed sketch frame, read only when used) |
+| [React](https://react.dev) and ReactDOM | 18.3.1 | © Meta Platforms, Inc. and affiliates | MIT | the sketch frame |
+| Virgil, [Cascadia Code](https://github.com/microsoft/cascadia-code) and [Assistant](https://fonts.google.com/specimen/Assistant), as shipped with Excalidraw 0.17.6 | 0.17.6 | © Excalidraw (Virgil); © Microsoft Corporation (Cascadia Code); © The Assistant Project Authors | SIL Open Font License 1.1 | lettering in sketches |
 | [topojson-client](https://github.com/topojson/topojson-client) | 3.1.0 | © Mike Bostock | ISC | map data decoding |
 | [world-atlas](https://github.com/topojson/world-atlas) | 2.0.2 | © Mike Bostock | ISC | country outlines (Crimea assigned to Ukraine; see tools/data) |
 | [Natural Earth](https://www.naturalearthdata.com) | 2026 snapshot | — | Public domain | countries, provinces, rivers, lakes, populated places |

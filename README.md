@@ -23,7 +23,7 @@
 
 Anabasis is for people who write from sources: historians, analysts, journalists, students and anyone working on a book, a white paper, a long article or a newsletter. It keeps your drafts, research notes and bibliography in one project. It formats citations as you write, and it checks the draft the way a careful editor would.
 
-The whole app is a single HTML file of about 23 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
+The whole app is a single HTML file of about 27 MB. Download it, open it in your browser, and it works offline. There’s no account, no server and no tracking.
 
 ## What it does
 
@@ -46,6 +46,7 @@ The whole app is a single HTML file of about 23 MB. Download it, open it in your
 - **Take notes** fills the screen with the reader and a note pad side by side.
 - Notes and quotes on a board you can pile, pin, tag and drag into a draft; note templates for interviews, archive visits, source summaries, field notes and meetings; a scratch pad for jotting now and sorting later; and a note trash that keeps deleted notes 30 days.
 - A web clipper, interview transcripts from caption files (.srt, .vtt), text or Word, and Markdown notes from Obsidian and similar tools.
+- **The notecard converter** brings in index cards you wrote by hand, from photos (read on your computer) or typed, with their sources, pages and tags.
 - **Archive photos**: file pictures from an archive visit by box and folder, transcribe them beside the image (or have a typed page read for you, offline), and make quote notes that cite the box and folder.
 - **Search inside sources**: the full text of your PDFs, ePubs, photo transcriptions and interview transcripts, opened at the page. Scanned PDFs are read on your computer (Tesseract), never uploaded.
 - **A reading list** with how far you’ve got in each source, **My library** (a shelf of sources and notes in your browser, for any project), a retraction check through Crossref, duplicate sources found and merged, and SHA-256 fingerprints for evidence files.
@@ -59,6 +60,11 @@ The whole app is a single HTML file of about 23 MB. Download it, open it in your
 - **Socrates** offers questions to start from: 475 in 24 kinds, filled in with whatever you’ve selected. He reads a chapter for the places that need a question (sweeping words, claims of cause, unnamed authorities, facts without a source) and walks you through examining a claim, a steelman, a pre-mortem, competing explanations and defining your terms.
 - **The Oracle**, a conversation partner in the manner of ELIZA, the 1960s MIT chatbot. It turns what you say into questions, answers from your own notes and sources, files notes and journal entries as you talk, argues the other side, starts the day where you left off and says what to work on next. Gentle, plain or blunt: you choose.
 - Socrates and the Oracle use no AI and nothing online; everything stays on your computer.
+
+**Your desk**
+- **Themes**: Map sheet, Night march, Parchment, High contrast, or your own colors, checked for contrast as you choose them.
+- **Workspaces**: any part full screen with another beside it, smaller: notes large and sources small, sources large and the writing small.
+- **Tasks** for a chapter or a section, with due dates and reminders; **drafting colors** with a key of what each means; and a **Project home** you arrange.
 - **Translation**: notes that keep the original beside your translation, a glossary checked as you write, standard transliteration for Russian, Ukrainian, Bulgarian, Serbian, Greek and Arabic, and a workspace for translating segment by segment.
 - Pseudonyms used in every export while the project keeps the real names, with each person’s consent recorded and checked.
 
@@ -68,6 +74,8 @@ The whole app is a single HTML file of about 23 MB. Download it, open it in your
 - Timelines from dated notes, and relationship maps of the people, places and organizations in your text.
 - **Data dashboards**: bring in a CSV, lay out headline numbers, charts, maps, timelines and searchable tables, each crediting its source, and export the whole thing as one web page. Numbers and charts placed in your writing update when the data changes.
 - Credit lines and permission status for every figure and table, with a permissions log for your editor.
+- **Sketches with Excalidraw**: draw a diagram and it goes in as a figure you can reopen and edit. Excalidraw comes with Anabasis and runs sealed off from your project, offline.
+- **Code snippets** kept exactly as typed, for documentation: fixed-width, never run, fenced in Markdown.
 
 **Plan, revise and finish**
 - **Project home** with a calendar of the words you wrote each day, deadlines, journal entries, archive visits and interviews, exported as an .ics file. **Submissions** tracks where each piece has gone, its status and fee.

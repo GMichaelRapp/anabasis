@@ -4,6 +4,40 @@ All notable changes to Anabasis. Versions follow [semantic versioning](https://s
 
 ## [Unreleased]
 
+## [2.12.0] — 2026-11-28
+
+The list gathered in the first week of public use, released before a 30-day pause for feedback.
+
+### Added
+- **Themes.** Map sheet, Night march, Parchment and High contrast, or your own: start from light or dark and choose the background, page, text and accent. Your own colors are checked for contrast as you choose them, and text that would be hard to read is shown darkened or lightened until it reads (Settings → Themes). Kept in this browser.
+- **Workspaces.** Any part of Anabasis full screen (the writing, notes, sources, the research desk, the Oracle, another document) with another beside it, smaller: notes large and sources small, sources large and the writing small. Swap trades them; Exit or Esc puts every pane back.
+- **Tasks for any part of the work.** The Tasks button in the document bar attaches a list to the whole document, or to the section you're in, under its heading. Tasks can have due dates; what's due shows on Project home and in the command search, and you're reminded once a day when you open the document. A heading shows its count, and its list follows it if the section moves.
+- **Drafting colors.** Color a passage blue, green, amber, red, purple or gray, and write what each color means; a count beside each finds the next passage. Each color has its own underline style too. Exports leave colors out unless you keep them.
+- **Code snippets.** Insert → Code snippet keeps code exactly as typed, for documentation: fixed-width, never run. Markdown gets a fenced block, Word a fixed-width font.
+- **Sketches with Excalidraw.** Insert → Sketch opens Excalidraw for a diagram; saving puts it in the document as a figure and keeps the drawing, which opens again from the figure. Excalidraw (0.17.6, with React 18.3.1 and its fonts) comes with Anabasis and never goes online.
+- **The notecard converter.** Notes → Cards… brings in index cards written by hand: photographs read by the offline text recognition, or cards typed with `---` between them. A card can name its source, page and tags, and every card is shown for checking before it becomes a note.
+- **Project home you arrange.** Move, hide or widen its cards, and add new ones: tasks, pinned notes, a question from Socrates, a quick note.
+
+### Changed
+- **Socrates fits its questions to your words.** The verb agrees with a plural, "a" becomes "an" before a vowel sound, a question that opens with the blank starts with a capital, possessives after names in *s* and quotations within quotations are written properly.
+- **The Oracle talks more like a person.** A short pause before it answers (none with reduced motion), an "I see" or "go on" now and then, no three replies opening the same way, "it" and "that" heard as what you were just talking about, and it comes back to a problem or plan you mentioned a few turns earlier. Its script knows more: motivation, feeling like an impostor, a dull draft, messy notes, checking facts, writing about real people, transitions, weak sections, finishing, breaks, and whether it's an AI. Still a script, still no AI.
+- The size budget is now 50 MB; Anabasis 2.12 is about 27 MB.
+
+### Fixed
+- In the dark theme, text found with Find and names flagged in the draft sat light on a light highlight; both now read at better than 4.5:1. The reader's colored highlights are dimmed on the night page for the same reason.
+- A picture in a project file must now be a well-formed PNG, JPEG, GIF or WebP; a damaged or crafted one is left out instead of stopping Word export.
+
+### Security
+- **Excalidraw runs in a sandboxed frame** with no origin of its own: it can't reach the project, the page or this browser's storage, and the page can't reach into it. The frame runs only Anabasis's own scripts, matched by hash, and the two sides exchange only plain data, checked on arrival.
+- **Every drawing is cleaned before Excalidraw sees it**: links, embedded web pages, AI frames and custom data are removed, and pictures inside a drawing must be PNG, JPEG, GIF or WebP. This also closes the path of GHSA-v2vq-3h6w-9r3c (script in a drawing's AI-frame data), which affects every Excalidraw release so far; it's recorded in `vendor/advisories-accepted.json` with a review date, and Excalidraw will be updated when a fixed release is published.
+- New project data (task lists, drawings, the color key) is checked field by field when a file opens: ids in a safe set of characters, dates as dates, sizes capped. Drafting colors are classes from a fixed set, never styles; a snippet's language label is plain text; custom theme colors must be `#rrggbb`.
+- The weekly advisory check now knows about accepted advisories: listed with the reason and a review date, reported every time, and failing again once the review date passes.
+
+### Tests
+- New suite `t61` for every 2.12 feature, including hostile values for each new field, contrast of emphasized text (painted highlights, drafting colors, snippets, task badges) in every theme, and the sandboxed sketch frame.
+- New suite `t62`, a load test: 300,000 words in 60 chapters, 1,500 sources, 3,000 notes, colors throughout, about 780 task lists and 25 drawings of 400 shapes each. Opening, switching chapters, Project home, saving and typing stay within budget.
+- The accessibility audit (`t25`) now runs in all four built-in themes and covers the new dialogs; the fuzzed hostile project (`t58`) carries a poisoned drawing, task lists and color key through every new view.
+
 ## [2.11.0] — 2026-11-27
 
 ### Added
@@ -499,7 +533,8 @@ The first public release.
 - Everything in an opened file is sanitized with DOMPurify, and a content security policy limits network access to citation lookups and GitHub.
 - First-run tour and sample project.
 
-[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/gmichaelrapp/anabasis/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.12.0
 [2.11.0]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.11.0
 [2.10.2]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.2
 [2.10.1]: https://github.com/gmichaelrapp/anabasis/releases/tag/v2.10.1

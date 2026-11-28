@@ -65,6 +65,8 @@ SUITES = {
     't58': 'a fuzzed hostile project: script payloads in every field, every view visited, every saved web page opened; nothing runs, nothing is fetched',
     't59': '2.10.2 security: Trusted Types and the hashed script policy, password checks, the idle lock, encrypted PDFs and token in a locked project, Work offline, the public-repository guard, photo metadata, saved pages, framing',
     't60': 'the Quartermaster: recording, pastes told apart, pause and changes it didn’t see, tamper checks, reopening, anchors, a hostile ledger, the report and its replay, locked projects, speed',
+    't61': '2.12: themes and contrast, drafting colors, code snippets, task lists for any part of the work, the notecard converter, Excalidraw sketches, Project home you arrange, workspaces, Socrates’ grammar, the Oracle’s manners',
+    't62': '2.12 load test: 300,000 words, 1,500 sources, 3,000 notes, colors throughout, 780 task lists, 25 large sketches; open, switch, home, save and typing within budget',
 
 }
 DEGRADED = ['t1', 't10', 't20', 't23', 't24']

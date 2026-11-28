@@ -14,7 +14,7 @@ const STORE_KEY = 'commonplace.project.v1';
 const THEME_KEY = 'commonplace.theme';
 const FIRST_VISIT = (() => { try { return localStorage.getItem('commonplace.prefs') === null && localStorage.getItem(STORE_KEY) === null; } catch (e) { return false; } })();
 const FORMAT = 2;
-const APP_VERSION = '2.11.0';
+const APP_VERSION = '2.12.0';
 /* File-format migrations. Each step takes a project at version n and returns it at n + 1.
    Add a step here whenever the shape of the saved file changes, and bump FORMAT. */
 const MIGRATIONS = {
@@ -176,7 +176,7 @@ function normalize(p) {
   if (out.copyOf && typeof out.copyOf === 'object') out.copyOf = { send: asStr(out.copyOf.send), from: asStr(out.copyOf.from), to: asStr(out.copyOf.to), at: asStr(out.copyOf.at), note: asStr(out.copyOf.note) }; else delete out.copyOf;
   // images: keep only assets some document (or a saved version) still uses
   const used = new Set(); [...out.docs.map(d => d.html), ...out.docs.flatMap(d => (d.snapshots || []).map(v => v.html))].forEach(h => (String(h || '').match(/data-asset="([^"]+)"/g) || []).forEach(m => used.add(m.slice(12, -1))));
-  out.assets = out.assets && typeof out.assets === 'object' ? Object.fromEntries(Object.entries(out.assets).filter(([k, a]) => used.has(k) && a && typeof a.data === 'string' && a.data.startsWith('data:image/'))) : {};
+  out.assets = out.assets && typeof out.assets === 'object' ? Object.fromEntries(Object.entries(out.assets).filter(([k, a]) => used.has(k) && a && typeof a.data === 'string' && /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/]+=*$/.test(a.data))) : {}; // 2.12: a picture's data must be one, or Word export can't read it
   ['acronyms', 'acroIgnore', 'places', 'relations'].forEach(k => { out[k] = Array.isArray(out[k]) ? out[k] : []; }); out.relLayout = out.relLayout && typeof out.relLayout === 'object' ? out.relLayout : {};
   const g = out.goal && typeof out.goal === 'object' ? out.goal : {};
   out.goal = { kind: String(g.kind || ''), target: Math.max(0, +g.target || 0), deadline: /^\d{4}-\d\d-\d\d$/.test(g.deadline || '') ? g.deadline : '', started: g.started || '' };
@@ -1298,7 +1298,7 @@ function sanitize(html) {
           ch.className = tag === 'P' ? (num ? 'eq num' : 'eq') : 'math'; ch.setAttribute('data-tex', tex); ch.textContent = tex; return; // made non-editable once in place: Chrome's paste drops non-editable pieces
         }
       }
-      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum') || ch.classList.contains('xref'));
+      const isMarker = tag === 'SPAN' && (ch.classList.contains('cite') || ch.classList.contains('fn') || ch.classList.contains('dnum') || ch.classList.contains('xref') || /^ink ink-[bgarps]$/.test(ch.className));
       if (tag === 'SPAN' && ch.classList.contains('rm') && /^[\w-]+$/.test(ch.dataset.rm || '') && /^(th|cl|rv|q)$/.test(ch.dataset.k || '') && !editor.querySelector(`.rm[data-rm="${ch.dataset.rm}"]`)) {
         const keep = doc.createElement('span'); keep.className = 'rm'; ['data-rm', 'data-k', 'data-ref'].forEach(a => { const v = ch.getAttribute(a); if (v && /^[\w-]+$/.test(v)) keep.setAttribute(a, v); });
         walk(ch); keep.append(...ch.childNodes); ch.replaceWith(keep); return;
@@ -1327,7 +1327,9 @@ function sanitize(html) {
           (/^H[1-3]$/.test(tag) && a.name === 'data-xid') ||
           (tag === 'IMG' && (a.name === 'data-asset' || a.name === 'alt' || (a.name === 'src' && /^data:image\/(png|jpeg|gif|webp)/i.test(a.value)))) ||
           (tag === 'FIGURE' && ((a.name === 'class' && /^(fig|tbl|tbl av)$/.test(a.value)) || /^data-(size|dl|xid|credit|rights|holder|rnote)$/.test(a.name))) ||
-          ((tag === 'TD' || tag === 'TH') && (a.name === 'colspan' || a.name === 'rowspan'));
+          ((tag === 'TD' || tag === 'TH') && (a.name === 'colspan' || a.name === 'rowspan')) ||
+          (tag === 'PRE' && ((a.name === 'class' && a.value === 'code') || (a.name === 'data-lang' && /^[\w#+.\- ]{0,24}$/.test(a.value)))) ||
+          (tag === 'SPAN' && a.name === 'class' && /^ink ink-[bgarps]$/.test(a.value));
         if (!keep) ch.removeAttribute(a.name);
       });
       if (isMarker) { ch.setAttribute('contenteditable', 'false'); return; }
@@ -2490,7 +2492,7 @@ function docClassAndStyle(doc) {
 /* mode: 'html' | 'md' */
 function buildExport(doc, mode = 'html', opt = {}) {
   if (doc.id === curDocId) syncEditor();
-  const tmp = document.createElement('div'); tmp.innerHTML = stripCp(doc.html);
+  const tmp = document.createElement('div'); tmp.innerHTML = stripCp(doc.html); if (typeof v212Export === 'function') v212Export(tmp);
   $$('.flag', tmp).forEach(f => { const m = document.createElement('mark'); m.textContent = `[${(FLAG_KINDS[f.dataset.kind] || FLAG_KINDS.tk).label}${f.dataset.note ? ': ' + f.dataset.note : ''}]`; f.replaceWith(m); });
   $$('.qlink', tmp).forEach(q => q.replaceWith(...q.childNodes));
   $$('[data-qn]', tmp).forEach(q => q.removeAttribute('data-qn'));
@@ -3199,7 +3201,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (ch.nodeType === 3) {
         const t = ch.data.replace(/\s+/g, ' '); if (!t) return;
         if (f.track) { const o = Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz }, f.ta); r.push(f.track === 'INS' ? new D.InsertedTextRun(o) : new D.DeletedTextRun(o)); return; }
-        r.push(new D.TextRun(Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz, color: f.link ? '1F4E9A' : undefined, highlight: f.mark ? 'yellow' : undefined },
+        r.push(new D.TextRun(Object.assign({ text: t, bold: f.b, italics: f.i, underline: f.u ? {} : undefined, strike: f.s, superScript: f.sup, subScript: f.sub, font: ctx.font, size: sz, color: f.link ? '1F4E9A' : f.ink || undefined, highlight: f.mark ? 'yellow' : undefined },
           f.lang ? { language: { value: f.lang, ...(langOf(f.lang).rtl ? { bidirectional: f.lang } : {}) }, ...(langOf(f.lang).rtl ? { rightToLeft: true } : {}) } : {})));
         return;
       }
@@ -3219,6 +3221,7 @@ function htmlToDocx(html, ctx, opt = {}) {
       if (tag === 'SPAN' && LANG_OK(ch.getAttribute('lang'))) g.lang = ch.getAttribute('lang');
       if (tag === 'B' || tag === 'STRONG') g.b = true; if (tag === 'I' || tag === 'EM' || tag === 'CITE') g.i = true; if (tag === 'U') g.u = true;
       if (tag === 'S' || tag === 'STRIKE' || tag === 'DEL') g.s = true; if (tag === 'SUP') g.sup = true; if (tag === 'SUB') g.sub = true; if (tag === 'MARK') g.mark = true;
+      if (tag === 'SPAN' && ch.classList.contains('ink')) g.ink = INK_DOCX[(/ink-([a-z])/.exec(ch.className) || [])[1]];
       r.push(...runs(ch, g, sz));
     });
     return r;
@@ -3247,6 +3250,7 @@ function htmlToDocx(html, ctx, opt = {}) {
     if (el.nodeType === 3) { if (el.data.trim()) { const p = document.createElement('p'); p.textContent = el.data; block(p); } return; }
     if (el.nodeType !== 1) return;
     const tag = el.nodeName;
+    if (tag === 'PRE') { const ls = el.textContent.replace(/\n$/, '').split('\n'); ls.forEach((ln, i) => out.push(new D.Paragraph({ spacing: { before: i ? 0 : 120, after: i === ls.length - 1 ? 160 : 0, line: 260 }, shading: { type: D.ShadingType.CLEAR, fill: 'F2F2F2', color: 'auto' }, children: [new D.TextRun({ text: ln.replace(/\t/g, '    ') || ' ', font: 'Courier New', size: Math.max(16, (ctx.size || 24) - 4) })] }))); prevHeading = false; return; }
     if (/^H[1-6]$/.test(tag)) {
       const lvl = Math.min(3, +tag[1]);
       const brk = el.classList.contains('ch-break');
@@ -7388,13 +7392,14 @@ editor.addEventListener('click', e => {
   const sz = fig.dataset.size || 'full';
   const spec = (P.assets[img.dataset.asset] || {}).spec;
   const specLabel = spec ? { chart: 'chart', map: 'map', timeline: 'timeline', network: 'relationship map' }[spec.type] : '';
-  popEl.innerHTML = `${spec ? `<div class="pbtns" style="margin-bottom:8px"><button class="primary" data-a="spec">Edit ${specLabel}…</button></div>` : ''}<div class="small muted" style="margin-bottom:6px">Figure size</div><div class="pbtns" style="margin-bottom:8px">${[['full', 'Full width'], ['large', 'Large'], ['half', 'Half']].map(([k, l]) => `<button data-a="sz" data-v="${k}" class="${k === sz ? 'primary' : ''}">${l}</button>`).join('')}</div><div class="pbtns"><button data-a="alt">Alt text…</button><button data-a="cred">Credit &amp; permission…</button><button data-a="rep">Replace image…</button><button class="danger" data-a="del">Remove</button></div>`;
+  popEl.innerHTML = `${fig.dataset.sketch ? '<div class="pbtns" style="margin-bottom:8px"><button class="primary" data-a="sketch">Edit sketch…</button></div>' : ''}${spec ? `<div class="pbtns" style="margin-bottom:8px"><button class="primary" data-a="spec">Edit ${specLabel}…</button></div>` : ''}<div class="small muted" style="margin-bottom:6px">Figure size</div><div class="pbtns" style="margin-bottom:8px">${[['full', 'Full width'], ['large', 'Large'], ['half', 'Half']].map(([k, l]) => `<button data-a="sz" data-v="${k}" class="${k === sz ? 'primary' : ''}">${l}</button>`).join('')}</div><div class="pbtns"><button data-a="alt">Alt text…</button><button data-a="cred">Credit &amp; permission…</button><button data-a="rep">Replace image…</button><button class="danger" data-a="del">Remove</button></div>`;
   document.body.appendChild(popEl);
   popEl.style.left = Math.max(8, Math.min(innerWidth - popEl.offsetWidth - 8, r.left + r.width / 2 - popEl.offsetWidth / 2)) + 'px';
   popEl.style.top = Math.max(8, Math.min(innerHeight - popEl.offsetHeight - 8, r.top + 12)) + 'px';
   popEl.addEventListener('click', async ev => {
     const b = ev.target.closest('button'); if (!b) return; const a = b.dataset.a; closePop();
     if (a === 'spec') { openSpecEditor(spec, fig); return; }
+    if (a === 'sketch') { openSketch(fig); return; }
     if (a === 'sz') { fig.dataset.size = b.dataset.v; onEdit(); }
     if (a === 'alt') { const t = await ask('Alt text', 'Describe the image for screen readers and e-books (the caption is separate).', 'Save', img.alt || ''); if (t !== null) { img.alt = t; onEdit(); } }
     if (a === 'rep') { figReplace = fig; $('#fileFigure').click(); }
@@ -10872,6 +10877,11 @@ function a11yNudge() { const n = a11yIssues().length; if (n) setTimeout(() => to
    ================================================================ */
 /* ---------- What's new: shown once after an update ---------- */
 const WHATS_NEW = {
+  '2.12.0': ['Themes: Map sheet, Night march, Parchment, High contrast, or your own colors, checked for contrast as you choose them (Settings → Themes).',
+    'Workspaces: any part full screen with another beside it, smaller (notes large and sources small, sources large and the writing small). And Project home is yours to arrange, with new cards for tasks, pinned notes, a question from Socrates and a quick note.',
+    'Tasks for a chapter or a section, with due dates and reminders (the checklist button in the document bar). Drafting colors for passages, with a key of what each color means. Code snippets, kept as typed and never run.',
+    'Sketches: draw a diagram with Excalidraw and it goes in as a figure you can open again. It runs sealed off on your computer. And Cards… in Notes brings in handwritten index cards, from photos or typed.',
+    'Socrates fits its questions to your words (“Are the Ten Thousand…”, “an FBI file”), and the Oracle talks more like a person: a pause before it answers, “I see” now and then, and it comes back to what you said earlier. Still no AI.'],
   '2.11.0': ['The Quartermaster keeps an honest account of how a document is written, if you turn it on: snapshots as you write, and whether pasted text came from outside, your notes or a quotation. Find it in the document bar.',
     'Save it as a report to show your process to a teacher or editor: when you wrote, how the piece grew, the text marked by where it came from, and a replay. It opens in any browser and contacts nothing.',
     'Each entry is chained to the one before, so a ledger changed later shows it, and GitHub backups record when it existed. It shows a process, not proof, and the report says so.'],
@@ -11881,6 +11891,7 @@ const ORC_RE = {
 function orcTurn(raw) {
   let text = String(raw || '').trim(); if (!text) return;
   orcPush('you', `<p>${esc(text)}</p>`, text);
+  if (typeof orc2Pre === 'function') text = orc2Pre(text);
   ORC.said++; ORC.acts.length > 400 && (ORC.acts = ORC.acts.slice(-200));
   if (ORC_RE.sure.test(text)) ORC.certainty++;
   let m;
@@ -18171,6 +18182,803 @@ COMMANDS.push(['Install Anabasis as an app', () => { if (installEvt) { $('#stIns
 if (isStandalone()) document.documentElement.classList.add('standalone');
 { const k = $('#btnSearch kbd'); if (k) k.textContent = IS_MAC ? '⌘K' : 'Ctrl K'; }
 
+/* ==== 2.12 begin ==== */
+/* ================================================================
+   2.12: the list gathered in the first week of public use.
+   Themes, drafting colors, code snippets, task lists for any part of the work, a notecard converter,
+   sketches (Excalidraw), a dashboard you arrange, workspaces, and a better Socrates and Oracle.
+   ================================================================ */
+
+/* ---------- Themes (2.12) ----------
+   Four themes and one of your own. Each sets the same color tokens the rest of the app reads, so every view
+   follows. Map sheet and Night march are the light and dark looks Anabasis has had; Parchment is warm and low in
+   glare; High contrast is black on white with the strongest focus ring. A custom theme starts from light or dark
+   and takes your background, page, text and accent colors, checked for contrast as you choose them. Kept in this
+   browser; a project file carries no theme. */
+const PAL_KEY = 'anabasis.palette', PAL_CUSTOM_KEY = 'anabasis.customTheme';
+const PALETTES = {
+  map: { name: 'Map sheet', base: 'light', note: 'Sage map paper and slate ink: the standard look.' },
+  night: { name: 'Night march', base: 'dark', note: 'Dark slate for evening work.' },
+  parchment: { name: 'Parchment', base: 'light', note: 'Warm paper, brown ink, less glare.' },
+  contrast: { name: 'High contrast', base: 'light', note: 'Black on white, the strongest focus ring.' },
+  custom: { name: 'Your own', base: '', note: 'Choose the colors yourself.' },
+};
+const HEX = /^#[0-9a-f]{6}$/i;
+const CUSTOM_DEF = { base: 'light', bg: '#E4E9EF', page: '#FFFFFF', ink: '#15202B', accent: '#2F5D8A' };
+function customTheme() {
+  let c = {}; try { c = JSON.parse(lsGet(PAL_CUSTOM_KEY) || '{}') || {}; } catch (e) { c = {}; }
+  const o = { base: c.base === 'dark' ? 'dark' : 'light' };
+  ['bg', 'page', 'ink', 'accent'].forEach(k => { o[k] = HEX.test(c[k] || '') ? c[k] : (o.base === 'dark' ? { bg: '#11161D', page: '#1A2029', ink: '#E6EAF0', accent: '#8FB4E8' } : CUSTOM_DEF)[k]; });
+  return o;
+}
+// relative luminance and contrast (WCAG 2.x)
+function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+function rgbHex(r, g, b) { return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('').toUpperCase(); }
+function lum(h) { return hexRgb(h).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
+function contrastRatio(a, b) { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+function mixHex(a, b, t) { const x = hexRgb(a), y = hexRgb(b); return rgbHex(...x.map((v, i) => v + (y[i] - v) * t)); }
+// nudge a color toward black or white until it reads against the background at the ratio asked for
+function readableOn(fg, bg, want = 4.5) {
+  if (contrastRatio(fg, bg) >= want) return fg.toUpperCase();
+  const to = lum(bg) > 0.4 ? '#000000' : '#FFFFFF';
+  for (let t = 0.05; t <= 1.0001; t += 0.05) { const c = mixHex(fg, to, t); if (contrastRatio(c, bg) >= want) return c; }
+  return to;
+}
+// every token the interface reads, derived from four colors; text tokens are pushed until they pass AA
+function customTokens(c) {
+  const dark = c.base === 'dark', bg = c.bg, page = c.page, ink = readableOn(c.ink, page, 7);
+  const panel = mixHex(bg, page, 0.55), line = mixHex(bg, ink, dark ? 0.22 : 0.18), line2 = mixHex(bg, ink, dark ? 0.12 : 0.08);
+  const muted = readableOn(mixHex(ink, bg, 0.38), panel, 4.6), faint = readableOn(mixHex(ink, bg, 0.3), panel, 4.6);
+  const accent = readableOn(c.accent, page, 4.5), accentInk = contrastRatio('#FFFFFF', accent) >= contrastRatio('#111111', accent) ? '#FFFFFF' : '#111111';
+  const soft = mixHex(page, accent, dark ? 0.22 : 0.14);
+  return {
+    '--bg': bg, '--panel': panel, '--line': line, '--line2': line2, '--ink': ink, '--muted': muted, '--faint': faint,
+    '--accent': accent, '--accent-ink': accentInk, '--accent-soft': soft, '--accent-hover': mixHex(accent, dark ? '#FFFFFF' : '#000000', 0.18),
+    '--page': page, '--page-ink': readableOn(ink, page, 7), '--contour': 'none',
+  };
+}
+const CUSTOM_VARS = ['--bg', '--panel', '--line', '--line2', '--ink', '--muted', '--faint', '--accent', '--accent-ink', '--accent-soft', '--accent-hover', '--page', '--page-ink', '--contour'];
+function paletteNow() { const p = lsGet(PAL_KEY), t = lsGet(THEME_KEY); return PALETTES[p] ? p : (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches) ? 'night' : 'map'); }
+function applyPalette(p = paletteNow()) {
+  const root = document.documentElement, c = p === 'custom' ? customTheme() : null;
+  const base = c ? c.base : PALETTES[p].base;
+  root.dataset.theme = base; root.dataset.palette = p;
+  CUSTOM_VARS.forEach(v => root.style.removeProperty(v));
+  if (c) Object.entries(customTokens(c)).forEach(([k, v]) => root.style.setProperty(k, v));
+  const tc = $('meta[name="theme-color"]'); if (tc) tc.setAttribute('content', getComputedStyle(root).getPropertyValue('--panel').trim() || '#F4F6F1');
+}
+function setPalette(p) {
+  if (!PALETTES[p]) p = 'map';
+  lsSet(PAL_KEY, p); applyPalette(p); lsSet(THEME_KEY, document.documentElement.dataset.theme);
+  if (PALETTES[p].base === 'light' || (p === 'custom' && customTheme().base === 'light')) { PREFS.lastLight = p; savePrefs(); }
+  if (typeof popSync === 'function' && !POPOUT) try { popSync(); } catch (e) {}
+}
+// the old one-click switch keeps working: dark goes back to the light theme you last used
+setTheme = t => setPalette(t === 'dark' ? 'night' : (PREFS.lastLight && PREFS.lastLight !== 'night' ? PREFS.lastLight : 'map'));
+applyPalette();
+addEventListener('storage', e => { if (e.key === PAL_KEY || e.key === PAL_CUSTOM_KEY) applyPalette(); });
+function themeSwatch(p) {
+  const v = p === 'custom' ? customTokens(customTheme()) : null;
+  return `<span class="th-sw" data-palette="${p}" ${v ? `style="--sw-bg:${v['--bg']};--sw-page:${v['--page']};--sw-ink:${v['--ink']};--sw-acc:${v['--accent']}"` : ''} aria-hidden="true"><i></i><b></b><em></em></span>`;
+}
+function openThemes() {
+  const now = paletteNow(), c = customTheme();
+  $('#thmList').innerHTML = Object.entries(PALETTES).map(([k, v]) => `<label class="thm-opt ${k === now ? 'on' : ''}"><input type="radio" name="thm" value="${k}" ${k === now ? 'checked' : ''}>${themeSwatch(k)}<span><b>${esc(v.name)}</b><span class="small muted">${esc(v.note)}</span></span></label>`).join('');
+  $('#thmBase').value = c.base; ['bg', 'page', 'ink', 'accent'].forEach(k => { $('#thm_' + k).value = c[k].toLowerCase(); });
+  $('#thmCustom').classList.toggle('hidden', now !== 'custom');
+  thmCheck(); $('#thmDlg').showModal();
+}
+function thmRead() { const o = { base: $('#thmBase').value === 'dark' ? 'dark' : 'light' }; ['bg', 'page', 'ink', 'accent'].forEach(k => { const v = $('#thm_' + k).value; o[k] = HEX.test(v) ? v.toUpperCase() : CUSTOM_DEF[k]; }); return o; }
+// the custom theme's colors, checked the way the interface will use them
+function thmCheck() {
+  const c = thmRead(), t = customTokens(c), rows = [
+    ['Text on the page', c.ink, c.page, 4.5], ['Your text as shown', t['--page-ink'], t['--page'], 4.5], ['Quieter text on panels', t['--muted'], t['--panel'], 4.5],
+    ['Links and buttons', t['--accent'], t['--page'], 4.5], ['Button labels', t['--accent-ink'], t['--accent'], 4.5], ['Panels against the background', t['--panel'], t['--bg'], 1.05],
+  ];
+  $('#thmChecks').innerHTML = rows.map(([l, f, b, need]) => { const r = contrastRatio(f, b), ok = r >= need; return `<li class="${ok ? 'ok' : 'bad'}"><span class="thm-chip" style="background:${b};color:${f}">Aa</span><span>${esc(l)}</span><b>${r.toFixed(1)}:1</b><span class="small">${need > 2 ? (ok ? 'passes' : 'too faint') : (ok ? 'distinct' : 'blends in')}</span></li>`; }).join('');
+  const raw = contrastRatio(c.ink, c.page) < 4.5 || contrastRatio(c.accent, c.page) < 4.5;
+  $('#thmFixNote').classList.toggle('hidden', !raw);
+  return c;
+}
+$('#thmList').addEventListener('change', e => { if (e.target.name !== 'thm') return; const p = e.target.value; $$('.thm-opt', $('#thmList')).forEach(l => l.classList.toggle('on', l.querySelector('input').value === p)); $('#thmCustom').classList.toggle('hidden', p !== 'custom'); if (p === 'custom') lsSet(PAL_CUSTOM_KEY, JSON.stringify(thmRead())); setPalette(p); });
+$('#thmCustom').addEventListener('input', () => { const c = thmCheck(); lsSet(PAL_CUSTOM_KEY, JSON.stringify(c)); if (paletteNow() === 'custom') applyPalette('custom'); const sw = $('.thm-opt input[value="custom"]')?.parentElement.querySelector('.th-sw'); if (sw) sw.outerHTML = themeSwatch('custom'); });
+$('#thmFix').addEventListener('click', () => { const c = thmRead(); $('#thm_ink').value = readableOn(c.ink, c.page, 7).toLowerCase(); $('#thm_accent').value = readableOn(c.accent, c.page, 4.5).toLowerCase(); $('#thmCustom').dispatchEvent(new Event('input')); toast('Text and accent adjusted until they read clearly on your page color.'); });
+$('#thmReset').addEventListener('click', () => { const d = $('#thmBase').value === 'dark' ? { bg: '#11161d', page: '#1a2029', ink: '#e6eaf0', accent: '#8fb4e8' } : { bg: '#e4e9ef', page: '#ffffff', ink: '#15202b', accent: '#2f5d8a' }; Object.entries(d).forEach(([k, v]) => { $('#thm_' + k).value = v; }); $('#thmCustom').dispatchEvent(new Event('input')); });
+$('#thmBase').addEventListener('change', () => $('#thmReset').click());
+$('#thmClose').addEventListener('click', () => $('#thmDlg').close());
+COMMANDS.push(['Themes: Map sheet, Night march, Parchment, High contrast, or your own', () => openThemes()]);
+
+/* ---------- Drafting colors (2.12) ----------
+   Color passages while you draft: blue for "rewrite", amber for "check", whatever the colors mean to you. The key
+   (what each color stands for) is kept with the project. Colors are a drafting aid: exports leave them out unless
+   you ask to keep them. They are marked with a class, never a style, so a shared file can't smuggle anything in. */
+const INKS = [['b', 'Blue'], ['g', 'Green'], ['a', 'Amber'], ['r', 'Red'], ['p', 'Purple'], ['s', 'Gray']];
+const INK_OK = new Set(INKS.map(x => x[0]));
+function inkKey() { const k = P.inkKey && typeof P.inkKey === 'object' ? P.inkKey : {}; return Object.fromEntries(INKS.map(([c, n]) => [c, typeof k[c] === 'string' ? k[c].slice(0, 60) : ''])); }
+function inkCounts() { syncEditor(); const n = {}; P.docs.forEach(d => (String(d.html || '').match(/class="ink ink-([a-z])"/g) || []).forEach(m => { const c = m.slice(-2, -1); n[c] = (n[c] || 0) + 1; })); return n; }
+// wrap the selection, splitting at block edges so each paragraph keeps its own span
+function inkApply(c) {
+  restoreSelection(); const s = getSelection(); if (!s.rangeCount || s.isCollapsed || !editor.contains(s.anchorNode)) { toast('Select some text first, then choose a color.'); return; }
+  const r = s.getRangeAt(0);
+  inkClearRange(r);
+  if (c) {
+    const texts = []; const w = document.createTreeWalker(r.commonAncestorContainer.nodeType === 1 ? r.commonAncestorContainer : r.commonAncestorContainer.parentNode, NodeFilter.SHOW_TEXT);
+    let t; while ((t = w.nextNode())) if (r.intersectsNode(t) && t.data.trim() && !t.parentElement.closest('.cite,.fn,.math,.xref,figure,pre.code,[contenteditable="false"]')) texts.push(t);
+    texts.forEach(tn => {
+      const st = tn === r.startContainer ? r.startOffset : 0, en = tn === r.endContainer ? r.endOffset : tn.data.length; if (en <= st) return;
+      let u = tn; if (en < u.data.length) u.splitText(en); if (st) u = u.splitText(st);
+      const sp = document.createElement('span'); sp.className = 'ink ink-' + c; u.parentNode.insertBefore(sp, u); sp.appendChild(u);
+    });
+  }
+  editor.normalize(); onEdit(); s.removeAllRanges();
+}
+function inkClearRange(r) { $$('span.ink', editor).forEach(sp => { if (r.intersectsNode(sp)) sp.replaceWith(...sp.childNodes); }); }
+function openInk() {
+  saveSelectionNow(); closePop();
+  const a = tbAnchor('#btnInk'), b = a.getBoundingClientRect(), key = inkKey(), n = inkCounts();
+  popEl = document.createElement('div'); popEl.className = 'pop ink-menu'; popEl.setAttribute('role', 'menu'); popEl.setAttribute('aria-label', 'Drafting color');
+  popEl.innerHTML = `<div class="mh">Color the selection</div>` + INKS.map(([c, nm]) => `<div class="ink-row"><button role="menuitem" data-ink="${c}"><i class="ink-dot ink-${c}" aria-hidden="true"></i><span class="ink-${c} ink">${nm}</span></button><input data-ik="${c}" value="${esc(key[c])}" placeholder="means…" aria-label="What ${nm.toLowerCase()} means"><button class="ghost small" data-inext="${c}" ${n[c] ? '' : 'disabled'} title="Find the next passage in ${nm.toLowerCase()}">${n[c] || 0}</button></div>`).join('') +
+    `<div class="ink-foot"><button role="menuitem" data-ink="">Remove color</button><label class="inline small"><input type="checkbox" id="inkKeepChk" ${P.inkKeep ? 'checked' : ''}> Keep colors in exports</label></div>`;
+  document.body.appendChild(popEl);
+  popEl.style.left = Math.max(8, Math.min(innerWidth - popEl.offsetWidth - 8, b.left)) + 'px'; popEl.style.top = Math.max(8, Math.min(innerHeight - popEl.offsetHeight - 8, b.bottom + 6)) + 'px';
+  popEl.addEventListener('click', e => {
+    const bt = e.target.closest('[data-ink]'); if (bt) { closePop(); inkApply(bt.dataset.ink); return; }
+    const nx = e.target.closest('[data-inext]'); if (nx) { closePop(); inkNext(nx.dataset.inext); }
+  });
+  popEl.addEventListener('change', e => {
+    if (e.target.dataset.ik) { const k = inkKey(); k[e.target.dataset.ik] = e.target.value.trim().slice(0, 60); P.inkKey = k; markDirty(); }
+    if (e.target.id === 'inkKeepChk') { P.inkKeep = e.target.checked; markDirty(); }
+  });
+  popEl.querySelector('button').focus();
+}
+// the next colored passage, across documents in binder order
+function inkNext(c) {
+  syncEditor();
+  const here = $$(`span.ink-${c}`, editor), s = getSelection(), at = s.rangeCount ? s.getRangeAt(0) : null;
+  const after = here.find(sp => at && at.compareBoundaryPoints(Range.START_TO_START, (() => { const r = document.createRange(); r.selectNode(sp); return r; })()) < 0);
+  const go = sp => { sp.scrollIntoView({ block: 'center' }); const r = document.createRange(); r.selectNodeContents(sp); s.removeAllRanges(); s.addRange(r); sp.classList.remove('hm-flash'); void sp.offsetWidth; sp.classList.add('hm-flash'); };
+  if (after) { go(after); return; }
+  const docs = binderOrder(), i = docs.findIndex(d => d.id === curDocId);
+  for (let k = 1; k <= docs.length; k++) { const d = docs[(i + k) % docs.length]; if (new RegExp(`class="ink ink-${c}"`).test(d.html || '')) { if (d.id !== curDocId) openDoc(d.id); const sp = $(`span.ink-${c}`, editor); if (sp) go(sp); return; } }
+}
+// exports: drafting colors come out unless the project keeps them
+function inkStrip(html) { return P && P.inkKeep ? String(html || '') : String(html || '').replace(/<span class="ink ink-[a-z]">([\s\S]*?)<\/span>/g, '$1'); }
+COMMANDS.push(['Color the selected text (drafting colors)', () => openInk()], ['Find the next colored passage', () => { const n = inkCounts(), c = INKS.map(x => x[0]).find(k => n[k]); if (c) inkNext(c); else toast('No colored text yet. Select a passage and choose Color in the toolbar.'); }]);
+
+/* ---------- Code snippets (2.12) ----------
+   A block of code kept exactly as typed, for documentation: shown in a fixed-width face, never run, never
+   formatted. It reaches Markdown as a fenced block, HTML as <pre><code>, Word in a fixed-width font. */
+const CODE_LANGS = ['', 'Bash', 'C', 'C#', 'C++', 'CSS', 'Go', 'HTML', 'Java', 'JavaScript', 'JSON', 'Kotlin', 'LaTeX', 'Markdown', 'PHP', 'PowerShell', 'Python', 'R', 'Ruby', 'Rust', 'SQL', 'Swift', 'TypeScript', 'XML', 'YAML'];
+let codeTarget = null;
+const codeLang = s => String(s || '').replace(/[^\w#+.\- ]/g, '').trim().slice(0, 24);
+function codeHTML(lang, text) { return `<pre class="code" data-lang="${esc(codeLang(lang))}" contenteditable="false"><code>${esc(String(text).replace(/\r\n?/g, '\n'))}</code></pre>`; }
+function openCode(pre) {
+  saveSelectionNow(); codeTarget = pre || null;
+  $('#codeLang').innerHTML = CODE_LANGS.map(l => `<option value="${esc(l)}">${l ? esc(l) : 'Plain text'}</option>`).join('');
+  const lang = pre ? codeLang(pre.dataset.lang) : (PREFS.codeLang || '');
+  if (lang && !CODE_LANGS.includes(lang)) $('#codeLang').insertAdjacentHTML('beforeend', `<option value="${esc(lang)}">${esc(lang)}</option>`);
+  $('#codeLang').value = lang; $('#codeText').value = pre ? pre.textContent : '';
+  $('#codeDel').classList.toggle('hidden', !pre); $('#codeTitle').textContent = pre ? 'Edit the code snippet' : 'Insert a code snippet';
+  $('#codeDlg').showModal(); setTimeout(() => $('#codeText').focus(), 30);
+}
+$('#codeText').addEventListener('keydown', e => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); const t = e.target, s = t.selectionStart; t.setRangeText('  ', s, t.selectionEnd, 'end'); } });
+$('#codeOk').addEventListener('click', () => {
+  const text = $('#codeText').value.replace(/\s+$/, ''), lang = $('#codeLang').value; if (!text) { $('#codeDlg').close(); return; }
+  PREFS.codeLang = lang; savePrefs(); $('#codeDlg').close();
+  if (codeTarget && editor.contains(codeTarget)) { const t = document.createElement('div'); t.innerHTML = codeHTML(lang, text); codeTarget.replaceWith(t.firstChild); }
+  else { restoreSelection(); insertBlocksAtCursor(codeHTML(lang, text) + '<p><br></p>'); }
+  codeTarget = null; onEdit();
+});
+$('#codeDel').addEventListener('click', () => { if (codeTarget && editor.contains(codeTarget)) { codeTarget.remove(); onEdit(); } codeTarget = null; $('#codeDlg').close(); });
+$('#codeCancel').addEventListener('click', () => { codeTarget = null; $('#codeDlg').close(); });
+$('#codeCopy').addEventListener('click', async () => { try { await navigator.clipboard.writeText($('#codeText').value); toast('Code copied.'); } catch (e) { toast('Copying isn’t allowed here. Select the code and press Ctrl/⌘+C.'); } });
+editor.addEventListener('click', e => { const pre = e.target.closest('pre.code'); if (pre && editor.contains(pre)) { e.preventDefault(); openCode(pre); } });
+editor.addEventListener('keydown', e => { if (e.key !== 'Enter') return; const s = getSelection(), n = s.anchorNode, el = n && (n.nodeType === 1 ? n : n.parentElement), pre = el && el.closest && el.closest('pre.code'); if (pre) { e.preventDefault(); openCode(pre); } });
+// Markdown: a fenced block, with enough backticks that the code can't close it early
+function codeToMd(pre) { const t = pre.textContent, fence = '`'.repeat(Math.max(3, ...(t.match(/`+/g) || []).map(x => x.length + 1))); return `${fence}${codeLang(pre.dataset.lang).toLowerCase().replace(/\s+/g, '-')}\n${t}\n${fence}`; }
+
+/* ---------- Task lists for any part of the work (2.12) ----------
+   Press Tasks and a list attaches to the part you're in: the whole document (a chapter, an article) or the
+   section under the nearest heading. Items can carry a due date; what's due shows on Project home and in the
+   calendar, and you're reminded when you open the document. A section's list follows its heading wherever the
+   heading goes, because the heading carries the list's id. */
+const TASK_MAX = 400;
+function tasksAll() { if (!Array.isArray(P.tasks)) P.tasks = []; return P.tasks; }
+function taskListFor(docId, anchor) { return tasksAll().find(l => l.docId === docId && (l.anchor || '') === (anchor || '')); }
+// the heading over the caret: the section a new list would belong to
+function taskHeadingAtCaret() {
+  const s = getSelection(); let n = s.rangeCount ? s.anchorNode : null; if (!n || !editor.contains(n)) n = savedRange && editor.contains(savedRange.startContainer) ? savedRange.startContainer : null; if (!n) return null;
+  let blk = n.nodeType === 1 ? n : n.parentElement; while (blk && blk.parentElement !== editor) blk = blk.parentElement; if (!blk) return null;
+  for (let el = blk; el; el = el.previousElementSibling) if (/^H[1-3]$/.test(el.tagName)) return el;
+  return null;
+}
+function taskHeadingFor(anchor) { return anchor ? editor.querySelector(`h1[data-task="${anchor}"],h2[data-task="${anchor}"],h3[data-task="${anchor}"]`) : null; }
+function taskLabel(l) {
+  const d = P.docs.find(x => x.id === l.docId); if (!d) return 'A deleted document';
+  if (!l.anchor) return d.title || 'Untitled document';
+  const m = new RegExp(`<h[1-3][^>]*data-task="${escRe(l.anchor)}"[^>]*>([\\s\\S]*?)</h[1-3]>`).exec(l.docId === curDocId ? editor.innerHTML : d.html || '');
+  return `${d.title || 'Untitled'} › ${m ? htmlToText(m[1]).trim().slice(0, 80) || 'Untitled section' : l.title || 'A section'}`;
+}
+function taskOpen() { return tasksAll().flatMap(l => l.items.filter(i => !i.done).map(i => ({ l, i }))); }
+function taskDue() { return taskOpen().filter(x => x.i.due && daysUntil(x.i.due) <= 0); }
+function taskNew(docId, anchor, title) { const l = { id: uid('tk'), docId, anchor: anchor || '', title: (title || '').slice(0, 200), items: [], created: nowISO() }; tasksAll().push(l); return l; }
+let TK = { docId: '', anchor: '' };
+function openTasks(opts = {}) {
+  if (!P) return; syncEditor();
+  TK = { docId: opts.docId || curDocId, anchor: opts.anchor !== undefined ? opts.anchor : '' };
+  if (opts.here) { const h = taskHeadingAtCaret(); TK.anchor = h && h.dataset.task ? h.dataset.task : ''; }
+  taskRender(); if (!$('#taskDlg').open) $('#taskDlg').showModal();
+  setTimeout(() => $('#tkAdd')?.focus(), 30);
+}
+function taskRender() {
+  const d = P.docs.find(x => x.id === TK.docId) || curDoc(), h = TK.docId === curDocId ? taskHeadingAtCaret() : null;
+  const lists = tasksAll().filter(l => l.docId === d.id), cur = taskListFor(d.id, TK.anchor);
+  const secName = el => htmlToText(el.innerHTML).trim().slice(0, 60) || 'Untitled section';
+  const tabs = [{ a: '', name: 'Whole document', n: (taskListFor(d.id, '') || { items: [] }).items.filter(i => !i.done).length }]
+    .concat(lists.filter(l => l.anchor).map(l => ({ a: l.anchor, name: taskLabel(l).split(' › ').slice(1).join(' › ') || 'A section', n: l.items.filter(i => !i.done).length })));
+  $('#tkWhere').innerHTML = tabs.map(t => `<button class="small ${t.a === TK.anchor ? 'on' : ''}" data-tka="${esc(t.a)}" aria-pressed="${t.a === TK.anchor}">${esc(t.name)}${t.n ? ` <span class="count">${t.n}</span>` : ''}</button>`).join('') +
+    (h && TK.docId === curDocId && !(h.dataset.task && taskListFor(d.id, h.dataset.task)) ? `<button class="small primary-soft" id="tkHere" title="A list for the section under “${esc(secName(h))}”">+ List for “${esc(secName(h))}”</button>` : '');
+  $('#tkDoc').textContent = d.title || 'Untitled document';
+  const items = cur ? cur.items : [];
+  $('#tkList').innerHTML = items.length ? items.map(i => `<li class="${i.done ? 'done' : ''}" data-tki="${esc(i.id)}"><input type="checkbox" ${i.done ? 'checked' : ''} aria-label="Done"><input class="tk-t" value="${esc(i.t)}" aria-label="Task"><input type="date" class="tk-due ${i.due && !i.done && daysUntil(i.due) <= 0 ? 'late' : ''}" value="${esc(i.due || '')}" aria-label="Due date"><button class="ghost small" data-tkdel aria-label="Delete task">✕</button></li>`).join('')
+    : `<li class="none muted small">${TK.anchor ? 'No tasks for this section yet.' : 'No tasks for this document yet.'} Add one below: something to check, rewrite, ask or find.</li>`;
+  $('#tkFoot').textContent = `${taskOpen().length} open across the project${taskDue().length ? `, ${taskDue().length} due or late` : ''}.`;
+}
+$('#tkWhere').addEventListener('click', e => {
+  const b = e.target.closest('[data-tka]'); if (b) { TK.anchor = b.dataset.tka; taskRender(); return; }
+  if (e.target.closest('#tkHere')) { const h = taskHeadingAtCaret(); if (!h) return; if (!h.dataset.task) h.dataset.task = uid('ts'); const l = taskListFor(curDocId, h.dataset.task) || taskNew(curDocId, h.dataset.task, htmlToText(h.innerHTML).trim()); TK.anchor = l.anchor; syncEditor(); markDirty(); taskRender(); $('#tkAdd').focus(); }
+});
+function taskAdd() {
+  const t = $('#tkAdd').value.trim(); if (!t) return;
+  if (taskOpen().length + tasksAll().reduce((n, l) => n + l.items.filter(i => i.done).length, 0) >= TASK_MAX * 10) { toast('That’s a lot of tasks. Clear some finished ones first.'); return; }
+  const l = taskListFor(TK.docId, TK.anchor) || taskNew(TK.docId, TK.anchor);
+  if (l.items.length >= TASK_MAX) { toast(`A list holds up to ${TASK_MAX} tasks.`); return; }
+  l.items.push({ id: uid('ti'), t: t.slice(0, 500), done: false, due: $('#tkAddDue').value || '', at: nowISO() });
+  $('#tkAdd').value = ''; $('#tkAddDue').value = ''; markDirty(); taskRender(); taskBadges(); $('#tkAdd').focus();
+}
+$('#tkAddBtn').addEventListener('click', taskAdd);
+$('#tkAdd').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); taskAdd(); } });
+$('#tkList').addEventListener('change', e => {
+  const li = e.target.closest('[data-tki]'), l = taskListFor(TK.docId, TK.anchor); if (!li || !l) return; const it = l.items.find(i => i.id === li.dataset.tki); if (!it) return;
+  if (e.target.type === 'checkbox') { it.done = e.target.checked; it.doneAt = it.done ? nowISO() : ''; }
+  else if (e.target.classList.contains('tk-t')) it.t = e.target.value.slice(0, 500);
+  else if (e.target.classList.contains('tk-due')) it.due = /^\d{4}-\d\d-\d\d$/.test(e.target.value) ? e.target.value : '';
+  markDirty(); taskRender(); taskBadges();
+});
+$('#tkList').addEventListener('click', e => { if (!e.target.closest('[data-tkdel]')) return; const li = e.target.closest('[data-tki]'), l = taskListFor(TK.docId, TK.anchor); if (!l) return; l.items = l.items.filter(i => i.id !== li.dataset.tki); markDirty(); taskRender(); taskBadges(); });
+$('#tkClearDone').addEventListener('click', () => { const l = taskListFor(TK.docId, TK.anchor); if (!l) return; const n = l.items.filter(i => i.done).length; l.items = l.items.filter(i => !i.done); if (n) { markDirty(); taskRender(); taskBadges(); toast(`${n} finished task${n === 1 ? '' : 's'} cleared.`); } });
+$('#tkClose').addEventListener('click', () => $('#taskDlg').close());
+// headings with a list show a small count; the doc bar button shows what's open in this document
+function taskBadges() {
+  if (!P || !editor) return;
+  $$('pre.code:not([contenteditable="false"])', editor).forEach(p => p.setAttribute('contenteditable', 'false'));
+  $$('[data-task]', editor).forEach(h => { const l = taskListFor(curDocId, h.dataset.task), n = l ? l.items.filter(i => !i.done).length : 0; if (n) h.setAttribute('data-cp-tasks', n); else h.removeAttribute('data-cp-tasks'); });
+  const n = tasksAll().filter(l => l.docId === curDocId).reduce((s, l) => s + l.items.filter(i => !i.done).length, 0), b = $('#btnTasks');
+  if (b) { b.querySelector('.tk-n').textContent = n || ''; b.setAttribute('aria-label', n ? `Tasks: ${n} open in this document` : 'Tasks'); }
+}
+// the day's reminder, once per document per day
+const tkReminded = new Set();
+function taskRemind() {
+  if (!P || !curDocId) return; const k = curDocId + todayKey(); if (tkReminded.has(k)) return; tkReminded.add(k);
+  const due = taskDue().filter(x => x.l.docId === curDocId); if (!due.length) return;
+  toast(`${due.length} task${due.length === 1 ? '' : 's'} due in “${(curDoc() || {}).title || 'this document'}”: ${due.slice(0, 2).map(x => x.i.t.slice(0, 50)).join('; ')}${due.length > 2 ? '…' : ''}`, { label: 'Show', fn: () => openTasks({ anchor: due[0].l.anchor }) });
+}
+// a heading's count is a button: click its right edge to open that section's list
+editor.addEventListener('click', e => { const h = e.target.closest('[data-cp-tasks]'); if (!h) return; const r = h.getBoundingClientRect(); if (e.clientX > r.right - 44) { e.preventDefault(); openTasks({ anchor: h.dataset.task }); } });
+// keep lists whose section heading was deleted: they move to the document's own list rather than vanish
+function taskTidy() {
+  if (!P || !Array.isArray(P.tasks)) return; syncEditor();
+  const ids = new Map(); P.docs.forEach(d => (String(d.html || '').match(/data-task="([\w-]+)"/g) || []).forEach(m => ids.set(m.slice(11, -1), d.id)));
+  P.tasks.forEach(l => { if (!l.anchor) return; const at = ids.get(l.anchor); if (at && at !== l.docId) l.docId = at; if (!at && P.docs.some(d => d.id === l.docId)) { const whole = taskListFor(l.docId, '') || taskNew(l.docId, ''); whole.items.push(...l.items.map(i => Object.assign(i, { t: i.t + ` (from “${l.title || 'a section'}”)` }))); l.items = []; l.gone = true; } });
+  P.tasks = P.tasks.filter(l => !l.gone && P.docs.some(d => d.id === l.docId) && (l.items.length || l.anchor));
+}
+COMMANDS.push(['Tasks for this document or section', () => openTasks({ here: true })], ['Tasks due: everything open across the project', () => openTaskAll()]);
+function openTaskAll() {
+  const open = taskOpen().sort((a, b) => (a.i.due || '9999').localeCompare(b.i.due || '9999'));
+  $('#taskAllList').innerHTML = open.length ? open.map((x, k) => `<li data-tkall="${k}"><span class="t">${esc(x.i.t)}</span><span class="m">${esc(taskLabel(x.l))}</span><span class="m ${x.i.due && daysUntil(x.i.due) <= 0 ? 'rv-late' : ''}">${x.i.due ? esc(fmtDue(x.i.due)) : ''}</span></li>`).join('') : '<li class="muted small none">Nothing open. Press Tasks in the document bar to start a list for a chapter or a section.</li>';
+  TK_ALL = open; $('#taskAllDlg').showModal();
+}
+let TK_ALL = [];
+$('#taskAllList').addEventListener('click', e => { const li = e.target.closest('[data-tkall]'); if (!li) return; const x = TK_ALL[+li.dataset.tkall]; $('#taskAllDlg').close(); if (x.l.docId !== curDocId) openDoc(x.l.docId); const h = taskHeadingFor(x.l.anchor); if (h) h.scrollIntoView({ block: 'center' }); openTasks({ docId: x.l.docId, anchor: x.l.anchor }); });
+$('#taskAllClose').addEventListener('click', () => $('#taskAllDlg').close());
+function tasksClean(p) {
+  const s = v => (typeof v === 'string' ? v : ''), day = v => (/^\d{4}-\d\d-\d\d$/.test(v || '') ? v : ''), idok = v => (/^[\w-]{1,40}$/.test(v || '') ? v : '');
+  p.tasks = (Array.isArray(p.tasks) ? p.tasks : []).filter(l => l && typeof l === 'object' && idok(l.id) && idok(l.docId)).slice(0, 2000).map(l => ({ id: l.id, docId: l.docId, anchor: idok(l.anchor), title: s(l.title).slice(0, 200), created: s(l.created).slice(0, 40) || nowISO(),
+    items: (Array.isArray(l.items) ? l.items : []).filter(i => i && typeof i === 'object').slice(0, TASK_MAX).map(i => ({ id: idok(i.id) || uid('ti'), t: s(i.t).slice(0, 500), done: !!i.done, doneAt: s(i.doneAt).slice(0, 40), due: day(i.due), at: s(i.at).slice(0, 40) })) }));
+  return p;
+}
+
+/* ---------- Notecard converter (2.12) ----------
+   Index cards written by hand, outside Anabasis, brought in as notes. Photograph the cards (one card a photo)
+   and the text is read on this computer by the same offline OCR the reader uses; or type them out, a blank line
+   and three dashes between cards. Either way you check every card before it becomes a note. A card can say where
+   it came from: "Source: Tuchman 1962" or a line starting with an author's name, "p. 23" for the page, and
+   #words for tags. Quotation marks around the whole card make it a quotation. */
+let NC = [];
+function ncParse(text) {
+  const lines = String(text || '').replace(/\r\n?/g, '\n').split('\n').map(l => l.trim());
+  while (lines.length && !lines[0]) lines.shift(); while (lines.length && !lines[lines.length - 1]) lines.pop();
+  if (!lines.length) return null;
+  const card = { title: '', body: '', tags: [], sourceId: '', locator: '', label: 'page', kind: 'idea', date: '' }, body = [];
+  lines.forEach((l, k) => {
+    let m;
+    if ((m = /^(?:source|src|from|ref)\s*[:\-–]\s*(.+)$/i.exec(l))) { card.sourceId = ncSource(m[1]) || card.sourceId; if (!card.sourceId) body.push(l); return; }
+    if ((m = /^(?:pp?\.|pages?|page)\s*([0-9ivxlcdm][0-9ivxlcdm,\-– ]*)$/i.exec(l))) { card.locator = m[1].replace(/\s+/g, ''); return; }
+    if ((m = /^(?:date)\s*[:\-–]\s*(\d{4}-\d\d-\d\d)$/i.exec(l))) { card.date = m[1]; return; }
+    const tags = l.match(/(^|\s)#[\p{L}\p{N}_-]{2,40}/gu);
+    if (tags && l.replace(/(^|\s)#[\p{L}\p{N}_-]{2,40}/gu, '').trim() === '') { tags.forEach(t => card.tags.push(t.trim().slice(1).replace(/[-_]/g, ' '))); return; }
+    if (k === 0 && lines.length > 1 && l.length <= 90 && !/[.!?]["”]?$/.test(l)) { card.title = l; return; }
+    body.push(l);
+  });
+  // "(Tuchman 1962, 41)" or "Tuchman, p. 41" at the end of the card
+  const last = body.length ? body[body.length - 1] : '';
+  let m = /\(([^()]{2,60}?)[,\s]+(?:p\.?\s*)?(\d[\d\-–]*)\)\s*$/.exec(last);
+  if (m && !card.sourceId) { const s = ncSource(m[1]); if (s) { card.sourceId = s; card.locator = card.locator || m[2]; body[body.length - 1] = last.slice(0, m.index).trim(); } }
+  card.body = body.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  if (/^["“].+["”]$/s.test(card.body)) { card.kind = 'quote'; card.body = card.body.replace(/^["“]|["”]$/g, '').trim(); }
+  if (!card.title) card.title = (card.body.split(/[.\n]/)[0] || '').slice(0, 70).trim();
+  card.tags = [...new Set(card.tags)].slice(0, 12);
+  return card.body || card.title ? card : null;
+}
+// "Tuchman 1962", "Tuchman", "Guns of August": the best single match among your sources, or none
+function ncSource(q) {
+  q = String(q || '').toLowerCase().replace(/[“”"]/g, '').trim(); if (q.length < 3) return '';
+  const year = (/\b(1[5-9]\d\d|20\d\d)\b/.exec(q) || [])[1], words = q.replace(/\b\d{4}\b/, '').split(/[\s,.;:]+/).filter(w => w.length > 2);
+  const scored = P.sources.map(s => {
+    const a = socAuthor(s).toLowerCase(), t = String(s.csl.title || '').toLowerCase(), y = String(((s.csl.issued || {})['date-parts'] || [[]])[0][0] || '');
+    let sc = 0; words.forEach(w => { if (a && a === w) sc += 3; else if (a.includes(w)) sc += 2; if (t.includes(w)) sc += 1; }); if (year && y === year) sc += 2; else if (year && y) sc -= 2;
+    return [s.id, sc];
+  }).filter(x => x[1] >= 2).sort((a, b) => b[1] - a[1]);
+  return scored.length && (scored.length === 1 || scored[0][1] > scored[1][1]) ? scored[0][0] : '';
+}
+function ncSplitTyped(text) { return String(text || '').replace(/\r\n?/g, '\n').split(/\n\s*(?:-{3,}|={3,}|\*{3,})\s*\n|\n{3,}/).map(ncParse).filter(Boolean); }
+function openNotecards() {
+  NC = []; $('#ncTyped').value = ''; $('#ncPhotos').value = ''; ncMode('photo'); ncRender(); $('#ncDlg').showModal();
+}
+function ncMode(m) { $$('#ncDlg [data-ncm]').forEach(b => { const on = b.dataset.ncm === m; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); }); $('#ncPhotoBox').classList.toggle('hidden', m !== 'photo'); $('#ncTypedBox').classList.toggle('hidden', m !== 'typed'); }
+$('#ncDlg').addEventListener('click', e => { const b = e.target.closest('[data-ncm]'); if (b) ncMode(b.dataset.ncm); });
+$('#ncTyped').addEventListener('input', debounce(() => { NC = ncSplitTyped($('#ncTyped').value).slice(0, 500).map(c => Object.assign(c, { on: true })); ncRender(); }, 250));
+$('#ncPhotos').addEventListener('change', async e => {
+  const fs = [...e.target.files].filter(f => /^image\//.test(f.type)).slice(0, 60); e.target.value = ''; if (!fs.length) return;
+  for (let k = 0; k < fs.length; k++) {
+    $('#ncStatus').textContent = `Reading card ${k + 1} of ${fs.length}… (on this computer; the first card takes longest)`;
+    try { const url = await fileToDataURL(fs[k]), text = await ocrRead(url, null), c = ncParse(text); if (c) NC.push(Object.assign(c, { on: true, from: fs[k].name })); else NC.push({ title: fs[k].name.replace(/\.[^.]+$/, ''), body: '', tags: [], sourceId: '', locator: '', label: 'page', kind: 'idea', date: '', on: false, from: fs[k].name, empty: true }); }
+    catch (err) { toast(`“${fs[k].name}” couldn’t be read: ${err.message || err}`); }
+    ncRender();
+  }
+  $('#ncStatus').textContent = `${NC.length} card${NC.length === 1 ? '' : 's'} read. Check each one: handwriting is hard, and OCR makes mistakes.`;
+});
+function ncRender() {
+  const srcOpts = id => `<option value="">No source</option>` + P.sources.map(s => `<option value="${esc(s.id)}" ${s.id === id ? 'selected' : ''}>${esc((socAuthor(s) ? socAuthor(s) + ', ' : '') + (s.csl.title || 'Untitled').slice(0, 60))}</option>`).join('');
+  $('#ncList').innerHTML = NC.length ? NC.map((c, i) => `<li class="nc-card ${c.on ? '' : 'off'}" data-nc="${i}"><label class="inline nc-on"><input type="checkbox" data-f="on" ${c.on ? 'checked' : ''}> Add</label>
+    <input data-f="title" value="${esc(c.title)}" aria-label="Title" placeholder="Title">
+    <textarea data-f="body" rows="3" aria-label="Card text" placeholder="${c.empty ? 'No text found on this photo. Type it in, or leave it out.' : ''}">${esc(c.body)}</textarea>
+    <div class="nc-meta"><select data-f="sourceId" aria-label="Source">${srcOpts(c.sourceId)}</select><input data-f="locator" value="${esc(c.locator)}" placeholder="page" aria-label="Page" class="nc-loc"><select data-f="kind" aria-label="Kind">${['idea', 'quote', 'paraphrase', 'summary', 'fact'].map(k => `<option ${k === c.kind ? 'selected' : ''}>${k}</option>`).join('')}</select><input data-f="tags" value="${esc(c.tags.join(', '))}" placeholder="tags" aria-label="Tags"></div>${c.from ? `<span class="small muted">${esc(c.from)}</span>` : ''}</li>`).join('')
+    : '<li class="muted small none">Cards appear here to check before they become notes.</li>';
+  const n = NC.filter(c => c.on).length; $('#ncOk').disabled = !n; $('#ncOk').textContent = n ? `Add ${n} note${n === 1 ? '' : 's'}` : 'Add notes';
+}
+$('#ncList').addEventListener('input', e => { const li = e.target.closest('[data-nc]'), f = e.target.dataset.f; if (!li || !f) return; const c = NC[+li.dataset.nc]; if (f === 'on') { c.on = e.target.checked; li.classList.toggle('off', !c.on); const n = NC.filter(x => x.on).length; $('#ncOk').disabled = !n; $('#ncOk').textContent = n ? `Add ${n} note${n === 1 ? '' : 's'}` : 'Add notes'; } else if (f === 'tags') c.tags = e.target.value.split(',').map(t => t.trim()).filter(Boolean).slice(0, 12); else c[f] = e.target.value; });
+$('#ncList').addEventListener('change', e => { if (e.target.tagName === 'SELECT') $('#ncList').dispatchEvent(new Event('input', { bubbles: true })) || null; const li = e.target.closest('[data-nc]'), f = e.target.dataset.f; if (li && f && e.target.tagName === 'SELECT') NC[+li.dataset.nc][f] = e.target.value; });
+$('#ncOk').addEventListener('click', () => {
+  const add = NC.filter(c => c.on && (c.body.trim() || c.title.trim())); if (!add.length) return;
+  const tag = PREFS.ncTag !== false ? 'notecard' : '';
+  add.forEach(c => { const n = Object.assign(newNote(), { title: c.title.slice(0, 300), body: c.body.slice(0, 100000), kind: c.kind, sourceId: P.sources.some(s => s.id === c.sourceId) ? c.sourceId : '', locator: c.locator.slice(0, 40), tags: [...new Set([...(c.tags || []), tag].filter(Boolean))], date: c.date || '' }); P.notes.push(n); });
+  markDirty(); renderNoteList(); $('#ncDlg').close(); switchTab('notes');
+  toast(`${add.length} notecard${add.length === 1 ? '' : 's'} added as notes, tagged “notecard”.`);
+});
+$('#ncCancel').addEventListener('click', () => $('#ncDlg').close());
+COMMANDS.push(['Notecard converter: bring in handwritten cards (photos or typed)', () => openNotecards()]);
+
+/* ---------- Sketches with Excalidraw (2.12) ----------
+   Insert → Sketch opens Excalidraw, the hand-drawn whiteboard, in a frame of its own. Saving puts the drawing in
+   the document as a figure (a picture, so every export and printout carries it) and keeps the drawing itself in
+   the project, so clicking the figure opens it again to edit. The frame has no network: fonts and code come with
+   Anabasis, links and embedded web pages are taken out of a drawing before it opens, and the two sides talk only
+   in messages that are checked on arrival. */
+const SK_MAX = 8e6; // a drawing's saved size, pictures included
+let SK = { id: '', fig: null, frame: null, urls: [] };
+function sketchesOf(p) { if (!p.sketches || typeof p.sketches !== 'object' || Array.isArray(p.sketches)) p.sketches = {}; return p.sketches; }
+// what a drawing may hold: shapes, text and pictures, nothing that reaches out
+function skClean(scene) {
+  if (!scene || typeof scene !== 'object') return null;
+  const els = (Array.isArray(scene.elements) ? scene.elements : []).filter(e => e && typeof e === 'object' && typeof e.type === 'string' && !/^(embeddable|iframe|magicframe)$/.test(e.type)).slice(0, 20000)
+    .map(e => { const o = JSON.parse(JSON.stringify(e)); o.link = null; if (o.customData) delete o.customData; return o; });
+  const files = {}; const F = scene.files && typeof scene.files === 'object' ? scene.files : {};
+  Object.entries(F).slice(0, 200).forEach(([k, f]) => { if (f && typeof f === 'object' && /^[\w-]{1,80}$/.test(k) && typeof f.dataURL === 'string' && /^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(f.dataURL)) files[k] = { id: k, mimeType: f.dataURL.slice(5, f.dataURL.indexOf(';')), dataURL: f.dataURL, created: +f.created || Date.now() }; });
+  const a = scene.appState && typeof scene.appState === 'object' ? scene.appState : {};
+  const appState = { viewBackgroundColor: HEX.test(a.viewBackgroundColor || '') || a.viewBackgroundColor === 'transparent' ? a.viewBackgroundColor : '#ffffff', gridSize: a.gridSize === 20 ? 20 : null };
+  const out = { elements: els, files, appState };
+  return JSON.stringify(out).length <= SK_MAX ? out : null;
+}
+function sketchesClean(p) {
+  const S = sketchesOf(p), used = new Set();
+  (p.docs || []).forEach(d => [d.html, ...(d.snapshots || []).map(v => v.html)].forEach(h => (String(h || '').match(/data-sketch="([\w-]+)"/g) || []).forEach(m => used.add(m.slice(13, -1)))));
+  p.sketches = Object.fromEntries(Object.entries(S).filter(([k]) => /^[\w-]{1,40}$/.test(k) && used.has(k)).map(([k, v]) => [k, skClean(v)]).filter(x => x[1]));
+  return p;
+}
+function openSketch(fig) {
+  saveSelectionNow();
+  const id = fig && fig.dataset.sketch && /^[\w-]+$/.test(fig.dataset.sketch) ? fig.dataset.sketch : '';
+  const scene = id ? sketchesOf(P)[id] : null;
+  if (fig && !scene) { toast('This figure’s drawing isn’t in the project any more. Replace the image, or draw it again.'); return; }
+  SK = { id: id || uid('sk'), fig: fig || null, frame: null, urls: [], dirty: false };
+  $('#skTitle').textContent = fig ? 'Edit the sketch' : 'New sketch';
+  $('#skStatus').textContent = 'Opening Excalidraw…';
+  const host = $('#skHost'); host.innerHTML = '';
+  const f = document.createElement('iframe'); f.className = 'sk-frame'; f.title = 'Excalidraw drawing area';
+  // a sandbox with scripts but not this page's origin: the drawing code can't reach the project, storage or the page
+  f.setAttribute('sandbox', 'allow-scripts');
+  f.srcdoc = skFrameHTML(); host.appendChild(f); SK.frame = f;
+  SK.init = { scene: scene ? JSON.parse(JSON.stringify(scene)) : null, theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light' };
+  $('#skDlg').showModal();
+}
+function skFrameHTML() {
+  // every script here is one of the page's own, word for word, so the frame runs it under the page's script hashes;
+  // nothing is added at run time, and the sandbox keeps the frame from the page and this browser's storage
+  const L = id => document.getElementById(id).textContent;
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>html,body,#root{margin:0;height:100%}body{font-family:Assistant,system-ui,sans-serif}</style>`
+    + ['lib-excal-shim', 'lib-react', 'lib-react-dom', 'lib-excal-vendor', 'lib-excal'].map(id => `<script>${L(id)}<\/script>`).join('')
+    + `</head><body><div id="root"></div><script>${L('lib-excal-boot')}<\/script></body></html>`;
+  return TT_FRAME ? TT_FRAME.createHTML(html) : html;
+}
+addEventListener('message', e => {
+  if (!SK.frame || e.source !== SK.frame.contentWindow || !e.data || e.data.sk !== 1) return;
+  const m = e.data;
+  if (m.skBoot) SK.frame.contentWindow.postMessage({ skInit: 1, scene: SK.init.scene, theme: SK.init.theme }, '*');
+  if (m.skReady) { $('#skStatus').textContent = 'Draw with the tools at the top. Save puts the sketch in your document; you can open it again by clicking it.'; $('#skSave').disabled = false; }
+  if (m.skChange) SK.dirty = true;
+  if (m.skErr) { $('#skStatus').textContent = 'The sketch couldn’t be saved: ' + String(m.skErr).slice(0, 200); $('#skSave').disabled = false; }
+  if (m.skScene) skSaved(m.skScene, typeof m.png === 'string' ? m.png : '');
+});
+async function skSaved(scene, png) {
+  $('#skSave').disabled = false;
+  const clean = skClean(scene);
+  if (!clean) { $('#skStatus').textContent = 'This drawing is too large to keep in the project. Take out some pictures and try again.'; return; }
+  if (!clean.elements.filter(x => !x.isDeleted).length) { skClose(); toast('Nothing drawn, so nothing was added.'); return; }
+  if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(png)) { $('#skStatus').textContent = 'The picture of the sketch couldn’t be made.'; return; }
+  sketchesOf(P)[SK.id] = clean;
+  const im = await loadImage(png).catch(() => null), assetId = addAsset(png, 'Sketch', im ? im.naturalWidth : 0, im ? im.naturalHeight : 0);
+  if (SK.fig && editor.contains(SK.fig)) { SK.fig.querySelector('img').dataset.asset = assetId; }
+  else { restoreSelection(); insertBlocksAtCursor(figHTML(assetId).replace('<figure class="fig"', `<figure class="fig" data-sketch="${SK.id}"`) + '<p><br></p>'); }
+  hydrateImages(); renumberFigures(); onEdit(); markDirty();
+  const fig = editor.querySelector(`figure[data-sketch="${SK.id}"]`); skClose();
+  if (fig && !SK.wasFig) focusCaption(fig);
+  toast(SK.fig ? 'Sketch updated.' : 'Sketch added. Type a caption under it; click it any time to draw more.');
+}
+function skClose() { if (SK.frame) SK.frame.remove(); SK.frame = null; $('#skHost').innerHTML = ''; if ($('#skDlg').open) $('#skDlg').close(); }
+$('#skSave').addEventListener('click', () => { if (!SK.frame) return; $('#skSave').disabled = true; $('#skStatus').textContent = 'Saving the sketch…'; SK.wasFig = !!SK.fig; SK.frame.contentWindow.postMessage({ skGet: 1 }, '*'); });
+$('#skCancel').addEventListener('click', async () => { if (SK.dirty && !(await ask('Leave without saving?', 'Your changes to this sketch will be lost.', 'Leave'))) return; skClose(); });
+$('#skDlg').addEventListener('cancel', e => { e.preventDefault(); $('#skCancel').click(); });
+COMMANDS.push(['Sketch: draw a diagram with Excalidraw (insert a figure)', () => openSketch()]);
+
+/* ---------- Insert menu: sketch and code ---------- */
+{
+  const F = INSERT_ITEMS.find(x => x[0] === 'Figures'), T = INSERT_ITEMS.find(x => x[0] === 'In the text');
+  if (F) F[1].push(['sketch', 'Sketch (Excalidraw)…', '<path d="M4 20c2-1 3.5-4 5-4s1 3 3 3 3-6 5-6 2 2 3 2"/><path d="m14.5 4.5 5 5L11 18H6v-5z"/>']);
+  if (T) T[1].push(['code', 'Code snippet…', '<path d="m8 8-4 4 4 4M16 8l4 4-4 4M13.5 5l-3 14"/>']);
+  INSERT_EXTRA.sketch = () => openSketch();
+  INSERT_EXTRA.code = () => openCode();
+}
+
+/* ---------- Project home you arrange (2.12) ----------
+   Every card on Project home can move, hide or widen, and a few new ones can be added: tasks, pinned notes, a
+   question from Socrates, and a quick note. Kept in this browser. */
+const HOME_CARDS = { resume: 'Pick up where you left off', goal: 'Goal & pace', calendar: 'Calendar', docs: 'Documents', loose: 'Loose ends', due: 'Due for review', inbox: 'Notes inbox', subs: 'Submissions', resurface: 'A note from the past', recent: 'Recently touched', file: 'Project file', tasks: 'Tasks', pinned: 'Pinned notes', socq: 'A question from Socrates', quick: 'Quick note' };
+const HOME_NEW = ['tasks', 'pinned', 'socq', 'quick'];
+function homeLayout() {
+  const L = Array.isArray(PREFS.homeCards) ? PREFS.homeCards.filter(x => x && HOME_CARDS[x.k]) : [];
+  const have = new Set(L.map(x => x.k));
+  Object.keys(HOME_CARDS).forEach(k => { if (!have.has(k)) L.push({ k, hide: HOME_NEW.includes(k) && k !== 'tasks', wide: false }); });
+  return L;
+}
+function homeIdentify(grid) {
+  [...grid.children].forEach(c => {
+    if (c.dataset.card) return; const h = (c.querySelector('h5')?.firstChild?.textContent || '').trim();
+    const k = c.classList.contains('hm-wide') && c.querySelector('.hm-resume') ? 'resume' : c.classList.contains('hm-due') ? 'due' : /^Goal/.test(h) ? 'goal' : /^Documents/.test(h) ? 'docs' : /^Loose/.test(h) ? 'loose' : /^Notes inbox/.test(h) ? 'inbox' : /^Recently/.test(h) ? 'recent' : /^Project file/.test(h) ? 'file' : /calendar/i.test(c.className + ' ' + h) ? 'calendar' : /submi|pitch/i.test(c.className + ' ' + h) ? 'subs' : /resurf|from the past|^On this day|^Rediscover/i.test(c.className + ' ' + h) ? 'resurface' : '';
+    if (k) c.dataset.card = k;
+  });
+}
+function homeExtraCards() {
+  const L = homeLayout(), editing = document.body.classList.contains('hm-edit'), on = k => L.some(x => x.k === k && (!x.hide || editing)), out = [];
+  if (on('tasks')) { const open = taskOpen().sort((a, b) => (a.i.due || '9999').localeCompare(b.i.due || '9999')).slice(0, 8); out.push(`<div class="hm-card" data-card="tasks"><h5>Tasks <span class="count">${taskOpen().length}</span><button class="ghost small" data-hmx="taskall">All tasks</button></h5>${open.length ? `<ul class="hm-list">${open.map((x, k) => `<li data-hmtk="${k}"><span class="t">${esc(x.i.t)}</span><span class="m">${esc(taskLabel(x.l))}</span><span class="m ${x.i.due && daysUntil(x.i.due) <= 0 ? 'rv-late' : ''}">${x.i.due ? esc(fmtDue(x.i.due)) : ''}</span></li>`).join('')}</ul>` : '<p class="small muted">No open tasks. Press <b>Tasks</b> in the document bar to give a chapter or a section its own list.</p>'}</div>`); HM_TK = open; }
+  if (on('pinned')) { const pins = P.notes.filter(n => n.pinned).slice(0, 8); out.push(`<div class="hm-card" data-card="pinned"><h5>Pinned notes <span class="count">${pins.length}</span></h5>${pins.length ? `<ul class="hm-list">${pins.map(n => `<li data-hmnote="${esc(n.id)}"><span class="t">${esc(noteTitle(n) || 'Untitled note')}</span><span class="m">${esc(n.kind || '')}</span></li>`).join('')}</ul>` : '<p class="small muted">Pin a note (the pin in its editor) to keep it here.</p>'}</div>`); }
+  if (on('socq')) { const G = socData(), g = G.length ? G[Math.floor(Math.random() * G.length)] : null, q = g ? g.stems.filter(s => !s.includes('___') && !/\{/.test(s))[0 | Math.random() * g.stems.filter(s => !s.includes('___') && !/\{/.test(s)).length] : ''; out.push(`<div class="hm-card" data-card="socq"><h5>A question from Socrates</h5><p class="hm-socq">${esc(q || 'What do I most need to find out next?')}</p><div class="row"><button class="small" data-hmx="soc">Ask Socrates</button><button class="small ghost" data-hmx="socagain">Another</button></div></div>`); }
+  if (on('quick')) out.push(`<div class="hm-card" data-card="quick"><h5>Quick note</h5><textarea id="hmQuick" rows="3" placeholder="A thought, a lead, a page number. It becomes a note in the inbox." aria-label="Quick note"></textarea><div class="row"><button class="small primary-soft" data-hmx="quick">Add note</button></div></div>`);
+  return out.join('');
+}
+let HM_TK = [];
+function homeArrange() {
+  const grid = $('#hmArea .hm-grid'); if (!grid) return;
+  grid.insertAdjacentHTML('beforeend', homeExtraCards()); homeIdentify(grid);
+  const L = homeLayout(), cards = Object.fromEntries([...grid.children].filter(c => c.dataset.card).map(c => [c.dataset.card, c]));
+  L.forEach(x => { const c = cards[x.k]; if (!c) return; grid.appendChild(c); c.classList.toggle('hidden', !!x.hide && !document.body.classList.contains('hm-edit')); c.classList.toggle('hm-hid', !!x.hide); if (x.k !== 'resume') c.classList.toggle('hm-wide', !!x.wide); });
+  if (document.body.classList.contains('hm-edit')) homeEditChrome(grid, L);
+  homeTools();
+}
+function homeTools() {
+  const area = $('#hmArea'); if (!area || $('#hmCustomize')) return;
+  area.insertAdjacentHTML('afterbegin', `<div class="hm-tools"><button class="small ghost" id="hmCustomize" aria-pressed="false">Arrange this page</button></div>`);
+}
+function homeEditChrome(grid, L) {
+  [...grid.children].forEach(c => {
+    const k = c.dataset.card; if (!k || c.querySelector('.hm-ed')) return; const x = L.find(y => y.k === k);
+    c.insertAdjacentHTML('afterbegin', `<div class="hm-ed" role="group" aria-label="${esc(HOME_CARDS[k])}"><b>${esc(HOME_CARDS[k])}</b><button class="small ghost" data-hme="up" aria-label="Move ${esc(HOME_CARDS[k])} earlier">↑</button><button class="small ghost" data-hme="down" aria-label="Move ${esc(HOME_CARDS[k])} later">↓</button>${k !== 'resume' ? `<button class="small ghost" data-hme="wide" aria-pressed="${!!x.wide}">${x.wide ? 'Narrow' : 'Wide'}</button>` : ''}<button class="small ghost" data-hme="hide" aria-pressed="${!!x.hide}">${x.hide ? 'Show' : 'Hide'}</button></div>`);
+    c.setAttribute('draggable', 'true');
+  });
+}
+function homeSet(fn) { const L = homeLayout(); fn(L); PREFS.homeCards = L; savePrefs(); renderHome(); }
+document.addEventListener('click', e => {
+  if (e.target.id === 'hmCustomize') { const on = document.body.classList.toggle('hm-edit'); e.target.setAttribute('aria-pressed', on); e.target.textContent = on ? 'Done arranging' : 'Arrange this page'; if (on) toast('Move cards with ↑ ↓ or by dragging; hide what you don’t use, or show the new cards: tasks, pinned notes, a question from Socrates, a quick note.'); renderHome(); return; }
+  if (e.target.id === 'hmLayoutReset') { PREFS.homeCards = null; savePrefs(); renderHome(); return; }
+  const ed = e.target.closest('[data-hme]'); if (ed) { const k = ed.closest('[data-card]').dataset.card, a = ed.dataset.hme; homeSet(L => { const i = L.findIndex(x => x.k === k); if (a === 'hide') L[i].hide = !L[i].hide; if (a === 'wide') L[i].wide = !L[i].wide; if (a === 'up' || a === 'down') { let j = i + (a === 'up' ? -1 : 1); while (j >= 0 && j < L.length && L[j].hide && !document.body.classList.contains('hm-edit')) j += a === 'up' ? -1 : 1; if (j >= 0 && j < L.length) { const [m] = L.splice(i, 1); L.splice(j, 0, m); } } }); setTimeout(() => $(`[data-card="${k}"] [data-hme="${a}"]`)?.focus(), 30); return; }
+  const tk = e.target.closest('[data-hmtk]'); if (tk) { const x = HM_TK[+tk.dataset.hmtk]; if (x) { closeHome(); if (x.l.docId !== curDocId) openDoc(x.l.docId); openTasks({ docId: x.l.docId, anchor: x.l.anchor }); } return; }
+  const nt = e.target.closest('[data-hmnote]'); if (nt) { openNote(nt.dataset.hmnote); return; }
+  const hx = e.target.closest('[data-hmx]'); if (!hx) return;
+  ({ taskall: () => openTaskAll(), soc: () => openSocrates({ fresh: true }), socagain: () => renderHome(),
+    quick: () => { const t = ($('#hmQuick')?.value || '').trim(); if (!t) return; const n = Object.assign(newNote(), { title: t.split('\n')[0].slice(0, 80), body: t, kind: 'idea' }); P.notes.push(n); markDirty(); renderNoteList(); renderHome(); toast('Added to the notes inbox.'); } })[hx.dataset.hmx]?.();
+});
+{ let drag = null;
+  document.addEventListener('dragstart', e => { const c = e.target.closest && e.target.closest('body.hm-edit .hm-grid > [data-card]'); if (!c) return; drag = c.dataset.card; e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', drag); } catch (err) {} });
+  document.addEventListener('dragover', e => { if (drag && e.target.closest && e.target.closest('.hm-grid > [data-card]')) e.preventDefault(); });
+  document.addEventListener('drop', e => { const c = drag && e.target.closest && e.target.closest('.hm-grid > [data-card]'); if (!c) return; e.preventDefault(); const to = c.dataset.card, from = drag; drag = null; if (to === from) return; homeSet(L => { const i = L.findIndex(x => x.k === from), [m] = L.splice(i, 1), j = L.findIndex(x => x.k === to); L.splice(j, 0, m); }); });
+  document.addEventListener('dragend', () => { drag = null; });
+}
+{ const rh = renderHome; renderHome = async function () { await rh(); if (homeOn) { homeArrange(); if (document.body.classList.contains('hm-edit') && !$('#hmLayoutReset')) $('.hm-tools')?.insertAdjacentHTML('beforeend', '<button class="small ghost" id="hmLayoutReset">Back to the standard layout</button>'); } }; }
+{ const ch = closeHome; closeHome = function () { document.body.classList.remove('hm-edit'); ch(); }; }
+
+/* ---------- Workspaces (2.12) ----------
+   Any part of Anabasis full screen (the writing, notes, sources, the research desk, the Oracle, a document)
+   with another beside it, smaller: notes large and sources small, sources large and the writing small, and so
+   on. Built from split view: when the writing is in the layout, the other part is the split pane, sized to
+   be the larger or the smaller; when it isn't, the writing steps aside and a second pane holds the smaller part. */
+const WS_VIEWS = [['writing', 'Writing'], ['notes', 'Notes'], ['sources', 'Sources'], ['desk', 'Research desk'], ['oracle', 'The Oracle'], ['doc', 'Another document']];
+const WS_SIZES = { small: 0.28, medium: 0.36, large: 0.44 };
+let WS = { on: false, main: '', side: '', size: 'medium', place: 'right', moved: null, home: null, stub: null };
+function openWorkspace() {
+  const c = PREFS.ws || {};
+  $('#wsMain').innerHTML = WS_VIEWS.map(([k, n]) => `<option value="${k}">${n}</option>`).join(''); $('#wsSide').innerHTML = '<option value="">Nothing</option>' + WS_VIEWS.map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+  $('#wsMain').value = c.main || 'writing'; $('#wsSide').value = c.side ?? 'notes'; $('#wsSize').value = c.size || 'medium'; $('#wsPlace').value = c.place || 'right'; $('#wsFull').checked = c.full !== false;
+  wsCheck(); $('#wsDlg').showModal();
+}
+function wsCheck() { const same = $('#wsMain').value === $('#wsSide').value; $('#wsSame').classList.toggle('hidden', !same); $('#wsGo').disabled = same; }
+['#wsMain', '#wsSide'].forEach(s => $(s).addEventListener('change', wsCheck));
+$('#wsCancel').addEventListener('click', () => $('#wsDlg').close());
+$('#wsGo').addEventListener('click', () => { const o = { main: $('#wsMain').value, side: $('#wsSide').value, size: $('#wsSize').value, place: $('#wsPlace').value, full: $('#wsFull').checked }; PREFS.ws = o; savePrefs(); $('#wsDlg').close(); wsEnter(o); });
+function wsEnter(o) {
+  if (WS.on) wsLeave(true);
+  if (homeOn) closeHome(); if (typeof deskOn !== 'undefined' && deskOn && !deskInSplit) closeDesk();
+  Object.assign(WS, { on: true, main: o.main, side: o.side || '', size: WS_SIZES[o.size] ? o.size : 'medium', place: o.place === 'left' ? 'left' : 'right' });
+  document.body.classList.add('ws-on');
+  const frac = WS_SIZES[WS.size];
+  if (WS.main === 'writing') {
+    if (WS.side) { PREFS.splitSide = WS.place; splitOpen(WS.side, { focus: false }); $('#split').style.width = Math.round(innerWidth * frac) + 'px'; }
+    else if (SPLIT.on) splitClose();
+  } else if (WS.side === 'writing') {
+    PREFS.splitSide = WS.place === 'left' ? 'right' : 'left'; splitOpen(WS.main, { focus: false }); $('#split').style.width = Math.round(innerWidth * (1 - frac)) + 'px';
+  } else {
+    splitOpen(WS.main, { focus: false }); document.body.classList.add('split-max');
+    if (WS.side) wsSideMount(WS.side, frac);
+  }
+  document.body.classList.toggle('split-left', PREFS.splitSide === 'left');
+  if (o.full && document.documentElement.requestFullscreen && !document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {});
+  $('#wsBar').classList.remove('hidden');
+  $('#wsBarLabel').textContent = `${(WS_VIEWS.find(v => v[0] === WS.main) || [])[1]}${WS.side ? ' with ' + (WS_VIEWS.find(v => v[0] === WS.side) || [])[1].toLowerCase() : ''}`;
+  pbLayoutAll();
+  if (WS.main === 'writing') editor.focus(); else splitFocus();
+}
+// the second pane, for a layout without the writing: notes and sources move in, others are drawn there
+function wsSideMount(view, frac) {
+  let pane = $('#split2');
+  if (!pane) { $('#split').insertAdjacentHTML('afterend', '<aside class="split split2" id="split2" aria-label="Second pane"><div class="sp-head"><b class="sp2-title"></b><span class="spacer"></span></div><div class="sp-body" id="sp2Body"></div></aside>'); pane = $('#split2'); }
+  pane.classList.remove('hidden'); pane.style.width = Math.round(innerWidth * frac) + 'px'; pane.style.order = WS.place === 'left' ? '-3' : '';
+  $('.sp2-title', pane).textContent = (WS_VIEWS.find(v => v[0] === view) || [])[1] || '';
+  const body = $('#sp2Body'); body.innerHTML = '';
+  if (view === 'notes' || view === 'sources') {
+    const el = $(`#sidebar .pane[data-pane="${view}"]`); if (!el) return;
+    WS.home = document.createComment('pane home'); el.before(WS.home); body.append(el); WS.moved = el; el.classList.add('on');
+    if (view === 'notes') renderNoteList(); else renderSourceList();
+  } else if (view === 'oracle') { orcMount(body); }
+  else if (view === 'desk') { const d = $('#desk'); WS.home = document.createComment('desk home'); d.before(WS.home); body.append(d); WS.moved = d; d.classList.remove('hidden'); deskInSplit = true; openDesk(PREFS.deskView || 'claims'); }
+  else if (view === 'doc') {
+    const d = binderOrder().find(x => x.id !== curDocId) || binderOrder()[0];
+    body.innerHTML = `<div class="sp-docscroll" tabindex="0" aria-label="Document, read only"><article class="page docbody sp-page"><h1 class="sp-doct">${esc(d ? d.title || 'Untitled' : '')}</h1>${d ? DOMPurify.sanitize(d.html || '', { ADD_ATTR: ['data-items', 'data-text'] }) : ''}</article></div>`;
+    const pg = $('.sp-page', body); if (d && pg) { applyLayout(pg, d); pg.querySelectorAll('[contenteditable]').forEach(x => x.removeAttribute('contenteditable')); hydrateImages(pg); }
+  } else if (view === 'writing') { /* handled by the split */ }
+}
+function wsLeave(quiet) {
+  if (!WS.on) return;
+  if (WS.moved) { if (WS.moved.id === 'desk') { WS.moved.classList.add('hidden'); deskInSplit = false; } WS.home.replaceWith(WS.moved); WS.moved = WS.home = null; renderNoteList(); renderSourceList(); }
+  const p2 = $('#split2'); if (p2) { $('#sp2Body').innerHTML = ''; p2.remove(); }
+  WS.on = false; document.body.classList.remove('ws-on', 'split-max');
+  if (SPLIT.on) splitClose();
+  PREFS.splitSide = (PREFS.ws && PREFS.ws.place === 'left' && PREFS.ws.main === 'writing') ? 'left' : PREFS.splitSide;
+  $('#wsBar').classList.add('hidden');
+  if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+  pbLayoutAll(); if (!quiet) editor.focus();
+}
+$('#wsExit').addEventListener('click', () => wsLeave());
+$('#wsChange').addEventListener('click', () => openWorkspace());
+$('#wsSwap').addEventListener('click', () => { if (!WS.on || !WS.side) return; const o = Object.assign({}, PREFS.ws, { main: WS.side, side: WS.main, full: false }); PREFS.ws = Object.assign({}, PREFS.ws, { main: o.main, side: o.side }); savePrefs(); wsEnter(o); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && WS.on && !document.querySelector('dialog[open]') && !document.fullscreenElement && !e.target.closest('input,textarea,select,[contenteditable="true"]')) wsLeave(); });
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && WS.on && PREFS.ws && PREFS.ws.full) { /* leaving full screen keeps the layout; the bar's Exit leaves it */ } });
+COMMANDS.push(['Workspace: any part full screen, with another beside it', () => openWorkspace()], ['Leave the workspace', () => wsLeave()]);
+
+/* ---------- Socrates fits the question to your words (2.12) ----------
+   A stem written for one word reads badly around another: "Is the Ten Thousand one thing", "a example",
+   "Where does the sources begin". The blank is now filled the way a careful writer would: the verb agrees with
+   a plural, "a" becomes "an" before a vowel sound, a question that opens with the blank starts with a capital,
+   a possessive after a name ending in s is just an apostrophe, and a quotation inside quotation marks gets
+   single ones. */
+const SOC_PLURAL_NOT = /(ss|us|is|ics|ous|ness|ics)$/i;
+const SOC_PLURAL_WORDS = /^(they|these|those|we|people|police|cattle|data|media|men|women|children|troops|forces|arms|clergy|staff)$/i;
+function socIsPlural(subj, kind) {
+  if (!subj || kind === 'claim' || kind === 'number' || kind === 'source') return false;
+  const s = subj.replace(/[“”"’']/g, '').trim(), words = s.split(/\s+/);
+  if (/\s(and|&)\s/i.test(s) && words.length <= 8) return true;
+  if (/^the\s+(ten|two|three|four|five|six|seven|eight|nine|twelve|hundred|thousand|many|few)\b/i.test(s)) return true;
+  let head = words.filter(w => !/^(of|the|a|an|in|on|at|for|to|and|from)$/i.test(w)); const ofAt = words.findIndex(w => /^of$/i.test(w)); if (ofAt > 0) head = words.slice(0, ofAt);
+  const last = (head[head.length - 1] || '').replace(/[^\p{L}-]/gu, '');
+  if (!last) return false;
+  if (SOC_PLURAL_WORDS.test(last)) return true;
+  if (kind === 'person' && /^[A-Z]/.test(last)) return /^(the\s)/i.test(s) && /s$/.test(last) && !SOC_PLURAL_NOT.test(last);
+  if (/^[A-Z]/.test(last) && kind !== 'term') return false;
+  return /[^s]s$/i.test(last) && !SOC_PLURAL_NOT.test(last) && last.length > 3;
+}
+const SOC_AGREE = [['is', 'are'], ['was', 'were'], ['has', 'have'], ['does', 'do'], ['seems', 'seem'], ['means', 'mean'], ['begins', 'begin'], ['ends', 'end'], ['matters', 'matter'], ['changes', 'change'], ['belongs', 'belong'], ['explains', 'explain'], ['depends', 'depend'], ['fits', 'fit'], ['looks', 'look'], ['appears', 'appear'], ['comes', 'come'], ['shows', 'show'], ['say', 'say'], ['says', 'say'], ['knows', 'know'], ['wants', 'want'], ['needs', 'need']];
+function socAgree(stem, subj, kind) {
+  if (!subj || !stem.includes('___')) return stem;
+  const pl = socIsPlural(subj, kind); let out = stem;
+  if (pl) {
+    const sing = new Map(SOC_AGREE);
+    // "Is ___ one thing" / "Where does ___ begin": the verb before the blank
+    out = out.replace(/\b(Is|Was|Has|Does|is|was|has|does)(\s+)___/, (m, v, sp) => { const p = sing.get(v.toLowerCase()); return (v[0] === v[0].toUpperCase() ? p[0].toUpperCase() + p.slice(1) : p) + sp + '___'; });
+    // "___ is" / "___ seems": the verb after it
+    out = out.replace(/___(\s+)(is|was|has|does|seems|means|begins|ends|matters|changes|belongs|explains|depends|fits|looks|appears|comes|shows|says|knows|wants|needs)\b/, (m, sp, v) => '___' + sp + sing.get(v));
+    out = out.replace(/___(\s+)(\w+\s+)?(it|its|itself)\b/, (m, sp, mid, p) => '___' + sp + (mid || '') + { it: 'they', its: 'their', itself: 'themselves' }[p]);
+    out = out.replace(/\b(one thing, or several things)\b/, 'one group, or several');
+  }
+  // a / an before the blank, by the sound of the word that will follow
+  out = out.replace(/\b([Aa])(n?)\s+___/, (m, a) => { const w = subj.replace(/^[“"‘']/, ''), an = /^(?:[aeiAEI]|o(?!ne)|O(?!ne)|u(?![nr]i|s[eu]|ti|ni|ra|ro|kr|ro)|U(?![nr]i|s[eu]|ti)|hour|honest|honou?r|heir|[FHLMNRSX](?:[A-Z]{1,4}\b|\s|$)|8|11|18)/.test(w); return a + (an ? 'n' : '') + ' ___'; });
+  return out;
+}
+// the subject as it will sit in the question: quotation marks nested properly, possessives after names in s
+function socFillSubj(stem, subj) {
+  let s = subj;
+  if (/^“[^“”]*“[^“”]*”[^“”]*”$/.test(s)) s = '“' + s.slice(1, -1).replace(/“/g, '‘').replace(/”/g, '’') + '”';
+  if (/___’s\b|___'s\b/.test(stem) && /s$/.test(s.replace(/[”"’]$/, ''))) stem = stem.replace(/___['’]s\b/, '___’');
+  return { stem, s };
+}
+{ // socText and socRender use the agreed stem
+  const st0 = socText;
+  socText = function (stem, subj) { const k = socKindNow, a = socAgree(stem, subj, k), f = socFillSubj(a, subj ? socQ(subj) : ''); let out = st0(f.stem, subj); if (subj) { const q = socQ(subj); if (q !== f.s) out = out.replace(q, f.s); } return /^___|^[“‘"]/.test(stem) || true ? out.replace(/^([a-z])/, c => c.toUpperCase()).replace(/\?\?+$/, '?').replace(/([.?!])\?$/, '$1') : out; };
+  const sr0 = socRender;
+  socRender = function () {
+    const subj = $('#socAbout').value.trim(), keep = socDeal.map(d => d.s);
+    socDeal.forEach(d => { d.s0 = d.s; d.s = socAgree(d.s, subj, socKindNow); const f = socFillSubj(d.s, subj ? socQ(subj) : ''); d.s = f.stem; d.fillAs = f.s; });
+    sr0(); socDeal.forEach((d, i) => { d.s = keep[i]; });
+    if (subj) $$('#socCards .soc-q').forEach((p, i) => { const d = socDeal[i]; if (!d) return; const m = p.querySelector('mark'); if (m && d.fillAs && m.textContent !== d.fillAs) m.textContent = d.fillAs; if (p.firstChild && p.firstChild.nodeType === 3) p.firstChild.data = p.firstChild.data.replace(/^([a-z])/, c => c.toUpperCase()); else if (m && p.firstChild === m && /^[a-z]/.test(m.textContent) && !/^[“‘]/.test(m.textContent)) m.textContent = m.textContent[0].toUpperCase() + m.textContent.slice(1); });
+  };
+}
+
+/* ---------- The Oracle, more like a conversation (2.12) ----------
+   Still a script, still no AI. But a person listening does a few things the 1966 script didn't: they let a
+   beat pass before answering, they say "I see" or "go on" instead of a question every time, they say back the
+   gist of what you said, they pick up a thread from earlier ("you said the archive was closed; did it open?"),
+   they hear "it" and "that" as the thing you were just talking about, and they don't open three replies running
+   the same way. */
+const ORC_ACK = { plain: ['I see.', 'Go on.', 'Right.', 'Mm.', 'Understood.'], gentle: ['I see.', 'That makes sense.', 'Go on.', 'I’m listening.', 'Mm, yes.'], blunt: ['Noted.', 'Right.', 'Go on.', 'Fine.', 'Mm.'] };
+const ORC_LINK = ['And', 'So', 'Then', 'Tell me,', 'One thing:', 'Still,'];
+const ORC2 = { threads: [], lastOpen: [], turns: 0, callbackAt: 0, pending: null };
+function orc2Manner() { try { const m = orcManner()[0]; return m === 'g' ? 'gentle' : m === 'b' ? 'blunt' : 'plain'; } catch (e) { return 'plain'; } }
+// what you said that's worth coming back to: a problem, a plan or a feeling, with its topic
+function orc2Note(text) {
+  const t = String(text || ''), low = t.toLowerCase(); if (t.length < 18) return;
+  const topic = orcTopic(t); if (!topic) return;
+  let kind = '';
+  if (/\b(can'?t|cannot|couldn'?t|stuck|problem|missing|closed|blocked|lost|no access|doesn'?t (?:say|work|fit)|contradict)/.test(low)) kind = 'problem';
+  else if (/\b(will|going to|plan to|need to|have to|should|tomorrow|next week|later)\b/.test(low)) kind = 'plan';
+  else if (/\b(worried|afraid|nervous|anxious|unsure|doubt)/.test(low)) kind = 'worry';
+  if (!kind || ORC2.threads.some(x => x.topic.toLowerCase() === topic.toLowerCase())) return;
+  ORC2.threads.push({ topic, kind, said: t.slice(0, 160), at: ORC2.turns, back: false }); if (ORC2.threads.length > 8) ORC2.threads.shift();
+}
+// a thread from earlier, once enough has been said since, and not every time
+function orc2Callback(curTopic) {
+  if (ORC2.turns - ORC2.callbackAt < 4) return '';
+  const x = ORC2.threads.find(y => !y.back && ORC2.turns - y.at >= 3 && (!curTopic || y.topic.toLowerCase() !== String(curTopic).toLowerCase())); if (!x) return '';
+  x.back = true; ORC2.callbackAt = ORC2.turns;
+  const t = x.topic.length > 40 ? x.topic.slice(0, 40) + '…' : x.topic;
+  return vary({ problem: `{Earlier you said there was a problem with ${t}. Where does that stand?|Before we go on: you mentioned trouble with ${t}. Is it still in the way?|You said ${t} was a sticking point. Has that moved at all?}`,
+    plan: `{You said you meant to deal with ${t}. Is that still the plan?|Earlier you mentioned a plan for ${t}. When will it happen?|Going back a little: what about ${t}? You had a plan for it.}`,
+    worry: `{You said you were uneasy about ${t}. Has saying it out loud helped?|Earlier, ${t} worried you. Does it still?}` }[x.kind]);
+}
+// "it", "that", "this one": the topic just before, so the reply can name it
+function orc2Resolve(text) {
+  const t = String(text || '').trim(); if (!ORC.topic || t.length > 90) return t;
+  if (/^(it|that|this|this one|that one)\b/i.test(t) && !/^(it|that|this)\s+(is|was)\s+(fine|ok|okay|good|great|true|right|wrong)\b/i.test(t)) return t.replace(/^(it|that|this one|that one|this)\b/i, ORC.topic);
+  return t;
+}
+// a short beat before the reply: longer for a longer answer, none when you asked not to have motion
+function orc2Delay(html) {
+  if (PREFS.orcPace === false || matchMedia('(prefers-reduced-motion: reduce)').matches || navigator.webdriver) return 0;
+  const n = htmlToText(html || '').length; return Math.min(1100, 260 + n * 6);
+}
+// don't open three replies the same way; sometimes acknowledge before asking
+function orc2Shape(html) {
+  const m = /^<p>([^<]{4,400})<\/p>/.exec(html || ''); if (!m) return html;
+  let p = m[1].trim(); const first = (p.split(/\s+/)[0] || '').toLowerCase().replace(/[^a-z']/g, '');
+  ORC2.lastOpen.push(first); if (ORC2.lastOpen.length > 3) ORC2.lastOpen.shift();
+  const same = ORC2.lastOpen.length === 3 && ORC2.lastOpen.every(w => w === first);
+  if (same && /^(what|why|how|when|where|who|which|do|does|did|is|are|can|could|would|have|has)$/.test(first)) { p = vary(ORC_LINK.join('|').replace(/^/, '{').replace(/$/, '}')) + ' ' + p[0].toLowerCase() + p.slice(1); ORC2.lastOpen[2] = 'link'; }
+  else if (/\?$/.test(p) && ORC2.turns % 3 === 2 && p.length < 140 && !/^(yes|no|i see|go on|right|mm)/i.test(p)) { const A = ORC_ACK[orc2Manner()]; p = A[ORC2.turns % A.length] + ' ' + p; }
+  return html.replace(m[0], `<p>${p}</p>`);
+}
+{ // wrap the Oracle's turn: note what's worth remembering, shape and pace the answer, maybe call back
+  const turn0 = orcTurn;
+  orcTurn = function (raw) {
+    if (!String(raw || '').trim()) return;
+    ORC2.turns++;
+    const say0 = orcSay, queued = []; let first = true;
+    orcSay = function (html) { queued.push(first ? orc2Shape(html) : html); first = false; };
+    try { turn0.call(this, raw); } finally { orcSay = say0; }
+    // a plain reply (one paragraph, no buttons) can give way to a thread from earlier: its stock question is replaced, or the thread follows a statement
+    if (queued.length === 1 && /^<p>[^<]*<\/p>$/.test(queued[0]) && !ORC.mode && !ORC.await) { const cb = orc2Callback(ORC.topic); if (cb) queued[0] = /\?<\/p>$/.test(queued[0]) ? `<p>${esc(cb)}</p>` : queued[0] + `<p>${esc(cb)}</p>`; }
+    const d = orc2Delay(queued.join(''));
+    if (!d) { queued.forEach(h => say0(h)); return; }
+    orc2Typing(true); setTimeout(() => { orc2Typing(false); queued.forEach(h => say0(h)); }, d);
+  };
+}
+// before the script reads your message: "it" means the topic just before, and anything worth coming back to is noted
+function orc2Pre(text) { const t = orc2Resolve(text); orc2Note(t); return t; }
+// the Oracle in a workspace's second pane answers just as it does beside the writing
+document.addEventListener('submit', e => { if (e.target.id !== 'orcForm' || e.target.closest('#spBody')) return; e.preventDefault(); const t = $('#orcIn'), v = t.value; t.value = ''; orcTurn(v); t.focus(); });
+document.addEventListener('keydown', e => { if (e.target.id === 'orcIn' && !e.target.closest('#spBody') && e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#orcForm').requestSubmit(); } });
+document.addEventListener('click', e => { if (e.target.closest('#spBody') || !e.target.closest('#sp2Body')) return; const a = e.target.closest('[data-oa]'); if (a) { const fn = ORC.acts[+a.dataset.oa]; if (fn) fn(); return; } const q = e.target.closest('[data-oq]'); if (q) { orcTurn(q.dataset.oq); return; } if (e.target.id === 'orcSave') orcSaveJournal(); if (e.target.id === 'orcNew') orcNew(); });
+function orc2Typing(on) {
+  const L = $('#orcLog'); if (!L) return; let t = $('#orcTyping');
+  if (on && !t) { L.insertAdjacentHTML('beforeend', `<div class="orc-m or" id="orcTyping" aria-hidden="true"><span class="orc-ic">${TRIPOD}</span><div class="orc-b orc-dots"><i></i><i></i><i></i></div></div>`); L.scrollTop = L.scrollHeight; }
+  if (!on && t) t.remove();
+}
+
+/* ---------- project data for 2.12, tidied when a file is read ---------- */
+{ const n0 = normalize; normalize = function (p) { const out = n0(p); tasksClean(out); sketchesClean(out);
+  out.inkKey = out.inkKey && typeof out.inkKey === 'object' && !Array.isArray(out.inkKey) ? Object.fromEntries(INKS.map(([c]) => [c, typeof out.inkKey[c] === 'string' ? out.inkKey[c].slice(0, 60) : ''])) : {};
+  out.inkKeep = out.inkKeep === true;
+  return out; }; }
+// headings carry their list's id; drafting colors and snippets keep only their own class
+function v212Scrub(html) {
+  return String(html || '')
+    .replace(/(<h[1-3][^>]*?)\sdata-task="([^"]*)"/g, (m, a, v) => /^[\w-]{1,40}$/.test(v) ? m : a)
+    .replace(/<span class="ink ink-([^"]*)">/g, (m, c) => INK_OK.has(c) ? m : '<span>')
+    .replace(/(<pre class="code"[^>]*?)\sdata-lang="([^"]*)"/g, (m, a, v) => a + ` data-lang="${codeLang(v.replace(/&[a-z#0-9]+;/gi, ''))}"`)
+    .replace(/(<figure[^>]*?)\sdata-sketch="([^"]*)"/g, (m, a, v) => /^[\w-]{1,40}$/.test(v) ? m : a);
+}
+{ const s0 = scrubHTML; scrubHTML = function (html) { return v212Scrub(s0(html)); }; }
+
+/* ---------- toolbar and document bar buttons ---------- */
+$('#btnInk')?.addEventListener('click', e => { e.stopPropagation(); if (popEl && popEl.classList.contains('ink-menu')) { closePop(); return; } openInk(); });
+$('#toolbar').addEventListener('mousedown', e => { if (e.target.closest('#btnInk')) { saveSelectionNow(); e.preventDefault(); } });
+document.addEventListener('click', e => { if (popEl && popEl.classList.contains('ink-menu') && !popEl.contains(e.target) && !e.target.closest('#btnInk,.pb-pop')) closePop(); });
+$('#btnTasks')?.addEventListener('click', () => openTasks({ here: true }));
+$('#btnWorkspace')?.addEventListener('click', () => (WS.on ? wsLeave() : openWorkspace()));
+$('#btnThemes')?.addEventListener('click', () => openThemes());
+$('#stThemes')?.addEventListener('click', () => { $('#settingsDlg').close(); openThemes(); });
+$('#ncOpenBtn')?.addEventListener('click', () => openNotecards());
+// after a document opens: counts on headings, and the day's reminder
+{ const od = openDoc; openDoc = function (...a) { const r = od.apply(this, a); try { taskBadges(); setTimeout(taskRemind, 1200); } catch (e) {} return r; }; }
+{ const ra = renderAll; renderAll = function (...a) { const r = ra.apply(this, a); try { taskBadges(); } catch (e) {} return r; }; }
+editor.addEventListener('input', debounce(() => { try { taskBadges(); } catch (e) {} }, 600));
+
+{ const a0 = addTableRules; addTableRules = function (td) { a0(td); td.addRule('codeSnippet', { filter: n => n.nodeName === 'PRE' && n.classList.contains('code'), replacement: (c, n) => '\n\n' + codeToMd(n) + '\n\n' }); td.addRule('inkSpan', { filter: n => n.nodeName === 'SPAN' && n.classList.contains('ink'), replacement: c => c }); return td; }; }
+// before any export: colors out unless kept, list ids off headings, snippets plain
+function v212Export(tmp) {
+  if (!(P && P.inkKeep)) $$('span.ink', tmp).forEach(sp => sp.replaceWith(...sp.childNodes));
+  $$('[data-task]', tmp).forEach(h => h.removeAttribute('data-task'));
+  $$('pre.code', tmp).forEach(p => p.removeAttribute('contenteditable'));
+  $$('figure[data-sketch]', tmp).forEach(f => f.removeAttribute('data-sketch'));
+}
+const INK_DOCX = { b: '1F5FA8', g: '2E7D32', a: '8A5A00', r: 'B3261E', p: '6A3FA0', s: '5F6368' };
+
+/* ==== 2.12 end ==== */
 /* ---------------- boot ---------------- */
 function sendClip(to, clip) {
   return new Promise(res => {

@@ -20,6 +20,7 @@ COVER = {
     'Other languages & transliteration': 'Languages-and-Translation', 'Translating': 'Languages-and-Translation',
     'My library, searching sources & submissions': 'Sources',
     'Revising & copyediting': 'Revising-and-Copyediting', 'Contents, numbering, books & submission packages': 'Exporting',
+    'Your desk: themes, workspaces, tasks & sketches': 'Your-Desk',
 }
 # Help sections whose wiki pages are still to be written
 PENDING = {

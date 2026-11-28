@@ -1,0 +1,11 @@
+[
+  {
+    "id": "GHSA-v2vq-3h6w-9r3c",
+    "aliases": ["CVE-2026-97224"],
+    "package": "@excalidraw/excalidraw",
+    "version": "0.17.6",
+    "accepted": "2026-11-28",
+    "review_by": "2027-02-28",
+    "reason": "Script in a drawing's customData.generationData.html (the AI-frame field) can run when Excalidraw restores a crafted file. No fixed release exists yet (0.18.1 is the latest and is affected). In Anabasis: every drawing is cleaned before Excalidraw sees it (customData, links, and embeddable, iframe and magic-frame elements are removed; see skClean in src/app.js); Excalidraw runs only in a sandboxed frame with no origin of its own, so it can't reach the project, the page or storage; and that frame runs only the page's own scripts, by hash, so injected script and event handlers are refused. Update Excalidraw as soon as a fixed release is published."
+  }
+]

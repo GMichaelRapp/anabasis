@@ -1,4 +1,4 @@
-"""Accessibility audit of the app itself with axe-core (WCAG 2.1 A/AA), light and dark themes."""
+"""Accessibility audit of the app itself with axe-core (WCAG 2.1 A/AA), in every theme: Map sheet, Night march, Parchment and High contrast."""
 import asyncio, json, os, sys
 from playwright.async_api import async_playwright
 import os as _os, sys as _sys; _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -66,6 +66,16 @@ VIEWS = [
     ('take changes back', "$('#scDlg').close(); TB = { T: JSON.parse(JSON.stringify(P)), send: null, name: 'x.json', who: 'Dana' }; TB.T.docs[0].html = TB.T.docs[0].html.replace(/<p>/, '<p>Changed. '); $('#tkWho').value = 'Dana'; tbPrepare(); $('#tkDlg').showModal();"),
     ('socrates', "$('#tkDlg').close(); openSocrates({ about: 'the blockade caused the famine' });"),
     ('the oracle', "$('#socDlg').close(); splitOpen('oracle'); orcTurn('what have I written about Xenophon?'); orcTurn('note: check the figures'); orcTurn('I am not sure about it');"),
+    ('themes dialog', "$('#updBar').classList.add('hidden'); openThemes()"),
+    ('themes: your own', "$('#thmList input[value=custom]').click(); $('#thmCustom').classList.remove('hidden'); thmCheck()"),
+    ('drafting colors menu', "$('#thmDlg').close(); setPalette(window.__axeTheme || 'map'); openDoc(curDocId); editor.insertAdjacentHTML('beforeend', '<p><span class=\"ink ink-b\">blue</span> <span class=\"ink ink-g\">green</span> <span class=\"ink ink-a\">amber</span> <span class=\"ink ink-r\">red</span> <span class=\"ink ink-p\">purple</span> <span class=\"ink ink-s\">gray</span></p>' + codeHTML('Python', 'print(1)')); openInk()"),
+    ('code dialog', "closePop(); openCode()"),
+    ('tasks dialog', "$('#codeDlg').close(); openTasks({ here: true }); $('#tkAdd').value = 'A task'; taskAdd()"),
+    ('notecards dialog', "$('#taskDlg').close(); openNotecards(); $('[data-ncm=typed]').click(); NC = ncSplitTyped('Title\\nBody text\\nSource: Tuchman\\np. 4'); NC.forEach(c => c.on = true); ncRender()"),
+    ('workspace dialog', "$('#ncDlg').close(); openWorkspace()"),
+    ('workspace', "$('#wsDlg').close(); wsEnter({ main: 'notes', side: 'sources', size: 'medium', place: 'right', full: false })"),
+    ('home, arranging', "wsLeave(true); openHome(); $('#hmCustomize') && $('#hmCustomize').click()"),
+    ('home after arranging', "$('#hmCustomize') && $('#hmCustomize').click()"),
     ('newer-version notice', "splitClose(); $('#socDlg').close(); $('#tkDlg').close(); $('#msfDlg').close(); $('#eqDlg').close(); $('#fbDlg').close(); clearTimeout(toastT); $('#toast').classList.remove('show'); $('#updMsg').textContent = 'Anabasis 9.9 is out.'; $('#updBar').classList.remove('hidden')"),
 ]
 async def main():
@@ -78,8 +88,8 @@ async def main():
         # the app's Trusted Types policy (rightly) refuses a script added as text, so run axe through the debugger instead
         await pg.evaluate('() => { ' + open(AXE).read() + '\n;if (!window.axe && typeof axe !== "undefined") window.axe = axe; }')
         total = {}
-        for theme in ('light', 'dark'):
-            await pg.evaluate(f"document.documentElement.dataset.theme='{theme}'")
+        for theme in ('map', 'night', 'parchment', 'contrast'):
+            await pg.evaluate(f"setPalette('{theme}'); window.__axeTheme = '{theme}'")
             for name, js in VIEWS:
                 await pg.evaluate(f"(()=>{{ try {{ {js} }} catch(e) {{ console.warn(e) }} }})()"); await pg.wait_for_timeout(350)
                 ctx = "document.querySelector('dialog[open]') || document" if 'dialog' in name or name in ('help', 'checkpoints', 'find all', 'promo') else "document"
@@ -90,7 +100,7 @@ async def main():
                     total.setdefault(k, []).append(f"{theme}/{name}: {v['n']} e.g. {v['eg'][:2]}")
             await pg.evaluate("endTour && endTour()")
         # the same audit on a phone-sized screen
-        await pg.evaluate("endTour && endTour(); document.documentElement.dataset.theme='light'")
+        await pg.evaluate("endTour && endTour(); setPalette('map')")
         await pg.set_viewport_size({'width': 390, 'height': 844}); await pg.wait_for_timeout(400)
         for name, js in [('phone editor', "closeHome && homeOn && closeHome(); openDoc(curDocId)"), ('phone toolbar menu', "TB_PB.open()"),
                          ('phone document menu', "$('#tbMore').classList.remove('open'); DOC_PB.open()"), ('phone top menu', "$('#docMore').classList.remove('open'); TOP_PB.open()"),

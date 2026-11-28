@@ -3,6 +3,8 @@
 Reads vendor/manifest.json, asks the OSV database (osv.dev, which gathers the GitHub, npm and other
 advisory feeds) about every npm package at the exact version vendored, and reports any advisory that
 applies. Exits 1 if there is one (2 if the database can't be reached), so the scheduled workflow can open an issue.
+An advisory listed in vendor/advisories-accepted.json (no fixed release yet, and mitigated in Anabasis, with the reason
+written down) is reported but doesn't fail the check until its review date passes.
 
     python tools/check_advisories.py             # report
     python tools/check_advisories.py --markdown  # report as Markdown (for the issue body)
@@ -58,14 +60,28 @@ def report(found, md=False):
     return '\n'.join(lines)
 
 
+def accepted_now(found, accepted, today):
+    """Split findings into those still to act on and those accepted, with a reason, until their review date."""
+    keep, ok = [], []
+    for f in found:
+        ids = {f['id'], *f['aliases']}
+        a = next((x for x in accepted if (x.get('id') in ids or ids & set(x.get('aliases') or [])) and x.get('package') == f['package'] and x.get('version') == f['version']), None)
+        (ok if a and str(a.get('review_by', '')) >= today else keep).append(dict(f, accepted=a) if a else f)
+    return keep, ok
+
+
 def main():
+    import datetime
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0]); ap.add_argument('--markdown', action='store_true')
     a = ap.parse_args()
     pkgs = packages(json.loads((ROOT / 'vendor/manifest.json').read_text()))
     try: found = findings(pkgs, query(pkgs))
     except Exception as e: print(f'Could not reach the advisory database: {e}', file=sys.stderr); sys.exit(2)
-    print(report(found, a.markdown))
-    sys.exit(1 if found else 0)
+    acc = ROOT / 'vendor/advisories-accepted.json'
+    keep, ok = accepted_now(found, json.loads(acc.read_text()) if acc.exists() else [], datetime.date.today().isoformat())
+    print(report(keep, a.markdown))
+    for f in ok: print(f"\nAccepted until {f['accepted']['review_by']}: {f['label']} {f['version']} {f['id']}. {f['accepted']['reason']}")
+    sys.exit(1 if keep else 0)
 
 
 if __name__ == '__main__':

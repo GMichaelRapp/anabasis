@@ -2377,6 +2377,155 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   :root .topbar .save-state::before{content:attr(data-s);font-size:12px}
   :root .topbar{padding-right:max(8px,env(safe-area-inset-right))}
 }
+/* ==== 2.12 css begin ==== */
+/* 2.12 themes: each palette sets the same tokens; status pairs keep colored text off colored fill */
+:root[data-palette="parchment"]{
+  --bg:#ECE3CF; --panel:#F6F0E1; --line:#D3C4A2; --line2:#E5DAC0; --ink:#2A2016; --muted:#5A4A35; --faint:#5F4F3A;
+  --accent:#6B3A1E; --accent-ink:#FFFFFF; --accent-soft:#EBDCC4; --accent-hover:#542C15;
+  --sun:#A26F12; --sun-ink:#6A4500; --sun-soft:#F1E1B8;
+  --danger:#9C2A16; --page:#FBF7EE; --page-ink:#231A10;
+  --tk-bg:#F2DEA0; --tk-ink:#583C00; --cite-bg:#F2D2C6; --cite-ink:#76200F; --check-bg:#DCE3EA; --check-ink:#22405F;
+  --ok-bg:#DCE8CC; --ok-ink:#2C4A1C; --warn-bg:#F1E2BB; --warn-ink:#583C00; --bad-bg:#F2D4CB; --bad-ink:#76200F; --idea-bg:#E7DCEB; --idea-ink:#4D2D66;
+  --shadow:0 1px 0 rgba(60,40,10,.06),0 8px 24px -10px rgba(60,40,10,.3);
+  --page-shadow:0 0 0 1px rgba(60,40,10,.1),0 18px 40px -18px rgba(60,40,10,.4);
+}
+:root[data-palette="contrast"]{
+  --bg:#FFFFFF; --panel:#FFFFFF; --line:#4D4D4D; --line2:#9A9A9A; --ink:#000000; --muted:#262626; --faint:#333333;
+  --accent:#0033A0; --accent-ink:#FFFFFF; --accent-soft:#DCE6FA; --accent-hover:#00226B;
+  --sun:#8F3B00; --sun-ink:#6B2C00; --sun-soft:#FBE3CC;
+  --danger:#A30000; --page:#FFFFFF; --page-ink:#000000;
+  --tk-bg:#FFE58A; --tk-ink:#000000; --cite-bg:#FFD0CC; --cite-ink:#000000; --check-bg:#C9DDFF; --check-ink:#000000;
+  --ok-bg:#C8EBCB; --ok-ink:#000000; --warn-bg:#FFE58A; --warn-ink:#000000; --bad-bg:#FFD0CC; --bad-ink:#000000; --idea-bg:#E6D8FF; --idea-ink:#000000;
+  --contour:none; --shadow:0 0 0 1px #000; --page-shadow:0 0 0 2px #000; --hair:#4D4D4D;
+}
+:root[data-palette="contrast"] :focus-visible{outline:3px solid #8F3B00!important;outline-offset:2px}
+:root[data-palette="contrast"] button{border-color:#4D4D4D}
+:root[data-palette="contrast"] .muted,:root[data-palette="contrast"] .small.muted{color:#262626}
+:root[data-palette="custom"] body{background-image:none}
+
+/* the theme picker */
+.thm-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.thm-opt{display:flex;gap:10px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--page);cursor:pointer;color:var(--ink);font-size:13.5px}
+.thm-opt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.thm-opt input{position:absolute;opacity:0;pointer-events:none}.thm-opt:focus-within{outline:2px solid var(--sun);outline-offset:2px}
+.thm-opt > span:last-child{display:flex;flex-direction:column;gap:2px}
+.th-sw{flex:none;width:46px;height:34px;border-radius:4px;position:relative;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.25);background:var(--sw-bg)}
+.th-sw i{position:absolute;left:8px;top:6px;right:8px;bottom:0;background:var(--sw-page);border-radius:2px 2px 0 0}
+.th-sw b{position:absolute;left:13px;top:13px;width:20px;height:3px;background:var(--sw-ink);border-radius:2px;box-shadow:0 6px 0 var(--sw-ink)}
+.th-sw em{position:absolute;right:6px;bottom:4px;width:8px;height:8px;border-radius:50%;background:var(--sw-acc)}
+.th-sw[data-palette="map"]{--sw-bg:#E7EBE4;--sw-page:#FFFFFF;--sw-ink:#14181D;--sw-acc:#24456E}
+.th-sw[data-palette="night"]{--sw-bg:#101720;--sw-page:#1A222D;--sw-ink:#E6E4DF;--sw-acc:#9DBBE3}
+.th-sw[data-palette="parchment"]{--sw-bg:#ECE3CF;--sw-page:#FBF7EE;--sw-ink:#231A10;--sw-acc:#6B3A1E}
+.th-sw[data-palette="contrast"]{--sw-bg:#FFFFFF;--sw-page:#FFFFFF;--sw-ink:#000000;--sw-acc:#0033A0;box-shadow:0 0 0 2px #000}
+.thm-custom{margin-top:14px;border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.thm-custom legend{font-weight:700;padding:0 4px}
+.thm-custom input[type=color]{width:100%;height:32px;padding:2px;border:1px solid var(--line);border-radius:var(--radius);background:var(--page)}
+.thm-btns{display:flex;align-items:flex-end}
+.thm-checks{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.thm-checks li{display:grid;grid-template-columns:42px 1fr auto 74px;gap:8px;align-items:center;font-size:13px}
+.thm-checks li.bad > span:last-child{color:var(--bad-ink);font-weight:700}.thm-checks li.ok > span:last-child{color:var(--ok-ink)}
+.thm-chip{display:inline-flex;align-items:center;justify-content:center;height:24px;border-radius:3px;font-weight:700;box-shadow:0 0 0 1px rgba(0,0,0,.2)}
+
+/* drafting colors: a hue and a line style each, so color is never the only cue */
+.docbody .ink{text-decoration-line:underline;text-decoration-thickness:1px;text-underline-offset:.18em}
+.ink-b{color:#1F5FA8;text-decoration-style:solid}.ink-g{color:#2E7D32;text-decoration-style:dashed}.ink-a{color:#8A5A00;text-decoration-style:dotted}
+.ink-r{color:#B3261E;text-decoration-style:wavy}.ink-p{color:#6A3FA0;text-decoration-style:double}.ink-s{color:#5F6368;text-decoration-style:dotted}
+:root[data-theme="dark"] .ink-b{color:#8DB8F2}:root[data-theme="dark"] .ink-g{color:#8FD19A}:root[data-theme="dark"] .ink-a{color:#F0C36A}
+:root[data-theme="dark"] .ink-r{color:#F4A39A}:root[data-theme="dark"] .ink-p{color:#C9AEF2}:root[data-theme="dark"] .ink-s{color:#B2BAC4}
+.ink-menu{min-width:300px;padding:6px}
+.ink-row{display:grid;grid-template-columns:110px 1fr 34px;gap:6px;align-items:center;margin:2px 0}
+.ink-row > button[data-ink]{justify-content:flex-start;gap:8px;min-height:30px}
+.ink-row input{min-height:28px;font-size:12.5px;padding:3px 7px}
+.ink-dot{width:12px;height:12px;border-radius:50%;background:currentColor;flex:none}
+.ink-dot.ink-b{background:#1F5FA8}.ink-dot.ink-g{background:#2E7D32}.ink-dot.ink-a{background:#8A5A00}.ink-dot.ink-r{background:#B3261E}.ink-dot.ink-p{background:#6A3FA0}.ink-dot.ink-s{background:#5F6368}
+.ink-menu .ink{text-decoration-line:underline;text-underline-offset:.18em}
+.ink-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;border-top:1px solid var(--line2);margin-top:6px;padding-top:6px}
+#btnInk .ink-bar{stroke:var(--accent)}
+
+/* code snippets in the editor (the page's own look is in doc.css) */
+.code-input{width:100%;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;tab-size:4;white-space:pre;resize:vertical}
+#editor pre.code{cursor:pointer;user-select:text}
+#editor pre.code:hover{box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 35%,transparent)}
+:root[data-theme="dark"] .docbody pre.code{background:#121820;border-color:#2D3947;color:#E3E8EE}
+:root[data-theme="dark"] .docbody pre.code::before{color:#AAB5C1}
+
+/* tasks */
+.tk-where{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tk-where button.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink);font-weight:700}
+.tk-where .count{font-size:11px;background:var(--line2);border-radius:8px;padding:0 6px;margin-left:4px}
+.tk-list{list-style:none;margin:0;padding:0;display:grid;gap:4px;max-height:50vh;overflow:auto}
+.tk-list li{display:grid;grid-template-columns:20px 1fr 148px 30px;gap:6px;align-items:center}
+.tk-list li.none{display:block;padding:8px 0}
+.tk-list li.done .tk-t{text-decoration:line-through;color:var(--muted)}
+.tk-list .tk-due.late{border-color:var(--danger);color:var(--bad-ink)}
+.tk-add{display:grid;grid-template-columns:1fr 148px auto;gap:6px;margin-top:10px}
+#btnTasks .tk-n:not(:empty){font:700 11px/1 var(--ui);background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:2px 5px;margin-left:2px}
+#editor [data-cp-tasks]{position:relative;padding-right:46px}
+#editor [data-cp-tasks]::after{content:"☑ " attr(data-cp-tasks);position:absolute;right:0;top:50%;transform:translateY(-50%);font:600 11.5px/1 var(--ui);color:var(--accent);background:var(--accent-soft);border-radius:9px;padding:3px 7px;cursor:pointer;font-style:normal}
+
+/* notecards */
+.nc-body .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:10px}
+.nc-body .seg button{border:0;border-radius:0;min-height:30px}.nc-body .seg button.on{background:var(--accent);color:var(--accent-ink)}
+.nc-drop{display:block;border:2px dashed var(--line);border-radius:var(--radius);padding:18px;text-align:center;color:var(--ink);font-size:14px;cursor:pointer}
+.nc-drop input{display:block;margin:8px auto 0}
+.nc-list{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:10px;max-height:52vh;overflow:auto}
+.nc-card{border:1px solid var(--line);border-radius:var(--radius);padding:10px;background:var(--page);display:grid;gap:6px;position:relative;border-left:4px solid var(--sun)}
+.nc-card.off{opacity:.6;border-left-color:var(--line)}
+.nc-card textarea{width:100%;resize:vertical}
+.nc-meta{display:grid;grid-template-columns:2fr 80px 120px 1.4fr;gap:6px}
+.nc-on{position:absolute;right:10px;top:8px}
+.nc-card > input[data-f="title"]{font-weight:700;margin-right:70px}
+
+/* sketches */
+dialog.sk-dlg{width:min(1400px,96vw);max-width:96vw;height:92vh;max-height:92vh}
+dialog.sk-dlg > .dlg{height:100%;display:flex;flex-direction:column}
+.sk-host{flex:1;min-height:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:#fff}
+.sk-frame{width:100%;height:100%;border:0;display:block}
+#editor figure[data-sketch]{cursor:pointer}
+#editor figure[data-sketch] img{background:#fff}
+
+/* workspace */
+body.ws-on .topbar,body.ws-on #sidebar,body.ws-on #scrim{display:none!important}
+body.ws-on .layout{height:100vh}
+.split2{border-left:1px solid var(--hair,var(--line))}
+body.ws-on .split2{flex:none;min-width:260px}
+.ws-bar{position:fixed;right:14px;bottom:14px;z-index:70;display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 6px 5px 14px;box-shadow:var(--shadow);font-size:13px;color:var(--ink)}
+.ws-bar.hidden{display:none}
+.bad-text{color:var(--bad-ink)}
+
+/* project home you arrange */
+.hm-tools{display:flex;gap:6px;justify-content:flex-end;margin:0 0 8px}
+body.hm-edit .hm-grid > [data-card]{outline:2px dashed color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:2px;cursor:grab}
+body.hm-edit .hm-grid > .hm-hid{opacity:.5}
+.hm-ed{display:flex;gap:4px;align-items:center;margin:-4px 0 8px;padding:4px 6px;background:var(--accent-soft);border-radius:4px;font-size:12.5px}
+.hm-ed b{flex:1;color:var(--ink)}
+.hm-ed button{min-height:26px;padding:2px 8px}
+.hm-socq{font:italic 500 17px/1.45 var(--display,Georgia);margin:4px 0 10px;color:var(--ink)}
+#hmQuick{width:100%;margin-bottom:8px}
+
+/* the Oracle, thinking */
+.orc-dots{display:inline-flex;gap:4px;padding:10px 12px!important}
+.orc-dots i{width:6px;height:6px;border-radius:50%;background:var(--muted);animation:orcDot 1s infinite ease-in-out}
+.orc-dots i:nth-child(2){animation-delay:.15s}.orc-dots i:nth-child(3){animation-delay:.3s}
+@keyframes orcDot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}
+@media (prefers-reduced-motion:reduce){.orc-dots i{animation:none;opacity:.6}}
+@media (max-width:860px){ .tk-list li{grid-template-columns:20px 1fr 30px}.tk-list .tk-due{grid-column:2} .tk-add{grid-template-columns:1fr auto} .tk-add input[type=date]{grid-column:1} .nc-meta{grid-template-columns:1fr 1fr} .ink-row{grid-template-columns:100px 1fr 34px} }
+
+/* 2.12 readability: highlights that sat light text on light color in the dark theme, and in the reader's night page */
+:root[data-theme="dark"] ::highlight(cp-find){background:#6B5414;color:inherit}
+:root[data-theme="dark"] ::highlight(cp-name){background:#5C2626;color:inherit;text-decoration:underline wavy #F4A39A}
+#reader.th-night ::highlight(rd-cy){background-color:rgba(245,213,101,.26)}
+#reader.th-night ::highlight(rd-cg){background-color:rgba(127,205,145,.24)}
+#reader.th-night ::highlight(rd-cb){background-color:rgba(120,184,245,.26)}
+#reader.th-night ::highlight(rd-cp){background-color:rgba(242,151,190,.26)}
+#reader.th-night ::highlight(rd-q){background-color:rgba(224,176,79,.26)}
+#reader.th-night ::highlight(rd-p){background-color:rgba(56,189,248,.22)}
+#reader.th-night ::highlight(rd-find){background-color:rgba(255,200,0,.28)}
+#reader.th-night ::highlight(rd-findcur){background-color:rgba(255,140,0,.42)}
+#reader.th-night ::highlight(rd-tts){background-color:rgba(56,189,248,.24)}
+:root[data-theme="dark"] .palette mark{background:#6B5414;color:inherit}
+
+/* ==== 2.12 css end ==== */
 </style>
 <style id="pageRule"></style>
 </head>
@@ -2499,7 +2648,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
         <div class="row"><input type="search" id="qNotes" placeholder="Search notes"><button id="btnNewNote" class="primary">+ New</button></div>
         <div class="chips" id="tagChips"></div>
         <div class="row"><button id="btnBoard" class="primary-soft" style="flex:1" title="Cards on a board: piles, tags, sources, or free arrangement">▦ Board</button><button id="btnCompile" style="flex:1">Compile…</button><button id="btnImportMd" title="Import Markdown notes, e.g. from Notecards">Import .md</button></div>
-        <div class="row notes-more"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">Templates…</button><button id="btnTrash" title="Deleted notes wait here for 30 days">Trash</button></div>
+        <div class="row notes-more"><button id="btnPad" style="flex:1" title="Jot now, sort later (⌘/Ctrl Alt N)">Scratch pad</button><button id="btnNoteTpl" style="flex:1" title="Interview log, archive visit, source summary, field notes, meeting notes, and your own">Templates…</button><button id="btnTrash" title="Deleted notes wait here for 30 days">Trash</button><button id="ncOpenBtn" title="Bring in handwritten index cards: photos read on this computer, or typed">Cards…</button></div>
       </div>
       <ul class="list" id="noteList"></ul>
     </section>
@@ -2526,10 +2675,12 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <button id="qmBadge" class="qm-badge hidden" data-nomenu type="button" aria-label="Quartermaster ledger"><i aria-hidden="true"></i><span>Ledger</span></button>
       <span class="wc" id="wordCount" data-pri="6" data-label="" data-nomenu></span>
       <button id="btnSplit" class="ghost" data-pri="5" data-label="Beside the writing" aria-label="Beside the writing" title="Notes, sources, the research desk or another document beside the writing (Ctrl+\\)"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M12 4v16M15 8h3M15 11h3M15 14h2"/></svg></button>
+      <button id="btnWorkspace" class="ghost" data-pri="6" data-label="Workspace: one part full screen, another beside it" aria-label="Workspace" title="Workspace: give notes, sources, the writing or the research desk the screen, with another part beside it"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/><path d="M6 8h6M6 12h6M6 16h4"/></svg></button>
       <button id="btnMargin" class="ghost" data-pri="5" data-label="Show or hide margin notes" aria-label="Margin notes" title="Show or hide margin notes"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16M17.5 8.5h1.5M17.5 12h1.5"/></svg><span class="mg-n"></span></button>
       <button id="btnPageSetup" class="ghost" data-pri="3" data-label="Page setup" aria-label="Page setup" title="Title block, fonts, spacing, bibliography options"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H6.5A2.5 2.5 0 0 0 4 5.5v13A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg><span class="lbl">Page setup</span></button>
       <button id="btnVersions" class="ghost" data-pri="2" data-label="Drafts" aria-label="Drafts" title="Save a draft, compare side by side, restore (⌘/Ctrl+Alt+D saves one)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 3.5H17a3 3 0 0 1 3 3V16"/><rect x="4" y="7" width="12.5" height="14" rx="2"/><path d="M7.5 12h5.5M7.5 16h3.5"/></svg><span class="lbl">Drafts</span></button>
       <button id="btnQM" class="ghost" data-pri="6" data-label="Quartermaster: an honest account of how this was written" aria-label="Quartermaster" title="The Quartermaster: keep an honest account of how this document is written, and save it as a report"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3M9 7.5h6M9 11h6M9 14.5h3"/></svg><span class="lbl">Quartermaster</span></button>
+      <button id="btnTasks" class="ghost" data-pri="4" data-label="Tasks for this chapter or section" aria-label="Tasks" title="Tasks for this document, or for the section you’re in; due dates remind you"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 6.5 1.5 1.5L8.5 5M4 12.5 5.5 14l3-3M4 18.5 5.5 20l3-3"/><path d="M11.5 7h8.5M11.5 13h8.5M11.5 19h8.5"/></svg><span class="tk-n" aria-hidden="true"></span></button>
       <button id="btnRecord" class="ghost" data-pri="4" data-label="Record" aria-label="Record" title="Daily words, streak, chapter status and deadlines"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 20h18M6 20v-6M11 20V8M16 20v-9M20.5 4l-4.5 4-3-2.5L8 9"/></svg><span class="lbl">Record</span></button>
       <button id="btnListen" class="ghost" data-pri="5" data-label="Listen: read aloud" aria-label="Listen: read the draft aloud" title="Read the draft aloud from the cursor, highlighting each sentence"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/></svg><span class="lbl">Listen</span></button>
       <button id="btnFocus" class="ghost" data-pri="1" data-label="Focus mode" aria-label="Focus mode" title="Focus mode (Ctrl/Cmd+Shift+F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span class="lbl">Focus</span></button>
@@ -2543,6 +2694,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <button data-cmd="italic" data-tb="italic" data-pri="1" data-label="Italic" aria-label="Italic" title="Italic (Ctrl/Cmd+I)" class="tb-letter"><i>I</i></button>
       <button data-cmd="underline" data-tb="underline" data-pri="5" data-label="Underline" aria-label="Underline" title="Underline (Ctrl/Cmd+U)" class="tb-letter"><u>U</u></button>
       <button data-cmd="strikeThrough" data-tb="strike" data-pri="7" data-label="Strikethrough" aria-label="Strikethrough" title="Strikethrough" class="tb-letter"><s>S</s></button>
+      <button id="btnInk" data-tb="ink" data-pri="6" data-label="Drafting color" aria-label="Drafting color" title="Color the selected text while you draft: blue for rewrite, amber for check… (left out of exports)" aria-haspopup="menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 18 11 4h2l6 14M7.6 12.5h8.8"/><path d="M3 21h18" stroke-width="3" class="ink-bar"/></svg></button>
       <span class="sep"></span>
       <button data-cmd="insertUnorderedList" data-tb="ul" data-pri="3" data-label="Bulleted list" aria-label="Bulleted list" title="Bulleted list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1" fill="currentColor"/><circle cx="4.5" cy="12" r="1" fill="currentColor"/><circle cx="4.5" cy="18" r="1" fill="currentColor"/></svg></button>
       <button data-cmd="insertOrderedList" data-tb="ol" data-pri="4" data-label="Numbered list" aria-label="Numbered list" title="Numbered list"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h10M10 12h10M10 18h10M4 4.5h1.5V9M4 9h3M4 14.5c.5-.7 2.8-.9 2.8.6 0 1.2-2.8 2-2.8 3.4h3"/></svg></button>
@@ -3697,6 +3849,7 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
       <label><input type="checkbox" id="stFocusMarks"> Show research marks in focus mode</label>
       <label><input type="checkbox" id="stSpell"> Spellcheck</label>
     </div>
+    <div class="st-row"><button type="button" class="small" id="stThemes">Themes…</button><span class="small muted">Map sheet, Night march, Parchment, High contrast, or your own colors.</span></div>
     <div class="st-row"><button type="button" class="small" id="stToolbar">Customize toolbar…</button><span class="small muted">Hide the buttons you don’t use.</span></div>
     <h4 class="st-h">Starting and saving</h4>
     <div class="st-checks">
@@ -3746,6 +3899,92 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
   <footer><button id="reClose">Close</button></footer>
 </div></dialog>
 
+<!-- ==== 2.12 html begin ==== -->
+<dialog id="thmDlg" class="wide"><div class="dlg">
+  <h3>Themes <span class="muted small">(this browser)</span></h3>
+  <div class="body">
+    <div class="thm-list" id="thmList" role="radiogroup" aria-label="Theme"></div>
+    <fieldset class="thm-custom hidden" id="thmCustom"><legend>Your own theme</legend>
+      <div class="grid3">
+        <div><label for="thmBase">Start from</label><select id="thmBase"><option value="light">Light</option><option value="dark">Dark</option></select></div>
+        <div><label for="thm_bg">Background</label><input type="color" id="thm_bg"></div>
+        <div><label for="thm_page">Page</label><input type="color" id="thm_page"></div>
+        <div><label for="thm_ink">Text</label><input type="color" id="thm_ink"></div>
+        <div><label for="thm_accent">Accent: links, buttons</label><input type="color" id="thm_accent"></div>
+        <div class="thm-btns"><button type="button" class="small" id="thmReset">Start over</button></div>
+      </div>
+      <p class="small muted">Anabasis checks your colors the way it will use them, and darkens or lightens text that would be hard to read. These are the results:</p>
+      <ul class="thm-checks" id="thmChecks" aria-live="polite"></ul>
+      <p class="small hidden" id="thmFixNote">Some of your chosen colors are too faint against the page; Anabasis shows them adjusted. <button type="button" class="small" id="thmFix">Use the adjusted colors</button></p>
+    </fieldset>
+    <p class="small muted">Every theme is checked for contrast (WCAG AA) on text, buttons and marks. The light / dark button in the top bar switches to Night march and back to your last light theme.</p>
+  </div>
+  <footer><button id="thmClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<dialog id="codeDlg" class="wide"><div class="dlg">
+  <h3 id="codeTitle">Insert a code snippet</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Code for documentation, kept exactly as you type it: shown in a fixed-width face and never run. Markdown export gives it a fenced block; Word, a fixed-width font.</p>
+    <label for="codeLang">Language <span class="muted">(a label only)</span></label><select id="codeLang"></select>
+    <label for="codeText">Code</label><textarea id="codeText" rows="12" spellcheck="false" autocapitalize="off" autocomplete="off" class="code-input"></textarea>
+  </div>
+  <footer><span class="left"><button id="codeDel" class="danger hidden">Delete snippet</button> <button id="codeCopy">Copy</button></span><button id="codeCancel">Cancel</button><button id="codeOk" class="primary">Save</button></footer>
+</div></dialog>
+
+<dialog id="taskDlg" class="wide"><div class="dlg">
+  <h3>Tasks <span class="muted small">for <span id="tkDoc"></span></span></h3>
+  <div class="body">
+    <div class="tk-where" id="tkWhere" role="group" aria-label="Which part of the document"></div>
+    <ul class="tk-list" id="tkList"></ul>
+    <div class="tk-add"><label class="sr-only" for="tkAdd">New task</label><input id="tkAdd" placeholder="Add a task: check the dates in this section, ask Lee about the map…"><label class="sr-only" for="tkAddDue">Due</label><input type="date" id="tkAddDue" title="Due (optional)"><button id="tkAddBtn" class="primary-soft">Add</button></div>
+    <p class="small muted" id="tkFoot"></p>
+  </div>
+  <footer><span class="left"><button id="tkClearDone" class="small">Clear finished</button></span><button id="tkClose" class="primary">Done</button></footer>
+</div></dialog>
+
+<dialog id="taskAllDlg" class="wide"><div class="dlg">
+  <h3>Open tasks across the project</h3>
+  <div class="body"><ul class="hm-list tk-all" id="taskAllList"></ul></div>
+  <footer><button id="taskAllClose" class="primary">Close</button></footer>
+</div></dialog>
+
+<dialog id="ncDlg" class="xwide"><div class="dlg">
+  <h3>Notecard converter</h3>
+  <div class="body nc-body">
+    <p class="small muted" style="margin-top:0">Bring in index cards you wrote by hand. Photograph them, one card a photo, and the text is read on this computer (nothing is uploaded); or type them out. A card can name its source (<code>Source: Tuchman 1962</code>), its page (<code>p. 23</code>) and tags (<code>#supply</code>); quotation marks around the whole card make it a quotation.</p>
+    <div class="seg" role="tablist" aria-label="How the cards come in"><button role="tab" data-ncm="photo" class="on" aria-selected="true">Photos of cards</button><button role="tab" data-ncm="typed" aria-selected="false">Typed cards</button></div>
+    <div id="ncPhotoBox"><label class="nc-drop">Choose photos of your cards <input type="file" id="ncPhotos" accept="image/*" multiple></label><p class="small" id="ncStatus" aria-live="polite"></p></div>
+    <div id="ncTypedBox" class="hidden"><label for="ncTyped">Your cards, with a line of three dashes (<code>---</code>) between them</label><textarea id="ncTyped" rows="7" placeholder="Supply lines&#10;The army lived off the land after Cunaxa.&#10;Source: Xenophon&#10;p. 112&#10;#supply #logistics&#10;---&#10;“The sea! The sea!”&#10;Source: Xenophon, p. 230"></textarea></div>
+    <ul class="nc-list" id="ncList" aria-label="Cards to check"></ul>
+  </div>
+  <footer><button id="ncCancel">Cancel</button><button id="ncOk" class="primary" disabled>Add notes</button></footer>
+</div></dialog>
+
+<dialog id="skDlg" class="sk-dlg"><div class="dlg">
+  <h3><span id="skTitle">Sketch</span> <span class="muted small">Excalidraw, on this computer</span></h3>
+  <div class="sk-host" id="skHost"></div>
+  <footer><span class="small muted left" id="skStatus" aria-live="polite"></span><button id="skCancel">Cancel</button><button id="skSave" class="primary" disabled>Save to document</button></footer>
+</div></dialog>
+
+<dialog id="wsDlg"><div class="dlg">
+  <h3>Workspace</h3>
+  <div class="body">
+    <p class="small muted" style="margin-top:0">Give one part of Anabasis the screen, with another beside it. Notes large and sources small; sources large and the writing small; whatever the work needs.</p>
+    <div class="grid2">
+      <div><label for="wsMain">Large</label><select id="wsMain"></select></div>
+      <div><label for="wsSide">Beside it, smaller</label><select id="wsSide"></select></div>
+      <div><label for="wsSize">Size of the smaller part</label><select id="wsSize"><option value="small">Narrow</option><option value="medium">Medium</option><option value="large">Wide</option></select></div>
+      <div><label for="wsPlace">The smaller part goes</label><select id="wsPlace"><option value="right">On the right</option><option value="left">On the left</option></select></div>
+    </div>
+    <label class="inline"><input type="checkbox" id="wsFull"> Full screen <span class="muted">(Esc or Exit leaves it)</span></label>
+    <p class="small bad-text hidden" id="wsSame">Choose two different parts.</p>
+  </div>
+  <footer><button id="wsCancel">Cancel</button><button id="wsGo" class="primary">Open workspace</button></footer>
+</div></dialog>
+<div class="ws-bar hidden" id="wsBar" role="toolbar" aria-label="Workspace"><span id="wsBarLabel"></span><button class="small" id="wsSwap" title="Swap the large and the small parts">Swap</button><button class="small" id="wsChange">Change…</button><button class="small primary" id="wsExit">Exit</button></div>
+
+<!-- ==== 2.12 html end ==== -->
 <!-- generic prompt / confirm -->
 <dialog id="askDlg"><div class="dlg">
   <h3 id="askTitle"></h3>
@@ -4076,9 +4315,20 @@ dialog#subDlg:has(#subTable.hidden){width:min(640px,96vw)}
     <ul>
       <li><b>Export → Substack post</b> copies the document ready to paste: notes become a numbered Notes section, figures stay images, and tables are drawn as images because Substack has no tables. The .zip package has the post and every image, in case something doesn’t paste.</li>
       <li><b>Import .md</b> (Notes tab) takes a whole folder, such as Notecards or an Obsidian vault, or a few files. Subfolders can become board piles.</li>
+      <li><b>Cards…</b> (Notes tab): the notecard converter brings in index cards you wrote by hand. Photograph them, one card a photo, and the text is read on this computer; or type them out with <code>---</code> between cards. A card can name its source (<code>Source: Tuchman 1962</code>), its page (<code>p. 23</code>) and tags (<code>#supply</code>). You check every card before it becomes a note.</li>
       <li><b>Autosave to file</b> (Settings, Chrome and Edge): after you save the project once, Anabasis writes to the same .json a few seconds after you stop typing. After a restart the browser may ask for one click (<i>Resume autosave</i>) before it can write again.</li>
       <li><b>The Quartermaster</b> (the ledger button in the document bar, or its ⋯ menu) keeps an honest account of how a document is written, if you turn it on: snapshots as you write, and where pasted text came from. Save it as a report with a replay to show your process. It records no keystrokes and nothing outside Anabasis, stays in your project file, and shows a process rather than proving who wrote anything.</li>
       <li><b>Lock project</b> (Export menu) encrypts the project file and everything this browser keeps for it, PDFs and archive photos included, with a password (AES-256, PBKDF2). There’s no recovery if you forget it. After 15 minutes away it hides itself and asks for the password again (change that, or <b>Lock now</b>, in the lock settings).</li>
+    </ul>
+    <h4>Your desk: themes, workspaces, tasks &amp; sketches</h4>
+    <ul>
+      <li><b>Themes</b> (Settings → Themes, or ⌘K “themes”): Map sheet, Night march, Parchment, High contrast, or your own. Your own starts from light or dark and takes four colors; Anabasis checks them for contrast as you choose and darkens or lightens text that would be hard to read. The moon button still switches to Night march and back.</li>
+      <li><b>Workspace</b> (the panes button in the document bar): give one part the screen with another beside it, smaller: notes large and sources small, sources large and the writing small, the research desk with the Oracle. <b>Swap</b> trades them; <b>Exit</b> or Esc puts everything back.</li>
+      <li><b>Tasks</b> (the checklist button in the document bar): a list for the whole document, or press <b>+ List for “…”</b> to give the section you’re in its own. Tasks can have due dates; what’s due shows on Project home and you’re reminded when you open the document. A heading with a list shows its count; click it to open the list.</li>
+      <li><b>Drafting colors</b> (the A with a bar, in the toolbar): color a passage blue, green, amber, red, purple or gray, and write what each color means. Each color has its own underline too, so color is never the only cue. Exports leave colors out unless you tick <i>Keep colors in exports</i>.</li>
+      <li><b>Code snippets</b> (Insert → Code snippet): code kept exactly as typed, in a fixed-width face, never run. Click one to edit it. Markdown gets a fenced block; Word, a fixed-width font.</li>
+      <li><b>Sketches</b> (Insert → Sketch): draw a diagram with Excalidraw. It goes into the document as a figure, and clicking it, then <b>Edit sketch</b>, opens the drawing again. Excalidraw runs in a sealed frame on this computer: no network, and no way into your project except the drawing you save.</li>
+      <li><b>Arrange Project home</b>: move, hide or widen its cards, and add new ones: tasks, pinned notes, a question from Socrates, a quick note.</li>
     </ul>
     <h4>Project home</h4>
     <ul>

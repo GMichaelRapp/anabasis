@@ -585,6 +585,107 @@
 - Is there someone you could talk this through with, besides me?
 - What would it take to have a reader for the next draft?
 
+@ motivation motivated unmotivated motivate bother | 6
+> *
+-[g] Motivation tends to come after starting, not before. What could you do in the next ten minutes that's small enough to start?
+-[b] You don't need to feel like it. What's the smallest piece you could finish today anyway?
+- When did this piece last feel worth doing? What was different then?
+- Who is waiting to read this? Picture them reading it.
+
+@ imposter impostor fraud qualified unqualified expert | 7
+> * not * expert *
+- Who decided what counts as an expert on this? What do you know that they don't?
+> *
+-[g] Most people who write seriously feel that way at some point. What have you found that nobody else has put together?
+- What would a real expert do next, in your place? Can you do that?
+- What do you know about this now that you didn't a year ago?
+
+@ boring dull flat lifeless | 6
+> * boring *
+- Boring to you, or boring to a reader? They're different problems.
+- Where in it did you last feel interested yourself? Start there.
+> *
+- What's the most surprising thing you found? Is it anywhere near the start?
+- Is there a person in it the reader can follow?
+
+@ hate loathe sick | 5
+> * i hate *
+- What is it about {2} that you hate, exactly?
+- If you could change one thing about {2}, what would it be?
+> *
+- Is it the work you hate, or the part of the work you're in?
+- What would make it bearable for one more hour?
+
+@ notes disorganized disorganised | 5
+> * my notes *
+- What would you need from your notes right now, if you could find it?
+- Which notes have you never used? Are they telling you something?
+> *
+- Would a pile on the board help? Sort them by what they're for, not where they came from.
+- What's the one question your notes are meant to answer?
+
+@ ai chatgpt gpt chatbot | 9
+> *
+- I'm not an AI: I'm a script that turns your words around and looks things up in your notes. The thinking is yours.
+- No AI here. Just questions, and your own project. What were you trying to work out?
+- Anabasis has no AI in it, and I'm part of Anabasis. What's the question underneath that?
+
+@ busy job kids family | 4
+> *
+- When in the week is the work yours, even an hour of it?
+- What could you do in twenty minutes, on a bad day?
+- Does the project need more time, or a smaller next step?
+
+@ break rest holiday vacation | 4
+> *
+- Rest is part of the work. What will you come back to first?
+- Before you stop: write one line about where you are, so you can find it again.
+- What would make it easy to start again?
+
+@ finished done completed | 6
+> * finished *
+-[g] Well done. What did you learn doing it that you'd want to remember next time?
+- Finished, or finished for now? What's still open?
+> *
+- What's the first thing you'll do with it?
+- Who reads it first?
+
+@ fact verify verified verifying check checking | 7
+> * check *
+- What would count as checking it: a second source, a document, a number that adds up?
+- Who could you ask who would know if it's wrong?
+> *
+- Which fact would hurt most if it were wrong? Check that one first.
+- Where did you first read it? Is that where it started?
+
+@ sensitive consent privacy permission ethical ethics | 7
+> *
+- Who could be hurt by this if it's published as it stands?
+- Did they know you might write about them?
+- What would you need to change to be fair to everyone in it?
+
+@ transition transitions flow | 4
+> *
+- What does the reader need to know to get from one part to the next?
+- Is it the sentences, or the order of the ideas?
+- Read the last line of one section and the first of the next. Do they talk to each other?
+
+@ weak weaker strongest strong | 4
+> * weak *
+- Weak because the evidence is thin, or because the argument doesn't follow?
+- What would make it strong enough to stand on its own?
+> *
+- Which part would you defend first?
+- What's carrying the most weight? Is it the strongest part?
+
+@ scared afraid nervous anxious worried | 6
+> * afraid of *
+- What's the worst that happens if {2} comes true?
+- How likely is it, honestly?
+> *
+-[g] That's a hard feeling to write through. What's one thing within your control?
+- What are you afraid someone will say?
+
 @ none
 -[g] {Take your time. What else is on your mind about it?|There’s no rush. Go on.}
 -[g] {That sounds like it matters to you. Why?|What’s underneath that, do you think?}

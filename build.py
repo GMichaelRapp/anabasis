@@ -12,7 +12,7 @@ import argparse, base64, hashlib, html.parser, json, pathlib, re, sys, urllib.pa
 
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC, VJ, CSL, DATA, ASSETS, DIST = (ROOT / d for d in ('src', 'vendor/js', 'vendor/csl', 'data', 'assets', 'dist'))
-BUDGET = 25 * 1024 * 1024  # the whole app must stay under 25 MB
+BUDGET = 50 * 1024 * 1024  # the whole app must stay under 50 MB
 STYLES = sorted(p.stem for p in (ROOT / 'vendor/csl').glob('*.csl'))  # every vendored CSL style is bundled
 EAGER = ['purify.min.js', 'citeproc.min.js', 'marked.min.js', 'turndown.min.js', 'osint.js', 'docx.min.js', 'mammoth.min.js', 'diff.min.js']
 
@@ -81,6 +81,21 @@ def build():
     lazy += '<script type="text/plain" id="lib-ocr-worker">/*! Tesseract.js worker 7.0.0 | Apache-2.0 */' + safe(read(OCR / 'worker.min.js')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-ocr-core">/*! tesseract.js-core 6.1.2 (Tesseract OCR, simd-lstm) | Apache-2.0 */' + safe(read(OCR / 'tesseract-core-simd-lstm.wasm.js')) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-ocr-eng">' + base64.b64encode((OCR / 'eng.traineddata.gz').read_bytes()).decode() + '</script>\n'
+    # 2.12: Excalidraw for sketches, with React, run only inside the sketch frame. Its fonts come with it as data,
+    # and the bundle's own font addresses are pointed at them, so drawing never reaches the network.
+    EX = ROOT / 'vendor' / 'excalidraw'
+    exc = read(EX / 'excalidraw.production.min.js')
+    for f in ('Virgil', 'Cascadia', 'Assistant-Regular', 'Assistant-Medium', 'Assistant-SemiBold', 'Assistant-Bold'):
+        ref = f'n.p+"excalidraw-assets/{f}.woff2"'
+        if exc.count(ref) != 1: sys.exit(f'Excalidraw bundle changed shape: {ref}')
+        exc = exc.replace(ref, '"data:font/woff2;base64,' + base64.b64encode((EX / f'{f}.woff2').read_bytes()).decode() + '"')
+    nocmt = lambda t: safe(t).replace('<!--', '\\x3c!--')
+    lazy += '<script type="text/plain" id="lib-excal-shim">' + safe(read(SRC / 'sketch' / 'shim.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-excal-boot">' + safe(read(SRC / 'sketch' / 'boot.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-react">/*! React 18.3.1 | MIT | (c) Meta Platforms, Inc. */' + nocmt(read(EX / 'react.production.min.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-react-dom">/*! ReactDOM 18.3.1 | MIT | (c) Meta Platforms, Inc. */' + nocmt(read(EX / 'react-dom.production.min.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-excal-vendor">/*! Excalidraw 0.17.6 (vendor chunk) | MIT | excalidraw.com */' + nocmt(read(EX / 'excalidraw-vendor.js')) + '</script>\n'
+    lazy += '<script type="text/plain" id="lib-excal">/*! Excalidraw 0.17.6 | MIT | excalidraw.com; fonts Virgil, Cascadia Code, Assistant | SIL OFL 1.1 */' + nocmt(exc) + '</script>\n'
     lazy += '<script type="text/plain" id="lib-paged">/*! Paged.js 0.4.3 | MIT | pagedjs.org */' + read(VJ / 'paged.min.js') + '</script>\n'
     lazy += f'<script type="text/plain" id="csl-locale">{read(CSL / "locales-en-US.xml")}</script>\n'
     for f in sorted(CSL.glob('locales-*.xml')):  # 2.7: citation terms for documents written in other languages

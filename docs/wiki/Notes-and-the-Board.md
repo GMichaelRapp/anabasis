@@ -148,6 +148,8 @@ The board’s order matters: it’s the default order for **Compile notes** and 
 
 **Export → All notes as Markdown** writes them all to one Markdown file, and the plain-file archive (Export menu) saves each note as its own file.
 
+**Cards…** in the Notes tab is the notecard converter, for index cards you wrote by hand: photograph them (the text is read on your computer) or type them out with `---` between cards. A card can name its source, page and tags, and you check every card before it becomes a note. See [Your desk](Your-Desk#notecards-you-wrote-by-hand).
+
 ## The notes inbox
 
 **Project home** lists notes not yet linked to the plan or sorted into a pile, so new research doesn’t get lost. Sort them into piles on the board, or drag them onto a plan item to link them.

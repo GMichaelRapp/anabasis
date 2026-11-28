@@ -84,6 +84,16 @@ Select a passage in the draft and choose **Mark → Consult the Oracle…**. It 
 - **Check in**: say “check in” or “good morning” and it starts the day where you left off: what you logged last time and what you meant to do first, then what’s coming up in the next few days, open editing marks, review keys due, next steps, open questions, TKs and flags, how far you are from your target, and a question from Socrates that’s still open. When there’s a lot, it offers **What should I work on first?** The first visit each day does this for you.
 - **Wrap up**: say “wrap up”, “done for today” or “that’s it for now” (or press **Wrap up**) and it asks three things: what you got done, what’s left, and the first thing to do next time. The first two go in today’s journal entry, the third becomes a next step, and the next check-in reminds you. Say **skip** to pass a question. Then it signs off with one of the maxims of Delphi, in Greek and English.
 
+## More like a conversation (2.12)
+
+The Oracle is still a script, with no AI. But it now does a few things a person listening does:
+
+- **It lets a beat pass** before answering, a little longer for a longer reply. (Turn on *reduce motion* in your system settings and it answers at once.)
+- **It says “I see” or “go on”** now and then, instead of a question every time, and doesn’t open three replies running the same way.
+- **It comes back to what you said.** Mention a problem, a plan or a worry (“the reading room is closed until March”), and a few turns later it may ask where that stands.
+- **It hears “it” and “that”** as the thing you were just talking about.
+- **It knows more:** motivation, feeling like an impostor, a draft that bores you, messy notes, checking facts, writing about real people, transitions, weak sections, finishing, taking a break, and being asked whether it’s an AI (it isn’t).
+
 ## Its manner
 
 The Oracle can be **gentle** (patient and encouraging), **plain** (questions, no frills; the default) or **blunt** (short and direct). Set it in **Settings → The Oracle**, or just tell it: “be gentle”, “be plain”, “be blunt”. The manner changes which replies come first; the questions underneath are the same.

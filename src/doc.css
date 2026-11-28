@@ -85,3 +85,9 @@ mjx-container[jax="SVG"]{direction:ltr}mjx-container[jax="SVG"]>svg{overflow:vis
 /* 2.8: paragraph numbers in the margin */
 .docbody p[data-pn]{position:relative}
 .docbody .pn{position:absolute;left:-3em;width:2.2em;text-align:right;font-size:.72em;line-height:inherit;color:#666;text-indent:0;font-style:normal;font-weight:normal;user-select:none}
+/* 2.12: code snippets, shown as typed and never run; drafting colors when an export keeps them */
+.docbody pre.code{font:.82em/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono","Courier New",monospace;background:#F4F5F7;border:1px solid #D9DDE3;border-radius:4px;padding:10px 12px;margin:0 0 .9em;white-space:pre;overflow-x:auto;tab-size:4;color:#1B1F24;text-indent:0;break-inside:avoid}
+.docbody pre.code code{font:inherit;background:none;padding:0}
+.docbody pre.code[data-lang]:not([data-lang=""])::before{content:attr(data-lang);display:block;font:600 .78em/1 "Helvetica Neue",Arial,sans-serif;color:#5F6368;margin-bottom:.6em}
+.docbody .ink{text-decoration-line:underline;text-decoration-thickness:1px;text-underline-offset:.18em}
+.docbody .ink-b{color:#1F5FA8}.docbody .ink-g{color:#2E7D32;text-decoration-style:dashed}.docbody .ink-a{color:#8A5A00;text-decoration-style:dotted}.docbody .ink-r{color:#B3261E;text-decoration-style:wavy}.docbody .ink-p{color:#6A3FA0;text-decoration-style:double}.docbody .ink-s{color:#5F6368;text-decoration-style:dotted}

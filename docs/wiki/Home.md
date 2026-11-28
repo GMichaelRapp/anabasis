@@ -6,6 +6,7 @@ Anabasis is a word processor for research writing that runs as a single web page
 
 - **[Getting started](Getting-Started)**: open the app, take the tour, start a project or open a finished example, and find your way around the screen.
 - **[Projects, saving and privacy](Projects-and-Saving)**: what a project file holds, how saving and autosave work, locking, GitHub backup and the plain-file archive.
+- **[Your desk: themes, workspaces, tasks and sketches](Your-Desk)**: five themes including your own colors, any part full screen with another beside it, task lists for a chapter or a section, drafting colors, code snippets, Excalidraw sketches, handwritten notecards, and a Project home you arrange.
 
 ## Writing with sources
 

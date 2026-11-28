@@ -38,12 +38,19 @@ async def main():
     async with async_playwright() as pw:
         b = await pw.chromium.launch()
         ctx = await b.new_context(viewport={'width': 1440, 'height': 900}, accept_downloads=True)
-        await ctx.add_init_script("delete window.showSaveFilePicker; localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'}))")
+        await ctx.add_init_script("delete window.showSaveFilePicker; try { localStorage.setItem('commonplace.prefs',JSON.stringify({startHome:false,toured:true,seenVersion:'99.0.0'})) } catch (e) { /* the sandboxed sketch frame has no storage */ }")
         ctx.on('request', lambda r: reqs.append(r.url) if re.match(r'https?://', r.url) and '127.0.0.1' not in r.url and 'localhost' not in r.url else None)
         pg = await ctx.new_page(); pg.on('pageerror', lambda e: errs.append(str(e)[:200]))
         pg.on('dialog', lambda d: (dialogs.append(d.message), asyncio.ensure_future(d.dismiss())))
         await pg.goto(URL); await pg.wait_for_timeout(1200)
-        base = await pg.evaluate("(() => { const p = sampleProject(); p.docs[0].comments = [{ id: 'c1', text: 'A comment', author: 'Ann', at: nowISO() }]; p.notes[0].comments = []; return JSON.parse(JSON.stringify(p)); })()")
+        base = await pg.evaluate("""(() => { const p = sampleProject(); p.docs[0].comments = [{ id: 'c1', text: 'A comment', author: 'Ann', at: nowISO() }]; p.notes[0].comments = [];
+          // 2.12: drafting colors and their key, a code snippet, a section with a task list, a sketch
+          p.docs[0].html += '<h2 data-task="ts1">A section</h2><p><span class="ink ink-b">colored</span></p>' + codeHTML('Python', 'print(1)') + '<figure class="fig" data-sketch="sk1" contenteditable="false"><img data-asset="i1" alt=""><figcaption>Sketch</figcaption></figure>';
+          p.inkKey = { b: 'rewrite', g: 'keep' }; p.inkKeep = true;
+          p.tasks = [{ id: 'tk1', docId: p.docs[0].id, anchor: 'ts1', title: 'A section', items: [{ id: 'ti1', t: 'Check it', done: false, due: '2020-01-01', at: nowISO() }] }, { id: 'tk2', docId: p.docs[0].id, anchor: '', title: '', items: [{ id: 'ti2', t: 'Read aloud', done: false, due: '', at: nowISO() }] }];
+          p.sketches = { sk1: { elements: [{ id: 'e1', type: 'text', text: 'Label', x: 0, y: 0, width: 50, height: 20, version: 1, versionNonce: 1, isDeleted: false, link: 'https://x.test', customData: { generationData: { html: '<script>parent.PWN=1</script>' } } }, { id: 'e2', type: 'embeddable', link: 'https://evil.example' }], files: {}, appState: { viewBackgroundColor: '#ffffff' } } };
+          p.assets = { i1: { name: 'x', type: 'image/png', data: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', w: 1, h: 1 } };
+          return JSON.parse(JSON.stringify(p)); })()""")
         proj = poison(base)
         # documents get a payload in their markup as well as their text
         for d in proj['docs']: d['html'] = d['html'] + ''.join(f'<p>{p}</p>' for p in PAYLOADS)
@@ -54,6 +61,10 @@ async def main():
         steps += ["openBoard()", "closeBoard()", "openHome()", "closeHome()", "openPlan()", "closePlan()", "openDrafts()", "closeDrafts()"]
         steps += [f"openDesk('{v}')" for v in ['threads', 'about', 'claims', 'codes', 'data', 'grid', 'journal', 'lit', 'questions', 'review', 'revision', 'translate']]
         steps += ["closeDesk(); openDoc(P.docs[0].id)", "renderOutline && renderOutline()", "openRel(); closeRel()"]
+        # 2.12: every new view, with the poisoned task text, color key and sketch
+        steps += ["openTasks({ anchor: (P.tasks.find(l => l.anchor) || {}).anchor || '' })", "$('#taskDlg').close(); openTaskAll()", "$('#taskAllDlg').close(); openHome()", "$('#hmCustomize') && $('#hmCustomize').click()", "closeHome(); openInk()", "closePop(); openThemes()", "$('#thmDlg').close(); openNotecards(); $('[data-ncm=typed]').click(); $('#ncTyped').value = P.notes.map(n => n.title + '\\n' + n.body).join('\\n---\\n'); $('#ncTyped').dispatchEvent(new Event('input'))",
+                  "$('#ncDlg').close(); const pre = editor.querySelector('pre.code'); if (pre) openCode(pre)", "$('#codeDlg').close(); wsEnter({ main: 'notes', side: 'sources', size: 'small', place: 'right', full: false })", "wsLeave(true)",
+                  "const f = editor.querySelector('figure[data-sketch]'); if (f) openSketch(f)"]
         for js in steps:
             try: await pg.evaluate(f"(() => {{ {js}; }})()"); await pg.wait_for_timeout(300)
             except Exception as e: errs.append('step ' + js + ': ' + str(e)[:120])
@@ -63,6 +74,9 @@ async def main():
             for el in els[:3]:
                 try: await el.hover(timeout=800); await pg.wait_for_timeout(80)
                 except Exception: pass
+        await pg.wait_for_timeout(4000)  # the sketch frame loads its drawing
+        check('a poisoned drawing reached the sketch frame cleaned', await pg.evaluate("(() => { const s = Object.values(P.sketches || {})[0]; return !s || s.elements.every(e => !e.customData && !e.link && e.type !== 'embeddable'); })()"))
+        await pg.evaluate("$('#skDlg').open && skClose()")
         check('nothing in the project ran in the app', await pg.evaluate("window.PWN || null") is None, await pg.evaluate("window.PWN || null"))
         # …and not just because the page's policy stopped it: no handler or script link made it into the page at all
         bad = await pg.evaluate("""(() => { const out = []; const scan = root => root.querySelectorAll('*').forEach(el => {

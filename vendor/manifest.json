@@ -750,5 +750,85 @@
     "license": "Apache-2.0",
     "source": "npm:@tesseract.js-data/eng@1.0.0 4.0.0_best_int/eng.traineddata.gz",
     "sha256": "45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91"
+  },
+  {
+    "file": "vendor/excalidraw/react.production.min.js",
+    "name": "React",
+    "version": "18.3.1",
+    "license": "MIT",
+    "source": "npm:react@18.3.1 umd/react.production.min.js",
+    "sha256": "d949f1c3687aedadcedac85261865f29b17cd273997e7f6b2bfc53b2f9d4c4dd"
+  },
+  {
+    "file": "vendor/excalidraw/react-dom.production.min.js",
+    "name": "ReactDOM",
+    "version": "18.3.1",
+    "license": "MIT",
+    "source": "npm:react-dom@18.3.1 umd/react-dom.production.min.js",
+    "sha256": "35f4f974f4b2bcd44da73963347f8952e341f83909e4498227d4e26b98f66f0d"
+  },
+  {
+    "file": "vendor/excalidraw/excalidraw.production.min.js",
+    "name": "Excalidraw",
+    "version": "0.17.6",
+    "license": "MIT",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw.production.min.js",
+    "sha256": "27b133f845543f091aa518924b5b2fdd7eb52a9e490de100b9bc3bfd2ae2f314"
+  },
+  {
+    "file": "vendor/excalidraw/excalidraw-vendor.js",
+    "name": "Excalidraw (vendor chunk)",
+    "version": "0.17.6",
+    "license": "MIT",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/vendor-677e88ca78c86bddf13d.js",
+    "sha256": "8e496e2d4d71d85c73c114ed5473d34c27c83a2344b6f036327b955e5ab0f260"
+  },
+  {
+    "file": "vendor/excalidraw/Virgil.woff2",
+    "name": "Virgil (Excalidraw hand-drawn font)",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Virgil.woff2",
+    "sha256": "9976295bfe709bdea64839a4d4e9a1d436dd6eb67538399a5a0e8b8fadbcf1cf"
+  },
+  {
+    "file": "vendor/excalidraw/Cascadia.woff2",
+    "name": "Cascadia Code",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Cascadia.woff2",
+    "sha256": "6d27c0474bb6c7922911f90ae811918f6be943005f1c4a6ec0e5b70a2bfddf16"
+  },
+  {
+    "file": "vendor/excalidraw/Assistant-Regular.woff2",
+    "name": "Assistant Regular",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Assistant-Regular.woff2",
+    "sha256": "76945f09225aae65bdbd204cb4ac40d4caa4ff67150e5074bab1a04d1b778fc3"
+  },
+  {
+    "file": "vendor/excalidraw/Assistant-Medium.woff2",
+    "name": "Assistant Medium",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Assistant-Medium.woff2",
+    "sha256": "81a9f280ce6a790f20ca8cd521183caa430f1f7fdc0752c36ef1cc6dc828ac57"
+  },
+  {
+    "file": "vendor/excalidraw/Assistant-SemiBold.woff2",
+    "name": "Assistant SemiBold",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Assistant-SemiBold.woff2",
+    "sha256": "bba47a7d1b185a4a2e0d265ec82aeac5dbc2dc9cb0f482a2ff57cbdfe4e5045d"
+  },
+  {
+    "file": "vendor/excalidraw/Assistant-Bold.woff2",
+    "name": "Assistant Bold",
+    "version": "0.17.6",
+    "license": "OFL-1.1",
+    "source": "npm:@excalidraw/excalidraw@0.17.6 dist/excalidraw-assets/Assistant-Bold.woff2",
+    "sha256": "e0cdd332ce039770e93ec44336b6db65f931940f42b0342aad35a06e7f991d29"
   }
 ]

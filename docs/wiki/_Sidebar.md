@@ -3,6 +3,7 @@
 **Start here**
 - [Getting started](Getting-Started)
 - [Projects, saving and privacy](Projects-and-Saving)
+- [Your desk: themes, workspaces, tasks and sketches](Your-Desk)
 
 **Writing with sources**
 - [Citations and styles](Citations-and-Styles)

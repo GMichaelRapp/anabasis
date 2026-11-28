@@ -152,6 +152,10 @@ There’s no model behind Socrates, only a list and some care in dealing from it
 
 The stems are in `data/socrates.txt` in the source code, in a simple format documented at the top of the file, if you want to see them all or suggest more.
 
+## Questions that fit your words (2.12)
+
+A question written for one word can read badly around another. Socrates now fills the blank the way a careful writer would: the verb agrees with a plural (“Are the Ten Thousand one group, or several?”, “Where do mercenary armies begin and end?”), “a” becomes “an” before a vowel sound (“an FBI file”, but “a unit”), a question that opens with the blank starts with a capital, a possessive after a name ending in *s* is just an apostrophe, and a quotation inside quotation marks gets single ones.
+
 ## Tips
 
 - **Select less, not more.** A single term or one sentence gets sharper questions than a paragraph.
